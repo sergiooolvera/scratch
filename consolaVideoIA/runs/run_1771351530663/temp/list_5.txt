@@ -1,0 +1,7 @@
+file 'C:/Users/sergi/.gemini/antigravity/scratch/consolaVideoIA/runs/run_1771351530663/temp/images/img_5_0.jpg'
+duration 3.448
+file 'C:/Users/sergi/.gemini/antigravity/scratch/consolaVideoIA/runs/run_1771351530663/temp/images/img_5_1.jpg'
+duration 3.448
+file 'C:/Users/sergi/.gemini/antigravity/scratch/consolaVideoIA/runs/run_1771351530663/temp/images/img_5_2.jpg'
+duration 3.448
+file 'C:/Users/sergi/.gemini/antigravity/scratch/consolaVideoIA/runs/run_1771351530663/temp/images/img_5_2.jpg'

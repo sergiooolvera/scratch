@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demostración de Animación - Antigravity</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: #e94560;
+        }
+
+        .container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+
+        .orb {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100px;
+            height: 100px;
+            margin-top: -50px;
+            margin-left: -50px;
+            background: linear-gradient(45deg, #e94560, #0f3460);
+            border-radius: 50%;
+            box-shadow: 0 0 50px rgba(233, 69, 96, 0.8);
+            animation: pulse 3s infinite alternate ease-in-out;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0.6;
+            filter: blur(2px);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(233, 69, 96, 0.4); }
+            100% { transform: scale(1.2); box-shadow: 0 0 80px rgba(233, 69, 96, 1); }
+        }
+
+        .text-overlay {
+            position: absolute;
+            bottom: 20%;
+            width: 100%;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+            animation: fadeInOut 4s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(10px); }
+            50% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="orb"></div>
+    </div>
+    <div class="text-overlay">Generando Video con Antigravity</div>
+
+    <script>
+        const container = document.body;
+        const particleCount = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            const size = Math.random() * 8 + 2;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            const startX = Math.random() * window.innerWidth;
+            const startY = Math.random() * window.innerHeight;
+            
+            particle.style.left = `${startX}px`;
+            particle.style.top = `${startY}px`;
+            
+            container.appendChild(particle);
+            
+            animateParticle(particle);
+        }
+
+        function animateParticle(p) {
+            const duration = Math.random() * 5000 + 3000;
+            const targetX = Math.random() * window.innerWidth;
+            const targetY = Math.random() * window.innerHeight;
+            
+            const animation = p.animate([
+                { left: p.style.left, top: p.style.top, opacity: 0.6 },
+                { left: `${targetX}px`, top: `${targetY}px`, opacity: 0.2 }
+            ], {
+                duration: duration,
+                easing: 'ease-in-out',
+                iterations: Infinity,
+                direction: 'alternate'
+            });
+        }
+    </script>
+</body>
+</html>

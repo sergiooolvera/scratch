@@ -1,0 +1,185 @@
+{
+  "title": "La Luna: Nuestro Eterno Vigilante",
+  "segments": [
+    {
+      "narrative": "Desde el inicio de los tiempos, nos ha observado en silencio.",
+      "visual_prompt": "Extreme wide shot of a silhouetted ancient megalithic structure (e.g., Stonehenge) against a vast, bright full moon in a star-speckled dark blue night sky, cinematic, high contrast, mystical atmosphere, 8k, photorealistic.",
+      "keywords": [
+        "moon",
+        "mystery",
+        "ancient",
+        "night sky"
+      ]
+    },
+    {
+      "narrative": "Una esfera plateada, majestuosa y eternamente enigmática.",
+      "visual_prompt": "Ultra close-up, slow zoom-out from the highly detailed, rugged lunar surface, showing craters and valleys under a harsh, direct overhead sunlight, revealing a stark, desolate beauty, photorealistic, 8k, documentary style.",
+      "keywords": [
+        "lunar surface",
+        "craters",
+        "desolate",
+        "beauty"
+      ]
+    },
+    {
+      "narrative": "Pero no siempre estuvo ahí. No nació con la Tierra.",
+      "visual_prompt": "Dramatic CGI simulation still: A young, proto-Earth, glowing red-orange, being struck by a colossal, molten impactor (Theia) with debris exploding outwards into space, fiery, high energy, scientifically accurate, epic scale, 8k.",
+      "keywords": [
+        "proto-Earth",
+        "Theia",
+        "impact",
+        "formation"
+      ]
+    },
+    {
+      "narrative": "Nació de un cataclismo cósmico, una colisión brutal hace eones.",
+      "visual_prompt": "Artistic rendering: A swirling disc of incandescent debris, dust, and molten rock slowly coalescing in the nascent solar system, forming a proto-moon, ethereal light, cosmic dust, visionary, 4k, digital painting style.",
+      "keywords": [
+        "cosmic",
+        "debris",
+        "coalescence",
+        "origin"
+      ]
+    },
+    {
+      "narrative": "Su constante danza gravitacional con nuestro planeta...",
+      "visual_prompt": "Time-lapse artistic rendering: A calm ocean shoreline, showing the water visibly receding and then advancing over several hours, represented by subtle changes in the water line, with a visible moon high in the sky, serene, educational, illustrative, 4k.",
+      "keywords": [
+        "gravitational",
+        "tides",
+        "ocean",
+        "influence"
+      ]
+    },
+    {
+      "narrative": "Dicta las poderosas mareas oceánicas que moldean costas.",
+      "visual_prompt": "Close-up of powerful ocean waves crashing against jagged rocks during high tide, sea foam flying, dramatic lighting from an overcast sky, dynamic, raw power, photorealistic, 8k.",
+      "keywords": [
+        "tides",
+        "waves",
+        "ocean power",
+        "natural phenomenon"
+      ]
+    },
+    {
+      "narrative": "Un motor silencioso de la vida terrestre.",
+      "visual_prompt": "Underwater wide shot: A vibrant coral reef teeming with diverse marine life (colorful fish, swaying anemones), illuminated by dappled sunlight filtering from the surface, showcasing the health of a tide-influenced ecosystem, serene, abundant, 4k, nature documentary style.",
+      "keywords": [
+        "ecosystem",
+        "marine life",
+        "coral reef",
+        "life on Earth"
+      ]
+    },
+    {
+      "narrative": "Para los antiguos, era una deidad, un faro de creencias.",
+      "visual_prompt": "Ancient Egyptian papyrus scroll fragment showing the goddess Isis or Thoth associated with the moon, depicted in intricate hieroglyphs and stylized figures, aged texture, historical, cultural artifact style, close-up.",
+      "keywords": [
+        "ancient beliefs",
+        "deity",
+        "mythology",
+        "cultural"
+      ]
+    },
+    {
+      "narrative": "Espejo de sueños, miedos, locura y el lado oculto del ser.",
+      "visual_prompt": "Stylized painting in the vein of a romantic era artwork: A lone, cloaked figure gazing up at a large, luminous full moon over a moody, dark, swirling forest, evoking wonder and slight apprehension, dreamlike, atmospheric, high detail.",
+      "keywords": [
+        "dreams",
+        "fears",
+        "symbolism",
+        "folklore"
+      ]
+    },
+    {
+      "narrative": "Inspiración de mitos y leyendas a través de los siglos.",
+      "visual_prompt": "Detailed illustration of a medieval-style werewolf mid-transformation, with glowing eyes and growing fangs, howling at a bright full moon in a dense, dark forest, gothic, dramatic shadows, fantastical, high detail.",
+      "keywords": [
+        "myth",
+        "werewolf",
+        "folklore",
+        "superstition"
+      ]
+    },
+    {
+      "narrative": "El hombre miró hacia ella, con un anhelo inquebrantable.",
+      "visual_prompt": "Archival black and white footage style: A group of people in the 1960s, dressed in period clothing, gathered around a small television set, captivated, watching a fuzzy broadcast of a rocket launch, nostalgic, film grain.",
+      "keywords": [
+        "space exploration",
+        "human ambition",
+        "1960s",
+        "dream"
+      ]
+    },
+    {
+      "narrative": "Y en 1969, el sueño se hizo realidad.",
+      "visual_prompt": "Iconic low-angle shot of the Apollo 11 Saturn V rocket launching, plumes of smoke and fire engulfing the launchpad, immense power, historical, photorealistic recreation, 8k, cinematic.",
+      "keywords": [
+        "Apollo 11",
+        "rocket launch",
+        "space race",
+        "historical event"
+      ]
+    },
+    {
+      "narrative": "Un pequeño paso para un hombre, un salto gigantesco para la humanidad.",
+      "visual_prompt": "Wide shot from a slight low angle: Neil Armstrong's bootprint clearly visible in the fine lunar dust, with the lunar module in the background under a pitch-black sky, iconic, stark, historical, photorealistic, 8k.",
+      "keywords": [
+        "first step",
+        "lunar footprint",
+        "Apollo",
+        "human achievement"
+      ]
+    },
+    {
+      "narrative": "Conquistamos su superficie, pero no su misterio total.",
+      "visual_prompt": "Astronaut in a full spacesuit, viewed from behind, standing triumphantly on the lunar surface, planting an American flag, with Earth visible as a vibrant blue marble in the distance, majestic, panoramic, aspirational, photorealistic, 8k.",
+      "keywords": [
+        "humanity",
+        "space exploration",
+        "moon landing",
+        "Earth from moon"
+      ]
+    },
+    {
+      "narrative": "Hoy, la estudiamos con tecnología, planeando nuevas misiones.",
+      "visual_prompt": "Close-up of a modern, high-tech lunar rover's wheel leaving precise tracks on a simulated moon dust surface inside a brightly lit, clean research lab, showcasing contemporary scientific exploration, futuristic, detailed, photorealistic.",
+      "keywords": [
+        "modern science",
+        "lunar rover",
+        "future exploration",
+        "research"
+      ]
+    },
+    {
+      "narrative": "Su belleza, influencia y enigma perduran por siempre.",
+      "visual_prompt": "Ethereal shot of a shimmering, transparent full moon partially obscured by wispy, slow-moving clouds, casting a soft, diffuse light over a tranquil, dark landscape, evoking a sense of enduring wonder and mystery, artistic, contemplative, 4k.",
+      "keywords": [
+        "mystery",
+        "wonder",
+        "contemplation",
+        "beauty"
+      ]
+    },
+    {
+      "narrative": "Nuestro confidente cósmico, nuestro eterno vigilante.",
+      "visual_prompt": "Slow, cinematic pan across a tranquil night sky filled with countless, sparkling stars, focusing on the moon as the brightest, most constant celestial body, its gentle light illuminating distant silhouetted mountains, majestic, awe-inspiring, 8k.",
+      "keywords": [
+        "eternal",
+        "watcher",
+        "night sky",
+        "celestial body"
+      ]
+    },
+    {
+      "narrative": "La Luna. Siempre ahí.",
+      "visual_prompt": "Final fade to black, with a single, perfectly round, softly glowing full moon appearing in the center of the frame, slowly shrinking to a dot, leaving a lingering impression of its singular beauty. Minimalist, powerful, 8k.",
+      "keywords": [
+        "the moon",
+        "beauty",
+        "end credit",
+        "final shot"
+      ]
+    }
+  ]
+}

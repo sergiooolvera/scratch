@@ -1,0 +1,98 @@
+﻿Usando FFmpeg en: C:\Users\sergi\.gemini\antigravity\scratch\consola\ffmpeg_dist\bin\ffmpeg.exe
+[DEBUG] Inicio: Segunda Guerra Mundial
+B├║scando contenido completo sobre: Segunda Guerra Mundial...
+
+Generando audio para 5000 caracteres...
+[DEBUG] Segmento 0 - Duraci├│n: 17.4
+.[DEBUG] Segmento 1 - Duraci├│n: 15.264
+.[DEBUG] Segmento 2 - Duraci├│n: 15.12
+.[DEBUG] Segmento 3 - Duraci├│n: 15.12
+.[DEBUG] Segmento 4 - Duraci├│n: 16.8
+.[DEBUG] Segmento 5 - Duraci├│n: 16.272
+.[DEBUG] Segmento 6 - Duraci├│n: 15.384
+.[DEBUG] Segmento 7 - Duraci├│n: 14.616
+.[DEBUG] Segmento 8 - Duraci├│n: 15.288
+.[DEBUG] Segmento 9 - Duraci├│n: 16.32
+.[DEBUG] Segmento 10 - Duraci├│n: 15.024
+.[DEBUG] Segmento 11 - Duraci├│n: 16.176
+.[DEBUG] Segmento 12 - Duraci├│n: 15.336
+.[DEBUG] Segmento 13 - Duraci├│n: 19.632
+.[DEBUG] Segmento 14 - Duraci├│n: 15.456
+.[DEBUG] Segmento 15 - Duraci├│n: 15.552
+.[DEBUG] Segmento 16 - Duraci├│n: 19.296
+.[DEBUG] Segmento 17 - Duraci├│n: 14.784
+.[DEBUG] Segmento 18 - Duraci├│n: 17.424
+.[DEBUG] Segmento 19 - Duraci├│n: 21.072
+.[DEBUG] Segmento 20 - Duraci├│n: 17.064
+.[DEBUG] Segmento 21 - Duraci├│n: 17.856
+.[DEBUG] Segmento 22 - Duraci├│n: 17.376
+.[DEBUG] Segmento 23 - Duraci├│n: 20.76
+.[DEBUG] Segmento 24 - Duraci├│n: 21.096
+.[DEBUG] Segmento 25 - Duraci├│n: 11.712
+.
+Audio completo generado: C:\Users\sergi\.gemini\antigravity\scratch\consola\output\full_narration.mp3
+
+Ensamblando documental (ID: 1771279339540)...
+
+Segmento 0/26: [conflicto]
+**[FFMPEG] Seg 0
+
+Segmento 1/26: [agrupadas]
+*![FFMPEG] Seg 1
+
+Segmento 2/26: [grandes]
+!!
+Segmento 3/26: [marcada]
+!!
+Segmento 4/26: [nucleares]
+!!
+Segmento 5/26: [conflicto]
+!!
+Segmento 6/26: [corredor]
+*![FFMPEG] Seg 6
+
+Segmento 7/26: [mantener]
+!!
+Segmento 8/26: [trincheras]
+!!
+Segmento 9/26: [blitzkrieg]
+!!
+Segmento 10/26: [extremis]
+*![FFMPEG] Seg 10
+
+Segmento 11/26: [italia]
+!!
+Segmento 12/26: [periodo]
+!!
+Segmento 13/26: [innovaci├│n]
+!!
+Segmento 14/26: [estrat├®gica]
+!!
+Segmento 15/26: [sitios]
+!!
+Segmento 16/26: [harbor]
+!!
+Segmento 17/26: [pac├¡fico]
+!!
+Segmento 18/26: [alemanes]
+!!
+Segmento 19/26: [operaciones]
+*![FFMPEG] Seg 19
+
+Segmento 20/26: [libraron]
+!!
+Segmento 21/26: [tecnol├│gicamente]
+!!
+Segmento 22/26: [destrucci├│n]
+!!
+Segmento 23/26: [pac├¡fico]
+!!
+Segmento 24/26: [batalla]
+!!
+Segmento 25/26: [agosto]
+!!
+--- Uniendo segmentos finales ---
+[FFMPEG FINAL CMD] ffmpeg -f concat -safe 0 -i C:\Users\sergi\.gemini\antigravity\scratch\consola\output\temp_1771279339540\list.txt -y -c copy C:\Users\sergi\.gemini\antigravity\scratch\consola\output\documental_dinamico.mp4
+
+--- DOCUMENTAL DIN├üMICO COMPLETADO ---
+Ruta: C:\Users\sergi\.gemini\antigravity\scratch\consola\output\documental_dinamico.mp4

@@ -1,0 +1,53 @@
+{
+  "message": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "code": 400,
+      "message": "`fileFormat` isn't supported by this model. Please remove it or refer to the Gemini API documentation for supported usage.",
+      "status": "INVALID_ARGUMENT"
+    }
+  },
+  "details": {
+    "message": "Request failed with status code 400",
+    "name": "AxiosError",
+    "stack": "AxiosError: Request failed with status code 400\n    at settle (C:\\Users\\sergi\\.gemini\\antigravity\\scratch\\consolaVideoIA\\node_modules\\axios\\dist\\node\\axios.cjs:2151:12)\n    at Unzip.handleStreamEnd (C:\\Users\\sergi\\.gemini\\antigravity\\scratch\\consolaVideoIA\\node_modules\\axios\\dist\\node\\axios.cjs:3545:11)\n    at Unzip.emit (node:events:519:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)\n    at Axios.request (C:\\Users\\sergi\\.gemini\\antigravity\\scratch\\consolaVideoIA\\node_modules\\axios\\dist\\node\\axios.cjs:4796:41)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async generateVideo (C:\\Users\\sergi\\.gemini\\antigravity\\scratch\\consolaVideoIA\\test_veo_flow.js:77:26)\n    at async main (C:\\Users\\sergi\\.gemini\\antigravity\\scratch\\consolaVideoIA\\test_veo_flow.js:142:13)",
+    "config": {
+      "transitional": {
+        "silentJSONParsing": true,
+        "forcedJSONParsing": true,
+        "clarifyTimeoutError": false,
+        "legacyInterceptorReqResOrdering": true
+      },
+      "adapter": [
+        "xhr",
+        "http",
+        "fetch"
+      ],
+      "transformRequest": [
+        null
+      ],
+      "transformResponse": [
+        null
+      ],
+      "timeout": 0,
+      "xsrfCookieName": "XSRF-TOKEN",
+      "xsrfHeaderName": "X-XSRF-TOKEN",
+      "maxContentLength": -1,
+      "maxBodyLength": -1,
+      "env": {},
+      "headers": {
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        "User-Agent": "axios/1.13.5",
+        "Content-Length": "1111",
+        "Accept-Encoding": "gzip, compress, deflate, br"
+      },
+      "method": "post",
+      "url": "https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predictLongRunning?key=AIzaSyBXLW80W0Jp1HaX1jvKuBB2fqlG4EPvQj4",
+      "data": "{\"instances\":[{\"prompt\":\"A hyperrealistic cinematic wide shot of a deeply mystical, ancient forest at twilight. Thousands of vibrant, glowing fireflies gracefully drift, dance, and swirl through the dense canopy and along the forest floor, creating intricate, luminous patterns. Their soft, pulsating golden and emerald lights illuminate patches of bioluminescent fungi and glowing flora on gnarled tree trunks and the ground. A gentle, ethereal mist weaves between the trees, subtly catching the light. The primary lighting comes from the fireflies themselves, casting warm, magical glows and soft ambient light, with a hint of moonlight filtering through the dense leaves. The camera executes a slow, smooth cinematic dolly movement, subtly craning upwards to reveal the vastness of the glowing canopy, then tracks a concentrated swarm of fireflies, shot with a wide-angle prime lens with a shallow depth of field, emphasizing the enchanting bokeh of distant lights. Ultra-high resolution, 4K, dreamlike, awe-inspiring.\"}],\"parameters\":{\"sampleCount\":1,\"aspectRatio\":\"16:9\",\"frameRate\":24,\"fileFormat\":\"mp4\"}}",
+      "allowAbsoluteUrls": true
+    },
+    "code": "ERR_BAD_REQUEST",
+    "status": 400
+  }
+}
