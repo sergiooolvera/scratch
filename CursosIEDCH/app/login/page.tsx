@@ -1,0 +1,131 @@
+'use client'
+
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Mail, Lock, ArrowRight, GraduationCap } from 'lucide-react'
+
+export default function LoginPage() {
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+    const router = useRouter()
+    const supabase = createClient()
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setError('')
+        setLoading(true)
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+        if (error) {
+            setError(error.message)
+            setLoading(false)
+        } else {
+            // No need to redirect manually, Navbar's listener will catch SIGNED_IN
+            // but for faster UX we push.
+            router.push('/dashboard')
+        }
+    }
+
+    return (
+        <div className="min-h-[calc(100vh-64px)] flex bg-zinc-50 font-sans">
+            <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+                <div className="mx-auto w-full max-w-sm lg:w-96">
+                    <div>
+                        <a href="https://iedch.vercel.app" className="flex items-center space-x-2 text-blue-700 font-bold text-2xl mb-8">
+                            <GraduationCap className="h-8 w-8" />
+                            <span>IEDCH</span>
+                        </a>
+                        <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                            Te damos la bienvenida
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-600">
+                            ¿No tienes cuenta?{' '}
+                            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+                                Regístrate gratis ahora
+                            </Link>
+                        </p>
+                    </div>
+
+                    <div className="mt-8">
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Correo Electrónico
+                                </label>
+                                <div className="mt-1 relative rounded-md shadow-sm">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Mail className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="email"
+                                        required
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                        placeholder="tu@correo.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Contraseña
+                                </label>
+                                <div className="mt-1 relative rounded-md shadow-sm">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Lock className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        required
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-50 border-l-4 border-red-500 p-4">
+                                    <p className="text-sm text-red-700">{error}</p>
+                                </div>
+                            )}
+
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm">
+                                    <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                                        ¿Olvidaste tu contraseña?
+                                    </Link>
+                                </div>
+                            </div>
+
+                            <div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
+                                >
+                                    <span>{loading ? 'Ingresando...' : 'Iniciar Sesión'}</span>
+                                    <ArrowRight className="h-4 w-4" />
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div className="hidden lg:block relative w-0 flex-1 bg-blue-900">
+                <div className="absolute inset-0 h-full w-full object-cover px-12 py-24 flex flex-col justify-center" >
+                    <h2 className="text-5xl font-bold text-white mb-6 leading-tight">Accede a tus cursos y continúa aprendiendo.</h2>
+                    <p className="text-blue-200 text-xl max-w-lg">El Portal de Cursos IEDCH te ofrece las mejores herramientas interactivas para impulsar tu carrera al siguiente nivel.</p>
+                </div>
+            </div>
+        </div>
+    )
+}

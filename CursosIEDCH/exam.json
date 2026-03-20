@@ -1,0 +1,18 @@
+[
+  {
+    "id": "9ff61c0a-bb7c-4f10-a8d2-500e91c4f9a4",
+    "user_id": "5302e955-6014-4e6b-8065-95254b393229",
+    "curso_id": "f7fc19ae-a709-4dc7-a816-579851fccca8",
+    "calificacion": 40,
+    "aprobado": false,
+    "fecha": "2026-02-26T20:20:54.489159+00:00"
+  },
+  {
+    "id": "73665145-1ee5-47d7-91e1-887f4bf8d61c",
+    "user_id": "25ee31e7-c12e-4f1e-ac42-3fa74e5ba453",
+    "curso_id": "f7fc19ae-a709-4dc7-a816-579851fccca8",
+    "calificacion": 100,
+    "aprobado": true,
+    "fecha": "2026-02-26T20:26:29.137782+00:00"
+  }
+]

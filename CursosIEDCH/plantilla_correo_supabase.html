@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .header { background-color: #1e3a8a; padding: 30px 20px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 600; }
+    .content { padding: 40px 30px; text-align: center; color: #333333; }
+    .content p { font-size: 16px; line-height: 1.6; margin-bottom: 25px; }
+    .btn { display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: bold; font-size: 16px; transition: background-color 0.3s; }
+    .btn:hover { background-color: #1d4ed8; }
+    .footer { background-color: #f8fafc; padding: 20px; text-align: center; font-size: 13px; color: #64748b; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <!-- Puedes reemplazar el texto por una etiqueta <img> con tu logo -->
+      <h1>Bienvenido a IEDCH</h1>
+    </div>
+    <div class="content">
+      <h2>¡Confirma tu registro!</h2>
+      <p>Gracias por unirte a nuestra plataforma de cursos. Para comenzar a aprender, por favor confirma tu dirección de correo electrónico haciendo clic en el botón de abajo.</p>
+      <!-- {{ .ConfirmationURL }} es la variable dinámica que usa Supabase -->
+      <a href="{{ .ConfirmationURL }}" class="btn">Confirmar Mi Cuenta</a>
+    </div>
+    <div class="footer">
+      <p>Si no creaste esta cuenta, puedes ignorar este mensaje de forma segura.</p>
+      <p>&copy; 2026 Instituto IEDCH. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>
