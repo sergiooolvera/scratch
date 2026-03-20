@@ -79,6 +79,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: true, url: null })
         }
 
+        // Determine the domain dynamically to avoid localhost redirect errors in production
+        const protocol = req.headers.get('x-forwarded-proto') || 'http';
+        const host = req.headers.get('host') || 'localhost:3000';
+        const absoluteUrl = `${protocol}://${host}`;
+
         // 5. Crear sesión de Stripe Checkout si hay un costo > 0
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -96,8 +101,8 @@ export async function POST(req: Request) {
                 },
             ],
             mode: 'payment',
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/checkout/verify?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/cursos/${curso.id}?canceled=1`,
+            success_url: `${absoluteUrl}/api/checkout/verify?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${absoluteUrl}/cursos/${curso.id}?canceled=1`,
             client_reference_id: userId,
             metadata: {
                 curso_id: curso.id,
