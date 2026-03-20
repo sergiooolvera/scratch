@@ -79,9 +79,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: true, url: null })
         }
 
-        // Determine the domain dynamically to avoid Vercel's internal host header bugs masking as localhost
-        const origin = req.headers.get('origin');
-        const absoluteUrl = origin || process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://cursos-iedch.vercel.app');
+        // Determinar el dominio usando el 'Referer' que el navegador siempre envía,
+        // o usando directamente el enlace público de Vercel como parche de seguridad absoluto.
+        const referer = req.headers.get('referer');
+        const absoluteUrl = referer 
+            ? new URL(referer).origin 
+            : (process.env.NEXT_PUBLIC_APP_URL || 'https://cursos-iedch.vercel.app');
 
         // 5. Crear sesión de Stripe Checkout si hay un costo > 0
         const session = await stripe.checkout.sessions.create({
