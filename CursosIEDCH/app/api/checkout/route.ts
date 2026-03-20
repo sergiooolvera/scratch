@@ -79,10 +79,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: true, url: null })
         }
 
-        // Determine the domain dynamically to avoid localhost redirect errors in production
-        const protocol = req.headers.get('x-forwarded-proto') || 'http';
-        const host = req.headers.get('host') || 'localhost:3000';
-        const absoluteUrl = `${protocol}://${host}`;
+        // Determine the domain dynamically to avoid Vercel's internal host header bugs masking as localhost
+        const origin = req.headers.get('origin');
+        const absoluteUrl = origin || process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://cursos-iedch.vercel.app');
 
         // 5. Crear sesión de Stripe Checkout si hay un costo > 0
         const session = await stripe.checkout.sessions.create({
