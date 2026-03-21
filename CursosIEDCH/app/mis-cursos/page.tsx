@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import CourseCard from '@/components/CourseCard'
-import { GraduationCap } from 'lucide-react'
+import { GraduationCap, Search } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function MisCursosPage() {
+export default async function MisCursosPage({ searchParams }: { searchParams: { q?: string } }) {
+    const query = searchParams.q?.toLowerCase() || ''
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -24,17 +25,37 @@ export default async function MisCursosPage() {
 
     const comprasIds = compras?.map(c => c.curso_id) || []
 
-    // Filtrar para mostrar solo los comprados
-    const misCursos = cursos?.filter(c => comprasIds.includes(c.id)) || []
+    // Filtrar para mostrar solo los comprados y que coincidan con la búsqueda
+    let misCursos = cursos?.filter(c => comprasIds.includes(c.id)) || []
+    if (query) {
+        misCursos = misCursos.filter(c => 
+            c.titulo?.toLowerCase().includes(query) || 
+            c.instructor?.toLowerCase().includes(query)
+        )
+    }
 
     return (
         <div className="bg-zinc-50 min-h-[calc(100vh-64px)] font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="flex items-center space-x-3 mb-8">
-                    <div className="bg-blue-600 p-2 rounded-lg">
-                        <GraduationCap className="h-6 w-6 text-white" />
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div className="flex items-center space-x-3">
+                        <div className="bg-blue-600 p-2 rounded-lg">
+                            <GraduationCap className="h-6 w-6 text-white" />
+                        </div>
+                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Mis Cursos Comprados</h1>
                     </div>
-                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Mis Cursos Comprados</h1>
+                    <form action="/mis-cursos" method="GET" className="relative w-full md:w-96">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                            type="text"
+                            name="q"
+                            defaultValue={query}
+                            placeholder="Buscar en mis cursos..."
+                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black shadow-sm"
+                        />
+                    </form>
                 </div>
 
                 {misCursos.length > 0 ? (

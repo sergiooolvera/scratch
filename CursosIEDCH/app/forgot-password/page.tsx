@@ -11,6 +11,12 @@ export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false)
     const supabase = createClient()
 
+    const traducirErrorAuth = (msg: string) => {
+        const m = msg.toLowerCase()
+        if (m.includes('user not found')) return 'Usuario no encontrado.'
+        return msg
+    }
+
     const handleReset = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
@@ -22,7 +28,7 @@ export default function ForgotPasswordPage() {
         })
 
         if (error) {
-            setError(error.message)
+            setError(traducirErrorAuth(error.message))
         } else {
             setMessage('Te hemos enviado un enlace para restablecer tu contraseña.')
         }

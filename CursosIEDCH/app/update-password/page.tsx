@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Lock, ArrowRight, GraduationCap } from 'lucide-react'
+import { Lock, ArrowRight, GraduationCap, Eye, EyeOff } from 'lucide-react'
 
 export default function UpdatePasswordPage() {
     const [password, setPassword] = useState('')
@@ -12,8 +12,16 @@ export default function UpdatePasswordPage() {
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const router = useRouter()
     const supabase = createClient()
+
+    const traducirErrorAuth = (msg: string) => {
+        const m = msg.toLowerCase()
+        if (m.includes('password should be at least')) return 'La contraseña debe tener al menos 6 caracteres.'
+        return msg
+    }
 
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -37,7 +45,7 @@ export default function UpdatePasswordPage() {
         })
 
         if (error) {
-            setError(error.message)
+            setError(traducirErrorAuth(error.message))
             setLoading(false)
         } else {
             setMessage('Tu contraseña ha sido actualizada con éxito. Serás redirigido al inicio.')
@@ -76,14 +84,21 @@ export default function UpdatePasswordPage() {
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         required
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
                                         placeholder="Min. 6 caracteres"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         minLength={6}
                                     />
+                                    <button
+                                        type="button"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
                                 </div>
                             </div>
 
@@ -96,14 +111,21 @@ export default function UpdatePasswordPage() {
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showConfirmPassword ? "text" : "password"}
                                         required
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
                                         placeholder="Min. 6 caracteres"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         minLength={6}
                                     />
+                                    <button
+                                        type="button"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
                                 </div>
                             </div>
 

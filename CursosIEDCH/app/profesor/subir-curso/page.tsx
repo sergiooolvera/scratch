@@ -28,7 +28,6 @@ export default function SubirCursoPage() {
         beneficios: '',
         duracion: '',
         precio: 0,
-        instructor: '',
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
@@ -146,8 +145,13 @@ export default function SubirCursoPage() {
 
         // 1. Crear el Curso en la base de datos primero (necesitamos el ID)
         setMensaje('Guardando información del curso...')
+        
+        const { data: profile } = await supabase.from('ie_profiles').select('*').eq('id', user.id).single()
+        const instructorNombre = `${profile?.nombre || ''} ${profile?.apellido_paterno || ''} ${profile?.apellido_materno || ''}`.trim() || user.email;
+
         const cursoDraftObj: any = {
             ...formData,
+            instructor: instructorNombre,
             url_contenido: 'processing', // Temporary placeholder
             precio: Number(formData.precio),
             estado: 'pendiente',
@@ -243,13 +247,8 @@ export default function SubirCursoPage() {
             }
         }
 
-        setMensaje('¡Curso creado exitosamente! Está pendiente de aprobación por un administrador.')
-        setFormData({ titulo: '', descripcion: '', beneficios: '', duracion: '', precio: 0, instructor: '' })
-        setRequiereExamen(false)
-        setArchivoExamen(null)
-        setPreguntasExtraidas([])
-        setModulos([{ titulo: '', tipo: 'video', url_contenido: '', archivoPdf: null }])
-        setLoading(false)
+        alert('Creado correctamente. Esperando a la validación.')
+        router.push('/profesor/cursos')
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -278,10 +277,6 @@ export default function SubirCursoPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Descripción</label>
                                 <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Nombre del Instructor</label>
-                                <input type="text" name="instructor" required value={formData.instructor} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
                             </div>
                         </div>
                     </div>

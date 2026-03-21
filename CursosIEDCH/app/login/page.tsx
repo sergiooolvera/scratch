@@ -4,15 +4,26 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Mail, Lock, ArrowRight, GraduationCap } from 'lucide-react'
+import { Mail, Lock, ArrowRight, GraduationCap, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
     const router = useRouter()
     const supabase = createClient()
+
+    const traducirErrorAuth = (msg: string) => {
+        const m = msg.toLowerCase()
+        if (m.includes('invalid login credentials')) return 'Correo o contraseña incorrectos.'
+        if (m.includes('user not found')) return 'Usuario no encontrado.'
+        if (m.includes('password should be at least')) return 'La contraseña debe tener al menos 6 caracteres.'
+        if (m.includes('user already registered')) return 'Este correo ya está registrado.'
+        if (m.includes('email not confirmed')) return 'Debes confirmar tu correo antes de iniciar sesión.'
+        return 'Ocurrió un error. Por favor intenta de nuevo.'
+    }
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -22,7 +33,7 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
 
         if (error) {
-            setError(error.message)
+            setError(traducirErrorAuth(error.message))
             setLoading(false)
         } else {
             // No need to redirect manually, Navbar's listener will catch SIGNED_IN
@@ -81,13 +92,20 @@ export default function LoginPage() {
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         required
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                     />
+                                    <button
+                                        type="button"
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
                                 </div>
                             </div>
 

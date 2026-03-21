@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Eye, X, FileText, PlayCircle } from 'lucide-react'
+import { Eye, X, FileText, PlayCircle, Trash2 } from 'lucide-react'
 
 type Curso = any;
 
@@ -73,6 +73,70 @@ export default function AdminCursosPage() {
         } else {
             alert('Error al actualizar el estado: ' + error.message)
         }
+    }
+
+    const handleEliminarCurso = async (cursoId: string) => {
+        const confirmar = window.confirm("¿Estás seguro de querer eliminar este curso lógicamente? Desaparecerá del catálogo.");
+        if (!confirmar) return;
+
+        // 1. Verificar si tiene compras
+        const { data: compras, error: errCompras } = await supabase
+            .from('ie_compras')
+            .select('id')
+            .eq('curso_id', cursoId)
+            .limit(1);
+
+        if (errCompras) {
+            alert("Error al verificar compras: " + errCompras.message);
+            return;
+        }
+
+        if (compras && compras.length > 0) {
+            alert("No se puede eliminar este curso porque ya ha sido comprado por alumnos.");
+            return;
+        }
+
+        // 2. Si no hay compras, aplicar borrado lógico
+        const { error } = await supabase.from('ie_cursos').update({ estado: 'eliminado' }).eq('id', cursoId);
+
+        if (error) {
+            alert("Error al eliminar el curso: " + error.message);
+        } else {
+            alert("Curso eliminado lógicamente con éxito.");
+            setCursos(cursos.map(c => c.id === cursoId ? { ...c, estado: 'eliminado' } : c));
+        }
+    }
+
+    const handleAprobarCambios = async (cursoId: string, draft: any) => {
+        const confirmar = window.confirm("¿Aprobar y publicar estos cambios? Reemplazarán la versión actual del curso en el catálogo.");
+        if (!confirmar) return;
+
+        try {
+            const res = await fetch('/api/admin/aprobar-borrador', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cursoId, draft })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+
+            alert("Los cambios han sido aprobados y el curso está actualizado");
+            fetchCursos();
+        } catch (err: any) {
+            alert("Error aprobando cambios: " + err.message);
+        }
+    }
+
+    const handleRechazarCambios = async (cursoId: string) => {
+        const confirmar = window.confirm("¿Rechazar estos cambios? El borrador se borrará pero la versión pública original seguirá intacta.");
+        if (!confirmar) return;
+
+        await supabase.from('ie_cursos').update({ cambios_pendientes: null }).eq('id', cursoId);
+        alert("Borrador rechazado y eliminado.");
+        fetchCursos();
     }
 
     const handleOpenPreview = async (curso: Curso) => {
@@ -208,7 +272,7 @@ export default function AdminCursosPage() {
                             c.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             c.instructor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             c.creador?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
-                        ).map(c => (
+                        ).filter(c => c.estado !== 'eliminado').map(c => (
                             <tr key={c.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.titulo}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.creador?.nombre || c.instructor}</td>
@@ -217,6 +281,11 @@ export default function AdminCursosPage() {
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${c.estado === 'aprobado' ? 'bg-green-100 text-green-800' : c.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
                                         {c.estado}
                                     </span>
+                                    {c.cambios_pendientes && (
+                                        <span className="block mt-1 px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                            Borrador Pendiente
+                                        </span>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                     <button
@@ -226,16 +295,43 @@ export default function AdminCursosPage() {
                                         <Eye className="h-4 w-4 mr-1" /> Ver Módulos
                                     </button>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <select
-                                        value={c.estado}
-                                        onChange={(e) => handleEstadoChange(c.id, e.target.value)}
-                                        className="block w-full pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
-                                    >
-                                        <option value="pendiente">Pendiente</option>
-                                        <option value="aprobado">Aprobado</option>
-                                        <option value="rechazado">Rechazado</option>
-                                    </select>
+                                <td className="px-6 py-4 text-sm text-gray-500 flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        {!c.cambios_pendientes && (
+                                            <select
+                                                value={c.estado}
+                                                onChange={(e) => handleEstadoChange(c.id, e.target.value)}
+                                                className="block w-full pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
+                                            >
+                                                <option value="pendiente">Pendiente</option>
+                                                <option value="aprobado">Aprobado</option>
+                                                <option value="rechazado">Rechazado</option>
+                                            </select>
+                                        )}
+                                        <button
+                                            onClick={() => handleEliminarCurso(c.id)}
+                                            className="text-red-600 hover:text-red-900 p-1.5 bg-red-50 hover:bg-red-100 rounded transition-colors ml-auto"
+                                            title="Eliminar curso lógicamente"
+                                        >
+                                            <Trash2 className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                    {c.cambios_pendientes && (
+                                        <div className="flex gap-2 w-full mt-1">
+                                            <button
+                                                onClick={() => handleAprobarCambios(c.id, c.cambios_pendientes)}
+                                                className="flex-1 bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1.5 rounded text-xs font-bold transition-colors shadow-sm border border-green-200"
+                                            >
+                                                Aprobar Edición
+                                            </button>
+                                            <button
+                                                onClick={() => handleRechazarCambios(c.id)}
+                                                className="flex-1 bg-red-100 text-red-800 hover:bg-red-200 px-2 py-1.5 rounded text-xs font-bold transition-colors shadow-sm border border-red-200"
+                                            >
+                                                Rechazar Edición
+                                            </button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}

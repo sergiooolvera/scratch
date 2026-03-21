@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { User, Mail, Lock, UserPlus, GraduationCap, CheckCircle } from 'lucide-react'
+import { User, Mail, Lock, UserPlus, GraduationCap, CheckCircle, Eye, EyeOff } from 'lucide-react'
 
 export default function RegisterPage() {
     const [email, setEmail] = useState('')
@@ -13,7 +13,16 @@ export default function RegisterPage() {
     const [error, setError] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const supabase = createClient()
+
+    const traducirErrorAuth = (msg: string) => {
+        const m = msg.toLowerCase()
+        if (m.includes('password should be at least')) return 'La contraseña debe tener al menos 6 caracteres.'
+        if (m.includes('user already registered')) return 'Este correo ya está registrado.'
+        return msg
+    }
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -43,7 +52,7 @@ export default function RegisterPage() {
         })
 
         if (signUpError) {
-            setError(signUpError.message)
+            setError(traducirErrorAuth(signUpError.message))
             setLoading(false)
         } else {
             setSuccessMessage('¡Cuenta creada con éxito! Se ha enviado un correo de confirmación a tu bandeja de entrada. Por favor, haz clic en el enlace para activar tu cuenta antes de iniciar sesión.')
@@ -143,14 +152,21 @@ export default function RegisterPage() {
                                                 <Lock className="h-5 w-5 text-gray-400" />
                                             </div>
                                             <input
-                                                type="password"
+                                                type={showPassword ? "text" : "password"}
                                                 required
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
                                                 placeholder="••••••••"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 minLength={6}
                                             />
+                                            <button
+                                                type="button"
+                                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            >
+                                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            </button>
                                         </div>
                                     </div>
 
@@ -163,14 +179,21 @@ export default function RegisterPage() {
                                                 <Lock className="h-5 w-5 text-gray-400" />
                                             </div>
                                             <input
-                                                type="password"
+                                                type={showConfirmPassword ? "text" : "password"}
                                                 required
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
                                                 placeholder="••••••••"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                                 minLength={6}
                                             />
+                                            <button
+                                                type="button"
+                                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            </button>
                                         </div>
                                         <p className="mt-2 text-xs text-gray-500">Asegúrate de que coincida con la contraseña anterior.</p>
                                     </div>

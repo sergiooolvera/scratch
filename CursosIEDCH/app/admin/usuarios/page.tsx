@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Trash2 } from 'lucide-react'
 
 export default function AdminUsuariosPage() {
     const [usuarios, setUsuarios] = useState<any[]>([])
@@ -25,6 +26,30 @@ export default function AdminUsuariosPage() {
             setUsuarios(usuarios.map(u => u.id === userId ? { ...u, rol: newRole } : u))
         } else {
             alert('Error al actualizar el rol: ' + error.message)
+        }
+    }
+
+    const handleEliminarUsuario = async (userId: string) => {
+        const confirmar = window.confirm("¿Seguro que deseas eliminar a este usuario lógicamente? No podrá acceder al sistema.");
+        if (!confirmar) return;
+
+        // 1. Verificar si tiene compras activas
+        const { data: compras } = await supabase.from('ie_compras').select('id').eq('user_id', userId).limit(1);
+        
+        // 2. Verificar si ha creado cursos
+        const { data: cursos } = await supabase.from('ie_cursos').select('id').eq('creado_por', userId).limit(1);
+
+        if ((compras && compras.length > 0) || (cursos && cursos.length > 0)) {
+            alert("No se puede eliminar este usuario porque tiene cursos comprados asociados a su cuenta, o ha creado cursos como profesor.");
+            return;
+        }
+
+        const { error } = await supabase.from('ie_profiles').update({ activo: false }).eq('id', userId);
+        if (error) {
+            alert("Error al eliminar usuario: " + error.message);
+        } else {
+            alert("Usuario eliminado con éxito.");
+            setUsuarios(usuarios.map(u => u.id === userId ? { ...u, activo: false } : u));
         }
     }
 
@@ -52,8 +77,10 @@ export default function AdminUsuariosPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {usuarios.filter(u =>
+                            u.activo !== false && (
                             u.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             u.rol?.toLowerCase().includes(searchTerm.toLowerCase())
+                            )
                         ).map(u => (
                             <tr key={u.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" title={u.id}>{u.id.substring(0, 8)}...</td>
@@ -63,7 +90,7 @@ export default function AdminUsuariosPage() {
                                         {u.rol}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 flex items-center gap-2">
                                     <select
                                         value={u.rol}
                                         onChange={(e) => handleRoleChange(u.id, e.target.value)}
@@ -73,6 +100,13 @@ export default function AdminUsuariosPage() {
                                         <option value="profesor">Profesor</option>
                                         <option value="admin">Admin</option>
                                     </select>
+                                    <button
+                                        onClick={() => handleEliminarUsuario(u.id)}
+                                        className="text-red-600 hover:text-red-900 p-1.5 bg-red-50 hover:bg-red-100 rounded transition-colors"
+                                        title="Eliminar usuario"
+                                    >
+                                        <Trash2 className="h-5 w-5" />
+                                    </button>
                                 </td>
                             </tr>
                         ))}
