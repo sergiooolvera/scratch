@@ -90,7 +90,7 @@ export async function POST(req: Request) {
 
         // 5. Crear sesión de Stripe Checkout si hay un costo > 0
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card', 'oxxo'],
+            payment_method_types: ['card'],
             line_items: [
                 {
                     price_data: {
