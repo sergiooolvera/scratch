@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import { Download, ChevronLeft, Lock, BadgeCheck } from 'lucide-react'
 import Link from 'next/link'
 import CertificadoDocument from '@/components/CertificadoDocument'
@@ -91,21 +90,26 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
     const handleDownloadPDF = async () => {
         if (!constanciaRef.current) return
         try {
-            const canvas = await html2canvas(constanciaRef.current, {
-                scale: 2,
-                useCORS: true,
-                logging: true,
-                backgroundColor: '#fdfbf7', // Color papel viejo ligero
-                windowWidth: 1056,
+            const htmlToImage = await import('html-to-image');
+            const dataUrl = await htmlToImage.toPng(constanciaRef.current, { 
+                quality: 1.0, 
+                pixelRatio: 2,
                 width: 1056,
-                height: 816
-            })
-            const imgData = canvas.toDataURL('image/png')
-            const pdf = new jsPDF('landscape', 'mm', 'a4')
-            const pdfWidth = pdf.internal.pageSize.getWidth()
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-            pdf.save(`Constancia_${curso?.titulo.replace(/\s+/g, '_')}.pdf`)
+                height: 816,
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left'
+                }
+            });
+
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'px',
+                format: [constanciaRef.current.offsetWidth, constanciaRef.current.offsetHeight]
+            });
+
+            pdf.addImage(dataUrl, 'PNG', 0, 0, constanciaRef.current.offsetWidth, constanciaRef.current.offsetHeight);
+            pdf.save(`Constancia_${curso?.titulo.replace(/\s+/g, '_')}.pdf`);
         } catch (error: any) {
             console.error('Error generando PDF', error)
             alert('Hubo un error al generar el PDF: ' + (error?.message || String(error)))
