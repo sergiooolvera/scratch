@@ -32,9 +32,9 @@ export default function BotonDescarga() {
 
             pdf.addImage(dataUrl, 'PNG', 0, 0, element.offsetWidth, element.offsetHeight);
             pdf.save('Constancia_IEDCH.pdf');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error generando PDF:', error);
-            alert('Hubo un error al generar el PDF. Por favor intenta de nuevo.');
+            alert('Hubo un error al generar el PDF: ' + (error?.message || String(error)));
         }
     }
 

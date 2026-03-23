@@ -106,9 +106,9 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
             pdf.save(`Constancia_${curso?.titulo.replace(/\s+/g, '_')}.pdf`)
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error generando PDF', error)
-            alert('Hubo un error al generar el PDF. Revisa la consola.')
+            alert('Hubo un error al generar el PDF: ' + (error?.message || String(error)))
         }
     }
 
