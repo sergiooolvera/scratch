@@ -3,7 +3,7 @@ import CourseCard from '@/components/CourseCard'
 import { GraduationCap, Search } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function MisCursosPage({ searchParams }: { searchParams: { q?: string } }) {
+export default async function MisCursosPage({ searchParams }: { searchParams: { q?: string, compra_exitosa?: string, pago_pendiente?: string, voucher?: string } }) {
     const query = searchParams.q?.toLowerCase() || ''
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -57,6 +57,26 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
                         />
                     </form>
                 </div>
+
+                {searchParams?.pago_pendiente === 'true' && (
+                    <div className="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-md">
+                        <div className="flex">
+                            <div className="ml-3 flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                                <div>
+                                    <h3 className="text-sm font-medium text-yellow-800">✅ Tu voucher se generó exitosamente</h3>
+                                    <p className="text-sm text-yellow-700 mt-1 max-w-3xl">Si elegiste pagar en OXXO, recuerda que el pago puede tardar de 1 a 2 días hábiles en procesarse en nuestro sistema posterior a liquidarse en la caja. Una vez completado, tu curso aparecerá aquí automáticamente.</p>
+                                </div>
+                                {searchParams.voucher && (
+                                    <div className="mt-4 sm:mt-0 flex-shrink-0">
+                                        <a href={searchParams.voucher} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-yellow-900 bg-yellow-200 hover:bg-yellow-300 transition-colors shadow-sm">
+                                            Ver e Imprimir Ticket OXXO
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {misCursos.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

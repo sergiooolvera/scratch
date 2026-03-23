@@ -35,8 +35,8 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
         redirect(`/cursos/${id}/contenido`)
     }
 
-    const { data: profile } = await supabase.from('ie_profiles').select('nombre').eq('id', user.id).single()
-    const alumnoNombre = profile?.nombre || 'Alumno'
+    const { data: profile } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
+    const alumnoNombre = profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Alumno' : 'Alumno'
 
     // Formatting date
     const fechaAprobacion = new Date(resultRow[0].created_at);

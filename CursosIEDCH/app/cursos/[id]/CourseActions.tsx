@@ -178,7 +178,7 @@ export default function CourseActions({ cursoId, isPagado, isAprobado, requiereE
                     <button
                         onClick={() => setShowCupon(true)}
                         disabled={loading}
-                        className="flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                        className="flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-yellow-800 bg-yellow-100 hover:bg-yellow-200 transition"
                     >
                         <Ticket className="w-5 h-5 mr-2" />
                         Tengo un Cupón

@@ -77,6 +77,8 @@ export async function POST(req: Request) {
                 })
             }
             return NextResponse.json({ success: true, url: null })
+        } else if (finalPrice < 10) {
+            return NextResponse.json({ error: 'El monto mínimo procesable por Stripe (Tarjeta/OXXO) es de $10.00 MXN. Por favor, selecciona otro método de pago o comunícate con soporte.' }, { status: 400 })
         }
 
         // Determinar el dominio usando el 'Referer' que el navegador siempre envía,
@@ -88,7 +90,7 @@ export async function POST(req: Request) {
 
         // 5. Crear sesión de Stripe Checkout si hay un costo > 0
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
+            payment_method_types: ['card', 'oxxo'],
             line_items: [
                 {
                     price_data: {

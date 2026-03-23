@@ -10,6 +10,8 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [nombre, setNombre] = useState('')
+    const [apellidoPaterno, setApellidoPaterno] = useState('')
+    const [apellidoMaterno, setApellidoMaterno] = useState('')
     const [error, setError] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
     const [loading, setLoading] = useState(false)
@@ -46,7 +48,9 @@ export default function RegisterPage() {
             password,
             options: {
                 data: {
-                    nombre
+                    nombre,
+                    apellido_paterno: apellidoPaterno,
+                    apellido_materno: apellidoMaterno
                 }
             }
         })
@@ -107,7 +111,7 @@ export default function RegisterPage() {
                                 <form onSubmit={handleRegister} className="space-y-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
-                                            Nombre Completo
+                                            Nombre(s)
                                         </label>
                                         <div className="mt-1 relative rounded-md shadow-sm">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -117,9 +121,46 @@ export default function RegisterPage() {
                                                 type="text"
                                                 required
                                                 className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
-                                                placeholder="Ej. Juan Pérez"
+                                                placeholder="Ej. Juan Carlos"
                                                 value={nombre}
                                                 onChange={(e) => setNombre(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Apellido Paterno
+                                        </label>
+                                        <div className="mt-1 relative rounded-md shadow-sm">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <User className="h-5 w-5 text-gray-400" />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                required
+                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                placeholder="Ej. Pérez"
+                                                value={apellidoPaterno}
+                                                onChange={(e) => setApellidoPaterno(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Apellido Materno (Opcional)
+                                        </label>
+                                        <div className="mt-1 relative rounded-md shadow-sm">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <User className="h-5 w-5 text-gray-400" />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                placeholder="Ej. García"
+                                                value={apellidoMaterno}
+                                                onChange={(e) => setApellidoMaterno(e.target.value)}
                                             />
                                         </div>
                                     </div>

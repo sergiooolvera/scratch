@@ -173,7 +173,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                         
                         return (
                             <CertificadoDocument
-                                alumnoNombre={profile?.nombre || profile?.email || 'Estudiante'}
+                                alumnoNombre={profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || profile.email : 'Estudiante'}
                                 cursoTitulo={curso?.titulo || 'Nombre del Curso'}
                                 cursoDuracion={curso?.duracion}
                                 fechaAprobacion={fechaAp}

@@ -23,7 +23,9 @@ export async function GET(req: Request) {
         }
 
         // Obtener la sesión validada de Stripe
-        const session = await stripe.checkout.sessions.retrieve(sessionId)
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ['payment_intent']
+        })
 
         // Si el pago se hizo correctamente
         if (session.payment_status === 'paid') {
@@ -51,10 +53,24 @@ export async function GET(req: Request) {
                     else console.log('Compra validada y registrada correctamente vía redirección.')
                 }
             }
+            return NextResponse.redirect(new URL('/mis-cursos?compra_exitosa=true', req.url))
+        } else if (session.payment_status === 'unpaid') {
+            let voucherUrl = ''
+            const paymentIntent = session.payment_intent as Stripe.PaymentIntent
+            if (paymentIntent && paymentIntent.next_action?.oxxo_display_details?.hosted_voucher_url) {
+                voucherUrl = paymentIntent.next_action.oxxo_display_details.hosted_voucher_url
+            }
+
+            const redirectUrl = new URL('/mis-cursos', req.url)
+            redirectUrl.searchParams.set('pago_pendiente', 'true')
+            if (voucherUrl) {
+                redirectUrl.searchParams.set('voucher', voucherUrl)
+            }
+            return NextResponse.redirect(redirectUrl)
         }
 
-        // Al final, independientemente redirigimos al dashboard o mis cursos
-        return NextResponse.redirect(new URL('/mis-cursos?compra_exitosa=true', req.url))
+        // Al final, independientemente redirigimos al dashboard
+        return NextResponse.redirect(new URL('/dashboard', req.url))
     } catch (error) {
         console.error('Error verificando sesión de checkout:', error)
         return NextResponse.redirect(new URL('/dashboard', req.url))
