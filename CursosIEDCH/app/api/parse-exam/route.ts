@@ -62,7 +62,7 @@ export async function POST(req: Request) {
             let currentOptions: string[] = [];
             let currentAnswer = '';
 
-            const saveQuestion = () => {
+            const saveQuestion = (answer: string) => {
                 if (currentQuestion && currentOptions.length >= 4) {
                     questions.push({
                         pregunta: currentQuestion,
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
                         opcion_b: currentOptions[1].replace(/^[A-D][.)]\s*/i, '').trim(),
                         opcion_c: currentOptions[2].replace(/^[A-D][.)]\s*/i, '').trim(),
                         opcion_d: currentOptions[3].replace(/^[A-D][.)]\s*/i, '').trim(),
-                        respuesta_correcta: currentAnswer,
+                        respuesta_correcta: answer,
                     });
                 }
             };
@@ -80,24 +80,11 @@ export async function POST(req: Request) {
                 const answerMatch = line.match(/^\((.+)\)$/);
                 if (answerMatch) {
                     const inner = answerMatch[1].trim();
-                    // La letra de la opción es la última "palabra" de una sola letra A-D
                     const letterMatch = inner.match(/\b([A-D])\s*$/i);
-                    if (letterMatch) {
-                        currentAnswer = letterMatch[1].toUpperCase();
-                    } else {
-                        currentAnswer = inner; // fallback
-                    }
-                    // Guardar pregunta acumulada
-                    saveQuestion();
+                    const resp = letterMatch ? letterMatch[1].toUpperCase() : inner;
+                    saveQuestion(resp);
                     currentQuestion = null;
                     currentOptions = [];
-                    currentAnswer = '';
-                    // Re-set the answer that was just extracted
-                    if (letterMatch) currentAnswer = letterMatch[1].toUpperCase();
-                    // Actually save properly
-                    if (questions.length > 0) {
-                        questions[questions.length - 1].respuesta_correcta = letterMatch ? letterMatch[1].toUpperCase() : inner;
-                    }
                     continue;
                 }
 
@@ -111,11 +98,10 @@ export async function POST(req: Request) {
                 // ¿Es inicio de pregunta? Número seguido de . o )
                 const questionMatch = line.match(/^(\d+)[.)]\s*(.+)/);
                 if (questionMatch) {
-                    // Guardar la anterior si existía (sin respuesta encontrada aún)
-                    // No guardar aquí, esperamos la respuesta
+                    // Si ya teníamos una pregunta con 4 opciones, guardarla (aunque no haya respuesta)
+                    saveQuestion('');
                     currentQuestion = line.replace(/^\d+[.)]\s*/, '').trim();
                     currentOptions = [];
-                    currentAnswer = '';
                     continue;
                 }
 
@@ -124,11 +110,25 @@ export async function POST(req: Request) {
                     currentQuestion += ' ' + line;
                 }
             }
+            // Guardar la última pregunta si quedó pendiente
+            saveQuestion('');
         }
 
         if (questions.length === 0) {
             return NextResponse.json({
                 error: 'No se encontraron preguntas válidas en el PDF. Formatos aceptados:\n• "Pregunta 1 ¿Texto?" con opciones y (Respuesta)\n• "1. ¿Texto?" con opciones A) B) C) D) y (Respuesta correcta LETRA)'
+            }, { status: 400 });
+        }
+
+        // Verificar que todas las preguntas tengan respuesta
+        const sinRespuesta = questions
+            .map((q: any, i: number) => ({ num: i + 1, q }))
+            .filter(({ q }: { q: any }) => !q.respuesta_correcta);
+
+        if (sinRespuesta.length > 0) {
+            const nums = sinRespuesta.map(({ num }: { num: number }) => num).join(', ');
+            return NextResponse.json({
+                error: `No se detectó la respuesta correcta para la(s) pregunta(s): ${nums}. Verifica que el PDF tenga el formato (Respuesta LETRA) en cada pregunta.`
             }, { status: 400 });
         }
 
