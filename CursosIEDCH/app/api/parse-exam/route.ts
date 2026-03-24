@@ -14,20 +14,13 @@ export async function POST(req: Request) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // Parse PDF
         const data = await pdf(buffer);
         const text = data.text;
 
         const questions: any[] = [];
 
         // ────────────────────────────────────────────────────
-        // Estrategia 1: Formato "Pregunta N" (original)
-        // Pregunta 1 ¿Texto?
-        // A) opción a
-        // B) opción b
-        // C) opción c
-        // D) opción d
-        // (Respuesta)
+        // Estrategia 1: Formato "Pregunta N"
         // ────────────────────────────────────────────────────
         const regexPregunta = /Pregunta\s+\d+[\s\S]*?(?=Pregunta\s+\d+|$)/gi;
         const bloqPregunta = text.match(regexPregunta);
@@ -55,68 +48,87 @@ export async function POST(req: Request) {
         }
 
         // ────────────────────────────────────────────────────
-        // Estrategia 2: Formato numerado "1." o "1)" 
-        // Detecta preguntas que empiezan con número seguido de . o )
-        // 1. ¿Texto de la pregunta?
-        // a) Opción A    o    A. Opción A
-        // b) Opción B         B. Opción B
-        // c) Opción C         C. Opción C
-        // d) Opción D         D. Opción D
-        // Respuesta: a   o    (a)
+        // Estrategia 2: Formato "1.Texto" o "1. Texto"
+        // Opciones: A) B) C) D)
+        // Respuesta: (Texto LETRA) — la letra está al final dentro del paréntesis
         // ────────────────────────────────────────────────────
         if (questions.length === 0) {
-            // Separar bloques por número de pregunta
-            const regexNum = /(?:^|\n)\s*(\d+)[.)]\s+/g;
-            const splits: number[] = [];
-            let m;
-            while ((m = regexNum.exec(text)) !== null) {
-                splits.push(m.index);
-            }
+            // Dividir el texto en bloques por número de pregunta
+            // Acepta: "1.Texto", "1. Texto", "1)Texto", "1) Texto"
+            const blockRegex = /(\d+)[.)]\s*/g;
+            const lines = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l !== '');
 
-            for (let i = 0; i < splits.length; i++) {
-                const block = text.slice(splits[i], splits[i + 1] ?? text.length);
-                const lines = block.split('\n').map((l: string) => l.trim()).filter((l: string) => l !== '');
-                if (lines.length < 2) continue;
+            let currentQuestion: string | null = null;
+            let currentOptions: string[] = [];
+            let currentAnswer = '';
 
-                // La primera línea puede ser "1. Texto" o "1)" — extraer pregunta
-                const preguntaRaw = lines[0].replace(/^\d+[.)]\s*/, '').trim();
-                if (!preguntaRaw) continue;
+            const saveQuestion = () => {
+                if (currentQuestion && currentOptions.length >= 4) {
+                    questions.push({
+                        pregunta: currentQuestion,
+                        opcion_a: currentOptions[0].replace(/^[A-D][.)]\s*/i, '').trim(),
+                        opcion_b: currentOptions[1].replace(/^[A-D][.)]\s*/i, '').trim(),
+                        opcion_c: currentOptions[2].replace(/^[A-D][.)]\s*/i, '').trim(),
+                        opcion_d: currentOptions[3].replace(/^[A-D][.)]\s*/i, '').trim(),
+                        respuesta_correcta: currentAnswer,
+                    });
+                }
+            };
 
-                // Opciones: líneas que empiezan con a) b) c) d) o A. B. C. D.
-                const optionRegex = /^[abcdABCD][.)]\s*/;
-                const optionLines = lines.slice(1).filter((l: string) => optionRegex.test(l));
+            for (const line of lines) {
+                // ¿Es línea de respuesta? Formato: (Texto LETRA) ej. (Hipótesis B)
+                const answerMatch = line.match(/^\((.+)\)$/);
+                if (answerMatch) {
+                    const inner = answerMatch[1].trim();
+                    // La letra de la opción es la última "palabra" de una sola letra A-D
+                    const letterMatch = inner.match(/\b([A-D])\s*$/i);
+                    if (letterMatch) {
+                        currentAnswer = letterMatch[1].toUpperCase();
+                    } else {
+                        currentAnswer = inner; // fallback
+                    }
+                    // Guardar pregunta acumulada
+                    saveQuestion();
+                    currentQuestion = null;
+                    currentOptions = [];
+                    currentAnswer = '';
+                    // Re-set the answer that was just extracted
+                    if (letterMatch) currentAnswer = letterMatch[1].toUpperCase();
+                    // Actually save properly
+                    if (questions.length > 0) {
+                        questions[questions.length - 1].respuesta_correcta = letterMatch ? letterMatch[1].toUpperCase() : inner;
+                    }
+                    continue;
+                }
 
-                if (optionLines.length < 4) continue;
+                // ¿Es opción? A) B) C) D)
+                const optionMatch = line.match(/^([A-D])[.)]\s+(.+)/i);
+                if (optionMatch && currentQuestion) {
+                    currentOptions.push(line);
+                    continue;
+                }
 
-                const opcion_a = optionLines[0].replace(optionRegex, '').trim();
-                const opcion_b = optionLines[1].replace(optionRegex, '').trim();
-                const opcion_c = optionLines[2].replace(optionRegex, '').trim();
-                const opcion_d = optionLines[3].replace(optionRegex, '').trim();
+                // ¿Es inicio de pregunta? Número seguido de . o )
+                const questionMatch = line.match(/^(\d+)[.)]\s*(.+)/);
+                if (questionMatch) {
+                    // Guardar la anterior si existía (sin respuesta encontrada aún)
+                    // No guardar aquí, esperamos la respuesta
+                    currentQuestion = line.replace(/^\d+[.)]\s*/, '').trim();
+                    currentOptions = [];
+                    currentAnswer = '';
+                    continue;
+                }
 
-                // Respuesta correcta: buscar "(X)" o "Respuesta: X" o "Clave: X"
-                let respuesta_correcta = '';
-                const respMatch = block.match(/[Rr]espuesta[:\s]+([abcdABCD])/);
-                const claveMatch = block.match(/[Cc]lave[:\s]+([abcdABCD])/);
-                const parensMatch = block.match(/\(([abcdABCD])\)/i);
-
-                if (respMatch) respuesta_correcta = respMatch[1].toLowerCase();
-                else if (claveMatch) respuesta_correcta = claveMatch[1].toLowerCase();
-                else if (parensMatch) respuesta_correcta = parensMatch[1].toLowerCase();
-
-                questions.push({
-                    pregunta: `${i + 1}. ${preguntaRaw}`,
-                    opcion_a,
-                    opcion_b,
-                    opcion_c,
-                    opcion_d,
-                    respuesta_correcta,
-                });
+                // ¿Es continuación de la pregunta actual?
+                if (currentQuestion && currentOptions.length === 0 && !line.match(/^[A-D][.)]/i)) {
+                    currentQuestion += ' ' + line;
+                }
             }
         }
 
         if (questions.length === 0) {
             return NextResponse.json({
-                error: 'No se encontraron preguntas válidas en el PDF. Formatos aceptados:\n• "Pregunta 1 ¿Texto?" con opciones y (Respuesta)\n• "1. ¿Texto?" con opciones a) b) c) d) y Respuesta: X'
+                error: 'No se encontraron preguntas válidas en el PDF. Formatos aceptados:\n• "Pregunta 1 ¿Texto?" con opciones y (Respuesta)\n• "1. ¿Texto?" con opciones A) B) C) D) y (Respuesta correcta LETRA)'
             }, { status: 400 });
         }
 
