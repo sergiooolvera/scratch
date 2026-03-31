@@ -45,12 +45,21 @@ export async function POST(req: Request) {
                 return;
             }
 
-            // Registrar compra
-            const { error } = await supabaseAdmin.from("ie_compras").insert({
+            // Determinar si pago_completo es true o false desde los metadatos de Stripe.
+            // Si la regla de negocio es que OXXO no acepta cupones de 100%, todos los pagos de OXXO / Tarjeta de mas de $0 deberían ser pago completo (a menos que haya sido un cupón parcial, en cuyo caso la metadata tiene la última palabra).
+            const pagoCompleto = session.metadata?.pago_completo === 'false' ? false : true;
+            const montoPagado = session.metadata?.monto_pagado ? Number(session.metadata.monto_pagado) : session.amount_total ? session.amount_total / 100 : 0;
+
+            const insertData: any = {
                 user_id: userId,
                 curso_id: cursoId,
                 pagado: true,
-            });
+                pago_completo: pagoCompleto,
+                monto_pagado: montoPagado
+            };
+
+            // Registrar compra
+            const { error } = await supabaseAdmin.from("ie_compras").insert(insertData);
 
             if (error) {
                 console.error("Error guardando compra en DB:", error);

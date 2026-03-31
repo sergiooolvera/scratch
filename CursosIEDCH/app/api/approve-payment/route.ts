@@ -5,7 +5,7 @@ import { Resend } from 'resend'
 export async function POST(req: Request) {
     try {
         const supabaseAdmin = await createClient()
-        const { pagoId, userId, cursoId, userEmail, userName, cursoTitulo, accion, notas } = await req.json()
+        const { pagoId, userId, cursoId, userEmail, userName, cursoTitulo, accion, notas, esPagoCompleto } = await req.json()
 
         // Inicializar Resend solo si tenemos la llave (para evitar crasheos si falta .env)
         const resendApiKey = process.env.RESEND_API_KEY || ''
@@ -31,9 +31,17 @@ export async function POST(req: Request) {
             if (!existe) {
                 const { error: insertError } = await supabaseAdmin
                     .from('ie_compras')
-                    .insert({ user_id: userId, curso_id: cursoId, pagado: true })
+                    .insert({ user_id: userId, curso_id: cursoId, pagado: true, pago_completo: esPagoCompleto !== undefined ? esPagoCompleto : true })
 
                 if (insertError) throw insertError
+            } else if (esPagoCompleto) {
+                // Si el alumno ya tenía ie_compras (ej. por cupón del 100% o pago parcial anterior) y ahora liquidó para la constancia
+                const { error: updateCompraError } = await supabaseAdmin
+                    .from('ie_compras')
+                    .update({ pago_completo: true })
+                    .eq('id', existe.id)
+                
+                if (updateCompraError) throw updateCompraError
             }
 
             // 3. Enviar correo de aprobación

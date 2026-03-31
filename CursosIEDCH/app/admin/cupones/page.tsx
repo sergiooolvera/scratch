@@ -6,7 +6,8 @@ import {
     Ticket,
     Plus,
     CheckCircle,
-    XCircle
+    XCircle,
+    Trash2
 } from 'lucide-react'
 
 export default function AdminCuponesPage() {
@@ -102,6 +103,16 @@ export default function AdminCuponesPage() {
 
         if (!error) {
             fetchCupones()
+        }
+    }
+
+    const handleDeleteCupon = async (id: string, codigo: string) => {
+        if (!confirm(`¿Eliminar el cupón "${codigo}"? Esta acción no se puede deshacer.`)) return
+        const { error } = await supabase.from('ie_cupones').delete().eq('id', id)
+        if (!error) {
+            fetchCupones()
+        } else {
+            alert('Error al eliminar el cupón.')
         }
     }
 
@@ -234,12 +245,21 @@ export default function AdminCuponesPage() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <button
-                                                    onClick={() => handleToggleActivo(c.id, c.activo)}
-                                                    className={`text-sm ${c.activo ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
-                                                >
-                                                    {c.activo ? 'Desactivar' : 'Activar'}
-                                                </button>
+                                                <div className="flex items-center justify-end gap-3">
+                                                    <button
+                                                        onClick={() => handleToggleActivo(c.id, c.activo)}
+                                                        className={`text-sm ${c.activo ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
+                                                    >
+                                                        {c.activo ? 'Desactivar' : 'Activar'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteCupon(c.id, c.codigo)}
+                                                        className="text-red-500 hover:text-red-700 transition"
+                                                        title="Eliminar cupón"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

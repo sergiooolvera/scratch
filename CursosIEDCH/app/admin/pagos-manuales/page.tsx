@@ -43,7 +43,10 @@ export default function AdminPagosManualesPage() {
     }
 
     const handleAprobar = async (pago: any) => {
-        if (!confirm('¿Estás seguro de que quieres aprobar este pago y liberar el curso al alumno?')) return
+        const confirmar = confirm('¿Estás seguro de que quieres aprobar este comprobante de pago?')
+        if (!confirmar) return
+
+        const esPagoCompleto = confirm('¿Este comprobante cubre el 100% del pago pendiente? (Si seleccionas Aceptar, se habilitará la descarga de la constancia. Si seleccionas Cancelar, se dará acceso al curso pero estará bloqueada la constancia hasta liquidar)')
 
         setActionMessage('Aprobando y enviando correo...')
 
@@ -58,7 +61,8 @@ export default function AdminPagosManualesPage() {
                     userEmail: pago.perfil?.email,
                     userName: pago.perfil?.nombre,
                     cursoTitulo: pago.curso?.titulo,
-                    accion: 'aprobar'
+                    accion: 'aprobar',
+                    esPagoCompleto: esPagoCompleto
                 })
             })
             const data = await res.json()

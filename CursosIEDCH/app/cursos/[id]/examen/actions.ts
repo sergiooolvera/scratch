@@ -22,9 +22,10 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
         return { error: 'Examen no encontrado en la base de datos' }
     }
 
+    // Fetch full question data including all options to convert user's text answer → letter
     const { data: preguntas, error: pregError } = await supabase
         .from('ie_preguntas')
-        .select('id, respuesta_correcta')
+        .select('id, respuesta_correcta, opcion_a, opcion_b, opcion_c, opcion_d')
         .eq('examen_id', examen.id)
 
     if (pregError || !preguntas || preguntas.length === 0) {
@@ -32,13 +33,27 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
     }
 
     // 2. Grade the exam
+    // respuesta_correcta is stored as a letter: 'A', 'B', 'C', or 'D'
+    // The client sends the full option text, so we map it back to the letter first.
     let correctas = 0;
     const total = preguntas.length;
 
     preguntas.forEach(p => {
-        const userAns = respuestasUsuario[p.id];
-        // Normalize strings for comparison (in case parsing had tiny discrepancies)
-        if (userAns && userAns.trim().toLowerCase() === p.respuesta_correcta.trim().toLowerCase()) {
+        const userAnsText = respuestasUsuario[p.id];
+        if (!userAnsText) return;
+
+        // Map the full option text the user selected to its letter
+        const normalize = (s: string) => s?.trim().toLowerCase() ?? '';
+        const userText = normalize(userAnsText);
+
+        let userLetter = '';
+        if (userText === normalize(p.opcion_a)) userLetter = 'A';
+        else if (userText === normalize(p.opcion_b)) userLetter = 'B';
+        else if (userText === normalize(p.opcion_c)) userLetter = 'C';
+        else if (userText === normalize(p.opcion_d)) userLetter = 'D';
+
+        // Compare letter to stored correct answer (also normalize for safety)
+        if (userLetter && userLetter === normalize(p.respuesta_correcta).toUpperCase()) {
             correctas++;
         }
     })

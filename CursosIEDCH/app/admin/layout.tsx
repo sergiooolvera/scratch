@@ -10,6 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <Link href="/admin/cursos" className="hover:text-gray-300">Revisión de Cursos</Link>
                         <Link href="/admin/cupones" className="hover:text-gray-300">Cupones y Bonos</Link>
                         <Link href="/admin/pagos-manuales" className="hover:text-gray-300">Pagos Manuales</Link>
+                        <Link href="/admin/transacciones" className="hover:text-gray-300">Transacciones Stripe</Link>
                         <Link href="/admin/actividad" className="hover:text-gray-300">Estadísticas</Link>
                     </div>
                 </div>

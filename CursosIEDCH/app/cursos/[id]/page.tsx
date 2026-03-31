@@ -29,6 +29,9 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         .single()
 
     const isPagado = compra?.pagado || false
+    const pagoCompleto = compra?.pago_completo || false
+    // Si el curso requiere pago completo Y el alumno no pagó completo → bloquear constancia
+    const constanciaRequierePago = (curso.requiere_pago_completo || false) && !pagoCompleto
 
     let isAprobado = false;
 
@@ -84,9 +87,12 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                     <CourseActions
                         cursoId={curso.id}
                         isPagado={isPagado}
+                        pagoCompleto={pagoCompleto}
+                        constanciaRequierePago={constanciaRequierePago}
                         isAprobado={isAprobado}
                         requiereExamen={curso.requiere_examen}
                         userId={user.id}
+                        precioCurso={curso.precio}
                     />
                 </div>
             </div>

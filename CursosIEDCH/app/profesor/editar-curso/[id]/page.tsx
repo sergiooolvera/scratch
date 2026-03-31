@@ -29,6 +29,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [estadoActual, setEstadoActual] = useState('')
     const [tieneBorrador, setTieneBorrador] = useState(false)
     const [modulos, setModulos] = useState<Modulo[]>([])
+    const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
     
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -62,6 +63,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             })
             setVigenciaAnos(curso.vigencia_anos || 3)
             setEstadoActual(curso.estado)
+            setRequierePagoCompleto(curso.requiere_pago_completo || false)
 
             if (curso.cambios_pendientes && curso.estado === 'aprobado') {
                 const borrador = curso.cambios_pendientes;
@@ -195,6 +197,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 precio: Number(formData.precio),
                 instructor: formData.instructor,
                 vigencia_anos: vigenciaAnos,
+                requiere_pago_completo: requierePagoCompleto,
                 modulos: modulosFinales
             }
             const { error: errorDraft } = await supabase.from('ie_cursos').update({ cambios_pendientes: borrador }).eq('id', id)
@@ -215,6 +218,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     precio: Number(formData.precio),
                     instructor: formData.instructor,
                     vigencia_anos: vigenciaAnos,
+                    requiere_pago_completo: requierePagoCompleto,
                     estado: 'pendiente', 
                 })
                 .eq('id', id)
@@ -308,6 +312,26 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                     <option value={5}>5 años</option>
                                     <option value={10}>10 años</option>
                                 </select>
+                            </div>
+                            <div className="col-span-2">
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                    <label className="flex items-start cursor-pointer gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={requierePagoCompleto}
+                                            onChange={(e) => setRequierePagoCompleto(e.target.checked)}
+                                            className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                        />
+                                        <div>
+                                            <span className="block text-sm font-semibold text-orange-900">
+                                                Requiere el 100% del curso pagado para obtener constancia
+                                            </span>
+                                            <span className="block text-xs text-orange-700 mt-0.5">
+                                                Si se activa, los alumnos que usen cupones de descuento deberán cubrir el valor total del curso antes de descargar su constancia.
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>

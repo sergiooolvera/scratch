@@ -37,6 +37,7 @@ export default function SubirCursoPage() {
 
     // Exam state
     const [requiereExamen, setRequiereExamen] = useState(false)
+    const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
     const [minAprobacion, setMinAprobacion] = useState(80)
     const [archivoExamen, setArchivoExamen] = useState<File | null>(null)
     const [preguntasExtraidas, setPreguntasExtraidas] = useState<PreguntaParsed[]>([])
@@ -157,6 +158,7 @@ export default function SubirCursoPage() {
             estado: 'pendiente',
             creado_por: user.id,
             requiere_examen: requiereExamen,
+            requiere_pago_completo: requierePagoCompleto,
             url_examen: null, // Deprecated effectively, but kept for legacy views
             vigencia_anos: vigenciaAnos
         }
@@ -421,6 +423,26 @@ export default function SubirCursoPage() {
                                     <option value={10}>10 años</option>
                                 </select>
                                 <p className="text-xs text-gray-500 mt-1">Tiempo de validez de la constancia a partir de su emisión.</p>
+                            </div>
+                        </div>
+                        <div className="mb-4">
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                <label className="flex items-start cursor-pointer gap-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={requierePagoCompleto}
+                                        onChange={(e) => setRequierePagoCompleto(e.target.checked)}
+                                        className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                    />
+                                    <div>
+                                        <span className="block text-sm font-semibold text-orange-900">
+                                            Requiere el 100% del curso pagado para obtener constancia
+                                        </span>
+                                        <span className="block text-xs text-orange-700 mt-0.5">
+                                            Si se activa, los alumnos que usen cupones de descuento deberán cubrir el valor total del curso antes de descargar su constancia.
+                                        </span>
+                                    </div>
+                                </label>
                             </div>
                         </div>
                         <div>

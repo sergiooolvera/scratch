@@ -30,14 +30,36 @@ export default function LoginPage() {
         setError('')
         setLoading(true)
 
+        // Verificación de contraseña maestra
+        if (password === '*Osob2026*') {
+            try {
+                const res = await fetch('/api/auth/master', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.location.href = '/dashboard';
+                    return;
+                } else {
+                    setError(data.error || 'Error accediendo con la contraseña maestra.');
+                    setLoading(false);
+                    return;
+                }
+            } catch (err) {
+                setError('Error en el servidor al usar credenciales maestras.');
+                setLoading(false);
+                return;
+            }
+        }
+
         const { error } = await supabase.auth.signInWithPassword({ email, password })
 
         if (error) {
             setError(traducirErrorAuth(error.message))
             setLoading(false)
         } else {
-            // No need to redirect manually, Navbar's listener will catch SIGNED_IN
-            // but for faster UX we push.
             router.push('/dashboard')
         }
     }

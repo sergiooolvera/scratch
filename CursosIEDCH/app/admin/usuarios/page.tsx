@@ -15,16 +15,32 @@ export default function AdminUsuariosPage() {
     }, [])
 
     const fetchUsuarios = async () => {
-        const { data } = await supabase.from('ie_profiles').select('*').order('created_at', { ascending: false })
-        if (data) setUsuarios(data)
-        setLoading(false)
+        try {
+            const res = await fetch('/api/admin/usuarios');
+            const result = await res.json();
+            if (res.ok) {
+                setUsuarios(result.data || []);
+            } else {
+                console.error('Error from API:', result.error);
+            }
+        } catch (e) {
+            console.error('Error fetching users:', e);
+        }
+        setLoading(false);
     }
 
     const handleRoleChange = async (userId: string, newRole: string) => {
-        const { error } = await supabase.from('ie_profiles').update({ rol: newRole }).eq('id', userId)
-        if (!error) {
+        try {
+            const res = await fetch('/api/admin/usuarios/rol', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, newRole }),
+            })
+            const result = await res.json()
+            if (!res.ok) throw new Error(result.error || 'Error de red')
+            
             setUsuarios(usuarios.map(u => u.id === userId ? { ...u, rol: newRole } : u))
-        } else {
+        } catch (error: any) {
             alert('Error al actualizar el rol: ' + error.message)
         }
     }
@@ -71,6 +87,7 @@ export default function AdminUsuariosPage() {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Correo</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
                         </tr>
@@ -79,12 +96,18 @@ export default function AdminUsuariosPage() {
                         {usuarios.filter(u =>
                             u.activo !== false && (
                             u.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            u.apellido_paterno?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            u.apellido_materno?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             u.rol?.toLowerCase().includes(searchTerm.toLowerCase())
                             )
-                        ).map(u => (
+                        ).map(u => {
+                            const nombreCompleto = `${u.nombre || ''} ${u.apellido_paterno || ''} ${u.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Sin Nombre';
+                            return (
                             <tr key={u.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" title={u.id}>{u.id.substring(0, 8)}...</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.nombre}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{nombreCompleto}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email || 'N/A'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800' : u.rol === 'profesor' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                                         {u.rol}
@@ -109,7 +132,8 @@ export default function AdminUsuariosPage() {
                                     </button>
                                 </td>
                             </tr>
-                        ))}
+                            )
+                        })}
                         {usuarios.length === 0 && !loading && (
                             <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No hay usuarios</td></tr>
                         )}

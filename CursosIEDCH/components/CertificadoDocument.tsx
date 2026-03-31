@@ -1,3 +1,5 @@
+'use client'
+
 import { QRCodeCanvas } from 'qrcode.react'
 
 interface CertificadoDocumentProps {
@@ -32,11 +34,11 @@ export default function CertificadoDocument({
             className={`bg-white relative mx-auto overflow-hidden flex flex-col shrink-0 min-w-[1056px] ${className}`}
             style={{ width: '1056px', height: '816px', boxSizing: 'border-box', fontFamily: 'Georgia, serif' }}
         >
-            {/* Left Vertical Black Line */}
-            <div className="absolute left-[100px] top-0 bottom-0 w-[4px] bg-black z-10"></div>
+            {/* Left Vertical Black Line - de arriba a abajo del certificado */}
+            <div className="absolute left-[100px] top-0 bottom-0 w-[4px] bg-black z-[5]"></div>
 
-            {/* Top Navy Blue Header Bar (Image Banner) */}
-            <div className="absolute top-[40px] left-0 right-0 z-0 bg-[#002060]">
+            {/* Top Navy Blue Header Bar - baja 20px del borde, se extiende -2px a cada lado para no dejar gap blanco */}
+            <div className="absolute z-[15] bg-[#002060]" style={{ top: '35px', left: '-2px', right: '-2px' }}>
                 <img src="/encabezado-modelo3.png" alt="Encabezado IEDCH" className="w-full h-auto block" />
             </div>
 
@@ -47,7 +49,7 @@ export default function CertificadoDocument({
             </div>
 
             {/* Main Content Area */}
-            <div className="relative z-30 flex flex-col items-center justify-start h-full pt-[160px] pb-12 px-24">
+            <div className="relative z-30 flex flex-col items-center justify-start h-full pt-[160px] pb-4 px-24">
                 
                 {/* Emitter Text */}
                 <p className="text-center text-[17px] leading-snug text-black max-w-4xl tracking-wide">
@@ -87,16 +89,25 @@ export default function CertificadoDocument({
 
             {/* Signature Area (Absolute to guarantee space) */}
             <div className="absolute bottom-[50px] left-0 right-0 flex flex-col items-center w-full z-30">
-                <div className="w-[360px] border-t-2 border-black pt-2 text-center">
-                    <p className="font-serif font-bold text-black uppercase text-sm tracking-widest leading-loose">
-                        Ramón Mendez Lopez
-                    </p>
-                    <p className="text-[14px] font-sans text-black font-semibold">
-                        Director académico del IEDCH
-                    </p>
-                    <p className="text-[12px] italic mt-0.5 font-serif text-black leading-tight">
-                        Instituto Educativo de Especialidades para la Conducta y el<br/>Desarrollo Humano S.C
-                    </p>
+                <div className="w-[480px] text-center">
+                    {/* Firma del director */}
+                    <img
+                        src="/firma.png"
+                        alt="Firma Director"
+                        className="mx-auto mb-1"
+                        style={{ height: '80px', objectFit: 'contain' }}
+                    />
+                    <div className="border-t-2 border-black pt-2">
+                        <p className="font-serif font-bold text-black uppercase text-[11px] tracking-widest leading-loose whitespace-nowrap">
+                            D. EN E. Irvin Rodolfo Tapia Bernabé
+                        </p>
+                        <p className="text-[14px] font-sans text-black font-semibold">
+                            Director Académico del IEDCH
+                        </p>
+                        <p className="text-[12px] italic mt-0.5 font-serif text-black leading-tight">
+                            Instituto Educativo de Especialidades para la Conducta y el<br/>Desarrollo Humano S.C
+                        </p>
+                    </div>
                 </div>
             </div>
 

@@ -33,6 +33,9 @@ export async function GET(req: Request) {
             const cursoId = session.metadata?.curso_id
 
             if (userId && cursoId) {
+                // Leer si el pago fue completo desde el metadata de Stripe
+                const pagoCompleto = session.metadata?.pago_completo !== 'false';
+
                 // Primero verificar si ya se guardó la compra (por webhook u otro lado)
                 const { data: existe } = await supabaseAdmin
                     .from('ie_compras')
@@ -47,10 +50,19 @@ export async function GET(req: Request) {
                         user_id: userId,
                         curso_id: cursoId,
                         pagado: true,
+                        pago_completo: pagoCompleto,
                     })
 
                     if (error) console.error('Error registrando compra en DB:', error)
                     else console.log('Compra validada y registrada correctamente vía redirección.')
+                } else {
+                    // Si ya existe, actualizar pago_completo si es true (puede venir de webhook sin ese campo)
+                    if (pagoCompleto) {
+                        await supabaseAdmin.from('ie_compras')
+                            .update({ pago_completo: true })
+                            .eq('user_id', userId)
+                            .eq('curso_id', cursoId)
+                    }
                 }
             }
             return NextResponse.redirect(new URL('/mis-cursos?compra_exitosa=true', req.url))

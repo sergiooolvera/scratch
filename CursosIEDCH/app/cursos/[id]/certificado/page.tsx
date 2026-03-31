@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Lock, CreditCard } from 'lucide-react'
 import BotonDescarga from './BotonDescarga'
 import CertificadoDocument from '@/components/CertificadoDocument'
 
@@ -15,7 +15,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos, requiere_pago_completo').eq('id', id).single()
     if (!curso) notFound()
 
     const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single()
@@ -34,6 +34,16 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     if (!resultRow || resultRow.length === 0) {
         redirect(`/cursos/${id}/contenido`)
     }
+
+    // Verificar si el pago es completo para desbloquear la constancia
+    const { data: compra } = await supabase
+        .from('ie_compras')
+        .select('pago_completo')
+        .eq('curso_id', id)
+        .eq('user_id', user.id)
+        .single()
+    const cursoPagoRequerido = curso.requiere_pago_completo || false
+    const pagoCompleto = cursoPagoRequerido ? (compra?.pago_completo || false) : true
 
     const { data: profile } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
     const alumnoNombre = profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Alumno' : 'Alumno'
@@ -65,24 +75,50 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                     Volver al curso
                 </Link>
 
-                <div className="flex justify-start sm:justify-center w-full overflow-x-auto pb-6">
-                    {/* Contenedor principal de la constancia imitando una hoja horizontal (landscape) premium */}
-                    <CertificadoDocument
-                        id="certificado-content"
-                        alumnoNombre={alumnoNombre}
-                        cursoTitulo={curso.titulo}
-                        cursoDuracion={curso.duracion}
-                        fechaAprobacion={fechaFormateada}
-                        folio={folioVenta}
-                        vigenciaStr={vigStr}
-                        qrUrl={`https://cursos-iedch.vercel.app/validar?folio=${resultRow[0].id}`}
-                        className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
-                    />
-                </div>
+                {!pagoCompleto ? (
+                    // Pago incompleto: mostrar pantalla de pago pendiente
+                    <div className="flex items-center justify-center py-12">
+                        <div className="bg-white p-8 rounded-3xl shadow-lg max-w-md w-full border border-amber-200">
+                            <div className="mx-auto h-16 w-16 bg-amber-50 rounded-full flex items-center justify-center mb-4">
+                                <Lock className="h-8 w-8 text-amber-500" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-3 text-center">Constancia pendiente de pago</h2>
+                            <p className="text-gray-600 text-sm mb-3 leading-relaxed text-center">
+                                ¡Felicidades por aprobar! Pero utilizaste un cupón de descuento. Para descargar tu constancia deberás cubrir el valor total del curso.
+                            </p>
+                            <p className="text-xs text-gray-500 text-center mb-5 italic">
+                                &ldquo;Si pagas tu curso al 100% completo, la constancia está incluida. Si utilizas un cupón de descuento, el beneficio es solo para el curso; para recibir la constancia deberás cubrir el valor total de la misma al finalizar.&rdquo;
+                            </p>
+                            <div className="grid grid-cols-1 gap-3">
+                                <Link href={`/cursos/${id}`} className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm">
+                                    <CreditCard className="w-4 h-4 mr-2" />
+                                    Ir a Pagar el Curso Completo
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex justify-start sm:justify-center w-full overflow-x-auto pb-6">
+                            {/* Contenedor principal de la constancia imitando una hoja horizontal (landscape) premium */}
+                            <CertificadoDocument
+                                id="certificado-content"
+                                alumnoNombre={alumnoNombre}
+                                cursoTitulo={curso.titulo}
+                                cursoDuracion={curso.duracion}
+                                fechaAprobacion={fechaFormateada}
+                                folio={folioVenta}
+                                vigenciaStr={vigStr}
+                                qrUrl={`https://cursos-iedch.vercel.app/validar?folio=${resultRow[0].id}`}
+                                className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
+                            />
+                        </div>
 
-                <div className="flex justify-center mt-12 mb-20 font-sans z-10 relative">
-                    <BotonDescarga />
-                </div>
+                        <div className="flex justify-center mt-12 mb-20 font-sans z-10 relative">
+                            <BotonDescarga />
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     )

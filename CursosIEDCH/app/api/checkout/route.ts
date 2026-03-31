@@ -32,6 +32,7 @@ export async function POST(req: Request) {
         // 3. Procesar Cupón si existe
         let porcentajeDescuento = 0;
         let finalPrice = curso.precio;
+        let usoCupon = false; // Track si se aplicó algún cupón de descuento
 
         if (cuponCodigo) {
             const { data: cupon } = await supabase
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
                 }
 
                 porcentajeDescuento = cupon.descuento_porcentaje;
+                usoCupon = true; // Se aplicó un cupón → pago NO es completo
                 // Calculamos el precio con descuento
                 if (porcentajeDescuento === 100) {
                     finalPrice = 0;
@@ -70,10 +72,13 @@ export async function POST(req: Request) {
                 .single()
 
             if (!existe) {
+                // Cupón 100%: acceso al curso pero pago_completo=false
                 await supabase.from('ie_compras').insert({
                     user_id: userId,
                     curso_id: cursoId,
                     pagado: true,
+                    pago_completo: false, // Cupón del 100% no cubre la constancia
+                    monto_pagado: 0,
                 })
             }
             return NextResponse.json({ success: true, url: null })
@@ -91,6 +96,7 @@ export async function POST(req: Request) {
         // 5. Crear sesión de Stripe Checkout si hay un costo > 0
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card', 'oxxo'],
+            customer_email: user.email,
             line_items: [
                 {
                     price_data: {
@@ -111,6 +117,8 @@ export async function POST(req: Request) {
             metadata: {
                 curso_id: curso.id,
                 user_id: userId,
+                pago_completo: usoCupon ? 'false' : 'true', // Stripe metadata es string
+                monto_pagado: finalPrice.toString(),
             }
         })
 
