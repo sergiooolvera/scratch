@@ -6,8 +6,8 @@ import Navbar from '@/components/Navbar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Portal Cursos IEDCH',
-  description: 'MVP Plataforma Educativa',
+  title: 'Portal Cursos SECNA',
+  description: 'Sistema Nacional de Evaluación y Registro Laboral',
 }
 
 export default function RootLayout({

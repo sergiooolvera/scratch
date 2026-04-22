@@ -1,15 +1,15 @@
-# Manual de Usuario - IEDCH (Rol Alumno)
+# Manual de Usuario - SECNA (Rol Alumno)
 
-Bienvenido a la plataforma educativa de IEDCH. Este manual te guiará paso a paso sobre cómo registrarte, comprar y tomar tus cursos para obtener tu constancia o certificado.
+Bienvenido a la plataforma educativa de SECNA. Este manual te guiará paso a paso sobre cómo registrarte, comprar y tomar tus cursos para obtener tu constancia o certificado.
 
 ---
 
 ## 1. Registro e Inicio de Sesión
 Para acceder a la plataforma necesitas crear una cuenta gratuita.
-1. Ve a la página principal del Portal IEDCH.
+1. Ve a la página principal del Portal SECNA.
 2. Haz clic en el botón de **"Registrarse"** ubicado en la parte superior derecha de la pantalla.
 3. Llena el formulario con tu Nombre Completo, Correo Electrónico y una Contraseña segura. *(Nota: El nombre que ingreses aquí es el que aparecerá en tus constancias y certificados, asegúrate de escribirlo correctamente sin faltas de ortografía).*
-4. Te llegará un correo de confirmación de parte de IEDCH. Ábrelo y haz clic en el botón para **Verificar tu cuenta**.
+4. Te llegará un correo de confirmación de parte de SECNA. Ábrelo y haz clic en el botón para **Verificar tu cuenta**.
 5. Ahora puedes **Iniciar Sesión** con tu correo y contraseña.
 
 ---

@@ -1,11 +1,11 @@
-# Manual de Usuario - IEDCH (Rol Profesor)
+# Manual de Usuario - SECNA (Rol Profesor)
 
-¡Bienvenido al equipo docente de IEDCH! Este manual está diseñado para guiarte en el proceso de creación de cursos, configuración de exámenes y monitoreo de tus ganancias.
+¡Bienvenido al equipo docente de SECNA! Este manual está diseñado para guiarte en el proceso de creación de cursos, configuración de exámenes y monitoreo de tus ganancias.
 
 ---
 
 ## 1. Acceso a tu Perfil de Profesor
-Para tener permisos de profesor, el administrador de IEDCH debe asignarte este rol a tu cuenta registrada.
+Para tener permisos de profesor, el administrador de SECNA debe asignarte este rol a tu cuenta registrada.
 1. Regístrate normalmente en la página principal, e infórmale a la administración cuál es el correo electrónico con el que te registraste.
 2. Una vez que te otorguen los permisos de educador, al Iniciar Sesión verás opciones nuevas exclusivas en tu menú de navegación principal (la barra de arriba).
 3. Verás accesos como **"Mis Ventas"** y **"Subir Curso"**.
@@ -13,7 +13,7 @@ Para tener permisos de profesor, el administrador de IEDCH debe asignarte este r
 ---
 
 ## 2. Creación y Subida de un Nuevo Curso
-Crear tu clase en IEDCH es muy sencillo.
+Crear tu clase en SECNA es muy sencillo.
 1. En el menú principal, haz clic en **"Subir Curso"**.
 2. Rellena el formulario con los detalles atractivos de tu curso:
    - **Título:** Corto pero descriptivo.
@@ -24,20 +24,20 @@ Crear tu clase en IEDCH es muy sencillo.
 
 ### 2.1 Carga del Contenido (Clases)
 Dependiendo del material de tu curso, elige una opción:
-- **Enlace de Vídeo Externo (YouTube/Vimeo):** Si tus clases están grabadas en video, puedes pegar el enlace aquí. El reproductor de IEDCH lo incrustará automáticamente.
+- **Enlace de Vídeo Externo (YouTube/Vimeo):** Si tus clases están grabadas en video, puedes pegar el enlace aquí. El reproductor de SECNA lo incrustará automáticamente.
 - **Subida de Archivo PDF:** Si tu materia es teórica y entregas un manual o libro electrónico, elige esta opción y sube tu archivo `.pdf`. El alumno lo podrá visualizar de forma interactiva en la pantalla.
 
 ### 2.2 Configuración del Examen
-IEDCH utiliza un sistema moderno de validación para garantizar que los alumnos aprendan. Debes adjuntar tu propio examen:
+SECNA utiliza un sistema moderno de validación para garantizar que los alumnos aprendan. Debes adjuntar tu propio examen:
 1. Crea tu examen en Microsoft Word garantizando que sea claro y con sus posibles opciones múltiples.
-2. Exporta el archivo Word a un formato **CUESTIONARIO IEDCH (.json)** o pégalo como lo requiera el sistema automatizado de exámenes de la plataforma.
+2. Exporta el archivo Word a un formato **CUESTIONARIO SECNA (.json)** o pégalo como lo requiera el sistema automatizado de exámenes de la plataforma.
 3. Sube el archivo `.json` de evaluación donde se te solicite en el formulario. Con este archivo la plataforma calificará las respuestas del alumno por ti, sin que tú tengas que intervenir manualmente.
 4. **Guardar e Iniciar Revisión:** Haz clic en Enviar.
 
 ---
 
 ## 3. Estado de Aprobación de tus Cursos
-Por políticas de calidad de IEDCH, todo curso subido se marca inicialmente como **`Pendiente`** y no se muestra inmediatamente a los estudiantes.
+Por políticas de calidad de SECNA, todo curso subido se marca inicialmente como **`Pendiente`** y no se muestra inmediatamente a los estudiantes.
 
 1. El administrador de la plataforma recibirá una notificación para revisar pedagógicamente tu curso y tu material de examen.
 2. Si todo cumple con el estándar educativo, el curso será **aprobado** y aparecerá como público en el catálogo automáticamente.
@@ -54,4 +54,4 @@ Supervisa en cualquier momento cómo rinden económicamente tus clases impartida
 *(Nota: El sistema solo contabiliza ventas exitosas reales procesadas, las becas del 100% financiadas por cupones no generarán ingresos netos en esta vista dependiendo de la política acordada).*
 
 ---
-¡Mucho éxito en la impartición de tus materias en IEDCH!
+¡Mucho éxito en la impartición de tus materias en SECNA!

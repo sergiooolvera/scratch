@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Search, BadgeCheck, FileText, Calendar, User, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Search, BadgeCheck, FileText, Calendar, User, ShieldCheck, AlertCircle, Clock } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 
 function ValidacionContent() {
@@ -24,7 +24,7 @@ function ValidacionContent() {
 
     const buscarFolio = async (folioABuscar: string) => {
         if (!folioABuscar.trim()) return
-        
+
         setLoading(true)
         setError('')
         setResultado(null)
@@ -52,11 +52,11 @@ function ValidacionContent() {
                     .select('curso_id')
                     .eq('id', examenData.examen_id)
                     .single()
-                
+
                 if (ceError) {
                     cursoInfoData = { titulo: `Error Examen: ${ceError.message}`, vigencia_anos: 3 }
                 } else if (cursoExamenData?.curso_id) {
-                    const { data: cursoData, error: cError } = await supabase.from('ie_cursos').select('titulo, vigencia_anos').eq('id', cursoExamenData.curso_id).single()
+                    const { data: cursoData, error: cError } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion').eq('id', cursoExamenData.curso_id).single()
                     if (cError) {
                         cursoInfoData = { titulo: `Error Curso: ${cError.message}`, vigencia_anos: 3 }
                     } else {
@@ -81,7 +81,7 @@ function ValidacionContent() {
                         created_at: constanciaData.fecha,
                         calificacion: constanciaData.calificacion,
                     }
-                    const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos').eq('id', constanciaData.curso_id).single()
+                    const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion').eq('id', constanciaData.curso_id).single()
                     cursoInfoData = cursoData
 
                     const { data: uData } = await supabase.from('ie_profiles').select('nombre').eq('id', constanciaData.user_id).single()
@@ -102,6 +102,7 @@ function ValidacionContent() {
                 alumno: userData?.nombre || 'Alumno IEDCH',
                 curso: cursoInfoData?.titulo || 'Curso no encontrado',
                 vigencia_anos: cursoInfoData?.vigencia_anos || 3,
+                duracion: cursoInfoData?.duracion || '40 horas',
             })
 
         } catch (err: any) {
@@ -119,14 +120,14 @@ function ValidacionContent() {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col pt-12">
             <div className="max-w-3xl w-full mx-auto px-4 sm:px-6">
-                
+
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center justify-center bg-blue-100 p-4 rounded-full mb-4">
                         <ShieldCheck className="w-10 h-10 text-blue-700" />
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-3">Validación de Constancias</h1>
                     <p className="text-gray-600 max-w-xl mx-auto">
-                        Verifica la autenticidad de una constancia o certificado emitido por el IEDCH ingresando el número de Folio oficial.
+                        Verifica la autenticidad de una constancia o certificado emitido por el SECNA ingresando el número de Folio oficial.
                     </p>
                 </div>
 
@@ -173,7 +174,7 @@ function ValidacionContent() {
                                     </div>
                                     <h3 className="text-green-800 font-bold text-lg">Constancia Válida y Oficial</h3>
                                 </div>
-                                
+
                                 <div className="p-6">
                                     <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                                         <div className="sm:col-span-2">
@@ -184,7 +185,7 @@ function ValidacionContent() {
                                                 {resultado.alumno}
                                             </dd>
                                         </div>
-                                        
+
                                         <div className="sm:col-span-2">
                                             <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
                                                 <FileText className="w-4 h-4 mr-1.5" /> Nombre del Curso
@@ -200,6 +201,15 @@ function ValidacionContent() {
                                             </dt>
                                             <dd className="text-base text-gray-900 font-medium">
                                                 {new Date(resultado.fecha).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </dd>
+                                        </div>
+
+                                        <div className="sm:col-span-1">
+                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                                <Clock className="w-4 h-4 mr-1.5" /> Valor Curricular
+                                            </dt>
+                                            <dd className="text-base text-gray-900 font-medium border-b pb-4 sm:border-b-0 sm:pb-0">
+                                                {resultado.duracion}
                                             </dd>
                                         </div>
 
@@ -231,9 +241,9 @@ function ValidacionContent() {
                         )}
                     </div>
                 </div>
-                
+
                 <p className="text-center text-gray-500 text-sm mb-12">
-                    El Instituto Educativo de Especialidades para el Desarrollo y la Conducta Humana S.C. avala la autenticidad de los datos mostrados en esta plataforma oficial.
+                    El Servicio Nacional de Evaluación y Registro Laboral avala la autenticidad de los datos mostrados en esta plataforma oficial.
                 </p>
             </div>
         </div>

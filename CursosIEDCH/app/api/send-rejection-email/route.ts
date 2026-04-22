@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         }
 
         const { data, error } = await resend.emails.send({
-            from: 'IEDCH Portal <onboarding@resend.dev>', // Por defecto Resend usa este; puedes cambiarlo si tienes un dominio verificado
+            from: 'SECNA Portal <onboarding@resend.dev>', // Por defecto Resend usa este; puedes cambiarlo si tienes un dominio verificado
             to: [to],
             subject: `Revisión de tu curso "${courseTitle}"`,
             html: `

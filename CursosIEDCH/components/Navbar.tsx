@@ -61,9 +61,15 @@ export default function Navbar() {
                 <div className="flex justify-between h-16">
                     <div className="flex">
                         <div className="flex-shrink-0 flex items-center">
-                            <a href="https://iedch.vercel.app" className="flex items-center space-x-2 text-xl font-bold text-blue-700">
-                                <GraduationCap className="h-8 w-8" />
-                                <span className="hidden sm:inline">IEDCH Portal</span>
+                             <a href="/" className="flex items-center space-x-2">
+                                <div className="flex flex-col space-y-[-4px] transform scale-75 origin-left">
+                                    <div className="w-8 h-1.5 bg-[#D4AF37] skew-x-[-20deg]"></div>
+                                    <div className="w-8 h-1.5 bg-[#002060] skew-x-[-20deg] ml-1"></div>
+                                    <div className="w-8 h-1.5 bg-[#D4AF37] skew-x-[-20deg] ml-2"></div>
+                                </div>
+                                <span className="text-2xl font-black text-[#002060] tracking-tighter">SECNA</span>
+                                <span className="hidden sm:inline-block h-6 w-[1px] bg-gray-200 mx-2"></span>
+                                <span className="hidden lg:inline text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Portal</span>
                             </a>
                         </div>
                         {user && (
