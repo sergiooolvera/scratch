@@ -75,7 +75,7 @@ export default function AdminUsuariosPage() {
             <div className="mb-4">
                 <input
                     type="text"
-                    placeholder="Buscar usuario por nombre o rol..."
+                    placeholder="Buscar usuario por nombre, correo o rol..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full md:w-1/3 px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm"
@@ -93,15 +93,18 @@ export default function AdminUsuariosPage() {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {usuarios.filter(u =>
-                            u.activo !== false && (
-                            u.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            u.apellido_paterno?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            u.apellido_materno?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            u.rol?.toLowerCase().includes(searchTerm.toLowerCase())
-                            )
-                        ).map(u => {
+                        {usuarios.filter(u => {
+                            if (u.activo === false) return false;
+                            const searchVal = searchTerm.trim().toLowerCase();
+                            if (!searchVal) return true;
+                            return (
+                                (u.nombre && u.nombre.toLowerCase().includes(searchVal)) ||
+                                (u.apellido_paterno && u.apellido_paterno.toLowerCase().includes(searchVal)) ||
+                                (u.apellido_materno && u.apellido_materno.toLowerCase().includes(searchVal)) ||
+                                (u.email && u.email.toLowerCase().includes(searchVal)) ||
+                                (u.rol && u.rol.toLowerCase().includes(searchVal))
+                            );
+                        }).map(u => {
                             const nombreCompleto = `${u.nombre || ''} ${u.apellido_paterno || ''} ${u.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Sin Nombre';
                             return (
                             <tr key={u.id}>

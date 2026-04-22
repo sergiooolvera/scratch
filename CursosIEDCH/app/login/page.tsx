@@ -69,9 +69,9 @@ export default function LoginPage() {
             <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
                 <div className="mx-auto w-full max-w-sm lg:w-96">
                     <div>
-                        <a href="https://iedch.vercel.app" className="flex items-center space-x-2 text-blue-700 font-bold text-2xl mb-8">
+                        <a href="https://iedch-2.vercel.app" className="flex items-center space-x-2 text-blue-700 font-bold text-2xl mb-8">
                             <GraduationCap className="h-8 w-8" />
-                            <span>IEDCH</span>
+                            <span>SECNA</span>
                         </a>
                         <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                             Te damos la bienvenida
@@ -163,7 +163,7 @@ export default function LoginPage() {
             <div className="hidden lg:block relative w-0 flex-1 bg-blue-900">
                 <div className="absolute inset-0 h-full w-full object-cover px-12 py-24 flex flex-col justify-center" >
                     <h2 className="text-5xl font-bold text-white mb-6 leading-tight">Accede a tus cursos y continúa aprendiendo.</h2>
-                    <p className="text-blue-200 text-xl max-w-lg">El Portal de Cursos IEDCH te ofrece las mejores herramientas interactivas para impulsar tu carrera al siguiente nivel.</p>
+                    <p className="text-blue-200 text-xl max-w-lg">El Portal de Cursos SECNA te ofrece las mejores herramientas interactivas para impulsar tu carrera al siguiente nivel.</p>
                 </div>
             </div>
         </div>

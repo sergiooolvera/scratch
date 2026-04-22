@@ -168,6 +168,10 @@ export default function AdminPagosManualesPage() {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {pagos
                                     .filter(p => {
+                                        // Excluir pagos reportados por OXXO
+                                        const isOxxo = p.metodo_pago === 'oxxo' || p.notas === 'Pago reportado por OXXO';
+                                        if (isOxxo) return false;
+
                                         const coincideEstado = filtroEstado === 'todos' || p.estado === filtroEstado;
                                         const textoBusqueda = filtroTexto.toLowerCase();
                                         const coincideTexto = 

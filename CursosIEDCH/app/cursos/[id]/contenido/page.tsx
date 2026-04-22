@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, PlayCircle, FileText, CheckCircle } from 'lucide-react'
+import { ArrowLeft, PlayCircle, FileText, CheckCircle, Video, Info } from 'lucide-react'
 import ContentViewer from './ContentViewer'
 import PlaylistClient from './PlaylistClient' // We'll extract client logic to a child component
 import CourseQA from './CourseQA'
@@ -130,6 +130,40 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                         </div>
                     )}
                 </div>
+
+                {/* Live Meeting and Special Notes */}
+                {(curso.reunion_url || curso.nota_profesor) && (
+                    <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {curso.reunion_url && (
+                            <div className="bg-blue-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold flex items-center gap-2 mb-1">
+                                        <Video className="h-5 w-5" /> Clase en Vivo / Reunión
+                                    </h3>
+                                    <p className="text-blue-100 text-sm">Hay una sesión programada para este curso.</p>
+                                </div>
+                                <a 
+                                    href={curso.reunion_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="bg-white text-blue-600 px-6 py-2.5 rounded-full font-bold hover:bg-zinc-100 transition shadow-md"
+                                >
+                                    Unirse ahora
+                                </a>
+                            </div>
+                        )}
+                        {curso.nota_profesor && (
+                            <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm">
+                                <h3 className="text-orange-600 text-lg font-bold flex items-center gap-2 mb-2">
+                                    <Info className="h-5 w-5" /> Aviso del Profesor
+                                </h3>
+                                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                                    {curso.nota_profesor}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="mt-8">
                     {/* Main Content Viewer (Handled by client component for state) */}

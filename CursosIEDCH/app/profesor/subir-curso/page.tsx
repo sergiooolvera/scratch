@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus } from 'lucide-react'
 
 type Modulo = {
     titulo: string;
-    tipo: 'video' | 'pdf';
+    tipo: 'video' | 'pdf' | 'html';
     url_contenido: string; // Used if type is video
-    archivoPdf: File | null; // Used if type is pdf
+    archivoPdf: File | null; // Used if type is pdf/html
 }
 
 type PreguntaParsed = {
@@ -28,6 +28,8 @@ export default function SubirCursoPage() {
         beneficios: '',
         duracion: '',
         precio: 0,
+        reunion_url: '',
+        nota_profesor: '',
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
@@ -63,7 +65,7 @@ export default function SubirCursoPage() {
         // Reset the other field when switching types
         if (field === 'tipo') {
             if (value === 'video') nuevosModulos[index].archivoPdf = null
-            if (value === 'pdf') nuevosModulos[index].url_contenido = ''
+            if (value === 'pdf' || value === 'html') nuevosModulos[index].url_contenido = ''
         }
 
         setModulos(nuevosModulos)
@@ -72,7 +74,6 @@ export default function SubirCursoPage() {
     const handleUploadExamenHelper = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
         setArchivoExamen(file);
-        setPreguntasExtraidas([]);
         setMensaje('');
 
         if (file) {
@@ -89,8 +90,9 @@ export default function SubirCursoPage() {
                 const data = await response.json();
 
                 if (response.ok && data.questions) {
-                    setPreguntasExtraidas(data.questions);
-                    setMensaje(`¡Examen analizado! Se detectaron ${data.questions.length} preguntas.`);
+                    // Append questions to existing ones instead of overwriting
+                    setPreguntasExtraidas(prev => [...prev, ...data.questions]);
+                    setMensaje(`¡Examen analizado! Se detectaron ${data.questions.length} preguntas adicionales.`);
                 } else {
                     setMensaje('Error leyendo el PDF del examen: ' + (data.error || 'Formato no válido.'));
                 }
@@ -100,6 +102,27 @@ export default function SubirCursoPage() {
                 setIsParsing(false);
             }
         }
+    }
+
+    const handleAgregarPreguntaManual = () => {
+        setPreguntasExtraidas([...preguntasExtraidas, {
+            pregunta: '',
+            opcion_a: '',
+            opcion_b: '',
+            opcion_c: '',
+            opcion_d: '',
+            respuesta_correcta: 'A'
+        }]);
+    }
+
+    const handleEliminarPreguntaManual = (index: number) => {
+        setPreguntasExtraidas(preguntasExtraidas.filter((_, i) => i !== index));
+    }
+
+    const handlePreguntaChange = (index: number, field: keyof PreguntaParsed, value: string) => {
+        const nuevas = [...preguntasExtraidas];
+        nuevas[index] = { ...nuevas[index], [field]: value };
+        setPreguntasExtraidas(nuevas);
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -121,7 +144,7 @@ export default function SubirCursoPage() {
         }
 
         for (const m of modulos) {
-            if (!m.titulo || (m.tipo === 'video' && !m.url_contenido) || (m.tipo === 'pdf' && !m.archivoPdf)) {
+            if (!m.titulo || (m.tipo === 'video' && !m.url_contenido) || (m.tipo !== 'video' && !m.archivoPdf)) {
                 setMensaje('Por favor, completa los títulos y el contenido (URL o Archivo PDF) de todos los módulos.');
                 setLoading(false)
                 return
@@ -130,15 +153,18 @@ export default function SubirCursoPage() {
 
         // Validate exam status
         if (requiereExamen) {
-            if (!archivoExamen) {
-                setMensaje('Has marcado que el curso requiere examen, por favor adjunta el PDF.');
+            if (preguntasExtraidas.length === 0) {
+                setMensaje('Has marcado que el curso requiere examen, por favor añade al menos una pregunta o sube un PDF.');
                 setLoading(false)
                 return
             }
-            if (preguntasExtraidas.length === 0) {
-                setMensaje('El archivo PDF del examen no pudo ser procesado o no contiene preguntas válidas.');
-                setLoading(false)
-                return
+            // Check if all questions are filled
+            for (const p of preguntasExtraidas) {
+                if (!p.pregunta || !p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
+                    setMensaje('Por favor, completa todas las preguntas y al menos 2 opciones de respuesta (A y B).');
+                    setLoading(false)
+                    return
+                }
             }
         }
 
@@ -160,7 +186,9 @@ export default function SubirCursoPage() {
             requiere_examen: requiereExamen,
             requiere_pago_completo: requierePagoCompleto,
             url_examen: null, // Deprecated effectively, but kept for legacy views
-            vigencia_anos: vigenciaAnos
+            vigencia_anos: vigenciaAnos,
+            reunion_url: formData.reunion_url?.trim() || null,
+            nota_profesor: formData.nota_profesor?.trim() || null
         }
 
         const { data: cursoGuardado, error: errorCurso } = await supabase.from('ie_cursos').insert(cursoDraftObj).select().single()
@@ -176,15 +204,21 @@ export default function SubirCursoPage() {
         const finalModulosObj = [];
         for (let i = 0; i < modulos.length; i++) {
             let finalUrl = modulos[i].url_contenido;
-            if (modulos[i].tipo === 'pdf' && modulos[i].archivoPdf) {
+            if (modulos[i].tipo !== 'video' && modulos[i].archivoPdf) {
                 const file = modulos[i].archivoPdf as File;
                 const fileExt = file.name.split('.').pop()
                 const fileName = `modulo_${cursoGuardado.id}_${i}_${Date.now()}.${fileExt}`
 
-                const { error: uploadError } = await supabase.storage.from('cursos_contenido').upload(fileName, file)
+                const ext = (fileExt || '').toLowerCase()
+                const contentType = ext === 'pdf'
+                    ? 'application/pdf'
+                    : (ext === 'html' || ext === 'htm' || file.type === 'text/html')
+                        ? 'text/html; charset=utf-8'
+                        : (file.type || 'application/octet-stream')
+
+                const { error: uploadError } = await supabase.storage.from('cursos_contenido').upload(fileName, file, { contentType })
                 if (uploadError) {
                     setMensaje(`Error subiendo el PDF del módulo ${i + 1}: ${uploadError.message}`);
-                    // Clean up course on error would be ideal, skipping for brevity
                     setLoading(false);
                     return;
                 }
@@ -317,6 +351,10 @@ export default function SubirCursoPage() {
                                                     <input type="radio" checked={modulo.tipo === 'pdf'} onChange={() => handleModuloChange(index, 'tipo', 'pdf')} className="mr-2 border-gray-300 text-blue-600 focus:ring-blue-500" />
                                                     Documento (PDF)
                                                 </label>
+                                                <label className="flex items-center text-sm text-gray-800">
+                                                    <input type="radio" checked={modulo.tipo === 'html'} onChange={() => handleModuloChange(index, 'tipo', 'html')} className="mr-2 border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                                    Web (HTML)
+                                                </label>
                                             </div>
                                         </div>
 
@@ -328,8 +366,16 @@ export default function SubirCursoPage() {
                                                 </div>
                                             ) : (
                                                 <div className="w-full">
-                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Seleccionar PDF</label>
-                                                    <input type="file" required accept=".pdf,application/pdf" onChange={(e) => handleModuloChange(index, 'archivoPdf', e.target.files?.[0] || null)} className="w-full text-sm text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 border-gray-300 rounded bg-white" />
+                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                                        {modulo.tipo === 'html' ? 'Seleccionar HTML' : 'Seleccionar PDF'}
+                                                    </label>
+                                                    <input
+                                                        type="file"
+                                                        required
+                                                        accept={modulo.tipo === 'html' ? '.html,.htm,text/html' : '.pdf,application/pdf'}
+                                                        onChange={(e) => handleModuloChange(index, 'archivoPdf', e.target.files?.[0] || null)}
+                                                        className="w-full text-sm text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 border-gray-300 rounded bg-white"
+                                                    />
                                                 </div>
                                             )}
                                         </div>
@@ -346,44 +392,121 @@ export default function SubirCursoPage() {
                     {/* Examen Interactivo */}
                     <div>
                         <h2 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2">3. Evaluación (Examen Final)</h2>
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-5">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-5 shadow-sm">
                             <label className="flex items-center cursor-pointer mb-2">
                                 <input type="checkbox" checked={requiereExamen} onChange={(e) => setRequiereExamen(e.target.checked)} className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                                <span className="ml-2 block text-sm font-semibold text-green-900">
+                                <span className="ml-2 block text-sm font-bold text-green-900">
                                     Este curso requiere que el alumno apruebe un examen final
                                 </span>
                             </label>
 
                             {requiereExamen && (
-                                <div className="mt-4 pl-6 border-l-2 border-green-300 space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
-                                        <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(Number(e.target.value))} className="w-32 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" />
-                                        <p className="text-xs text-gray-500 mt-1">El sistema calificará en automático. Si el alumno saca al menos esta puntuación, aprueba y obtiene constancia.</p>
+                                <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-green-300 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
+                                            <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(Number(e.target.value))} className="w-full sm:w-32 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" />
+                                            <p className="text-[10px] text-gray-500 mt-1 italic">Si el alumno saca al menos esta puntuación, aprueba.</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Cargar PDF (Automático)</label>
+                                            <input type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-300 rounded bg-white p-1" />
+                                            {isParsing && <p className="text-[10px] font-bold text-green-600 mt-1 animate-pulse italic">Analizando PDF...</p>}
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Cargar PDF del Examen para crear cuestionario interactivo</label>
-                                        <p className="text-xs text-gray-500 mb-2">El sistema procesará tu PDF (Asegúrate que tenga formato "Pregunta X", Respuestas A, B, C, D y "(Respuesta Correcta)" en otra línea).</p>
-                                        <input type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-300 rounded bg-white p-1.5" />
+                                    {/* Manual Questions Section */}
+                                    <div className="pt-4 border-t border-green-200">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-sm font-bold text-green-800 flex items-center gap-2">
+                                                <FileText className="h-4 w-4" /> Preguntas del Examen ({preguntasExtraidas.length})
+                                            </h3>
+                                            <button 
+                                                type="button" 
+                                                onClick={handleAgregarPreguntaManual}
+                                                className="bg-green-600 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-green-700 transition-colors flex items-center gap-1 shadow-sm"
+                                            >
+                                                <Plus className="h-3 w-3" /> Agregar Pregunta
+                                            </button>
+                                        </div>
 
-                                        {isParsing && <p className="text-xs font-bold text-gray-600 mt-2 animate-pulse">Analizando PDF (Extrayendo inteligencia artificial)...</p>}
-
-                                        {preguntasExtraidas.length > 0 && (
-                                            <div className="mt-4 bg-white p-4 border border-green-200 rounded text-sm max-h-48 overflow-y-auto">
-                                                <h4 className="font-bold text-green-800 mb-2 flex items-center">
-                                                    <CheckCircle className="h-4 w-4 mr-1" /> ¡Extracción Exitosa! ({preguntasExtraidas.length} preguntas)
-                                                </h4>
-                                                <ul className="list-disc pl-5 space-y-2 text-gray-700 text-xs">
-                                                    {preguntasExtraidas.map((p, i) => (
-                                                        <li key={i}>
-                                                            <strong>{p.pregunta}</strong> <br />
-                                                            <span className="text-gray-500">Correcta: {p.respuesta_correcta}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                        {preguntasExtraidas.length === 0 && !isParsing && (
+                                            <div className="text-center py-8 bg-white/50 border-2 border-dashed border-green-200 rounded-lg">
+                                                <p className="text-xs text-gray-500 italic">No hay preguntas aún. Sube un PDF o agrégalas manualmente.</p>
                                             </div>
                                         )}
+
+                                        <div className="space-y-4">
+                                            {preguntasExtraidas.map((p, i) => (
+                                                <div key={i} className="bg-white p-4 rounded-lg border border-green-100 shadow-sm hover:border-green-300 transition-all relative">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => handleEliminarPreguntaManual(i)}
+                                                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500 transition-colors"
+                                                        title="Eliminar pregunta"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                    
+                                                    <div className="grid grid-cols-1 gap-4">
+                                                        <div className="col-span-full">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">#{i + 1}</span>
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Texto de la Pregunta</label>
+                                                            </div>
+                                                            <input 
+                                                                type="text" 
+                                                                required
+                                                                value={p.pregunta} 
+                                                                onChange={(e) => handlePreguntaChange(i, 'pregunta', e.target.value)}
+                                                                placeholder="Ej. ¿Cuál es el componente encargado de...?"
+                                                                className="w-full text-sm font-medium border-0 border-b-2 border-gray-50 focus:border-green-500 focus:ring-0 px-0 pb-1 bg-transparent text-black"
+                                                            />
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                                                            {(['a', 'b', 'c', 'd'] as const).map(opt => (
+                                                                <div key={opt}>
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${p.respuesta_correcta === opt.toUpperCase() ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                                                                            {opt.toUpperCase()}
+                                                                        </span>
+                                                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Opción {opt.toUpperCase()}</label>
+                                                                    </div>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        required={opt === 'a' || opt === 'b'} // At least 2 options
+                                                                        value={(p as any)[`opcion_${opt}`]} 
+                                                                        onChange={(e) => handlePreguntaChange(i, `opcion_${opt}` as any, e.target.value)}
+                                                                        className="w-full text-xs border-0 border-b border-gray-50 focus:border-green-400 focus:ring-0 px-0 py-1 bg-transparent text-black"
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
+                                                            <label className="text-xs font-bold text-gray-600 italic">Respuesta Correcta:</label>
+                                                            <div className="flex gap-4">
+                                                                {['A', 'B', 'C', 'D'].map(letter => (
+                                                                    <label key={letter} className="flex items-center gap-1.5 cursor-pointer group">
+                                                                        <input 
+                                                                            type="radio" 
+                                                                            name={`correct_${i}`} 
+                                                                            checked={p.respuesta_correcta === letter}
+                                                                            onChange={() => handlePreguntaChange(i, 'respuesta_correcta', letter)}
+                                                                            className="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300"
+                                                                        />
+                                                                        <span className={`text-xs font-bold transition-colors ${p.respuesta_correcta === letter ? 'text-green-700' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                                                                            {letter}
+                                                                        </span>
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -426,7 +549,7 @@ export default function SubirCursoPage() {
                             </div>
                         </div>
                         <div className="mb-4">
-                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm">
                                 <label className="flex items-start cursor-pointer gap-3">
                                     <input
                                         type="checkbox"
@@ -445,15 +568,61 @@ export default function SubirCursoPage() {
                                 </label>
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Beneficios / ¿Qué aprenderá el alumno?</label>
-                            <textarea name="beneficios" required value={formData.beneficios} onChange={handleChange} rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" placeholder="Ej. Al finalizar este curso dominarás..." />
+                    {/* Clase en Vivo y Notas */}
+                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 shadow-sm">
+                        <h2 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
+                            <Activity className="h-5 w-5 text-blue-600" /> 5. Clase en Vivo / Avisos (Opcional)
+                        </h2>
+                        <div className="space-y-4">
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-gray-700">Enlace de Reunión (Zoom, Meet, etc.)</label>
+                                    {formData.reunion_url && (
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, reunion_url: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
+                                            ✕ LIMPIAR ENLACE
+                                        </button>
+                                    )}
+                                </div>
+                                <input 
+                                    type="url" 
+                                    name="reunion_url" 
+                                    value={formData.reunion_url} 
+                                    onChange={handleChange} 
+                                    placeholder="https://zoom.us/j/..." 
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" 
+                                />
+                                <p className="text-xs text-gray-500 mt-1 italic">Este enlace aparecerá destacado en el contenido del curso.</p>
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-gray-700">Nota o Aviso para Alumnos</label>
+                                    {formData.nota_profesor && (
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, nota_profesor: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
+                                            ✕ QUITAR NOTA
+                                        </button>
+                                    )}
+                                </div>
+                                <textarea 
+                                    name="nota_profesor" 
+                                    value={formData.nota_profesor} 
+                                    onChange={handleChange} 
+                                    rows={3} 
+                                    placeholder="Ej: La clase en vivo será el próximo viernes a las 6:00 PM..." 
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" 
+                                />
+                            </div>
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Beneficios / ¿Qué aprenderá el alumno?</label>
+                        <textarea name="beneficios" required value={formData.beneficios} onChange={handleChange} rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" placeholder="Ej. Al finalizar este curso dominarás..." />
+                    </div>
                     </div>
 
                     {/* Submit */}
                     <div className="pt-6 border-t border-gray-200">
-                        <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors">
+                        <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98]">
                             {loading ? 'Subiendo archivos y registrando curso...' : 'Enviar Curso a Revisión'}
                         </button>
                     </div>

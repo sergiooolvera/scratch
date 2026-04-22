@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Diplomado · Competencias para la Empleabilidad · SECNA</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B0E1A;--deep:#111627;--navy:#182040;
+  --gold:#C9A84C;--gold2:#F0CC7A;--gold-lt:rgba(201,168,76,.12);
+  --blue:#2563EB;--blue-lt:rgba(37,99,235,.1);
+  --teal:#0D9488;--teal-lt:rgba(13,148,136,.1);
+  --rose:#E11D48;--rose-lt:rgba(225,29,72,.1);
+  --amber:#D97706;--amber-lt:rgba(217,119,6,.1);
+  --violet:#7C3AED;--violet-lt:rgba(124,58,237,.1);
+  --white:#FFFFFF;--off:#F8F6F1;--glt:#E5E2D9;--gmd:#C4C0B4;
+  --gray:#8A8680;--text:#1A1714;--text2:#4A4641;
+  --fs:'DM Sans',sans-serif;--fd:'Fraunces',Georgia,serif;--fm:'JetBrains Mono',monospace;
+  --r:12px;--r2:20px;
+  --sh:0 4px 20px rgba(0,0,0,.06),0 1px 4px rgba(0,0,0,.04);
+  --sh2:0 12px 40px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--fs)}
+body{background:var(--off);color:var(--text);overflow:hidden;display:flex;flex-direction:column}
+
+/* ── TOP BAR ── */
+#top{background:var(--ink);height:54px;display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:relative;z-index:100}
+#top::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gold),transparent 60%)}
+.t-seal{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-weight:500;font-size:10px;color:var(--ink);flex-shrink:0;letter-spacing:.05em}
+.t-brand{font-family:var(--fd);font-size:15px;color:var(--white);letter-spacing:-.01em}
+.t-brand em{color:var(--gold2);font-style:normal}
+.t-pipe{width:1px;height:18px;background:rgba(255,255,255,.12)}
+.t-course{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.03em;font-weight:300}
+.t-sp{flex:1}
+.t-prog{display:flex;align-items:center;gap:10px}
+.t-bar{width:110px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.t-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%}
+.t-pct{font-family:var(--fm);font-size:11px;color:var(--gold2);min-width:30px;font-weight:500}
+.t-badge{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:var(--gold2);font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px;border-radius:4px}
+.ham{background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;padding:4px;display:flex;align-items:center;transition:color .15s}
+.ham:hover{color:var(--white)}
+
+/* ── LAYOUT ── */
+#lay{flex:1;display:flex;overflow:hidden}
+
+/* ── SIDEBAR ── */
+#sb{width:280px;min-width:280px;background:var(--ink);display:flex;flex-direction:column;overflow:hidden;transition:width .3s,min-width .3s;border-right:1px solid rgba(255,255,255,.05)}
+#sb.shut{width:0;min-width:0}
+.sb-hd{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.sb-dip{font-size:8px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.sb-name{font-family:var(--fd);font-size:14px;color:var(--white);line-height:1.4;margin-bottom:14px;font-weight:300;font-style:italic}
+.sb-stats{display:flex;gap:8px}
+.sb-stat{flex:1;text-align:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:8px 4px}
+.sb-n{font-family:var(--fd);font-size:20px;color:var(--gold2);line-height:1}
+.sb-l{font-size:8px;color:rgba(255,255,255,.35);margin-top:3px;letter-spacing:.04em;font-weight:300}
+.sb-scroll{flex:1;overflow-y:auto;padding:10px 0 24px}
+.sb-scroll::-webkit-scrollbar{width:2px}
+.sb-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08)}
+.sb-sec{padding:12px 16px 5px;font-size:8px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.2)}
+.sb-it{display:flex;align-items:flex-start;gap:10px;padding:9px 16px;cursor:pointer;transition:background .12s;border-left:3px solid transparent}
+.sb-it:hover{background:rgba(255,255,255,.03)}
+.sb-it.act{background:rgba(201,168,76,.1);border-left-color:var(--gold)}
+.sb-it.done{border-left-color:var(--teal)}
+.sb-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--fm);font-size:10px;font-weight:500;margin-top:1px;border:1.5px solid rgba(255,255,255,.12);color:rgba(255,255,255,.35);background:transparent;transition:all .2s}
+.sb-it.act .sb-num{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.sb-it.done .sb-num{background:rgba(13,148,136,.2);border-color:var(--teal);color:var(--teal)}
+.sb-it.integrador .sb-num{border-color:rgba(201,168,76,.4);color:var(--gold2)}
+.sb-it.act.integrador .sb-num{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink)}
+.sb-nm{font-size:12px;font-weight:500;color:rgba(255,255,255,.5);line-height:1.35;margin-bottom:2px}
+.sb-it.act .sb-nm{color:var(--white);font-weight:600}
+.sb-meta{font-size:10px;color:rgba(255,255,255,.25);font-weight:300}
+.sb-ft{padding:12px 16px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:rgba(255,255,255,.3);font-weight:300}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#lhdr{background:var(--white);border-bottom:1px solid var(--glt);padding:0 32px;flex-shrink:0;box-shadow:var(--sh)}
+.lhdr-top{display:flex;align-items:center;gap:10px;padding:14px 0 0}
+.bc{font-size:11px;color:var(--gray);display:flex;align-items:center;gap:5px}
+.bc span{color:var(--blue);cursor:pointer;font-weight:500}
+.lhdr-tabs{display:flex;gap:2px}
+.ltab{padding:10px 18px 9px;font-size:13px;font-weight:500;color:var(--gray);background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-1px;transition:all .15s;font-family:var(--fs);white-space:nowrap}
+.ltab:hover{color:var(--blue)}
+.ltab.act{color:var(--blue);border-bottom-color:var(--blue)}
+#cont{flex:1;overflow-y:auto;padding:32px 40px 100px}
+#cont::-webkit-scrollbar{width:4px}
+#cont::-webkit-scrollbar-thumb{background:var(--glt);border-radius:2px}
+.cw{max-width:860px;margin:0 auto}
+
+/* ── HERO ── */
+.hero{border-radius:var(--r2);padding:32px 36px;margin-bottom:28px;position:relative;overflow:hidden;background:var(--ink)}
+.hero-pattern{position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,rgba(201,168,76,.03) 0,rgba(201,168,76,.03) 1px,transparent 1px,transparent 10px);pointer-events:none}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:260px;height:260px;background:radial-gradient(circle,rgba(201,168,76,.18) 0%,transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-20px;left:20%;width:300px;height:140px;background:radial-gradient(ellipse,rgba(37,99,235,.1) 0%,transparent 70%);pointer-events:none}
+.hero-tag{font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold2);margin-bottom:10px;display:flex;align-items:center;gap:8px;position:relative}
+.hero-tag::before{content:'';width:20px;height:1px;background:var(--gold);display:inline-block}
+.hero-ttl{font-family:var(--fd);font-size:28px;color:var(--white);line-height:1.15;margin-bottom:10px;position:relative;font-weight:600}
+.hero-ttl em{color:var(--gold2);font-style:italic;font-weight:300}
+.hero-desc{font-size:14px;color:rgba(255,255,255,.55);line-height:1.8;max-width:600px;margin-bottom:18px;position:relative;font-weight:300}
+.hero-chips{display:flex;gap:7px;flex-wrap:wrap;position:relative}
+.hchip{font-size:11px;font-weight:400;padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5)}
+.hchip.g{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.3);color:var(--gold2)}
+.hchip.b{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.3);color:#93C5FD}
+
+/* ── PROSE ── */
+.prose h2{font-family:var(--fd);font-size:22px;color:var(--ink);margin:30px 0 12px;line-height:1.25;font-weight:600}
+.prose h2:first-child{margin-top:0}
+.prose h3{font-size:11px;font-weight:600;color:var(--blue);margin:20px 0 8px;text-transform:uppercase;letter-spacing:.09em;display:flex;align-items:center;gap:9px}
+.prose h3::after{content:'';flex:1;height:1px;background:var(--blue-lt)}
+.prose p{font-size:14.5px;color:var(--text2);line-height:1.85;margin-bottom:12px;font-weight:300}
+.prose p strong{color:var(--text);font-weight:600}
+.prose ul,.prose ol{margin:8px 0 14px 22px}
+.prose li{font-size:14px;color:var(--text2);line-height:1.78;margin-bottom:7px;font-weight:300}
+.prose li strong{color:var(--text);font-weight:600}
+
+/* ── CALLOUTS ── */
+.co{border-radius:var(--r);padding:14px 18px;margin:14px 0;display:flex;gap:13px;align-items:flex-start;border-left:3px solid}
+.co.b{background:var(--blue-lt);border-color:var(--blue)}
+.co.t{background:var(--teal-lt);border-color:var(--teal)}
+.co.a{background:var(--amber-lt);border-color:var(--amber)}
+.co.g{background:var(--gold-lt);border-color:var(--gold)}
+.co.r{background:var(--rose-lt);border-color:var(--rose)}
+.co.dk{background:var(--deep);border-color:var(--gold)}
+.co-ico{font-size:17px;flex-shrink:0;margin-top:2px}
+.co-bd{font-size:13.5px;color:var(--text2);line-height:1.75;font-weight:300}
+.co.dk .co-bd{color:rgba(255,255,255,.65)}
+.co-bd strong{color:var(--text);font-weight:600;display:block;margin-bottom:4px;font-size:13px}
+.co.dk .co-bd strong{color:var(--white)}
+.co-bd ul{margin:5px 0 0 15px}
+.co-bd li{font-size:13px;margin-bottom:5px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;margin:14px 0}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{background:var(--ink);color:var(--gold2);font-weight:500;padding:10px 14px;text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--glt);color:var(--text2);font-weight:300;vertical-align:top}
+.tbl tr:hover td{background:rgba(37,99,235,.03)}
+
+/* ── CARDS GRID ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--white);border:1px solid var(--glt);border-radius:var(--r);padding:16px 18px;transition:box-shadow .2s,transform .2s}
+.card:hover{box-shadow:var(--sh2);transform:translateY(-2px)}
+.card-ico{font-size:22px;margin-bottom:10px}
+.card-ttl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+.card-tx{font-size:12.5px;color:var(--gray);line-height:1.65;font-weight:300}
+
+/* ── PHASES ── */
+.phases{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.phase{display:flex;gap:14px;background:var(--white);border:1px solid var(--glt);border-radius:var(--r);padding:14px 18px;align-items:flex-start}
+.phase-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:11px;font-weight:500;flex-shrink:0;color:var(--white)}
+.phase-bd{flex:1}
+.phase-ttl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.phase-tx{font-size:13px;color:var(--gray);line-height:1.65;font-weight:300}
+.phase-dur{font-family:var(--fm);font-size:10px;color:var(--gray);margin-top:4px;font-weight:400}
+
+/* ── EVIDENCE LIST ── */
+.ev-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.ev-it{display:flex;gap:12px;background:var(--white);border:1px solid var(--glt);border-radius:var(--r);padding:12px 16px;align-items:flex-start}
+.ev-n{width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--gold2);font-family:var(--fm);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ev-bd{flex:1}
+.ev-ttl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.ev-tx{font-size:12.5px;color:var(--gray);line-height:1.6;font-weight:300}
+
+/* ── RUBRIC ── */
+.rubric{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.rub-it{border-radius:var(--r);padding:14px 16px;border:1px solid}
+.rub-it.hi{background:rgba(13,148,136,.06);border-color:rgba(13,148,136,.2)}
+.rub-it.md{background:rgba(217,119,6,.06);border-color:rgba(217,119,6,.2)}
+.rub-it.lo{background:rgba(225,29,72,.06);border-color:rgba(225,29,72,.2)}
+.rub-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.rub-it.hi .rub-lbl{color:var(--teal)}
+.rub-it.md .rub-lbl{color:var(--amber)}
+.rub-it.lo .rub-lbl{color:var(--rose)}
+.rub-tx{font-size:12.5px;color:var(--text2);line-height:1.65;font-weight:300}
+
+/* ── QUIZ ── */
+.quiz{background:var(--white);border:1px solid var(--glt);border-radius:var(--r2);overflow:hidden}
+.quiz-hd{background:var(--ink);padding:16px 22px;display:flex;align-items:center;gap:14px}
+.quiz-hd-ico{font-size:22px}
+.quiz-hd-ttl{font-family:var(--fd);font-size:15px;color:var(--white);font-weight:600}
+.quiz-hd-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;font-weight:300}
+.quiz-prog{height:3px;background:rgba(255,255,255,.08)}
+.quiz-pf{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .4s}
+.quiz-body{padding:24px 22px}
+.q-cnt{font-family:var(--fm);font-size:10px;color:var(--gray);margin-bottom:8px;font-weight:400}
+.q-text{font-size:15px;font-weight:500;color:var(--text);line-height:1.65;margin-bottom:18px}
+.q-opts{display:flex;flex-direction:column;gap:8px}
+.q-opt{display:flex;align-items:flex-start;gap:11px;padding:11px 14px;border-radius:var(--r);border:1.5px solid var(--glt);cursor:pointer;text-align:left;background:var(--white);transition:all .15s;font-family:var(--fs)}
+.q-opt:hover{border-color:var(--blue);background:var(--blue-lt)}
+.q-opt.sel{border-color:var(--blue);background:var(--blue-lt)}
+.q-opt.ok{border-color:var(--teal);background:var(--teal-lt);pointer-events:none}
+.q-opt.bad{border-color:var(--rose);background:var(--rose-lt);pointer-events:none}
+.q-let{width:24px;height:24px;border-radius:6px;border:1.5px solid var(--gmd);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:11px;font-weight:500;color:var(--gray);flex-shrink:0;transition:all .15s}
+.q-opt.sel .q-let{background:var(--blue);border-color:var(--blue);color:var(--white)}
+.q-opt.ok .q-let{background:var(--teal);border-color:var(--teal);color:var(--white)}
+.q-opt.bad .q-let{background:var(--rose);border-color:var(--rose);color:var(--white)}
+.q-opt-tx{font-size:14px;color:var(--text2);line-height:1.55;font-weight:300}
+.q-fb{margin-top:14px;padding:12px 16px;border-radius:var(--r);font-size:13.5px;line-height:1.65;display:none;font-weight:300}
+.q-fb.show{display:block}
+.q-fb.ok-fb{background:var(--teal-lt);color:var(--teal);border:1px solid rgba(13,148,136,.2)}
+.q-fb.bad-fb{background:var(--rose-lt);color:var(--rose);border:1px solid rgba(225,29,72,.2)}
+.quiz-ft{padding:14px 22px;border-top:1px solid var(--glt);display:flex;justify-content:space-between;align-items:center}
+.q-sc{font-family:var(--fm);font-size:12px;color:var(--gray);font-weight:400}
+
+/* ── CHECKLIST ── */
+.cl{background:var(--white);border:1px solid var(--glt);border-radius:var(--r2);overflow:hidden;margin:14px 0}
+.cl-hd{background:var(--ink);padding:14px 20px;font-family:var(--fd);font-size:15px;color:var(--white);font-weight:600}
+.cl-it{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--glt);cursor:pointer;transition:background .12s}
+.cl-it:last-child{border-bottom:none}
+.cl-it:hover{background:var(--off)}
+.cl-it.chk{background:rgba(13,148,136,.04)}
+.cl-bx{width:20px;height:20px;border:1.5px solid var(--gmd);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s;margin-top:2px}
+.cl-it.chk .cl-bx{background:var(--teal);border-color:var(--teal);color:var(--white)}
+.cl-tx{font-size:14px;color:var(--text2);line-height:1.65;font-weight:300}
+.cl-it.chk .cl-tx{text-decoration:line-through;color:var(--gray)}
+
+/* ── BTNS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:1.5px solid;font-family:var(--fs)}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.btn-gold:hover{background:var(--gold2);border-color:var(--gold2)}
+.btn-out{background:transparent;border-color:var(--gmd);color:var(--text2)}
+.btn-out:hover{border-color:var(--text2)}
+.btn-b{background:var(--blue);border-color:var(--blue);color:var(--white)}
+.btn-b:hover{opacity:.9}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+
+/* ── CASO ── */
+.case-wrap{background:var(--white);border:1px solid var(--glt);border-radius:var(--r2);overflow:hidden;margin:14px 0}
+.case-hd{background:var(--ink);padding:18px 22px;display:flex;justify-content:space-between;align-items:flex-start}
+.case-ttl{font-family:var(--fd);font-size:16px;color:var(--white);font-weight:600;margin-bottom:4px}
+.case-sub{font-size:12px;color:rgba(255,255,255,.4);font-weight:300}
+.case-dur{font-family:var(--fm);font-size:10px;color:var(--gold2);margin-top:6px;font-weight:400}
+.case-body{padding:22px}
+.case-desc{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:18px;font-weight:300}
+.ws-area{margin-top:16px}
+.ws-lbl{font-size:11px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.ws-ta{width:100%;border:1.5px solid var(--glt);border-radius:var(--r);padding:12px 14px;font-size:14px;font-family:var(--fs);color:var(--text);resize:vertical;min-height:90px;transition:border-color .15s;font-weight:300}
+.ws-ta:focus{outline:none;border-color:var(--blue)}
+
+/* ── SKILLS GRID ── */
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}
+.skill-it{background:var(--white);border:1px solid var(--glt);border-radius:var(--r);padding:14px 16px}
+.skill-num{font-family:var(--fd);font-size:24px;color:var(--gold);line-height:1;margin-bottom:4px}
+.skill-tx{font-size:12.5px;color:var(--text2);line-height:1.6;font-weight:300}
+
+/* ── INTEGRADOR badge ── */
+.int-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gold-lt);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:12px}
+
+/* ── CONTENIDO RICO ── */
+.tema-bloque{background:var(--white);border:1px solid var(--glt);border-radius:var(--r2);overflow:hidden;margin:18px 0}
+.tema-hd{background:var(--ink);padding:14px 22px;display:flex;align-items:center;gap:12px}
+.tema-hd-num{font-family:var(--fm);font-size:10px;color:var(--gold2);font-weight:500;letter-spacing:.08em}
+.tema-hd-ttl{font-family:var(--fd);font-size:16px;color:var(--white);font-weight:600}
+.tema-body{padding:22px}
+.tema-sec{margin-bottom:20px}
+.tema-sec:last-child{margin-bottom:0}
+.tema-sec-ttl{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.tema-sec-ttl::after{content:'';flex:1;height:1px;background:var(--blue-lt)}
+.tema-txt{font-size:14px;color:var(--text2);line-height:1.85;font-weight:300;margin-bottom:10px}
+.analogy-box{background:var(--deep);border-radius:var(--r);padding:16px 20px;margin:12px 0}
+.analogy-ttl{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:10px}
+.analogy-row{display:flex;gap:14px;align-items:flex-start;margin-bottom:8px}
+.analogy-ic{font-size:18px;flex-shrink:0;margin-top:2px}
+.analogy-tx{font-size:13.5px;color:rgba(255,255,255,.7);line-height:1.65;font-weight:300}
+.analogy-tx strong{color:var(--white);font-weight:500}
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0}
+.cmp-tbl th{padding:9px 14px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--gold2);text-align:left}
+.cmp-tbl td{padding:9px 14px;border-bottom:1px solid var(--glt);color:var(--text2);font-weight:300;vertical-align:top}
+.cmp-tbl tr:last-child td{border-bottom:none}
+.cmp-tbl tr:hover td{background:rgba(37,99,235,.03)}
+.insight-box{background:var(--gold-lt);border:1px solid rgba(201,168,76,.3);border-radius:var(--r);padding:14px 18px;margin:12px 0;display:flex;gap:12px;align-items:flex-start}
+.insight-ic{font-size:18px;flex-shrink:0}
+.insight-tx{font-size:13.5px;color:var(--text);line-height:1.7;font-weight:400;font-style:italic}
+.ejemplo-box{background:var(--off);border:1px solid var(--glt);border-radius:var(--r);padding:16px 18px;margin:12px 0}
+.ejemplo-ttl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);margin-bottom:10px}
+.ejemplo-line{font-size:13.5px;color:var(--text2);line-height:1.7;margin-bottom:6px;font-weight:300}
+.ejemplo-line strong{color:var(--text);font-weight:600}
+.ejercicio-box{background:var(--violet-lt);border:1px solid rgba(124,58,237,.2);border-radius:var(--r);padding:14px 18px;margin:12px 0}
+.ejercicio-ttl{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);margin-bottom:8px}
+.ejercicio-tx{font-size:13.5px;color:var(--text2);line-height:1.75;font-weight:300;font-style:italic}
+.cierre-box{background:var(--ink);border-radius:var(--r);padding:14px 20px;margin-top:16px;text-align:center}
+.cierre-tx{font-family:var(--fd);font-size:15px;color:var(--white);line-height:1.5;font-weight:300;font-style:italic}
+.cierre-tx em{color:var(--gold2)}
+.competencias-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.comp-chip{font-size:12px;font-weight:500;padding:5px 12px;border-radius:20px;background:var(--teal-lt);border:1px solid rgba(13,148,136,.25);color:var(--teal)}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .35s ease both}
+</style>
+</head>
+<body>
+
+<!-- TOP -->
+<div id="top">
+  <button class="ham" onclick="toggleSb()">☰</button>
+  <div class="t-seal">SECNA</div>
+  <div class="t-brand"><em>Diplomado</em> Profesional</div>
+  <div class="t-pipe"></div>
+  <div class="t-course">Competencias para la Empleabilidad</div>
+  <div class="t-sp"></div>
+  <div class="t-prog">
+    <div class="t-bar"><div class="t-fill" id="tfill"></div></div>
+    <div class="t-pct" id="tpct">0%</div>
+  </div>
+  <div class="t-badge">40 hrs</div>
+</div>
+
+<!-- LAYOUT -->
+<div id="lay">
+
+<!-- SIDEBAR -->
+<div id="sb">
+  <div class="sb-hd">
+    <div class="sb-dip">SECNA · Diplomado</div>
+    <div class="sb-name">Competencias Clave para la<br>Empleabilidad e Inserción Laboral</div>
+    <div class="sb-stats">
+      <div class="sb-stat"><div class="sb-n">5</div><div class="sb-l">Módulos</div></div>
+      <div class="sb-stat"><div class="sb-n">40</div><div class="sb-l">Horas</div></div>
+      <div class="sb-stat"><div class="sb-n">Virtual</div><div class="sb-l">Modalidad</div></div>
+    </div>
+  </div>
+  <div class="sb-scroll" id="sblist"></div>
+  <div class="sb-ft">Servicio Nacional de Evaluación y Registro Laboral</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="lhdr">
+    <div class="lhdr-top">
+      <div class="bc">Diplomado <span>›</span> <span id="bc-mod" onclick="render()">Inicio</span></div>
+    </div>
+    <div class="lhdr-tabs">
+      <button class="ltab act" onclick="setTab(0,this)">📖 Teoría</button>
+      <button class="ltab" onclick="setTab(1,this)">💼 Caso práctico</button>
+      <button class="ltab" onclick="setTab(2,this)">📝 Evaluación</button>
+      <button class="ltab" onclick="setTab(3,this)">✅ Checklist</button>
+    </div>
+  </div>
+  <div id="cont">
+    <div class="cw" id="cw"></div>
+  </div>
+</div>
+
+</div><!-- /lay -->
+
+<script>
+/* ══════════════════════════════════════════════════
+   DATOS DEL DIPLOMADO
+══════════════════════════════════════════════════ */
+const BLOQUES = [
+  {
+    id:0, emoji:'🧠', color:'#2563EB',
+    title:'Mentalidad profesional y autogestión',
+    sub:'Módulo fundacional · 8 horas',
+    dur:'8 horas',
+    desc:'Desarrolla la transición consciente de la identidad académica hacia una identidad profesional, fortaleciendo competencias de autogestión, responsabilidad y organización del desempeño orientadas a contextos laborales reales.',
+    competencia:'Gestiona de manera autónoma sus tareas y responsabilidades en un contexto simulado, demostrando organización, priorización y cumplimiento de objetivos con base en estándares profesionales.',
+    unidades:[
+      {titulo:'Unidad 1 · El nuevo contexto del trabajo (2 h)',items:['Transformaciones del mercado laboral','Expectativas del empleador actual','Brecha entre formación académica y desempeño','Concepto de empleabilidad']},
+      {titulo:'Unidad 2 · Identidad profesional (2 h)',items:['Diferencias entre estudiante y profesional','Actitudes profesionales clave','Responsabilidad y ética básica en el trabajo','Mentalidad de crecimiento y aprendizaje continuo']},
+      {titulo:'Unidad 3 · Autogestión del desempeño (4 h)',items:['Gestión del tiempo','Priorización de tareas (urgente vs. importante)','Proactividad y accountability','Hábitos de alto desempeño','Organización del trabajo en entornos reales']},
+    ],
+    temas:[
+      {
+        num:'Tema 1',
+        titulo:'Transformaciones del mercado laboral',
+        idea:'El mercado laboral contemporáneo ha experimentado transformaciones profundas derivadas de la digitalización, la automatización y la globalización. Estos cambios han modificado no solo los tipos de empleo disponibles, sino también la manera en que se concibe el trabajo, pasando de estructuras rígidas y predecibles a entornos dinámicos, flexibles y orientados a resultados.',
+        idea2:'A diferencia de modelos anteriores, donde el conocimiento técnico garantizaba estabilidad laboral, el entorno actual exige la integración de competencias transversales. El valor de un profesional ya no reside únicamente en lo que sabe, sino en su capacidad para interpretar situaciones, tomar decisiones y generar soluciones en tiempo real.',
+        analogia:{ttl:'Analogía: el sistema de transporte',antes:'Era un tren con una sola vía → Subías y seguías una ruta definida hasta el final.',ahora:'Ahora es una red de transporte con múltiples rutas → Necesitas elegir caminos, cambiar de dirección y tomar decisiones constantemente.'},
+        tabla:{cols:['Antes','Ahora'],filas:[['Empleos estables','Empleos dinámicos'],['Funciones definidas','Roles cambiantes'],['Conocimiento técnico suficiente','Competencias integradas'],['Trayectorias lineales','Trayectorias flexibles'],['Aprender una vez','Aprender continuamente']]},
+        ejemplo:{ttl:'Ejemplo aplicado',tx:'Un egresado de informática aprende a programar en un lenguaje específico. La tecnología cambia, el lenguaje se actualiza o queda obsoleto, surgen nuevas herramientas. La empresa no necesita solo que sepa programar, sino que aprenda rápido, se adapte y resuelva problemas nuevos.'},
+        cambio:{antes:'"Sé hacer esto"',ahora:'"Puedo aprender, adaptarme y resolver lo que venga"'},
+        error:'Muchos piensan: "Si termino la carrera, ya estoy listo." Pero el mercado laboral responde: "Apenas estás comenzando a aprender cómo trabajar."',
+        insight:'El conocimiento ya no es una ventaja competitiva por sí solo. La ventaja está en cómo usas ese conocimiento en contextos cambiantes.',
+        ejercicio:'Si mañana cambia completamente la forma de trabajar en tu área... ¿podrías adaptarte o te quedarías bloqueado?',
+        competencias:['Adaptabilidad','Aprendizaje continuo','Pensamiento flexible','Resolución de problemas'],
+        cierre:'El mercado laboral ya no premia al que más sabe, sino al que mejor se adapta y responde al cambio.'
+      },
+      {
+        num:'Tema 2',
+        titulo:'Expectativas del empleador actual',
+        idea:'El empleador actual opera en un contexto de alta incertidumbre, competitividad y cambio constante, por lo que ha modificado sus criterios de selección. Ya no es suficiente contar con un título universitario o dominar conceptos teóricos; lo que realmente se valora es la capacidad de traducir ese conocimiento en acciones concretas dentro del entorno laboral.',
+        idea2:'Las organizaciones buscan perfiles que puedan integrarse rápidamente, comprender situaciones reales y generar respuestas efectivas sin depender de supervisión constante. No se trata de cuánto sabes, sino de qué tan confiable eres al momento de actuar frente a una situación real.',
+        analogia:{ttl:'Analogía: el entrenador deportivo',antes:'No le interesa cuánto sabes sobre fútbol.',ahora:'Le interesa cómo juegas en la cancha. Puedes saber toda la teoría, pero si no sabes jugar, no entras al equipo.'},
+        tabla:{cols:['Expectativa','Qué significa en la práctica'],filas:[['Autonomía','No depender de instrucciones constantes'],['Resolución de problemas','Proponer soluciones, no solo identificar problemas'],['Comunicación','Expresar ideas con claridad y sentido'],['Adaptabilidad','Ajustarse a cambios sin bloquearse'],['Responsabilidad','Cumplir sin supervisión constante']]},
+        ejemplo:{ttl:'Ejemplo aplicado',tx:'El jefe dice: "Tenemos un retraso con un cliente, necesitamos resolverlo." Perfil académico: "En teoría, el servicio al cliente implica..." Perfil profesional: "Propongo contactar al cliente, ofrecer solución X y ajustar el proceso." ¿A quién contratan?'},
+        cambio:{antes:'Estudiante: espera instrucciones, responde preguntas, cumple tareas, se enfoca en aprobar.',ahora:'Profesional esperado: toma iniciativa, propone soluciones, resuelve problemas, se enfoca en resultados.'},
+        error:'Muchos egresados creen: "Si sé mucho, me van a contratar." Pero el empleador piensa: "Si no sé cómo actúas, no puedo confiar en ti."',
+        insight:'El empleador no compra conocimiento. Compra certeza de desempeño.',
+        ejercicio:'Te hacen esta pregunta en una entrevista: "¿Cómo resolverías un problema con un cliente difícil?" ¿Responderías con teoría o con una acción concreta paso a paso?',
+        competencias:['Pensamiento aplicado','Comunicación profesional','Toma de decisiones','Seguridad en la acción'],
+        cierre:'El empleador no busca al más preparado en teoría, sino al más confiable en la práctica.'
+      }
+    ],
+    fases:[
+      {n:'F1',label:'Activación',dur:'1 h',desc:'Diagnóstico de hábitos de trabajo + reflexión: ¿Cómo gestiono mis responsabilidades?',color:'#7C3AED'},
+      {n:'F2',label:'Comprensión',dur:'3 h',desc:'Revisión de contenidos · Análisis de casos breves · Comportamientos profesionales vs. no profesionales',color:'#2563EB'},
+      {n:'F3',label:'Aplicación guiada',dur:'2 h',desc:'Ejercicios de priorización · Agenda semanal simulada · Errores en gestión del tiempo',color:'#0D9488'},
+      {n:'F4',label:'Integración',dur:'2 h',desc:'Simulación principal del módulo',color:'#D97706'},
+    ],
+    caso:{
+      ttl:'El candidato técnicamente preparado, pero no contratado',
+      desc:'Mariana es egresada reciente de una licenciatura. Durante su formación obtuvo buenas calificaciones y domina conceptos teóricos de su área. Decide postularse a un puesto de nivel inicial en una empresa. Durante la entrevista, responde correctamente preguntas conceptuales, pero cuando el entrevistador le plantea un escenario práctico —"¿Cómo resolverías un problema con un cliente insatisfecho?"— Mariana responde de forma general y poco estructurada.',
+      feedback:['"Tienes buena base académica, pero nos faltó ver cómo aplicas tus conocimientos."','"No lograste aterrizar tus respuestas a situaciones reales."','"Buscamos perfiles que puedan integrarse rápidamente al entorno laboral."'],
+      desafios:['¿Por qué no fue seleccionada Mariana?','¿Qué competencia le faltó demostrar?','¿Qué esperaba realmente el empleador?','¿Cómo podría mejorar su empleabilidad?'],
+      ws:[
+        {lbl:'¿Cuál fue el error principal de Mariana en la entrevista? Explica con tus propias palabras.',hint:'No es falta de conocimiento — ¿qué le faltó demostrar?'},
+        {lbl:'Si tú fueras Mariana, ¿cómo habrías respondido la pregunta del cliente insatisfecho?',hint:'Responde con pasos concretos, no con teoría'},
+        {lbl:'¿Qué acciones concretas tomarías hoy para no repetir la situación de Mariana?'},
+      ]
+    },
+    quiz:[
+      {q:'¿Cuál es el principal factor que explica por qué Mariana no fue seleccionada?',opts:['Falta de conocimientos teóricos','Falta de experiencia laboral formal','Dificultad para aplicar conocimientos en situaciones reales','Falta de interés en el puesto'],ans:2,fb:'Has identificado el punto crítico. En el mercado laboral actual, no basta con saber, es necesario demostrar la capacidad de aplicar el conocimiento en contextos reales. Esta es una de las principales causas de rechazo en procesos de selección.'},
+      {q:'La situación de Mariana refleja principalmente:',opts:['Falta de motivación profesional','Brecha entre formación académica y desempeño laboral','Problemas de comunicación personal','Falta de oportunidades laborales'],ans:1,fb:'Este caso evidencia la brecha entre lo aprendido en la formación académica y la capacidad de transferir ese conocimiento al contexto laboral.'},
+      {q:'¿Cuál de las siguientes competencias le hizo falta a Mariana demostrar?',opts:['Memorización de conceptos','Pensamiento analítico aplicado','Capacidad de repetición de contenidos','Dominio teórico avanzado'],ans:1,fb:'El pensamiento analítico aplicado permite interpretar situaciones reales y proponer soluciones concretas, lo cual es altamente valorado por los empleadores.'},
+      {q:'Desde la perspectiva del empleador, ¿qué se esperaba de Mariana en la entrevista?',opts:['Que repitiera conceptos teóricos con precisión','Que demostrara cómo resolvería un problema real','Que hablara de su trayectoria académica','Que explicara definiciones técnicas'],ans:1,fb:'Los empleadores buscan evidencia de desempeño, es decir, cómo el candidato actuaría frente a situaciones reales de trabajo.'},
+      {q:'¿Cuál sería la mejor estrategia para que Mariana mejore su empleabilidad?',opts:['Estudiar más teoría de su carrera','Memorizar respuestas para entrevistas','Practicar la resolución de casos reales y comunicar sus decisiones','Esperar a tener más experiencia laboral'],ans:2,fb:'Practicar con casos reales permite desarrollar habilidades de aplicación, toma de decisiones y comunicación, elementos clave para mejorar la empleabilidad.'},
+    ],
+    checks:['Puedo explicar la diferencia entre rol académico y rol profesional','Identifico mis fortalezas y áreas de mejora en empleabilidad','Sé aplicar criterios de urgencia e importancia para priorizar','Conozco hábitos básicos de alto desempeño laboral','Puedo diseñar un plan personal de mejora profesional'],
+    rubric:[
+      {nivel:'Alto',color:'hi',tx:'Gestión autónoma del tiempo, priorización adecuada, cumple objetivos y realiza reflexión crítica profunda.'},
+      {nivel:'Medio',color:'md',tx:'Organiza tareas de manera general, con algunas dificultades en priorización o consistencia de decisiones.'},
+      {nivel:'Bajo',color:'lo',tx:'Dificultades significativas en organización, no prioriza adecuadamente, reflexión superficial.'},
+    ]
+  },
+  {
+    id:1, emoji:'💬', color:'#0D9488',
+    title:'Comunicación profesional y relaciones laborales',
+    sub:'Desarrollo interpersonal aplicado · 8 horas',
+    dur:'8 horas',
+    desc:'Desarrolla competencias de comunicación profesional para interactuar de manera efectiva, clara y asertiva en entornos laborales, favoreciendo la colaboración, resolución de conflictos y construcción de relaciones productivas.',
+    competencia:'Se comunica de manera efectiva en contextos laborales simulados, empleando estrategias de comunicación asertiva, escucha activa y manejo adecuado de la retroalimentación.',
+    unidades:[
+      {titulo:'Unidad 1 · Fundamentos de la comunicación profesional (2 h)',items:['Comunicación en el entorno laboral','Canales y medios (oral, escrita y digital)','Barreras de la comunicación','Errores comunes en contextos profesionales']},
+      {titulo:'Unidad 2 · Comunicación asertiva y escucha activa (3 h)',items:['Estilos: pasivo, agresivo, asertivo','Principios de la comunicación asertiva','Técnicas de expresión clara y respetuosa','Escucha activa y validación','Comunicación emocional en el trabajo']},
+      {titulo:'Unidad 3 · Retroalimentación y situaciones críticas (3 h)',items:['Tipos de retroalimentación (correctiva, constructiva, positiva)','Cómo dar retroalimentación efectiva','Cómo recibir retroalimentación sin resistencia','Manejo de malentendidos y conflictos','Comunicación bajo presión']},
+    ],
+    fases:[
+      {n:'F1',label:'Activación',dur:'1 h',desc:'Diagnóstico de estilos de comunicación + reflexión: ¿Cómo me comunico bajo presión?',color:'#7C3AED'},
+      {n:'F2',label:'Comprensión',dur:'3 h',desc:'Contenidos unidades 1 y 2 · Análisis de comunicación efectiva e inefectiva · Errores en escenarios simulados',color:'#2563EB'},
+      {n:'F3',label:'Aplicación guiada',dur:'2 h',desc:'Reformulación de mensajes · Prácticas de escucha activa · Simulación breve de interacción profesional',color:'#0D9488'},
+      {n:'F4',label:'Integración',dur:'2 h',desc:'Conversaciones laborales críticas (simulación integradora)',color:'#D97706'},
+    ],
+    caso:{
+      ttl:'Conversaciones laborales críticas',
+      desc:'Participas en una serie de escenarios que representan situaciones comunes en el entorno laboral donde deberás aplicar comunicación profesional asertiva.',
+      desafios:['Dar retroalimentación a un compañero','Recibir observaciones de un superior','Solicitar apoyo ante una dificultad','Resolver un malentendido en el equipo'],
+      ws:[
+        {lbl:'Reformula este mensaje de forma asertiva: "Siempre llegas tarde a las juntas y nos atrasa a todos."',hint:'Usa el modelo: situación + impacto + solicitud'},
+        {lbl:'Tu jefe te da una retroalimentación negativa frente al equipo. ¿Cómo respondes?'},
+        {lbl:'Escribe cómo pedirías ayuda a un colega cuando tienes demasiado trabajo sin sonar débil o descortés'},
+      ]
+    },
+    quiz:[
+      {q:'¿Cuál es la característica principal de la comunicación asertiva?',opts:['Imponer el punto de vista propio con firmeza','Expresar ideas y sentimientos con claridad y respeto hacia los demás','Evitar cualquier tipo de confrontación','Comunicarse solo cuando es estrictamente necesario'],ans:1,fb:'La comunicación asertiva equilibra la expresión propia con el respeto al otro, diferente tanto del estilo pasivo (no expresarse) como del agresivo (imponer).'},
+      {q:'¿Qué distingue la escucha activa de simplemente "oir" a alguien?',opts:['Tomar notas de todo lo que dice el otro','Prestar atención plena, comprender el mensaje y validar al interlocutor','Responder rápidamente sin dejar pausas','Estar de acuerdo con lo que dice el otro'],ans:1,fb:'La escucha activa implica atención total, comprensión del mensaje (no solo las palabras) y señales de validación que el otro pueda percibir.'},
+      {q:'Cuando recibes retroalimentación negativa de tu jefe, ¿cuál es la respuesta más profesional?',opts:['Justificarte inmediatamente explicando por qué pasó','Ignorarla si crees que no es justa','Escuchar con atención, agradecer y preguntar cómo mejorar','Esperar a estar solas para contradecirla'],ans:2,fb:'Recibir retroalimentación sin defensividad, agradecer y preguntar cómo mejorar demuestra madurez profesional y disposición al aprendizaje.'},
+      {q:'¿Cuál de las siguientes es una barrera de comunicación frecuente en el trabajo?',opts:['Usar canales digitales','Dar retroalimentación positiva','Asumir que el otro interpretó el mensaje correctamente','Verificar la comprensión del mensaje'],ans:2,fb:'Asumir comprensión sin verificar es una de las barreras más comunes. Siempre es útil preguntar: ¿quedó claro lo que necesito?'},
+    ],
+    checks:['Identifico mi estilo de comunicación predominante','Puedo reformular mensajes agresivos de forma asertiva','Aplico técnicas básicas de escucha activa','Sé dar retroalimentación de forma constructiva','Puedo manejar situaciones de comunicación conflictiva'],
+    rubric:[
+      {nivel:'Alto',color:'hi',tx:'Comunicación clara, asertiva y estratégica. Adapta el mensaje, gestiona retroalimentación y reflexiona críticamente.'},
+      {nivel:'Medio',color:'md',tx:'Comunicación generalmente clara con inconsistencias en asertividad o adaptación al contexto.'},
+      {nivel:'Bajo',color:'lo',tx:'Dificultades en la claridad, no aplica principios asertivos, reflexión superficial.'},
+    ]
+  },
+  {
+    id:2, emoji:'🔍', color:'#7C3AED',
+    title:'Pensamiento analítico y resolución de problemas',
+    sub:'Desarrollo cognitivo aplicado · 8 horas',
+    dur:'8 horas',
+    desc:'Desarrolla la capacidad de analizar situaciones laborales, identificar problemas relevantes, tomar decisiones fundamentadas y proponer soluciones efectivas en contextos reales o simulados de trabajo.',
+    competencia:'Analiza situaciones laborales complejas y propone soluciones viables mediante pensamiento crítico, razonamiento estructurado y toma de decisiones fundamentadas.',
+    unidades:[
+      {titulo:'Unidad 1 · Pensamiento analítico en el trabajo (2 h)',items:['Pensamiento crítico vs. pensamiento automático','Importancia del análisis en la toma de decisiones','Errores comunes en el razonamiento (sesgos básicos)','Análisis de información en el trabajo']},
+      {titulo:'Unidad 2 · Identificación y estructuración de problemas (3 h)',items:['Diferencia entre situación y problema','Formulación adecuada de problemas','Identificación de causas (análisis causal básico)','Consecuencias e impacto de los problemas','Delimitación del problema']},
+      {titulo:'Unidad 3 · Toma de decisiones y solución de problemas (3 h)',items:['Generación de alternativas','Criterios para la toma de decisiones','Evaluación de opciones','Solución estructurada de problemas','Creatividad aplicada al contexto laboral']},
+    ],
+    fases:[
+      {n:'F1',label:'Activación',dur:'1 h',desc:'Diagnóstico de estilos de toma de decisiones + análisis breve de una situación ambigua',color:'#7C3AED'},
+      {n:'F2',label:'Comprensión',dur:'3 h',desc:'Contenidos unidades 1 y 2 · Identificación de errores de razonamiento · Formulación de problemas',color:'#2563EB'},
+      {n:'F3',label:'Aplicación guiada',dur:'2 h',desc:'Análisis de caso estructurado · Causas y consecuencias · Generación de alternativas',color:'#0D9488'},
+      {n:'F4',label:'Integración',dur:'2 h',desc:'Caso aplicado: Resolución de un problema laboral',color:'#D97706'},
+    ],
+    caso:{
+      ttl:'Resolución de un problema laboral',
+      desc:'Analizas un caso que representa una situación laboral compleja, con información incompleta, múltiples variables y posibles soluciones. Debes aplicar pensamiento analítico estructurado.',
+      desafios:['Identificar el problema central','Analizar causas y consecuencias','Proponer al menos dos alternativas de solución','Seleccionar la mejor opción y justificarla'],
+      ws:[
+        {lbl:'Identifica y formula el problema central del siguiente caso: "El equipo no cumple los plazos de entrega porque todos dicen estar ocupados, pero los reportes muestran horas ociosas."',hint:'¿Cuál es el problema real detrás de los síntomas?'},
+        {lbl:'Lista al menos 3 posibles causas del problema que identificaste'},
+        {lbl:'Propón dos alternativas de solución y justifica cuál elegirías'},
+      ]
+    },
+    quiz:[
+      {q:'¿Cuál es la diferencia entre una situación problemática y un problema?',opts:['No hay diferencia, son lo mismo','Una situación es cualquier contexto; un problema es una brecha entre lo actual y lo deseado que requiere solución','Un problema siempre es más grave que una situación','Las situaciones se resuelven solas; los problemas no'],ans:1,fb:'Un problema implica identificar una brecha específica entre el estado actual y el deseado, con causas que se pueden analizar y alternativas que se pueden generar.'},
+      {q:'¿Qué es un sesgo cognitivo en la toma de decisiones?',opts:['Una habilidad que mejora las decisiones','Una distorsión sistemática del pensamiento que lleva a juicios incorrectos','Un tipo de análisis objetivo de datos','La tendencia a consultar a otros antes de decidir'],ans:1,fb:'Los sesgos cognitivos (como el sesgo de confirmación o el anclaje) distorsionan el razonamiento y pueden llevar a decisiones poco fundamentadas.'},
+      {q:'Al proponer soluciones a un problema laboral, ¿qué debes considerar antes de elegir la mejor opción?',opts:['Elegir la primera idea que se te ocurra para ahorrar tiempo','Generar múltiples alternativas y evaluarlas con criterios claros','Preguntar solo a tu jefe cuál es la mejor solución','Elegir la más barata siempre'],ans:1,fb:'El pensamiento estructurado requiere generar alternativas y evaluarlas con criterios explícitos (costo, impacto, viabilidad) antes de decidir.'},
+      {q:'¿Cuál es la utilidad del análisis causal en la resolución de problemas?',opts:['Permite encontrar al culpable del problema','Ayuda a identificar las razones de fondo para atacar el problema desde la raíz','Solo sirve para problemas técnicos','Reemplaza la necesidad de tomar decisiones'],ans:1,fb:'El análisis causal busca las causas raíz, no solo los síntomas. Atacar la causa evita que el problema se repita.'},
+    ],
+    checks:['Distingo entre una situación y un problema real','Puedo formular un problema de manera clara y delimitada','Identifico al menos 3 causas posibles de un problema','Genero alternativas de solución pertinentes','Fundamento mis decisiones con criterios explícitos'],
+    rubric:[
+      {nivel:'Alto',color:'hi',tx:'Identifica el problema con precisión, análisis profundo, soluciones viables, argumentación clara y estructurada.'},
+      {nivel:'Medio',color:'md',tx:'Identifica el problema de manera general, propone soluciones pertinentes con argumentación limitada.'},
+      {nivel:'Bajo',color:'lo',tx:'Dificultades para identificar el problema, soluciones poco pertinentes, argumentación débil.'},
+    ]
+  },
+  {
+    id:3, emoji:'🤝', color:'#D97706',
+    title:'Trabajo en equipo, adaptabilidad y resiliencia',
+    sub:'Integración socioemocional · 8 horas',
+    dur:'8 horas',
+    desc:'Desarrolla competencias para la colaboración efectiva en entornos laborales, la capacidad de adaptarse a cambios, gestionar situaciones de presión y responder de manera resiliente ante desafíos profesionales.',
+    competencia:'Colabora efectivamente en equipos, se adapta a condiciones cambiantes, demuestra habilidades de interacción, regulación emocional y resiliencia en situaciones complejas.',
+    unidades:[
+      {titulo:'Unidad 1 · Fundamentos del trabajo en equipo (2 h)',items:['Importancia del trabajo colaborativo','Roles dentro de un equipo de trabajo','Responsabilidades individuales y colectivas','Factores que afectan el desempeño del equipo']},
+      {titulo:'Unidad 2 · Colaboración y gestión de conflictos (3 h)',items:['Estrategias de colaboración efectiva','Comunicación en equipos de trabajo','Tipos de conflicto en el entorno laboral','Técnicas básicas para resolver conflictos','Construcción de acuerdos']},
+      {titulo:'Unidad 3 · Adaptabilidad y resiliencia profesional (3 h)',items:['Cambio en el entorno laboral','Adaptación a nuevas condiciones y equipos','Manejo del error y aprendizaje','Regulación emocional en el trabajo','Resiliencia profesional y persistencia']},
+    ],
+    fases:[
+      {n:'F1',label:'Activación',dur:'1 h',desc:'Diagnóstico de estilos de trabajo en equipo + reflexión: ¿Cómo reacciono cuando trabajo con otros?',color:'#7C3AED'},
+      {n:'F2',label:'Comprensión',dur:'3 h',desc:'Contenidos · Análisis de equipos exitosos y problemáticos · Roles y conflictos en escenarios simulados',color:'#2563EB'},
+      {n:'F3',label:'Aplicación guiada',dur:'2 h',desc:'Resolución de conflictos · Colaboración simulada · Análisis de reacciones ante cambios',color:'#0D9488'},
+      {n:'F4',label:'Integración',dur:'2 h',desc:'Reto organizacional en equipo',color:'#D97706'},
+    ],
+    caso:{
+      ttl:'Reto organizacional en equipo',
+      desc:'Organizados en equipos virtuales, deben resolver un reto que simula una situación organizacional real con cambios inesperados y necesidad de coordinar esfuerzos.',
+      desafios:['Organización y distribución de tareas','Manejo de desacuerdos internos','Adaptación a nuevas indicaciones','Toma de acuerdos bajo presión'],
+      ws:[
+        {lbl:'Describe una situación donde tuviste que trabajar con alguien muy diferente a ti. ¿Qué aprendiste?'},
+        {lbl:'¿Cómo reaccionas cuando el proyecto en el que trabajas cambia repentinamente de rumbo? ¿Qué estrategias usas?'},
+        {lbl:'Diseña un plan de 5 pasos para resolver un conflicto entre dos integrantes de tu equipo'},
+      ]
+    },
+    quiz:[
+      {q:'¿Cuál de los siguientes factores contribuye más al éxito de un equipo de trabajo?',opts:['Que todos tengan el mismo perfil y habilidades','Claridad de roles, comunicación abierta y metas compartidas','Que el líder tome todas las decisiones','Que los integrantes sean amigos fuera del trabajo'],ans:1,fb:'Los equipos efectivos combinan claridad de roles, comunicación abierta y metas compartidas. La diversidad de perfiles suele ser una ventaja, no un problema.'},
+      {q:'¿Qué es la resiliencia profesional?',opts:['La capacidad de no cometer errores','La habilidad de recuperarse ante adversidades y seguir funcionando eficazmente','Resistir el estrés sin pedir ayuda','Adaptarse solo a cambios positivos'],ans:1,fb:'La resiliencia es la capacidad de recuperarse ante dificultades, aprender de ellas y mantener el desempeño. No significa no sentir el impacto, sino saber gestionarlo.'},
+      {q:'Ante un conflicto con un compañero de trabajo, ¿cuál es el primer paso recomendado?',opts:['Reportarlo inmediatamente al jefe','Ignorarlo y esperar que se resuelva solo','Hablar directamente con la persona involucrada de manera respetuosa','Involucrar a todo el equipo para que opinen'],ans:2,fb:'El primer paso es abordar el conflicto directamente con la persona, en privado y con respeto. Escalar o ignorar suele empeorar la situación.'},
+      {q:'¿Qué significa "regulación emocional" en el contexto laboral?',opts:['Suprimir todas las emociones en el trabajo','La capacidad de reconocer y gestionar las propias emociones para mantener el desempeño','Expresar todas las emociones en el momento que se sienten','Depender del humor del jefe para trabajar bien'],ans:1,fb:'La regulación emocional no es suprimir las emociones, sino reconocerlas y gestionarlas para que no interfieran negativamente en el desempeño o las relaciones.'},
+    ],
+    checks:['Identifico mi rol predominante en equipos de trabajo','Conozco al menos 3 estrategias de resolución de conflictos','Puedo adaptarme a cambios repentinos con estrategias concretas','Entiendo qué es la resiliencia y cómo desarrollarla','Reconozco mis reacciones emocionales y cómo gestionarlas'],
+    rubric:[
+      {nivel:'Alto',color:'hi',tx:'Participa activamente, contribuye significativamente, gestiona conflictos de forma constructiva y se adapta a cambios.'},
+      {nivel:'Medio',color:'md',tx:'Participa de manera general, cumple tareas con limitaciones en adaptación o gestión de conflictos.'},
+      {nivel:'Bajo',color:'lo',tx:'Baja participación, dificultades para colaborar, no gestiona conflictos, escasa reflexión.'},
+    ]
+  },
+  {
+    id:4, emoji:'🚀', color:'#E11D48',
+    title:'Estrategias de inserción laboral y empleabilidad',
+    sub:'Módulo de cierre y transferencia · 8 horas',
+    dur:'8 horas',
+    desc:'Prepara al estudiante para su incorporación efectiva al mercado laboral mediante herramientas estratégicas de empleabilidad: comunicar su perfil profesional, participar en procesos de selección y posicionarse en entornos laborales reales.',
+    competencia:'Gestiona su proceso de inserción laboral elaborando y comunicando su perfil profesional de manera estratégica, participando efectivamente en procesos de selección y usando herramientas digitales.',
+    unidades:[
+      {titulo:'Unidad 1 · Empleabilidad y posicionamiento profesional (2 h)',items:['Concepto de empleabilidad','Tendencias actuales del mercado laboral','Perfil profesional y propuesta de valor','Identificación de competencias clave']},
+      {titulo:'Unidad 2 · Herramientas para la inserción laboral (3 h)',items:['Estructura y tipos de currículum vitae','Redacción orientada a logros y competencias','Carta de presentación (nociones básicas)','Uso de plataformas digitales de empleo','Presencia profesional en entornos digitales']},
+      {titulo:'Unidad 3 · Proceso de selección y entrevista laboral (3 h)',items:['Etapas del proceso de selección','Tipos de entrevistas laborales','Preparación de respuestas (experiencias, competencias, logros)','Lenguaje verbal y no verbal','Errores comunes en entrevistas']},
+    ],
+    fases:[
+      {n:'F1',label:'Activación',dur:'1 h',desc:'Diagnóstico: ¿Qué tan preparado estoy para conseguir empleo? + reflexión sobre expectativas laborales',color:'#7C3AED'},
+      {n:'F2',label:'Comprensión',dur:'3 h',desc:'Contenidos · Análisis de CV efectivos e inefectivos · Errores comunes en perfiles profesionales',color:'#2563EB'},
+      {n:'F3',label:'Aplicación guiada',dur:'2 h',desc:'Elaboración progresiva del CV · Propuesta de valor · Preparación de respuestas para entrevista',color:'#0D9488'},
+      {n:'F4',label:'Integración',dur:'2 h',desc:'Simulación del proceso de selección laboral',color:'#D97706'},
+    ],
+    caso:{
+      ttl:'Proceso de selección laboral',
+      desc:'Participas en un proceso simulado de selección que integra diferentes etapas, demostrando tus competencias profesionales ante un perfil de puesto específico.',
+      desafios:['Presentación de currículum vitae','Respuesta a preguntas de entrevista','Resolución de un microcaso','Evaluación del perfil profesional'],
+      ws:[
+        {lbl:'Escribe tu "propuesta de valor profesional" en máximo 3 oraciones: ¿Qué ofreces, qué te diferencia y para qué tipo de organización serías ideal?'},
+        {lbl:'Responde esta pregunta de entrevista: "Cuéntame de una situación en la que cometiste un error importante. ¿Qué hiciste al respecto?"',hint:'Usa el método STAR: Situación, Tarea, Acción, Resultado'},
+        {lbl:'¿Qué tres preguntas inteligentes le harías al entrevistador al final de la entrevista?'},
+      ]
+    },
+    quiz:[
+      {q:'¿Qué es la "propuesta de valor profesional"?',opts:['El salario que esperas ganar','Una descripción clara de lo que aportas, en qué te diferencias y qué tipo de empleador te conviene','Tu lista de logros académicos','El resumen de tu CV'],ans:1,fb:'La propuesta de valor articula qué ofreces al empleador, qué te hace único y qué tipo de organización se beneficiaría más de tu perfil.'},
+      {q:'¿Qué error es más común en los currículums de recién egresados?',opts:['Usar fuentes tipográficas llamativas','Listar funciones en lugar de logros y resultados concretos','Incluir foto profesional','Usar el formato cronológico'],ans:1,fb:'El error más frecuente es describir "responsabilidades" en lugar de logros medibles. Los empleadores quieren saber qué resultado generaste, no solo qué hacías.'},
+      {q:'¿Cuál es el objetivo principal del método STAR en una entrevista?',opts:['Memorizar respuestas de forma literal','Estructurar respuestas conductuales con evidencia concreta de experiencias pasadas','Impresionar con vocabulario técnico','Evitar responder preguntas incómodas'],ans:1,fb:'STAR (Situación, Tarea, Acción, Resultado) ayuda a dar respuestas estructuradas y con evidencia real, que son mucho más convincentes que respuestas genéricas.'},
+      {q:'¿Por qué es importante la presencia profesional en plataformas digitales como LinkedIn?',opts:['Para tener más "likes" y seguidores','Porque los empleadores buscan candidatos activamente en estas plataformas','Solo es útil para personas con mucha experiencia','Es innecesario si ya tienes buen CV'],ans:1,fb:'Más del 90% de los reclutadores usa LinkedIn para buscar candidatos. Un perfil bien construido amplía significativamente las oportunidades de inserción.'},
+    ],
+    checks:['Puedo articularmi propuesta de valor profesional en 3 oraciones','Tengo un CV orientado a logros (no solo funciones)','Conozco el método STAR para responder entrevistas','Sé qué preguntas NO hacer en una entrevista','Identifico al menos 3 plataformas digitales de empleo relevantes'],
+    rubric:[
+      {nivel:'Alto',color:'hi',tx:'Perfil profesional claro, CV bien estructurado, comunica competencias efectivamente y demuestra seguridad en entrevista.'},
+      {nivel:'Medio',color:'md',tx:'Perfil adecuado con áreas de mejora en comunicación o estructura del CV. Entrevista funcional pero limitada.'},
+      {nivel:'Bajo',color:'lo',tx:'Perfil poco claro, CV con deficiencias importantes, participación en entrevista poco estructurada.'},
+    ]
+  },
+  {
+    id:5, emoji:'🏆', color:'#C9A84C', esIntegrador:true,
+    title:'Módulo integrador · Evaluación de competencias',
+    sub:'Módulo de cierre y certificación · 8 horas',
+    dur:'8 horas',
+    desc:'Evalúa de manera integral el dominio de competencias desarrolladas a lo largo del diplomado, mediante la resolución de una situación laboral compleja y la presentación de evidencias que demuestren la capacidad del estudiante para insertarse y desempeñarse eficazmente.',
+    competencia:'Integra y aplica de manera articulada competencias de autogestión, comunicación, análisis, colaboración y empleabilidad en la resolución de una situación laboral simulada.',
+    unidades:[
+      {titulo:'Naturaleza del módulo',items:['Este módulo es evaluativo-integrador (no formativo)','Se basa en evaluación por desempeño y evidencias auténticas','Simula un contexto laboral real','Integra aprendizajes de los 5 módulos previos']},
+      {titulo:'Desempeños esperados',items:['Organizar y priorizar tareas (autogestión)','Analizar situaciones y proponer soluciones (pensamiento analítico)','Comunicar decisiones y argumentos (comunicación profesional)','Considerar el trabajo con otros (colaboración)','Actuar con criterio profesional (empleabilidad)']},
+      {titulo:'Condiciones de certificación',items:['Entrega completa del portafolio de desempeño','Alcanzar al menos nivel "Competente" en la rúbrica global','Demostrar coherencia entre evidencias y desempeño']},
+    ],
+    fases:[
+      {n:'Σ1',label:'Diagnóstico profesional',dur:'1 h',desc:'Síntesis de perfil y nivel de preparación para el mercado laboral',color:'#C9A84C'},
+      {n:'Σ2',label:'Resolución de caso',dur:'3 h',desc:'Caso integrador con identificación de problema, análisis, alternativas y decisión fundamentada',color:'#2563EB'},
+      {n:'Σ3',label:'Evidencias de competencias',dur:'2 h',desc:'Comunicación profesional · Autogestión · Colaboración documentada',color:'#0D9488'},
+      {n:'Σ4',label:'Reflexión y portafolio',dur:'2 h',desc:'Reflexión crítica final + integración del Portafolio de Desempeño Profesional Certificable',color:'#7C3AED'},
+    ],
+    caso:{
+      ttl:'Desempeño profesional en un entorno laboral realista',
+      desc:'Asumes el rol de un profesional recién incorporado a una organización y debes responder a una serie de demandas laborales complejas que requieren movilizar todas las competencias del diplomado.',
+      desafios:['Organización y priorización de tareas (autogestión)','Análisis del problema central (pensamiento crítico)','Comunicación de decisiones al equipo','Coordinación con colegas y jefatura','Presentación de evidencias profesionales'],
+      ws:[
+        {lbl:'Escenario: Llevas 2 semanas en tu primer empleo. Hoy recibes 4 tareas urgentes de diferentes personas, pero solo puedes completar 2. Describe cómo decides cuáles atender y cómo comunicas tu decisión.',hint:'Integra: autogestión + comunicación + pensamiento analítico'},
+        {lbl:'Reflexión final: ¿Qué competencias desarrollaste en el diplomado? ¿En cuáles te sientes más preparado/a? ¿Cuáles sigues necesitando fortalecer?'},
+        {lbl:'Propuesta de valor profesional actualizada: ¿Cómo te presentarías hoy a un empleador, integrando lo aprendido?'},
+      ]
+    },
+    quiz:[
+      {q:'¿Cuál es la función principal del módulo integrador?',opts:['Enseñar nuevos contenidos teóricos','Certificar competencias mediante desempeño real en un caso integrador','Evaluar solo los conocimientos memorizados','Resumir los contenidos de los módulos anteriores'],ans:1,fb:'El módulo integrador no enseña contenidos nuevos; su función es certificar que el estudiante puede movilizar todas las competencias en una situación laboral real.'},
+      {q:'¿Qué incluye el Portafolio de Desempeño Profesional Certificable?',opts:['Solo el currículum vitae','Diagnóstico, caso laboral, evidencias de comunicación, autogestión, colaboración y reflexión final','Un examen de conocimientos','Solo las calificaciones de los módulos'],ans:1,fb:'El portafolio integra múltiples evidencias: diagnóstico, resolución de caso, evidencias de competencias y reflexión crítica. Es un instrumento de certificación y empleabilidad.'},
+      {q:'¿Qué nivel se requiere para obtener la certificación del diplomado?',opts:['Nivel básico en la rúbrica global','Nivel competente o sobresaliente en la rúbrica global','Obtener 80% en el quiz de cada módulo','Entregar todos los trabajos sin importar la calidad'],ans:1,fb:'Para certificar, el estudiante debe alcanzar al menos el nivel "Competente" en la rúbrica analítica global, demostrando integración coherente de competencias.'},
+      {q:'¿Por qué este diplomado utiliza simulaciones laborales en lugar de solo evaluaciones de conocimiento?',opts:['Porque las simulaciones son más fáciles de calificar','Porque permite evaluar el desempeño real, no solo lo que se sabe, sino lo que se puede hacer','Porque es más rápido que los exámenes tradicionales','No hay diferencia real entre ambos enfoques'],ans:1,fb:'El enfoque por desempeño evalúa la transferencia: la capacidad de aplicar competencias en situaciones reales, lo que predice mejor el éxito laboral que los exámenes de conocimiento.'},
+    ],
+    checks:['Completé el diagnóstico profesional inicial','Resolví el caso laboral integrador con análisis documentado','Generé al menos una evidencia de comunicación profesional','Elaboré mi plan de autogestión dentro del caso','Escribí mi reflexión profesional final con áreas de mejora concretas'],
+    rubric:[
+      {nivel:'Sobresaliente',color:'hi',tx:'Integra consistentemente todas las competencias, autonomía, pensamiento crítico sólido, comunicación clara, reflexión profunda y transferencia al contexto real.'},
+      {nivel:'Competente',color:'md',tx:'Integra competencias adecuadamente, resuelve el caso con coherencia y demuestra habilidades suficientes para el desempeño profesional inicial.'},
+      {nivel:'Básico (no certifica)',color:'lo',tx:'Dificultades en la integración de competencias, decisiones poco fundamentadas, evidencias limitadas del desempeño profesional.'},
+    ]
+  }
+];
+
+/* ── STATE ── */
+let cur = 0;
+let curTab = 0;
+let done = new Set();
+const QS = BLOQUES.map(()=>({q:0,score:0}));
+
+/* ── SIDEBAR ── */
+function buildSb(){
+  const list = document.getElementById('sblist');
+  list.innerHTML = '';
+
+  const sec1 = document.createElement('div');
+  sec1.className = 'sb-sec'; sec1.textContent = 'Módulos formativos';
+  list.appendChild(sec1);
+
+  BLOQUES.forEach((b,i)=>{
+    if(b.esIntegrador) return;
+    const el = document.createElement('div');
+    el.className = 'sb-it' + (i===cur?' act':'') + (done.has(i)?' done':'');
+    el.innerHTML = `<div class="sb-num">${i+1}</div><div><div class="sb-nm">${b.title}</div><div class="sb-meta">${b.dur} · 3 unidades</div></div>`;
+    el.onclick = ()=>{cur=i;curTab=0;buildSb();render();};
+    list.appendChild(el);
+  });
+
+  const sec2 = document.createElement('div');
+  sec2.className = 'sb-sec'; sec2.textContent = 'Evaluación final';
+  list.appendChild(sec2);
+
+  const bi = BLOQUES[5];
+  const el = document.createElement('div');
+  el.className = 'sb-it integrador' + (cur===5?' act':'') + (done.has(5)?' done':'');
+  el.innerHTML = `<div class="sb-num">★</div><div><div class="sb-nm">${bi.title}</div><div class="sb-meta">${bi.dur} · Certificación</div></div>`;
+  el.onclick = ()=>{cur=5;curTab=0;buildSb();render();};
+  list.appendChild(el);
+
+  // progress
+  const pct = Math.round(done.size/6*100);
+  document.getElementById('tfill').style.width = pct+'%';
+  document.getElementById('tpct').textContent = pct+'%';
+}
+
+/* ── TABS ── */
+function setTab(n, btn){
+  curTab=n;
+  document.querySelectorAll('.ltab').forEach((t,i)=>t.classList.toggle('act',i===n));
+  render();
+}
+
+/* ── MAIN RENDER ── */
+function render(){
+  const b = BLOQUES[cur];
+  document.getElementById('bc-mod').textContent = `Módulo ${b.esIntegrador?'Integrador':cur+1}`;
+  const cw = document.getElementById('cw');
+  cw.innerHTML='';
+  cw.className='cw fade-up';
+
+  if(curTab===0) renderTeoria(cw,b);
+  else if(curTab===1) renderCaso(cw,b);
+  else if(curTab===2) renderQuiz(cw,b);
+  else renderChecklist(cw,b);
+}
+
+/* ── TEORÍA ── */
+function renderTeoria(wrap,b){
+  const intBadge = b.esIntegrador ? `<div class="int-badge">★ Módulo integrador · Certificación</div>` : '';
+  wrap.innerHTML=`
+  <div class="hero">
+    <div class="hero-pattern"></div>
+    <div class="hero-tag">${b.esIntegrador?'Módulo final':'Módulo '+(b.id+1)} · Diplomado SECNA</div>
+    <div class="hero-ttl">${b.emoji} ${b.title}</div>
+    <div class="hero-desc">${b.desc}</div>
+    <div class="hero-chips">
+      <span class="hchip g">⏱ ${b.dur}</span>
+      <span class="hchip b">💻 Virtual autodirigido</span>
+      <span class="hchip">${b.esIntegrador?'Certificación por desempeño':'Aprendizaje basado en desempeño'}</span>
+    </div>
+  </div>
+
+  <div class="prose">
+    ${intBadge}
+    <h2>Competencia del módulo</h2>
+    <div class="co g"><span class="co-ico">🎯</span><div class="co-bd">${b.competencia}</div></div>
+
+    <h2>Contenidos</h2>
+    ${b.temas ? b.temas.map(t=>`
+      <div class="tema-bloque">
+        <div class="tema-hd">
+          <div class="tema-hd-num">${t.num.toUpperCase()}</div>
+          <div class="tema-hd-ttl">${t.titulo}</div>
+        </div>
+        <div class="tema-body">
+          <div class="tema-sec">
+            <div class="tema-sec-ttl">Idea central</div>
+            <div class="tema-txt">${t.idea}</div>
+            <div class="tema-txt">${t.idea2}</div>
+          </div>
+          <div class="tema-sec">
+            <div class="tema-sec-ttl">Analogía clave</div>
+            <div class="analogy-box">
+              <div class="analogy-ttl">${t.analogia.ttl}</div>
+              <div class="analogy-row"><div class="analogy-ic">🚌</div><div class="analogy-tx"><strong>Antes:</strong> ${t.analogia.antes}</div></div>
+              <div class="analogy-row"><div class="analogy-ic">🗺️</div><div class="analogy-tx"><strong>Ahora:</strong> ${t.analogia.ahora}</div></div>
+            </div>
+          </div>
+          <div class="tema-sec">
+            <div class="tema-sec-ttl">Comparativo</div>
+            <div class="tbl-wrap">
+              <table class="cmp-tbl">
+                <thead><tr>${t.tabla.cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+                <tbody>${t.tabla.filas.map(f=>`<tr>${f.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+              </table>
+            </div>
+          </div>
+          <div class="tema-sec">
+            <div class="tema-sec-ttl">Ejemplo aplicado</div>
+            <div class="ejemplo-box">
+              <div class="ejemplo-ttl">${t.ejemplo.ttl}</div>
+              <div class="ejemplo-line">${t.ejemplo.tx}</div>
+            </div>
+          </div>
+          <div class="tema-sec">
+            <div class="tema-sec-ttl">Cambio fundamental</div>
+            <div class="co a" style="margin:0">
+              <span class="co-ico">⚡</span>
+              <div class="co-bd">
+                <strong>Antes →</strong> ${t.cambio.antes}<br><br>
+                <strong>Ahora →</strong> ${t.cambio.ahora}
+              </div>
+            </div>
+          </div>
+          <div class="tema-sec">
+            <div class="tema-sec-ttl">Error común</div>
+            <div class="co r" style="margin:0"><span class="co-ico">⚠️</span><div class="co-bd">${t.error}</div></div>
+          </div>
+          <div class="insight-box">
+            <div class="insight-ic">💡</div>
+            <div class="insight-tx">${t.insight}</div>
+          </div>
+          <div class="tema-sec">
+            <div class="tema-sec-ttl">Mini ejercicio de conciencia</div>
+            <div class="ejercicio-box">
+              <div class="ejercicio-ttl">Reflexiona</div>
+              <div class="ejercicio-tx">${t.ejercicio}</div>
+            </div>
+          </div>
+          <div class="tema-sec">
+            <div class="tema-sec-ttl">Competencias que desarrolla</div>
+            <div class="competencias-chips">${t.competencias.map(c=>`<span class="comp-chip">${c}</span>`).join('')}</div>
+          </div>
+          <div class="cierre-box"><div class="cierre-tx"><em>${t.cierre}</em></div></div>
+        </div>
+      </div>
+    `).join('') : b.unidades.map(u=>`
+      <h3>${u.titulo}</h3>
+      <ul>${u.items.map(i=>`<li>${i}</li>`).join('')}</ul>
+    `).join('')}
+
+    <h2>Secuencia de aprendizaje</h2>
+    <div class="phases">
+      ${b.fases.map(f=>`
+        <div class="phase">
+          <div class="phase-dot" style="background:${f.color}">${f.n}</div>
+          <div class="phase-bd">
+            <div class="phase-ttl">${f.label}</div>
+            <div class="phase-tx">${f.desc}</div>
+            <div class="phase-dur">${f.dur}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    ${!b.esIntegrador?`
+    <h2>Recursos didácticos</h2>
+    <div class="cards">
+      <div class="card"><div class="card-ico">📹</div><div class="card-ttl">Cápsulas de contenido</div><div class="card-tx">Videos o textos breves para cada unidad temática</div></div>
+      <div class="card"><div class="card-ico">📋</div><div class="card-ttl">Casos simulados</div><div class="card-tx">Situaciones laborales realistas para análisis y resolución</div></div>
+      <div class="card"><div class="card-ico">📝</div><div class="card-ttl">Guías de reflexión</div><div class="card-tx">Instrumentos estructurados de autoevaluación</div></div>
+      <div class="card"><div class="card-ico">🗂️</div><div class="card-ttl">Plantillas</div><div class="card-tx">Herramientas prácticas de planificación y registro</div></div>
+    </div>
+    `:`
+    <h2>Portafolio de Desempeño Profesional Certificable</h2>
+    <div class="ev-list">
+      <div class="ev-it"><div class="ev-n">1</div><div class="ev-bd"><div class="ev-ttl">Diagnóstico profesional inicial</div><div class="ev-tx">Síntesis del perfil y nivel de preparación</div></div></div>
+      <div class="ev-it"><div class="ev-n">2</div><div class="ev-bd"><div class="ev-ttl">Resolución de caso laboral</div><div class="ev-tx">Identificación del problema · Análisis · Alternativas · Decisión fundamentada</div></div></div>
+      <div class="ev-it"><div class="ev-n">3</div><div class="ev-bd"><div class="ev-ttl">Evidencia de comunicación profesional</div><div class="ev-tx">Video, respuesta a entrevista simulada o comunicación escrita formal</div></div></div>
+      <div class="ev-it"><div class="ev-n">4</div><div class="ev-bd"><div class="ev-ttl">Evidencia de autogestión</div><div class="ev-tx">Plan de trabajo y organización de tareas dentro del caso</div></div></div>
+      <div class="ev-it"><div class="ev-n">5</div><div class="ev-bd"><div class="ev-ttl">Reflexión profesional final</div><div class="ev-tx">Aprendizajes logrados · Competencias desarrolladas · Áreas de mejora</div></div></div>
+    </div>
+    `}
+
+    <h2>Criterios de evaluación (rúbrica)</h2>
+    <div class="rubric">
+      ${b.rubric.map(r=>`
+        <div class="rub-it ${r.color}">
+          <div class="rub-lbl">${r.nivel}</div>
+          <div class="rub-tx">${r.tx}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── CASO ── */
+function renderCaso(wrap,b){
+  const c = b.caso;
+  wrap.innerHTML=`
+  <div class="co dk" style="margin-bottom:20px">
+    <span class="co-ico">💼</span>
+    <div class="co-bd">
+      <strong>Actividad integradora · ${b.esIntegrador?'Módulo Integrador':'Módulo '+(b.id+1)}</strong>
+      Esta actividad aplica los conceptos del módulo en una simulación de contexto laboral real. Responde con base en tu análisis y criterio profesional.
+    </div>
+  </div>
+  <div class="case-wrap">
+    <div class="case-hd">
+      <div>
+        <div class="case-ttl">📋 ${c.ttl}</div>
+        <div class="case-sub">${b.title}</div>
+        <div class="case-dur">60 min · Simulación laboral</div>
+      </div>
+    </div>
+    <div class="case-body">
+      <div class="case-desc">${c.desc}</div>
+      ${c.feedback ? `
+      <div class="co r" style="margin-bottom:18px">
+        <span class="co-ico">📋</span>
+        <div class="co-bd"><strong>Retroalimentación que recibió</strong><ul>${c.feedback.map(f=>`<li>${f}</li>`).join('')}</ul></div>
+      </div>` : ''}
+      <h3 style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px;display:flex;align-items:center;gap:9px">Preguntas de análisis <span style="flex:1;height:1px;background:var(--blue-lt)"></span></h3>
+      <div class="cards" style="margin-bottom:20px">
+        ${c.desafios.map((d,i)=>`<div class="card"><div class="card-ico">${['🎯','⚡','💡','✅'][i%4]}</div><div class="card-tx">${d}</div></div>`).join('')}
+      </div>
+      <h3 style="font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px;display:flex;align-items:center;gap:9px">Espacio de trabajo <span style="flex:1;height:1px;background:var(--gold-lt)"></span></h3>
+      ${c.ws.map((f,i)=>`
+        <div class="ws-area">
+          <div class="ws-lbl">${i+1}. ${f.lbl}${f.hint?`<span style="font-size:10px;color:var(--gray);font-weight:300;text-transform:none;letter-spacing:0;margin-left:8px">→ ${f.hint}</span>`:''}</div>
+          <textarea class="ws-ta" placeholder="Escribe tu respuesta aquí..."></textarea>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── QUIZ ── */
+function renderQuiz(wrap,b){
+  const qs=QS[cur]; const q=b.quiz[qs.q]; const total=b.quiz.length;
+  wrap.innerHTML=`
+  <div class="quiz">
+    <div class="quiz-hd">
+      <div class="quiz-hd-ico">📝</div>
+      <div class="quiz-hd-tx">
+        <div class="quiz-hd-ttl">Evaluación · ${b.title}</div>
+        <div class="quiz-hd-sub" id="qsub">Pregunta ${qs.q+1} de ${total} · Aciertos: ${qs.score}/${total}</div>
+      </div>
+    </div>
+    <div class="quiz-prog"><div class="quiz-pf" id="qpf" style="width:${Math.round(qs.q/total*100)}%"></div></div>
+    <div class="quiz-body">
+      <div class="q-cnt">Pregunta ${qs.q+1} / ${total}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="q-opts">
+        ${q.opts.map((o,i)=>`<button class="q-opt" data-idx="${i}" onclick="selOpt(this,${i})">
+          <div class="q-let">${String.fromCharCode(65+i)}</div>
+          <div class="q-opt-tx">${o}</div>
+        </button>`).join('')}
+      </div>
+      <div class="q-fb" id="qfb"></div>
+    </div>
+    <div class="quiz-ft">
+      <div class="q-sc" id="qsc">Aciertos: ${qs.score} / ${total}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-gold" id="qchk" onclick="checkQ(${cur})" disabled>Verificar</button>
+        <button class="btn btn-b" id="qnxt" onclick="nextQ(${cur})" style="display:none">Siguiente →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function selOpt(btn,idx){
+  if(document.getElementById('qnxt')?.style.display!=='none') return;
+  document.querySelectorAll('.q-opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  window._sel=idx;
+  const chk=document.getElementById('qchk'); if(chk) chk.disabled=false;
+}
+
+function checkQ(lid){
+  const qs=QS[lid]; const b=BLOQUES[lid]; const q=b.quiz[qs.q]; const sel=window._sel;
+  if(sel===undefined) return;
+  document.querySelectorAll('.q-opt').forEach((btn,i)=>{
+    if(i===q.ans) btn.classList.add('ok');
+    else if(i===sel&&i!==q.ans) btn.classList.add('bad');
+    btn.onclick=null;
+  });
+  const fb=document.getElementById('qfb');
+  if(sel===q.ans){qs.score++;fb.className='q-fb show ok-fb';fb.innerHTML='✅ <strong>¡Correcto!</strong> '+q.fb;}
+  else{fb.className='q-fb show bad-fb';fb.innerHTML='❌ <strong>Incorrecto.</strong> '+q.fb;}
+  document.getElementById('qchk').style.display='none';
+  const nxt=document.getElementById('qnxt'); nxt.style.display='inline-flex';
+  document.getElementById('qsub').textContent=`Pregunta ${qs.q+1} de ${b.quiz.length} · Aciertos: ${qs.score}/${b.quiz.length}`;
+  document.getElementById('qsc').textContent=`Aciertos: ${qs.score} / ${b.quiz.length}`;
+  if(qs.q===b.quiz.length-1){nxt.textContent=`Ver resultado (${qs.score}/${b.quiz.length})`;nxt.onclick=()=>showResult(lid);}
+  window._sel=undefined;
+}
+
+function nextQ(lid){QS[lid].q++;setTab(2,null);}
+
+function showResult(lid){
+  const qs=QS[lid]; const b=BLOQUES[lid];
+  const pct=Math.round(qs.score/b.quiz.length*100);
+  document.querySelector('.quiz').innerHTML=`<div style="padding:36px;text-align:center">
+    <div style="font-size:52px;margin-bottom:14px">${pct>=80?'🏆':pct>=60?'👍':'📚'}</div>
+    <div style="font-family:var(--fd);font-size:24px;color:var(--ink);margin-bottom:8px">${pct>=80?'¡Excelente dominio!':pct>=60?'Buen trabajo':'Repasa y vuelve a intentarlo'}</div>
+    <div style="font-size:14px;color:var(--gray);margin-bottom:22px;font-weight:300">Obtuviste <strong style="font-size:24px;color:var(--blue)">${qs.score}</strong> de <strong>${b.quiz.length}</strong> respuestas correctas (${pct}%)</div>
+    ${pct>=60?`<div style="margin-bottom:22px"><button class="btn btn-gold" onclick="markDone(${lid})">✅ Marcar módulo como completado</button></div>`:''}
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-out" onclick="resetQ(${lid})">🔄 Repetir evaluación</button>
+      <button class="btn btn-b" onclick="setTab(3,null)">Ver checklist →</button>
+    </div>
+  </div>`;
+}
+
+function markDone(lid){
+  done.add(lid);
+  buildSb();
+  showResult(lid);
+}
+
+function resetQ(lid){QS[lid]={q:0,score:0};window._sel=undefined;setTab(2,null);}
+
+/* ── CHECKLIST ── */
+function renderChecklist(wrap,b){
+  wrap.innerHTML=`
+  <div style="background:var(--ink);border-radius:var(--r2);padding:18px 24px;margin-bottom:18px;border:1px solid rgba(255,255,255,.06)">
+    <div style="font-family:var(--fd);font-size:18px;color:var(--white);margin-bottom:4px">✅ Lista de verificación</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.4);font-weight:300">Confirma que dominas estos conceptos antes de avanzar.</div>
+  </div>
+  <div class="cl">
+    <div class="cl-hd">${b.title}</div>
+    ${b.checks.map(c=>`<div class="cl-it" onclick="toggleCheck(this)"><div class="cl-bx"></div><div class="cl-tx">${c}</div></div>`).join('')}
+  </div>
+  <div class="co b" style="margin-top:14px">
+    <span class="co-ico">💡</span>
+    <div class="co-bd">Si no puedes marcar todos los elementos con confianza, regresa a la pestaña de Teoría antes de avanzar. El dominio de estos conceptos es prerequisito para los módulos siguientes.</div>
+  </div>`;
+}
+
+function toggleCheck(el){
+  el.classList.toggle('chk');
+  el.querySelector('.cl-bx').textContent = el.classList.contains('chk') ? '✓' : '';
+}
+
+/* ── SIDEBAR TOGGLE ── */
+function toggleSb(){document.getElementById('sb').classList.toggle('shut');}
+
+/* ── INIT ── */
+buildSb();
+render();
+</script>
+</body>
+</html>

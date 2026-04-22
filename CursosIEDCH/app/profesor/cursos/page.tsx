@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { Edit, BookOpen, Clock, Activity, History } from 'lucide-react'
+import { Edit, BookOpen, Clock, Activity, History, Mail, Loader2 } from 'lucide-react'
 
 export default function ProfesorCursosPage() {
     const [cursos, setCursos] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [notifying, setNotifying] = useState<string | null>(null)
     const supabase = createClient()
 
     useEffect(() => {
@@ -26,6 +27,27 @@ export default function ProfesorCursosPage() {
         }
         fetchCursos()
     }, [supabase])
+
+    const handleNotify = async (cursoId: string, titulo: string) => {
+        try {
+            setNotifying(cursoId)
+            const res = await fetch('/api/profesor/notificar-reunion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cursoId })
+            })
+            const data = await res.json()
+            if (res.ok) {
+                alert(`✅ Notificación enviada con éxito a los alumnos de: ${titulo}`)
+            } else {
+                throw new Error(`${data.error}\n\nDetalles: ${data.details || 'Sin detalles extra'}`)
+            }
+        } catch (error: any) {
+            alert(error.message)
+        } finally {
+            setNotifying(null)
+        }
+    }
 
     if (loading) return (
         <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-zinc-50">
@@ -58,11 +80,28 @@ export default function ProfesorCursosPage() {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {cursos.map(curso => (
                             <div key={curso.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col hover:border-blue-200 transition">
-                                <h3 className="font-bold text-xl text-gray-900 mb-2 leading-tight">{curso.titulo}</h3>
+                                <div className="flex justify-between items-start mb-2">
+                                    <h3 className="font-bold text-xl text-gray-900 leading-tight">{curso.titulo}</h3>
+                                    {(curso.reunion_url || curso.nota_profesor) && (
+                                        <button 
+                                            onClick={() => handleNotify(curso.id, curso.titulo)}
+                                            disabled={notifying === curso.id}
+                                            title="Enviar por correo link de reunión y avisos a los alumnos inscritos"
+                                            className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 flex items-center justify-center transition-colors disabled:opacity-50"
+                                        >
+                                            {notifying === curso.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                                        </button>
+                                    )}
+                                </div>
                                 <div className="text-sm text-gray-500 space-y-1 mb-6 flex-grow">
                                     <p className="flex items-center"><Clock className="h-4 w-4 mr-1.5" /> {curso.duracion}</p>
                                     <p className="flex items-center"><Activity className="h-4 w-4 mr-1.5" /> Estado: <span className="ml-1 capitalize text-blue-600 font-medium">{curso.estado}</span></p>
                                     <p className="flex items-center font-semibold text-gray-700 mt-2">${curso.precio} MXN</p>
+                                    {(curso.reunion_url || curso.nota_profesor) && (
+                                        <p className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full inline-block mt-2">
+                                            ✓ Tiene info de reunión/avisos
+                                        </p>
+                                    )}
                                 </div>
                                 
                                 <div className="flex space-x-2 mt-auto border-t border-gray-50 pt-4">

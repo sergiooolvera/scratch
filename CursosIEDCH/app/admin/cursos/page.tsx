@@ -44,6 +44,21 @@ export default function AdminCursosPage() {
         if (!error) {
             setCursos(cursos.map(c => c.id === cursoId ? { ...c, estado: newEstado } : c))
 
+            // AUTO-NOTIFY on approval
+            if (newEstado === 'aprobado') {
+                try {
+                    fetch('/api/profesor/notificar-reunion', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cursoId })
+                    }).then(res => res.json()).then(data => {
+                        console.log('[AUTO-NOTIFY] Status:', data)
+                    })
+                } catch (notifyErr) {
+                    console.error('[AUTO-NOTIFY-ERROR]', notifyErr)
+                }
+            }
+
             if (newEstado === 'rechazado') {
                 const cursoRechazado = cursos.find(c => c.id === cursoId);
                 try {
@@ -128,6 +143,20 @@ export default function AdminCursosPage() {
         } catch (err: any) {
             alert("Error aprobando cambios: " + err.message);
         }
+    }
+
+    const handleSuperCursoToggle = async (cursoId: string, checked: boolean) => {
+        const { error } = await supabase
+            .from('ie_cursos')
+            .update({ es_super_curso: checked })
+            .eq('id', cursoId)
+
+        if (error) {
+            alert('Error actualizando Super Curso: ' + error.message)
+            return
+        }
+
+        setCursos(cursos.map(c => c.id === cursoId ? { ...c, es_super_curso: checked } : c))
     }
 
     const handleRechazarCambios = async (cursoId: string) => {
@@ -263,6 +292,7 @@ export default function AdminCursosPage() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curso</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Instructor</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Super Curso</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado actual</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Revisar Contenido</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
@@ -278,6 +308,17 @@ export default function AdminCursosPage() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.titulo}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.creador?.nombre || c.instructor}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.precio}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <label className="inline-flex items-center gap-2 select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!c.es_super_curso}
+                                            onChange={(e) => handleSuperCursoToggle(c.id, e.target.checked)}
+                                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                        />
+                                        <span className="text-xs font-semibold text-gray-700">Super</span>
+                                    </label>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${c.estado === 'aprobado' ? 'bg-green-100 text-green-800' : c.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
                                         {c.estado}
@@ -337,13 +378,13 @@ export default function AdminCursosPage() {
                             </tr>
                         ))}
                         {cursos.length === 0 && !loading && (
-                            <tr><td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">No hay cursos creados</td></tr>
+                            <tr><td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">No hay cursos creados</td></tr>
                         )}
-                        {loading && <tr><td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">Cargando...</td></tr>}
+                        {loading && <tr><td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">Cargando...</td></tr>}
                     </tbody>
-                </table>
-                </div>
-            </div>
+                 </table>
+                 </div>
+             </div>
         </div>
     )
 }

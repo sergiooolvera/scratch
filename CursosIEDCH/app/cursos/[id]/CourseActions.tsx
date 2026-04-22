@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { X, UploadCloud, Ticket, CreditCard, Banknote, AlertCircle, Lock } from 'lucide-react'
+import { X, UploadCloud, Ticket, CreditCard, Banknote, AlertCircle, Lock, Store } from 'lucide-react'
 
 export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso }: {
     cursoId: string,
@@ -19,6 +19,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     const [loading, setLoading] = useState(false)
     const [showCupon, setShowCupon] = useState(false)
     const [showEfectivo, setShowEfectivo] = useState(false)
+    const [showOxxo, setShowOxxo] = useState(false)
     const [showPagoConstancia, setShowPagoConstancia] = useState(false)
     const [showTransferFormForConstancia, setShowTransferFormForConstancia] = useState(false)
 
@@ -109,7 +110,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
         }
     }
 
-    const handleSubirPago = async (e: React.FormEvent) => {
+    const handleSubirPago = async (e: React.FormEvent, metodo: string = 'transferencia') => {
         e.preventDefault()
         if (!file) {
             setPagoMensaje('Por favor, selecciona la imagen o PDF del comprobante.')
@@ -141,7 +142,9 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                 user_id: userId,
                 curso_id: cursoId,
                 comprobante_url: publicURL,
-                estado: 'pendiente'
+                estado: 'pendiente',
+                metodo_pago: metodo,
+                notas: metodo === 'oxxo' ? 'Pago reportado por OXXO' : ''
             })
 
             if (dbError) throw dbError
@@ -152,6 +155,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
             // Opcional: Cerrar modal después de un rato
             setTimeout(() => {
                 setShowEfectivo(false)
+                setShowOxxo(false)
                 setPagoMensaje('')
             }, 5000)
 
@@ -212,7 +216,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     if (!isPagado) {
         return (
             <div className="w-full space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <button
                         onClick={() => handleComprarStrípe()}
                         disabled={loading}
@@ -223,7 +227,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                     </button>
 
                     <button
-                        onClick={() => setShowEfectivo(true)}
+                        onClick={() => { setShowEfectivo(true); setShowOxxo(false); setShowCupon(false); }}
                         disabled={loading}
                         className="flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-green-600 hover:bg-green-700 transition"
                     >
@@ -232,7 +236,16 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                     </button>
 
                     <button
-                        onClick={() => setShowCupon(true)}
+                        onClick={() => { setShowOxxo(true); setShowEfectivo(false); setShowCupon(false); }}
+                        disabled={loading}
+                        className="flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition"
+                    >
+                        <Store className="w-5 h-5 mr-2" />
+                        Reportar Pago Oxxo
+                    </button>
+
+                    <button
+                        onClick={() => { setShowCupon(true); setShowEfectivo(false); setShowOxxo(false); }}
                         disabled={loading}
                         className="flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-yellow-800 bg-yellow-100 hover:bg-yellow-200 transition"
                     >
@@ -293,7 +306,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                             <p className="mt-3 text-xs text-gray-500">Una vez realizado el pago, toma una foto del ticket o guarda el comprobante de transferencia y súbelo aquí.</p>
                         </div>
 
-                        <form onSubmit={handleSubirPago} className="flex flex-col gap-4">
+                        <form onSubmit={(e) => handleSubirPago(e, 'transferencia')} className="flex flex-col gap-4">
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer" onClick={() => document.getElementById('comprobante-upload')?.click()}>
                                 <UploadCloud className="w-10 h-10 text-gray-400 mb-2" />
                                 <span className="text-sm font-medium text-gray-600">
@@ -323,14 +336,51 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                         )}
                     </div>
                 )}
+
+                {/* MODAL OXXO */}
+                {showOxxo && (
+                    <div className="mt-4 p-6 bg-white border border-red-200 shadow-xl rounded-xl flex flex-col relative transition-all animate-in fade-in slide-in-from-top-4">
+                        <button onClick={() => setShowOxxo(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center"><Store className="mr-2 text-red-600" /> Reportar Pago en Oxxo</h3>
+                        
+                        <p className="text-sm text-gray-600 mb-4">Sube una foto clara de tu ticket de depósito o transferencia recibida de Oxxo.</p>
+
+                        <form onSubmit={(e) => handleSubirPago(e, 'oxxo')} className="flex flex-col gap-4">
+                            <div className="border-2 border-dashed border-red-300 rounded-lg p-6 flex flex-col items-center justify-center bg-red-50 hover:bg-red-100 transition cursor-pointer" onClick={() => document.getElementById('comprobante-oxxo-upload')?.click()}>
+                                <UploadCloud className="w-10 h-10 text-red-400 mb-2" />
+                                <span className="text-sm font-medium text-red-600">
+                                    {file ? file.name : 'Haz clic para seleccionar tu ticket de Oxxo'}
+                                </span>
+                                <input
+                                    id="comprobante-oxxo-upload"
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    className="hidden"
+                                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={uploading || !file}
+                                className="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50 flex items-center justify-center transition"
+                            >
+                                {uploading ? 'Enviando...' : 'Enviar Ticket para Revisión'}
+                            </button>
+                        </form>
+                        {pagoMensaje && (
+                            <p className={`mt-3 text-sm font-medium text-center ${pagoMensaje.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+                                {pagoMensaje}
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
         )
     }
 
     // Determinar la URL de la constancia según si requiere examen o no
-    const constanciaHref = requiereExamen
-        ? isAprobado ? `/cursos/${cursoId}/certificado` : null
-        : `/cursos/${cursoId}/constancia`
+    const constanciaHref = `/cursos/${cursoId}/certificado`
 
     // Puede ver la constancia si: no requiere pago completo O ya pagó completo
     const puedeVerConstancia = !constanciaRequierePago
@@ -348,7 +398,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                 {!requiereExamen ? (
                     puedeVerConstancia ? (
                         <Link
-                            href={`/cursos/${cursoId}/constancia`}
+                            href={`/cursos/${cursoId}/certificado`}
                             className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600"
                         >
                             Obtener Constancia

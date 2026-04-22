@@ -61,7 +61,7 @@ export default function Navbar() {
                 <div className="flex justify-between h-16">
                     <div className="flex">
                         <div className="flex-shrink-0 flex items-center">
-                             <a href="/" className="flex items-center space-x-2">
+                             <a href="https://iedch-2.vercel.app" className="flex items-center space-x-2">
                                 <div className="flex flex-col space-y-[-4px] transform scale-75 origin-left">
                                     <div className="w-8 h-1.5 bg-[#D4AF37] skew-x-[-20deg]"></div>
                                     <div className="w-8 h-1.5 bg-[#002060] skew-x-[-20deg] ml-1"></div>

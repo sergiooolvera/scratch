@@ -1,30 +1,23 @@
 const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
+require('dotenv').config({ path: '.env.local' });
 
-const envFile = fs.readFileSync('c:\\Users\\sergi\\.gemini\\antigravity\\scratch\\CursosIEDCH\\.env.local', 'utf-8');
-const lines = envFile.split('\n');
-const envVars = {};
-lines.forEach(line => {
-    const parts = line.split('=');
-    if (parts.length >= 2) {
-        envVars[parts[0].trim()] = parts.slice(1).join('=').trim().replace(/"/g, '');
-    }
-});
-const supabase = createClient(envVars['NEXT_PUBLIC_SUPABASE_URL'], envVars['SUPABASE_SERVICE_ROLE_KEY']);
+async function listColumns() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
 
-async function testQuery() {
-    console.log("Fetching ie_compras...");
-    const { data, error } = await supabase.from("ie_compras").select("*").limit(1);
-
-    if (error) {
-        console.error("ERROR:", error);
-    } else {
-        console.log("DATA:", data);
-        if (data && data.length > 0) {
-            console.log("COLUMNS:", Object.keys(data[0]));
-        } else {
-            console.log("No data found.");
-        }
-    }
+  console.log('[DEBUG] Consultando columnas de ie_pagos_manuales...');
+  const { data, error } = await supabase.rpc('get_table_columns', { t_name: 'ie_pagos_manuales' });
+  
+  if (error) {
+    // Fallback si el RPC no existe: usar una query directa
+    const { data: cols, error: qErr } = await supabase.from('ie_pagos_manuales').select('*').limit(1);
+    if (qErr) return console.error(qErr);
+    console.log('Columnas encontradas:', Object.keys(cols?.[0] || {}));
+  } else {
+    console.log('Columnas:', data);
+  }
 }
-testQuery();
+
+listColumns();

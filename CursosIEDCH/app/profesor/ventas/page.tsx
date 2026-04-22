@@ -18,18 +18,12 @@ export default function ProfesorVentasPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        const { data: profile } = await supabase
-            .from('ie_profiles')
-            .select('nombre')
-            .eq('id', user.id)
-            .single()
-
-        const nombreProf = profile?.nombre || 'NombreDesconocidoParaFallo'
-
-        const { data: misCursos } = await supabase
+        const { data: misCursos, error: cursosError } = await supabase
             .from('ie_cursos')
-            .select('id, titulo, precio')
-            .or(`creado_por.eq.${user.id},instructor.ilike.%${nombreProf}%`)
+            .select('id, titulo, precio, porcentaje_profesor')
+            .eq('creado_por', user.id)
+
+        console.log('[ventas] misCursos:', misCursos, 'error:', cursosError)
 
         if (!misCursos || misCursos.length === 0) {
             setVentas([])
@@ -58,11 +52,12 @@ export default function ProfesorVentasPage() {
                 const cursoRef = misCursos.find(c => c.id === compra.curso_id)
                 const fallback = compra.pago_completo === false ? 0 : (cursoRef?.precio || 0);
                 // Si existe monto_pagado, lo usamos. Si compran viejo sin él, cae al precio original o 0 si usó cupón total
-                const monto = compra.monto_pagado !== null && compra.monto_pagado !== undefined 
+                const montoPagadoPorAlumno = compra.monto_pagado !== null && compra.monto_pagado !== undefined 
                     ? Number(compra.monto_pagado) 
                     : Number(fallback)
-                total += Number(monto)
-                return { ...compra, curso_titulo: cursoRef?.titulo || 'Desconocido', monto }
+                
+                total += montoPagadoPorAlumno;
+                return { ...compra, curso_titulo: cursoRef?.titulo || 'Desconocido', monto: montoPagadoPorAlumno }
             })
 
             const userIds = [...new Set(misVentasMapping.map(v => v.user_id))]
@@ -130,8 +125,8 @@ export default function ProfesorVentasPage() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alumno</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Curso</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID de Compra</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -146,8 +141,8 @@ export default function ProfesorVentasPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{venta.alumno_nombre}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{venta.curso_titulo}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 font-medium">${Number(venta.monto).toFixed(2)}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-400 font-mono">{venta.id.split('-')[0]}...</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold text-right">${Number(venta.monto).toFixed(2)}</td>
                                     </tr>
                                 ))
                             ) : (

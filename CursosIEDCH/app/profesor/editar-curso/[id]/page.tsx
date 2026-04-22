@@ -3,15 +3,25 @@
 import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, CheckCircle, ArrowLeft, History } from 'lucide-react'
+import { Trash2, CheckCircle, ArrowLeft, History, Activity, FileText, Plus } from 'lucide-react'
 import Link from 'next/link'
 
 type Modulo = {
     id?: string;
     titulo: string;
-    tipo: 'video' | 'pdf';
+    tipo: 'video' | 'pdf' | 'html';
     url_contenido: string;
     archivoPdf: File | null;
+}
+
+type PreguntaParsed = {
+    id?: string;
+    pregunta: string;
+    opcion_a: string;
+    opcion_b: string;
+    opcion_c: string;
+    opcion_d: string;
+    respuesta_correcta: string;
 }
 
 export default function EditarCursoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -23,6 +33,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         duracion: '',
         precio: 0,
         instructor: '',
+        reunion_url: '',
+        nota_profesor: '',
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
@@ -31,6 +43,13 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [modulos, setModulos] = useState<Modulo[]>([])
     const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
     
+    // Exam state
+    const [requiereExamen, setRequiereExamen] = useState(false)
+    const [minAprobacion, setMinAprobacion] = useState(80)
+    const [preguntasExtraidas, setPreguntasExtraidas] = useState<PreguntaParsed[]>([])
+    const [isParsing, setIsParsing] = useState(false)
+    const [archivoExamen, setArchivoExamen] = useState<File | null>(null)
+
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [mensaje, setMensaje] = useState('')
@@ -60,10 +79,13 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 duracion: curso.duracion,
                 precio: curso.precio,
                 instructor: curso.instructor,
+                reunion_url: curso.reunion_url || '',
+                nota_profesor: curso.nota_profesor || '',
             })
             setVigenciaAnos(curso.vigencia_anos || 3)
             setEstadoActual(curso.estado)
             setRequierePagoCompleto(curso.requiere_pago_completo || false)
+            setRequiereExamen(curso.requiere_examen || false)
 
             if (curso.cambios_pendientes && curso.estado === 'aprobado') {
                 const borrador = curso.cambios_pendientes;
@@ -75,17 +97,35 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     duracion: borrador.duracion || curso.duracion,
                     precio: borrador.precio || curso.precio,
                     instructor: borrador.instructor || curso.instructor,
+                    reunion_url: borrador.reunion_url || curso.reunion_url || '',
+                    nota_profesor: borrador.nota_profesor || curso.nota_profesor || '',
                 })
                 setVigenciaAnos(borrador.vigencia_anos || curso.vigencia_anos || 3)
+                setRequiereExamen(borrador.requiere_examen !== undefined ? borrador.requiere_examen : (curso.requiere_examen || false))
+                
                 if (borrador.modulos) {
                     setModulos(borrador.modulos.map((m: any) => ({
                         id: m.id,
                         titulo: m.titulo,
-                        tipo: m.tipo || (m.url_contenido && m.url_contenido.includes('.pdf') ? 'pdf' : 'video'),
+                        tipo: m.tipo || (m.url_contenido && (m.url_contenido.includes('.pdf') ? 'pdf' : (m.url_contenido.includes('.htm') ? 'html' : 'video'))),
                         url_contenido: m.url_contenido,
                         archivoPdf: null,
                     })))
                 }
+                
+                if (borrador.examen) {
+                    setMinAprobacion(borrador.examen.min_aprobacion);
+                    setPreguntasExtraidas(borrador.examen.preguntas || []);
+                } else {
+                    // Cargar examen original si hay borrador pero no del examen
+                    const { data: exm } = await supabase.from('ie_examenes').select('*').eq('curso_id', id).single();
+                    if (exm) {
+                        setMinAprobacion(exm.min_aprobacion);
+                        const { data: pregs } = await supabase.from('ie_preguntas').select('*').eq('examen_id', exm.id).order('orden', { ascending: true });
+                        if (pregs) setPreguntasExtraidas(pregs);
+                    }
+                }
+
                 setLoading(false)
                 return
             }
@@ -101,10 +141,18 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setModulos(mods.map(m => ({
                     id: m.id,
                     titulo: m.titulo,
-                    tipo: m.url_contenido.includes('.pdf') ? 'pdf' : 'video',
+                    tipo: m.url_contenido.includes('.pdf') ? 'pdf' : (m.url_contenido.includes('.htm') ? 'html' : 'video'),
                     url_contenido: m.url_contenido,
                     archivoPdf: null,
                 })))
+            }
+
+            // Cargar Examen normal
+            const { data: exm } = await supabase.from('ie_examenes').select('*').eq('curso_id', id).single();
+            if (exm) {
+                setMinAprobacion(exm.min_aprobacion);
+                const { data: pregs } = await supabase.from('ie_preguntas').select('*').eq('examen_id', exm.id).order('orden', { ascending: true });
+                if (pregs) setPreguntasExtraidas(pregs);
             }
             
             setLoading(false)
@@ -133,9 +181,62 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
         if (field === 'tipo') {
             if (value === 'video') nuevosModulos[index].archivoPdf = null
-            if (value === 'pdf') nuevosModulos[index].url_contenido = ''
+            if (value === 'pdf' || value === 'html') nuevosModulos[index].url_contenido = ''
         }
         setModulos(nuevosModulos)
+    }
+
+    const handleUploadExamenHelper = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        setArchivoExamen(file);
+        setMensaje('');
+
+        if (file) {
+            setIsParsing(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/parse-exam', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.questions) {
+                    setPreguntasExtraidas(prev => [...prev, ...data.questions]);
+                    setMensaje(`¡Examen analizado! Se detectaron ${data.questions.length} preguntas adicionales.`);
+                } else {
+                    setMensaje('Error leyendo el PDF del examen: ' + (data.error || 'Formato no válido.'));
+                }
+            } catch (err) {
+                setMensaje('Error de conexión al leer el PDF.');
+            } finally {
+                setIsParsing(false);
+            }
+        }
+    }
+
+    const handleAgregarPreguntaManual = () => {
+        setPreguntasExtraidas([...preguntasExtraidas, {
+            pregunta: '',
+            opcion_a: '',
+            opcion_b: '',
+            opcion_c: '',
+            opcion_d: '',
+            respuesta_correcta: 'A'
+        }]);
+    }
+
+    const handleEliminarPreguntaManual = (index: number) => {
+        setPreguntasExtraidas(preguntasExtraidas.filter((_, i) => i !== index));
+    }
+
+    const handlePreguntaChange = (index: number, field: keyof PreguntaParsed, value: string) => {
+        const nuevas = [...preguntasExtraidas];
+        nuevas[index] = { ...nuevas[index], [field]: value };
+        setPreguntasExtraidas(nuevas);
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -157,7 +258,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         }
 
         for (const m of modulos) {
-            if (!m.titulo || (m.tipo === 'video' && !m.url_contenido) || (m.tipo === 'pdf' && !m.url_contenido && !m.archivoPdf)) {
+            if (!m.titulo || (m.tipo === 'video' && !m.url_contenido) || (m.tipo !== 'video' && !m.url_contenido && !m.archivoPdf)) {
                 setMensaje('Completa los datos de todos los módulos nuevos.')
                 setSaving(false)
                 return
@@ -168,12 +269,25 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         for (let i = 0; i < modulos.length; i++) {
             let finalUrl = modulos[i].url_contenido;
 
-            // Subir PDF si es uno nuevo
-            if (modulos[i].tipo === 'pdf' && modulos[i].archivoPdf) {
+            // Subir documento (PDF/HTML) si es uno nuevo
+            if (modulos[i].tipo !== 'video' && modulos[i].archivoPdf) {
                 const file = modulos[i].archivoPdf as File;
                 const fileExt = file.name.split('.').pop()
                 const fileName = `modulo_${id}_${i}_${Date.now()}.${fileExt}`
-                await supabase.storage.from('cursos_contenido').upload(fileName, file)
+
+                const ext = (fileExt || '').toLowerCase()
+                const contentType = ext === 'pdf'
+                    ? 'application/pdf'
+                    : (ext === 'html' || ext === 'htm' || file.type === 'text/html')
+                        ? 'text/html; charset=utf-8'
+                        : (file.type || 'application/octet-stream')
+
+                const { error: upErr } = await supabase.storage.from('cursos_contenido').upload(fileName, file, { contentType })
+                if (upErr) {
+                    setMensaje('Error subiendo contenido: ' + upErr.message)
+                    setSaving(false)
+                    return
+                }
                 finalUrl = supabase.storage.from('cursos_contenido').getPublicUrl(fileName).data.publicUrl
             }
 
@@ -198,7 +312,14 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 instructor: formData.instructor,
                 vigencia_anos: vigenciaAnos,
                 requiere_pago_completo: requierePagoCompleto,
-                modulos: modulosFinales
+                reunion_url: formData.reunion_url?.trim() || null,
+                nota_profesor: formData.nota_profesor?.trim() || null,
+                modulos: modulosFinales,
+                requiere_examen: requiereExamen,
+                examen: requiereExamen ? {
+                    min_aprobacion: minAprobacion,
+                    preguntas: preguntasExtraidas.map((p, idx) => ({ ...p, orden: idx + 1 }))
+                } : null
             }
             const { error: errorDraft } = await supabase.from('ie_cursos').update({ cambios_pendientes: borrador }).eq('id', id)
             if (errorDraft) {
@@ -219,6 +340,9 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     instructor: formData.instructor,
                     vigencia_anos: vigenciaAnos,
                     requiere_pago_completo: requierePagoCompleto,
+                    reunion_url: formData.reunion_url?.trim() || null,
+                    nota_profesor: formData.nota_profesor?.trim() || null,
+                    requiere_examen: requiereExamen,
                     estado: 'pendiente', 
                 })
                 .eq('id', id)
@@ -243,6 +367,34 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     await supabase.from('ie_curso_modulos').insert(moduloPayload)
                 }
             }
+
+            // Guardar Examen
+            if (requiereExamen) {
+                setMensaje('Actualizando examen final...')
+                let { data: exm } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single()
+                if (!exm) {
+                    const { data: newExm } = await supabase.from('ie_examenes').insert({ curso_id: id, min_aprobacion: minAprobacion }).select().single()
+                    exm = newExm
+                } else {
+                    await supabase.from('ie_examenes').update({ min_aprobacion: minAprobacion }).eq('id', exm.id)
+                }
+
+                if (exm) {
+                    // Reemplazar preguntas
+                    await supabase.from('ie_preguntas').delete().eq('examen_id', exm.id)
+                    const pregsParaInsertar = preguntasExtraidas.map((p, idx) => ({
+                        examen_id: exm!.id,
+                        pregunta: p.pregunta,
+                        opcion_a: p.opcion_a,
+                        opcion_b: p.opcion_b,
+                        opcion_c: p.opcion_c,
+                        opcion_d: p.opcion_d,
+                        respuesta_correcta: p.respuesta_correcta,
+                        orden: idx + 1
+                    }))
+                    await supabase.from('ie_preguntas').insert(pregsParaInsertar)
+                }
+            }
         }
 
         // Registrar Historial
@@ -250,7 +402,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         await supabase.from('ie_curso_historial').insert({
             curso_id: id,
             modificado_por: user.id,
-            detalles_cambio: historialMensaje || 'Actualización de datos y/o módulos del curso',
+            detalles_cambio: historialMensaje || 'Actualización de datos, módulos y/o examen del curso',
         })
 
         alert('Editado correctamente. Esperando a la validación.')
@@ -302,6 +454,51 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             <div className="col-span-2">
                                 <label className="block text-sm font-medium text-gray-700">Beneficios</label>
                                 <textarea name="beneficios" required value={formData.beneficios} onChange={handleChange} rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black bg-white" />
+                            </div>
+
+                            {/* Clase en Vivo y Notas */}
+                            <div className="col-span-2 border-t pt-4 mt-2">
+                                <h3 className="text-md font-bold text-gray-800 mb-4 flex items-center">
+                                    <Activity className="h-5 w-5 mr-2 text-blue-500" /> Clase en Vivo / Avisos (Opcional)
+                                </h3>
+                                <div className="space-y-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Enlace de Reunión (Zoom, Meet, etc.)</label>
+                                            {formData.reunion_url && (
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, reunion_url: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
+                                                    ✕ LIMPIAR ENLACE
+                                                </button>
+                                            )}
+                                        </div>
+                                        <input 
+                                            type="url" 
+                                            name="reunion_url" 
+                                            value={formData.reunion_url} 
+                                            onChange={handleChange} 
+                                            placeholder="https://zoom.us/j/..." 
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1 mt-2">
+                                            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Nota o Aviso para Alumnos</label>
+                                            {formData.nota_profesor && (
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, nota_profesor: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
+                                                    ✕ QUITAR NOTA
+                                                </button>
+                                            )}
+                                        </div>
+                                        <textarea 
+                                            name="nota_profesor" 
+                                            value={formData.nota_profesor} 
+                                            onChange={handleChange} 
+                                            rows={2} 
+                                            placeholder="Ej: La siguiente clase será a las 5pm..." 
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" 
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Vigencia Constancia (Años)</label>
@@ -362,6 +559,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                             <div className="flex gap-4">
                                                 <label className="flex items-center text-sm"><input type="radio" checked={modulo.tipo === 'video'} onChange={() => handleModuloChange(index, 'tipo', 'video')} className="mr-2" /> Video</label>
                                                 <label className="flex items-center text-sm"><input type="radio" checked={modulo.tipo === 'pdf'} onChange={() => handleModuloChange(index, 'tipo', 'pdf')} className="mr-2" /> PDF</label>
+                                                <label className="flex items-center text-sm"><input type="radio" checked={modulo.tipo === 'html'} onChange={() => handleModuloChange(index, 'tipo', 'html')} className="mr-2" /> HTML</label>
                                             </div>
                                         </div>
                                         <div>
@@ -372,9 +570,18 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">Cargar Nuevo Archivo PDF (Opcional si ya existe)</label>
+                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                                        {modulo.tipo === 'html'
+                                                            ? 'Cargar Nuevo Archivo HTML (Opcional si ya existe)'
+                                                            : 'Cargar Nuevo Archivo PDF (Opcional si ya existe)'}
+                                                    </label>
                                                     {modulo.id && <p className="text-xs text-blue-600 truncate mb-1">Actual: {modulo.url_contenido}</p>}
-                                                    <input type="file" accept=".pdf" onChange={(e) => handleModuloChange(index, 'archivoPdf', e.target.files?.[0] || null)} className="w-full text-sm text-gray-500 border p-1 border-gray-300 rounded bg-white" />
+                                                    <input
+                                                        type="file"
+                                                        accept={modulo.tipo === 'html' ? '.html,.htm,text/html' : '.pdf,application/pdf'}
+                                                        onChange={(e) => handleModuloChange(index, 'archivoPdf', e.target.files?.[0] || null)}
+                                                        className="w-full text-sm text-gray-500 border p-1 border-gray-300 rounded bg-white"
+                                                    />
                                                 </div>
                                             )}
                                         </div>
@@ -387,10 +594,115 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         </div>
                     </div>
 
+                    {/* Examen Interactivo */}
+                    <div>
+                        <h2 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2">3. Evaluación (Examen Final)</h2>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-5 shadow-sm">
+                            <label className="flex items-center cursor-pointer mb-2">
+                                <input type="checkbox" checked={requiereExamen} onChange={(e) => setRequiereExamen(e.target.checked)} className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                <span className="ml-2 block text-sm font-bold text-green-900">
+                                    Este curso requiere que el alumno apruebe un examen final
+                                </span>
+                            </label>
+
+                            {requiereExamen && (
+                                <div className="mt-4 sm:pl-6 border-l-0 sm:border-l-2 border-green-300 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
+                                            <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(Number(e.target.value))} className="w-full sm:w-32 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Sugerencia: Cargar PDF para extraer preguntas</label>
+                                            <input type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-300 rounded bg-white p-1" />
+                                            {isParsing && <p className="text-[10px] font-bold text-green-600 mt-1 animate-pulse italic">Analizando...</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-green-200">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-sm font-bold text-green-800 flex items-center gap-2">
+                                                <FileText className="h-4 w-4" /> Preguntas del Examen ({preguntasExtraidas.length})
+                                            </h3>
+                                            <button 
+                                                type="button" 
+                                                onClick={handleAgregarPreguntaManual}
+                                                className="bg-green-600 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-green-700 transition-colors flex items-center gap-1 shadow-sm"
+                                            >
+                                                <Plus className="h-3 w-3" /> Agregar Pregunta
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {preguntasExtraidas.map((p, i) => (
+                                                <div key={i} className="bg-white p-4 rounded-lg border border-green-100 shadow-sm relative">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => handleEliminarPreguntaManual(i)}
+                                                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                    
+                                                    <div className="grid grid-cols-1 gap-4">
+                                                        <div className="col-span-full">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">#{i + 1}</span>
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase">Pregunta</label>
+                                                            </div>
+                                                            <input 
+                                                                type="text" 
+                                                                value={p.pregunta} 
+                                                                onChange={(e) => handlePreguntaChange(i, 'pregunta', e.target.value)}
+                                                                className="w-full text-sm font-medium border-0 border-b border-gray-100 focus:border-green-500 outline-none px-0 pb-1 bg-transparent text-black"
+                                                            />
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                                                            {(['a', 'b', 'c', 'd'] as const).map(opt => (
+                                                                <div key={opt}>
+                                                                    <label className="block text-[10px] font-bold text-gray-400 uppercase">Opción {opt.toUpperCase()}</label>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={(p as any)[`opcion_${opt}`]} 
+                                                                        onChange={(e) => handlePreguntaChange(i, `opcion_${opt}` as any, e.target.value)}
+                                                                        className="w-full text-xs border-0 border-b border-gray-50 focus:border-green-400 outline-none px-0 py-1 bg-transparent text-black"
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-4 pt-2">
+                                                            <label className="text-xs font-bold text-gray-600 italic">Correcta:</label>
+                                                            <div className="flex gap-4">
+                                                                {['A', 'B', 'C', 'D'].map(letter => (
+                                                                    <label key={letter} className="flex items-center gap-1 cursor-pointer">
+                                                                        <input 
+                                                                            type="radio" 
+                                                                            name={`correct_edit_${i}`} 
+                                                                            checked={p.respuesta_correcta === letter}
+                                                                            onChange={() => handlePreguntaChange(i, 'respuesta_correcta', letter)}
+                                                                            className="h-3 w-3 text-green-600"
+                                                                        />
+                                                                        <span className="text-xs font-bold text-gray-700">{letter}</span>
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Nota de Historial */}
                     <div>
                         <h2 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2 flex items-center">
-                            <History className="h-5 w-5 mr-2 text-gray-500" /> 3. Nota de Actualización
+                            <History className="h-5 w-5 mr-2 text-gray-500" /> 4. Nota de Actualización
                         </h2>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Describe brevemente qué cambiaste (Se guardará en el historial):

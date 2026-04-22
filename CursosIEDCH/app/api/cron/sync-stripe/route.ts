@@ -10,12 +10,28 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
-        // 1. Verificación de Seguridad del Demonio (Cron Secret)
+        // 1. Verificación de Seguridad del Demonio (Cron Secret) o Usuario Admin
+        let isCronAllowed = false;
         const authHeader = req.headers.get('authorization');
-        if (
-            process.env.CRON_SECRET && 
-            authHeader !== `Bearer ${process.env.CRON_SECRET}`
-        ) {
+
+        if (!process.env.CRON_SECRET || (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`)) {
+            isCronAllowed = true;
+        } else {
+            try {
+                // Verificar si es Admin autenticado
+                const { createClient: createServerClient } = await import('@/lib/supabase/server');
+                const supabaseServer = await createServerClient();
+                const { data: { user } } = await supabaseServer.auth.getUser();
+                if (user) {
+                    const { data: profile } = await supabaseServer.from('ie_profiles').select('rol').eq('id', user.id).single();
+                    if (profile?.rol === 'admin') isCronAllowed = true;
+                }
+            } catch (e) {
+                console.error("No valid session for admin check");
+            }
+        }
+
+        if (!isCronAllowed) {
             return new NextResponse('Unauthorized access to Vercel Cron', { status: 401 });
         }
 
@@ -50,8 +66,9 @@ export async function GET(req: Request) {
             const userId = session.metadata!.user_id;
             const cursoId = session.metadata!.curso_id;
             
-            // Determinar si es pago completo
+            // Determinar si es pago completo y el monto pagado
             const pagoCompleto = session.metadata?.pago_completo === 'false' ? false : true;
+            const montoPagado = session.metadata?.monto_pagado ? Number(session.metadata.monto_pagado) : session.amount_total ? session.amount_total / 100 : 0;
 
             // Revisar si ya existe la compra en la base de datos
             const { data: existe } = await supabaseAdmin
@@ -69,7 +86,8 @@ export async function GET(req: Request) {
                     user_id: userId,
                     curso_id: cursoId,
                     pagado: true,
-                    pago_completo: pagoCompleto
+                    pago_completo: pagoCompleto,
+                    monto_pagado: montoPagado
                 });
 
                 if (error) {

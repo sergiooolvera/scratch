@@ -148,19 +148,31 @@ export async function GET() {
                 if (prof?.nombre) name = prof.nombre;
             } catch {}
 
+            const montoPago = c.monto_pagado ?? 0;
+            let finalOrigin = 'Sistema / Directo';
+            let finalMethod = 'Acceso Directo DB';
+            
+            if (montoPago > 0) {
+                finalOrigin = 'Stripe (Historial)';
+                finalMethod = c.pago_completo ? 'Tarjeta / OXXO (Histórico)' : 'Tarjeta / OXXO (Con Cupón)';
+            } else if (c.pago_completo === false) {
+                finalOrigin = 'Cupón / Beca';
+                finalMethod = 'Cupón 100% Descuento';
+            }
+
             return {
                 id: c.id,
-                origin: 'Cupón/Directo',
+                origin: finalOrigin,
                 created: Math.floor(new Date(c.fecha_compra).getTime() / 1000),
                 paid_at: Math.floor(new Date(c.fecha_compra).getTime() / 1000),
-                amount: 0,
+                amount: montoPago,
                 currency: 'MXN',
                 status: 'complete',
                 payment_status: 'paid',
                 customer_email: email,
                 customer_name: name,
                 curso_titulo: curso?.titulo || 'Curso desconocido',
-                method: c.pago_completo === false ? 'Cupón 100% Descuento' : 'Acceso Directo DB',
+                method: finalMethod,
             };
         }));
 

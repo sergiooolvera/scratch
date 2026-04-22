@@ -34,6 +34,16 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
         )
     }
 
+    // Super Cursos primero
+    misCursos.sort((a: any, b: any) => {
+        const sa = a.es_super_curso ? 1 : 0
+        const sb = b.es_super_curso ? 1 : 0
+        if (sb !== sa) return sb - sa
+        const da = a.created_at ? new Date(a.created_at).getTime() : 0
+        const db = b.created_at ? new Date(b.created_at).getTime() : 0
+        return db - da
+    })
+
     return (
         <div className="bg-zinc-50 min-h-[calc(100vh-64px)] font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
