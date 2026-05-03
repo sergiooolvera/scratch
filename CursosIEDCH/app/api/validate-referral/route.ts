@@ -27,5 +27,5 @@ export async function GET(request: Request) {
     }
 
     const nombre = `${data.nombre || ''} ${data.apellido_paterno || ''}`.trim() || 'Colaborador'
-    return NextResponse.json({ valid: true, nombre, rol: data.rol })
+    return NextResponse.json({ valid: true, id: data.id, nombre, rol: data.rol })
 }

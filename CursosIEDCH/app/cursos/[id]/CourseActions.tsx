@@ -34,6 +34,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     // Referido State
     const [referralCode, setReferralCode] = useState('')
     const [referralValid, setReferralValid] = useState<boolean | null>(null)
+    const [referralId, setReferralId] = useState<string | null>(null)
     const [referralNombre, setReferralNombre] = useState('')
     const [referralError, setReferralError] = useState('')
     const [checkingReferral, setCheckingReferral] = useState(false)
@@ -86,6 +87,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
             const data = await res.json()
             if (data.valid) {
                 setReferralValid(true)
+                setReferralId(data.id)
                 setReferralNombre(data.nombre)
             } else {
                 setReferralValid(false)
@@ -181,7 +183,8 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                     publicURL,
                     metodo,
                     notas: metodo === 'oxxo' ? 'Pago reportado por OXXO' : '',
-                    esConstancia: false
+                    esConstancia: false,
+                    referredBy: referralValid ? referralId : null
                 })
             })
 

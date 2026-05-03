@@ -83,6 +83,9 @@ export async function GET() {
         const sessions = { data: allSessionsData };
 
         const stripeTransactions = sessions.data.map(session => {
+            const isPaid = session.payment_status === 'paid';
+            if (!isPaid) return null; // Solo reportamos lo pagado
+
             const pi = session.payment_intent as any;
             let methodLabel = 'Tarjeta';
             
@@ -104,9 +107,9 @@ export async function GET() {
 
             // Fecha de pago (si ya se pagó con OXXO/Tarjeta)
             let paid_at = null;
-            if (session.payment_status === 'paid' && pi?.latest_charge?.created) {
+            if (isPaid && pi?.latest_charge?.created) {
                 paid_at = pi.latest_charge.created;
-            } else if (session.payment_status === 'paid' && pi?.created) {
+            } else if (isPaid && pi?.created) {
                 paid_at = pi.created;
             }
 
@@ -136,7 +139,7 @@ export async function GET() {
                 // referred_by viene del metadata de STRIPE (solo si el alumno usó código en ESE checkout)
                 referred_by: session.metadata?.referred_by || null,
             };
-        });
+        }).filter((t): t is NonNullable<typeof t> => t !== null);
 
         // Manuales
         const { data: manuales } = await supabaseAdmin

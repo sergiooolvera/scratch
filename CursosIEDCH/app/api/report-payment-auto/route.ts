@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: Request) {
     try {
-        const { cursoId, userId, publicURL, metodo, notas, esConstancia } = await req.json()
+        const { cursoId, userId, publicURL, metodo, notas, esConstancia, referredBy } = await req.json()
 
         const supabaseUser = await createServerClient()
 
@@ -52,7 +52,8 @@ export async function POST(req: Request) {
                     user_id: userId, 
                     curso_id: cursoId, 
                     pagado: true, 
-                    pago_completo: esConstancia ? true : false 
+                    pago_completo: esConstancia ? true : false,
+                    referred_by: referredBy || null
                 })
 
             if (insertError) throw insertError
