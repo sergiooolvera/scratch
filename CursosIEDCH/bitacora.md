@@ -41,5 +41,10 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Módulo de Colaboradores:** Se habilitó el cálculo de comisiones (30/40/20%) incluyendo tanto ventas de Stripe como pagos manuales, con filtros avanzados por colaborador, curso y periodo (Mes/Año).
 - **Integridad de Reportes:** Se consolidó la regla de que solo sesiones con `payment_status: 'paid'` en Stripe (especialmente para OXXO) se contabilicen en los reportes de ventas y comisiones.
 
+### 🧹 Limpieza y Optimización Final (03 de Mayo de 2026)
+- **Precisión en Referidos Manuales:** Se sincronizó el Frontend y Backend para asegurar que los códigos de referido verificados se guarden correctamente en la base de datos al realizar pagos por transferencia/depósito, cerrando la brecha de atribución que existía fuera de Stripe.
+- **Auditoría de Base de Datos:** Se realizó una limpieza profunda eliminando 21 registros de pagos manuales excedentes/duplicados que inflaban los reportes de comisiones de colaboradores.
+- **Simplificación de Dashboard:** Se optimizó el Dashboard Financiero eliminando gráficos y resúmenes redundantes para ofrecer una vista centrada en el listado detallado de transacciones y filtros de búsqueda.
+
 ---
-*Última actualización: 02 de Mayo de 2026*
+*Última actualización: 03 de Mayo de 2026*
