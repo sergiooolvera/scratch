@@ -437,6 +437,7 @@ export default function PagoColaboradoresPage() {
                             </div>
                         )}
                     </div>
+                    <p className="mt-4 text-xs text-gray-400 text-right">
                         * Montos reales de Stripe · Referidos cruzados desde BD · Porcentajes configurables en <code className="bg-gray-100 px-1 rounded">ie_config_comisiones</code>
                     </p>
                 </>
