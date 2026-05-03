@@ -22,7 +22,7 @@ export async function GET() {
             .eq('id', user.id)
             .single();
 
-        if (profile?.rol !== 'admin' && profile?.rol !== 'financiero' && profile?.rol !== 'profesor') return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 });
+        if (profile?.rol !== 'admin' && profile?.rol !== 'financiero' && profile?.rol !== 'profesor' && profile?.rol !== 'vendedor') return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 });
 
         const supabaseAdmin = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -234,6 +234,7 @@ export async function GET() {
                 curso_titulo: curso?.titulo || 'Curso desconocido',
                 profesor_nombre: profileNameMap[curso?.profesor_id] || 'Desconocido',
                 method: finalMethod,
+                referred_by: c.referred_by
             };
         }));
 
@@ -242,6 +243,10 @@ export async function GET() {
 
         if (profCursoIds) {
             allTransactions = allTransactions.filter(t => profCursoIds!.has(t.curso_id));
+        }
+
+        if (profile?.rol === 'vendedor') {
+            allTransactions = allTransactions.filter(t => t.referred_by === user.id);
         }
 
         return NextResponse.json({ data: allTransactions });
