@@ -123,6 +123,11 @@ export default function Navbar() {
                                         </div>
                                     </div>
                                 )}
+                                {profile?.rol === 'vendedor' && (
+                                    <Link href="/profesor/ventas" className={navItemClass('/profesor/ventas')}>
+                                        <HandCoins className="h-4 w-4" /> <span>Mis Ventas</span>
+                                    </Link>
+                                )}
                                 {profile?.rol === 'admin' && (
                                     <Link href="/admin/usuarios" className={navItemClass('/admin')}>
                                         <Users className="h-4 w-4" /> <span>Admin Panel</span>
@@ -226,6 +231,11 @@ export default function Navbar() {
                                         <Link href="/profesor/preguntas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Dudas de Alumnos</Link>
                                         <Link href="/profesor/ventas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Ventas</Link>
                                     </div>
+                                )}
+                                {profile?.rol === 'vendedor' && (
+                                    <Link href="/profesor/ventas" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+                                        <HandCoins className="h-5 w-5" /> <span>Mis Ventas</span>
+                                    </Link>
                                 )}
                                 {profile?.rol === 'admin' && (
                                     <Link href="/admin/usuarios" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
