@@ -40,10 +40,9 @@ export async function POST(req: Request) {
 
             if (referrer) {
                 const esSelfReferral = referrer.id === userId
-                const esProfesor = referrer.rol === 'profesor'
-                const esCursoPropio = curso.creado_por === referrer.id
-                // Profesores solo pueden referir sus propios cursos. Vendedores: cualquier curso.
-                const codigoValido = !esSelfReferral && (!esProfesor || esCursoPropio)
+                // Profesores pueden referir sus propios cursos (40%) o cursos ajenos (20% como vendedor).
+                // Vendedores pueden referir cualquier curso (20%).
+                const codigoValido = !esSelfReferral
                 if (codigoValido) referredById = referrer.id
             }
         }

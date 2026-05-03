@@ -10,6 +10,7 @@ interface Colaborador {
     nombre: string
     rol: 'profesor' | 'vendedor'
     referral_code: string | null
+    curso_titulo: string
     ventas_con_referido: number
     ventas_sin_referido: number
     total_generado: number
@@ -148,18 +149,15 @@ export default function PagoColaboradoresPage() {
                 perfilesFiltrados = perfilesFiltrados.filter(p => p.rol === filtroRol)
             }
 
-            // Mapa curso → profesor_id
             const cursoMap: Record<string, Curso> = {}
             cursos.forEach(c => { cursoMap[c.id] = c })
 
-            // 6. Calcular comisiones
             const cfg = config
-            const resultado: Colaborador[] = perfilesFiltrados.map(p => {
+            const lineas: Colaborador[] = []
+
+            perfilesFiltrados.forEach(p => {
                 const nombre = `${p.nombre || ''} ${p.apellido_paterno || ''}`.trim()
-                let ventasConRef = 0
-                let ventasSinRef = 0
-                let totalGenerado = 0
-                let totalComision = 0
+                const ventasPorCurso: Record<string, { sinRef: number, conRef: number, total: number, comision: number }> = {}
 
                 txs.forEach(t => {
                     const monto = t.amount || 0
@@ -167,43 +165,55 @@ export default function PagoColaboradoresPage() {
                     const curso = cursoMap[cursoId]
                     if (!curso) return
 
+                    if (!ventasPorCurso[cursoId]) {
+                        ventasPorCurso[cursoId] = { sinRef: 0, conRef: 0, total: 0, comision: 0 }
+                    }
+
+                    const esPropio = curso.creado_por === p.id
+                    const esReferidoSuyo = t.referred_by === p.id
+
                     if (p.rol === 'profesor') {
-                        // Solo cuenta ventas de sus propios cursos
-                        if (curso.creado_por === p.id) {
-                            const tieneReferido = !!t.referred_by
-                            if (tieneReferido) {
-                                ventasConRef++
-                                totalComision += monto * cfg.profesor_referido
+                        if (esPropio) {
+                            if (esReferidoSuyo) {
+                                ventasPorCurso[cursoId].conRef++
+                                ventasPorCurso[cursoId].comision += monto * cfg.profesor_referido
                             } else {
-                                ventasSinRef++
-                                totalComision += monto * cfg.profesor_base
+                                ventasPorCurso[cursoId].sinRef++
+                                ventasPorCurso[cursoId].comision += monto * cfg.profesor_base
                             }
-                            totalGenerado += monto
+                            ventasPorCurso[cursoId].total += monto
+                        } else if (esReferidoSuyo) {
+                            ventasPorCurso[cursoId].conRef++
+                            ventasPorCurso[cursoId].total += monto
+                            ventasPorCurso[cursoId].comision += monto * cfg.vendedor_referido
                         }
                     } else if (p.rol === 'vendedor') {
-                        // Solo cuenta ventas donde su ID es el referido
-                        if (t.referred_by === p.id) {
-                            ventasConRef++
-                            totalGenerado += monto
-                            totalComision += monto * cfg.vendedor_referido
+                        if (esReferidoSuyo) {
+                            ventasPorCurso[cursoId].conRef++
+                            ventasPorCurso[cursoId].total += monto
+                            ventasPorCurso[cursoId].comision += monto * cfg.vendedor_referido
                         }
                     }
                 })
 
-                return {
-                    id: p.id,
-                    nombre,
-                    rol: p.rol,
-                    referral_code: p.referral_code,
-                    ventas_con_referido: ventasConRef,
-                    ventas_sin_referido: ventasSinRef,
-                    total_generado: totalGenerado,
-                    comision: totalComision,
-                }
+                Object.entries(ventasPorCurso).forEach(([cursoId, stats]) => {
+                    if (stats.total > 0 || stats.conRef > 0) {
+                        lineas.push({
+                            id: p.id,
+                            nombre,
+                            rol: p.rol,
+                            referral_code: p.referral_code,
+                            curso_titulo: cursoMap[cursoId]?.titulo || 'Curso desconocido',
+                            ventas_con_referido: stats.conRef,
+                            ventas_sin_referido: stats.sinRef,
+                            total_generado: stats.total,
+                            comision: stats.comision
+                        })
+                    }
+                })
             })
-            .filter(c => c.total_generado > 0 || c.ventas_con_referido > 0)
-            .sort((a, b) => b.comision - a.comision)
 
+            const resultado = lineas.sort((a, b) => b.comision - a.comision)
             setColaboradores(resultado)
         } catch (e) {
             console.error(e)
@@ -229,7 +239,6 @@ export default function PagoColaboradoresPage() {
                 <p className="mt-1 text-sm text-gray-500">Comisiones calculadas sobre ventas reales de Stripe + referidos registrados en BD.</p>
             </div>
 
-            {/* Config de comisiones */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="bg-green-50 border border-green-100 rounded-xl p-4">
                     <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Profesor (base)</p>
@@ -245,7 +254,6 @@ export default function PagoColaboradoresPage() {
                 </div>
             </div>
 
-            {/* Filtros */}
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 mb-8">
                 <div className="flex items-center gap-2 mb-5">
                     <Filter className="w-5 h-5 text-indigo-500" />
@@ -259,7 +267,6 @@ export default function PagoColaboradoresPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Rol */}
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Tipo</label>
                             <div className="relative">
@@ -273,7 +280,6 @@ export default function PagoColaboradoresPage() {
                             </div>
                         </div>
 
-                        {/* Colaborador */}
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Colaborador</label>
                             <div className="relative">
@@ -290,7 +296,6 @@ export default function PagoColaboradoresPage() {
                             </div>
                         </div>
 
-                        {/* Curso */}
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Curso</label>
                             <div className="relative">
@@ -304,7 +309,6 @@ export default function PagoColaboradoresPage() {
                             </div>
                         </div>
 
-                        {/* Período */}
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Período</label>
                             <div className="flex gap-2">
@@ -343,23 +347,19 @@ export default function PagoColaboradoresPage() {
                 </div>
             </div>
 
-            {/* Estado vacío inicial */}
             {!hasSearched && !loading && (
                 <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white border border-dashed border-gray-200 rounded-2xl">
                     <Filter className="w-12 h-12 mb-3 opacity-20" />
                     <p className="text-sm font-medium">Selecciona los filtros y presiona <span className="font-bold text-indigo-500">Calcular Comisiones</span></p>
-                    <p className="text-xs mt-1 text-gray-300">Los montos se calculan sobre transacciones reales de Stripe</p>
                 </div>
             )}
 
-            {/* Spinner */}
             {loading && (
                 <div className="flex justify-center py-20">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
                 </div>
             )}
 
-            {/* Resultados */}
             {hasSearched && !loading && (
                 <>
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 mb-6">
@@ -367,9 +367,7 @@ export default function PagoColaboradoresPage() {
                             <DollarSign className="w-7 h-7 text-amber-500" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">
-                                Total a pagar{labelMes && filtroAnio ? ` — ${labelMes} ${filtroAnio}` : filtroAnio ? ` — ${filtroAnio}` : ''}
-                            </p>
+                            <p className="text-sm text-gray-500">Total a pagar{labelMes && filtroAnio ? ` — ${labelMes} ${filtroAnio}` : filtroAnio ? ` — ${filtroAnio}` : ''}</p>
                             <p className="text-3xl font-extrabold text-gray-900">{fmt(totalComisiones)}</p>
                         </div>
                     </div>
@@ -390,35 +388,47 @@ export default function PagoColaboradoresPage() {
                             <div className="overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead>
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Colaborador</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ventas sin ref.</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ventas con ref.</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Stripe</th>
-                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Comisión a pagar</th>
+                                        <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                                            <th className="px-6 py-4 text-left">Colaborador</th>
+                                            <th className="px-6 py-4 text-left">Rol</th>
+                                            <th className="px-6 py-4 text-left">Código</th>
+                                            <th className="px-6 py-4 text-left">Curso</th>
+                                            <th className="px-6 py-4 text-center">Ventas Sin Ref.</th>
+                                            <th className="px-6 py-4 text-center">Ventas Con Ref.</th>
+                                            <th className="px-6 py-4 text-right">Total Stripe</th>
+                                            <th className="px-6 py-4 text-right">Comisión a Pagar</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {colaboradores.map(c => (
-                                            <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{c.nombre || 'Sin nombre'}</td>
-                                                <td className="px-4 py-3">
-                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${c.rol === 'profesor' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                        {c.rol}
+                                    <tbody className="divide-y divide-gray-50">
+                                        {colaboradores.map((col, idx) => (
+                                            <tr key={`${col.id}-${idx}`} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <p className="font-bold text-gray-900">{col.nombre}</p>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                        col.rol === 'profesor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
+                                                    }`}>
+                                                        {col.rol}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    {c.referral_code
-                                                        ? <span className="font-mono text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded">{c.referral_code}</span>
-                                                        : <span className="text-gray-300 text-xs">—</span>}
+                                                <td className="px-6 py-4">
+                                                    {col.referral_code ? (
+                                                        <span className="font-mono text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded border border-yellow-100">
+                                                            {col.referral_code}
+                                                        </span>
+                                                    ) : <span className="text-gray-400">-</span>}
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-right text-gray-600">{c.ventas_sin_referido}</td>
-                                                <td className="px-4 py-3 text-sm text-right text-gray-600">{c.ventas_con_referido}</td>
-                                                <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">{fmt(c.total_generado)}</td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <span className="text-base font-extrabold text-emerald-600">{fmt(c.comision)}</span>
+                                                <td className="px-6 py-4">
+                                                    <p className="text-sm text-gray-600 max-w-[200px] truncate" title={col.curso_titulo}>
+                                                        {col.curso_titulo}
+                                                    </p>
+                                                </td>
+                                                <td className="px-6 py-4 text-center text-gray-500 font-medium">{col.ventas_sin_referido}</td>
+                                                <td className="px-6 py-4 text-center text-gray-500 font-medium">{col.ventas_con_referido}</td>
+                                                <td className="px-6 py-4 text-right font-bold text-gray-900">{fmt(col.total_generado)}</td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <span className="text-lg font-black text-green-600">{fmt(col.comision)}</span>
                                                 </td>
                                             </tr>
                                         ))}
@@ -427,8 +437,6 @@ export default function PagoColaboradoresPage() {
                             </div>
                         )}
                     </div>
-
-                    <p className="mt-4 text-xs text-gray-400 text-right">
                         * Montos reales de Stripe · Referidos cruzados desde BD · Porcentajes configurables en <code className="bg-gray-100 px-1 rounded">ie_config_comisiones</code>
                     </p>
                 </>
