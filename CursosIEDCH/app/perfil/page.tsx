@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { User, Save, CheckCircle, GraduationCap } from 'lucide-react'
+import { User, Save, CheckCircle, GraduationCap, Copy, Link2, Share2 } from 'lucide-react'
 
 export default function PerfilPage() {
     const [nombre, setNombre] = useState('')
@@ -11,6 +11,8 @@ export default function PerfilPage() {
     const [apellidoMaterno, setApellidoMaterno] = useState('')
     const [email, setEmail] = useState('')
     const [rol, setRol] = useState('')
+    const [referralCode, setReferralCode] = useState<string | null>(null)
+    const [copiado, setCopiado] = useState(false)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [success, setSuccess] = useState('')
@@ -29,17 +31,23 @@ export default function PerfilPage() {
 
             setEmail(user.email || '')
 
-            const { data: prof } = await supabase.from('ie_profiles').select('*').eq('id', user.id).single()
+            // Usamos la API route para garantizar que se lean todos los campos (bypassa RLS)
+            const res = await fetch('/api/perfil')
+            const result = await res.json()
+            const prof = result.data
+
             if (prof) {
                 setNombre(prof.nombre || '')
                 setApellidoPaterno(prof.apellido_paterno || '')
                 setApellidoMaterno(prof.apellido_materno || '')
                 setRol(prof.rol || 'alumno')
+                setReferralCode(prof.referral_code || null)
             }
             setLoading(false)
         }
         loadProfile()
     }, [router, supabase])
+
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -117,6 +125,50 @@ export default function PerfilPage() {
                                 <span className="capitalize font-medium">{rol}</span>
                             </div>
                         </div>
+
+                        {/* Tarjeta de código de referido */}
+                        {referralCode && (
+                            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-5">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Link2 className="w-5 h-5 text-indigo-600" />
+                                    <h2 className="text-base font-bold text-indigo-800">Mi Código de Referido</h2>
+                                </div>
+                                <p className="text-xs text-indigo-500 mb-4 leading-relaxed">
+                                    Comparte este código con tus referidos para que lo ingresen al momento de inscribirse. Ganarás comisión por cada venta generada.
+                                </p>
+                                <div className="bg-white border-2 border-indigo-200 rounded-xl px-4 py-3 flex items-center justify-between mb-4">
+                                    <span className="text-2xl font-mono font-extrabold tracking-widest text-indigo-700">{referralCode}</span>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            await navigator.clipboard.writeText(referralCode)
+                                            setCopiado(true)
+                                            setTimeout(() => setCopiado(false), 2000)
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg transition-colors"
+                                    >
+                                        <Copy className="w-3.5 h-3.5" />
+                                        {copiado ? '¡Copiado!' : 'Copiar'}
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        const url = `${window.location.origin}/cursos?ref=${referralCode}`
+                                        if (navigator.share) {
+                                            await navigator.share({ title: 'Cursos IEDCH', text: '¡Inscríbete usando mi código de referido!', url })
+                                        } else {
+                                            await navigator.clipboard.writeText(url)
+                                            alert('Enlace copiado al portapapeles: ' + url)
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    Compartir Enlace de Referido
+                                </button>
+                            </div>
+                        )}
 
                         <div className="pt-4 border-t border-gray-100">
                             <h2 className="text-lg font-bold text-gray-800 mb-4">Información Personal</h2>

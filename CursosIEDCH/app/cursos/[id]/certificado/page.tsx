@@ -15,49 +15,60 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos, requiere_pago_completo').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos, requiere_pago_completo, requiere_examen').eq('id', id).single()
     if (!curso) notFound()
-
-    const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single()
-    if (!examenRow) notFound()
-
-    // Verify they actually passed
-    const { data: resultRow } = await supabase
-        .from('ie_resultados_examenes')
-        .select('id, aprobado, created_at')
-        .eq('examen_id', examenRow.id)
-        .eq('user_id', user.id)
-        .eq('aprobado', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-    if (!resultRow || resultRow.length === 0) {
-        redirect(`/cursos/${id}/contenido`)
-    }
 
     // Verificar si el pago es completo para desbloquear la constancia
     const { data: compra } = await supabase
         .from('ie_compras')
-        .select('pago_completo')
+        .select('id, pago_completo, fecha_compra')
         .eq('curso_id', id)
         .eq('user_id', user.id)
         .single()
     const cursoPagoRequerido = curso.requiere_pago_completo || false
     const pagoCompleto = cursoPagoRequerido ? (compra?.pago_completo || false) : true
 
+    let fechaAprobacionObj: Date;
+    let folioVenta: string;
+
+    if (curso.requiere_examen) {
+        const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single()
+        if (!examenRow) notFound()
+
+        // Verify they actually passed
+        const { data: resultRow } = await supabase
+            .from('ie_resultados_examenes')
+            .select('id, aprobado, created_at')
+            .eq('examen_id', examenRow.id)
+            .eq('user_id', user.id)
+            .eq('aprobado', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+
+        if (!resultRow || resultRow.length === 0) {
+            redirect(`/cursos/${id}/contenido`)
+        }
+
+        fechaAprobacionObj = new Date(resultRow[0].created_at);
+        folioVenta = resultRow[0].id.toUpperCase();
+    } else {
+        // If it doesn't require an exam, they just get it if they have access to the course (compra exists)
+        if (!compra) {
+            redirect(`/cursos/${id}/contenido`)
+        }
+        fechaAprobacionObj = new Date(compra.fecha_compra || Date.now()); // Fallback por seguridad
+        folioVenta = compra.id.toUpperCase();
+    }
+
     const { data: profile } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
     const alumnoNombre = profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Alumno' : 'Alumno'
 
     // Formatting date
-    const fechaAprobacion = new Date(resultRow[0].created_at);
     const opcionesFecha: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    const fechaFormateada = fechaAprobacion.toLocaleDateString('es-MX', opcionesFecha);
-
-    // Formatting Folio: use the full UUID for exact validation match
-    const folioVenta = resultRow[0].id.toUpperCase();
+    const fechaFormateada = fechaAprobacionObj.toLocaleDateString('es-MX', opcionesFecha);
 
     const vigAnos = curso.vigencia_anos || 3;
-    const fechaVig = new Date(fechaAprobacion);
+    const fechaVig = new Date(fechaAprobacionObj);
     fechaVig.setFullYear(fechaVig.getFullYear() + vigAnos);
     const vigStr = fechaVig.toLocaleDateString('es-MX', opcionesFecha);
 
@@ -105,11 +116,11 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                                 id="certificado-content"
                                 alumnoNombre={alumnoNombre}
                                 cursoTitulo={curso.titulo}
-                                cursoDuracion={curso.duracion}
+                                cursoDuracion={curso.duracion && curso.duracion.length <= 30 ? curso.duracion : '40 horas'}
                                 fechaAprobacion={fechaFormateada}
                                 folio={folioVenta}
                                 vigenciaStr={vigStr}
-                                qrUrl={`https://cursos-iedch.vercel.app/validar?folio=${resultRow[0].id}`}
+                                qrUrl={`https://cursos-iedch.vercel.app/validar?folio=${folioVenta}`}
                                 className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
                             />
                         </div>

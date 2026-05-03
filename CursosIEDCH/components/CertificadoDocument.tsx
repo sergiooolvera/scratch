@@ -73,7 +73,10 @@ export default function CertificadoDocument({
                 <p className="mt-6 text-[20px] text-black">
                     Por haber acreditado el Curso:
                 </p>
-                <h3 className="mt-2 text-[26px] font-bold text-black uppercase text-center max-w-4xl tracking-wide leading-tight">
+                <h3 
+                    className={`mt-2 font-bold text-black uppercase text-center max-w-[900px] tracking-wide leading-tight truncate px-4 ${cursoTitulo.length > 45 ? 'text-[20px]' : 'text-[26px]'}`}
+                    title={cursoTitulo}
+                >
                     “{cursoTitulo}”
                 </h3>
 

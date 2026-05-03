@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { X, UploadCloud, Ticket, CreditCard, Banknote, AlertCircle, Lock, Store } from 'lucide-react'
+import { X, UploadCloud, Ticket, CreditCard, Banknote, AlertCircle, Lock, Store, Tag } from 'lucide-react'
 
-export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso }: {
+export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso, montoPagado }: {
     cursoId: string,
     isPagado: boolean,
     pagoCompleto: boolean,
@@ -14,7 +14,8 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     isAprobado: boolean,
     requiereExamen: boolean,
     userId: string,
-    precioCurso?: number
+    precioCurso?: number,
+    montoPagado?: number
 }) {
     const [loading, setLoading] = useState(false)
     const [showCupon, setShowCupon] = useState(false)
@@ -22,11 +23,20 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     const [showOxxo, setShowOxxo] = useState(false)
     const [showPagoConstancia, setShowPagoConstancia] = useState(false)
     const [showTransferFormForConstancia, setShowTransferFormForConstancia] = useState(false)
+    const [showOxxoForConstancia, setShowOxxoForConstancia] = useState(false)
+    const [showCuponForConstancia, setShowCuponForConstancia] = useState(false)
 
     // Cupón State
     const [cuponCodigo, setCuponCodigo] = useState('')
     const [cuponError, setCuponError] = useState('')
     const [cuponSuccess, setCuponSuccess] = useState('')
+
+    // Referido State
+    const [referralCode, setReferralCode] = useState('')
+    const [referralValid, setReferralValid] = useState<boolean | null>(null)
+    const [referralNombre, setReferralNombre] = useState('')
+    const [referralError, setReferralError] = useState('')
+    const [checkingReferral, setCheckingReferral] = useState(false)
 
     // Efectivo State
     const [file, setFile] = useState<File | null>(null)
@@ -41,13 +51,13 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     const router = useRouter()
     const supabase = createClient()
 
-    const handleComprarStrípe = async (cuponCode?: string) => {
+    const handleComprarStrípe = async (cuponCode?: string, esConstancia: boolean = false) => {
         setLoading(true)
         try {
             const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cursoId, userId, cuponCodigo: cuponCode })
+                body: JSON.stringify({ cursoId, userId, cuponCodigo: cuponCode, esConstancia, referralCode: referralValid ? referralCode.trim().toUpperCase() : undefined })
             })
             const data = await res.json()
             if (data.url) {
@@ -62,6 +72,30 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
             console.error(error)
             alert(`Error al iniciar el pago: ${error.message}`)
             setLoading(false)
+        }
+    }
+
+    const handleVerificarReferral = async () => {
+        if (!referralCode.trim()) return
+        setCheckingReferral(true)
+        setReferralValid(null)
+        setReferralNombre('')
+        setReferralError('')
+        try {
+            const res = await fetch(`/api/validate-referral?code=${encodeURIComponent(referralCode.trim().toUpperCase())}`)
+            const data = await res.json()
+            if (data.valid) {
+                setReferralValid(true)
+                setReferralNombre(data.nombre)
+            } else {
+                setReferralValid(false)
+                setReferralError(data.error || 'Código inválido')
+            }
+        } catch {
+            setReferralValid(false)
+            setReferralError('Error al verificar el código')
+        } finally {
+            setCheckingReferral(false)
         }
     }
 
@@ -98,10 +132,10 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
             if (cupon.descuento_porcentaje === 100) {
                 // Bono del 100% - Aprobar inmediatamente vía backend en un endpoint o insertar directo si hay permiso
                 // Para seguridad, lo mandaremos al checkout pero indicando que es gratis.
-                await handleComprarStrípe(cupon.codigo)
+                await handleComprarStrípe(cupon.codigo, showCuponForConstancia)
             } else {
                 setCuponSuccess(`¡Cupón de ${cupon.descuento_porcentaje}% aplicado!`)
-                await handleComprarStrípe(cupon.codigo)
+                await handleComprarStrípe(cupon.codigo, showCuponForConstancia)
             }
         } catch (error: any) {
             console.error(error)
@@ -137,27 +171,36 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
             const { data } = supabase.storage.from('comprobantes').getPublicUrl(filePath)
             const publicURL = data.publicUrl
 
-            // Insertar registro en ie_pagos_manuales
-            const { error: dbError } = await supabase.from('ie_pagos_manuales').insert({
-                user_id: userId,
-                curso_id: cursoId,
-                comprobante_url: publicURL,
-                estado: 'pendiente',
-                metodo_pago: metodo,
-                notas: metodo === 'oxxo' ? 'Pago reportado por OXXO' : ''
+            // Enviar al nuevo endpoint de aprobación automática
+            const res = await fetch('/api/report-payment-auto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cursoId,
+                    userId,
+                    publicURL,
+                    metodo,
+                    notas: metodo === 'oxxo' ? 'Pago reportado por OXXO' : '',
+                    esConstancia: false
+                })
             })
 
-            if (dbError) throw dbError
+            if (!res.ok) {
+                throw new Error('Error al procesar el pago automático')
+            }
 
-            setPagoMensaje('¡Comprobante enviado con éxito! El administrador lo revisará pronto.')
+            setPagoMensaje('¡Comprobante enviado con éxito y curso habilitado!')
             setFile(null)
+
+            // Recargar para que vea el curso
+            router.refresh()
 
             // Opcional: Cerrar modal después de un rato
             setTimeout(() => {
                 setShowEfectivo(false)
                 setShowOxxo(false)
                 setPagoMensaje('')
-            }, 5000)
+            }, 3000)
 
         } catch (error: any) {
             console.error(error)
@@ -167,7 +210,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
         }
     }
 
-    const handleSubirPagoConstancia = async (e: React.FormEvent) => {
+    const handleSubirPagoConstancia = async (e: React.FormEvent, metodo: string = 'transferencia') => {
         e.preventDefault()
         if (!fileConstancia) {
             setPagoConstanciaMensaje('Por favor, selecciona la imagen o PDF del comprobante.')
@@ -191,23 +234,34 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
             const { data } = supabase.storage.from('comprobantes').getPublicUrl(filePath)
             const publicURL = data.publicUrl
 
-            // Insertar como pago manual con nota de que es para complementar constancia
-            const { error: dbError } = await supabase.from('ie_pagos_manuales').insert({
-                user_id: userId,
-                curso_id: cursoId,
-                comprobante_url: publicURL,
-                estado: 'pendiente',
-                notas: 'Pago complementario para constancia (alumno usó cupón de descuento)'
+            // Enviar al nuevo endpoint de aprobación automática para constancia
+            const res = await fetch('/api/report-payment-auto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cursoId,
+                    userId,
+                    publicURL,
+                    metodo,
+                    notas: `Pago complementario para constancia - ${metodo}`,
+                    esConstancia: true
+                })
             })
 
-            if (dbError) throw dbError
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({ details: 'Error desconocido' }))
+                throw new Error(errData.details || 'Error al procesar el pago automático')
+            }
 
-            setPagoConstanciaMensaje('¡Comprobante enviado! El administrador lo revisará y habilitará tu constancia pronto.')
+            setPagoConstanciaMensaje('¡Comprobante enviado y constancia habilitada!')
             setFileConstancia(null)
+
+            // Recargar para que vea el certificado habilitado
+            router.refresh()
 
         } catch (error: any) {
             console.error(error)
-            setPagoConstanciaMensaje('Hubo un error al subir el comprobante. Inténtalo de nuevo.')
+            setPagoConstanciaMensaje(error.message || 'Hubo un error al subir el comprobante. Inténtalo de nuevo.')
         } finally {
             setUploadingConstancia(false)
         }
@@ -216,6 +270,54 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     if (!isPagado) {
         return (
             <div className="w-full space-y-4">
+                {/* Campo de código de referido */}
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                    <label className="flex items-center gap-2 text-sm font-medium text-indigo-700 mb-2">
+                        <Tag className="w-4 h-4" />
+                        ¿Tienes un código de referido? <span className="text-indigo-400 font-normal">(opcional)</span>
+                    </label>
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            placeholder="Ej: CARLOS247"
+                            value={referralCode}
+                            onChange={(e) => {
+                                setReferralCode(e.target.value.toUpperCase())
+                                setReferralValid(null)
+                                setReferralNombre('')
+                                setReferralError('')
+                            }}
+                            className={`flex-1 rounded-md shadow-sm text-sm px-3 py-2 border uppercase bg-white focus:ring-2 ${
+                                referralValid === true ? 'border-green-400 focus:ring-green-200' :
+                                referralValid === false ? 'border-red-400 focus:ring-red-200' :
+                                'border-indigo-200 focus:ring-indigo-300 focus:border-indigo-400'
+                            }`}
+                            maxLength={15}
+                        />
+                        {referralCode.trim() && referralValid === null && (
+                            <button
+                                type="button"
+                                onClick={handleVerificarReferral}
+                                disabled={checkingReferral}
+                                className="px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors whitespace-nowrap"
+                            >
+                                {checkingReferral ? '...' : 'Verificar'}
+                            </button>
+                        )}
+                        {referralValid !== null && (
+                            <button type="button" onClick={() => { setReferralCode(''); setReferralValid(null); setReferralNombre(''); setReferralError('') }} className="text-gray-400 hover:text-gray-600 px-2">
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                    {referralValid === true && (
+                        <p className="text-xs text-green-600 mt-1 font-medium">✓ Código válido — Referido por: {referralNombre}</p>
+                    )}
+                    {referralValid === false && (
+                        <p className="text-xs text-red-500 mt-1 font-medium">✕ {referralError}</p>
+                    )}
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <button
                         onClick={() => handleComprarStrípe()}
@@ -365,7 +467,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                                 disabled={uploading || !file}
                                 className="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50 flex items-center justify-center transition"
                             >
-                                {uploading ? 'Enviando...' : 'Enviar Ticket para Revisión'}
+                                {uploading ? 'Enviando...' : 'Enviar comprobante oxxo'}
                             </button>
                         </form>
                         {pagoMensaje && (
@@ -451,27 +553,41 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                         <div>
                             <h3 className="text-base font-bold text-amber-900">Constancia pendiente de pago</h3>
                             <p className="text-sm text-amber-800 mt-1 leading-relaxed">
-                                Utilizaste un cupón de descuento para acceder al curso. Para recibir tu constancia deberás cubrir el valor total del curso
-                                {precioCurso ? ` ($${precioCurso} MXN)` : ''}.
+                                Utilizaste un cupón de descuento para acceder al curso. Para recibir tu constancia deberás cubrir el monto restante
+                                {precioCurso !== undefined && montoPagado !== undefined ? ` ($${Math.max(0, precioCurso - montoPagado)} MXN)` : ''}.
                             </p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                         <button
-                            onClick={() => handleComprarStrípe()}
+                            onClick={() => handleComprarStrípe(undefined, true)}
                             disabled={loading}
                             className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm"
                         >
                             <CreditCard className="w-5 h-5 mr-2" />
-                            Pagar con Tarjeta
+                            Tarjeta
                         </button>
                         <button
-                            onClick={() => setShowTransferFormForConstancia(!showTransferFormForConstancia)}
+                            onClick={() => { setShowTransferFormForConstancia(!showTransferFormForConstancia); setShowOxxoForConstancia(false); setShowCuponForConstancia(false); }}
                             className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 transition shadow-sm"
                         >
                             <Banknote className="w-5 h-5 mr-2" />
-                            Pagar por Transferencia
+                            Transferencia
+                        </button>
+                        <button
+                            onClick={() => { setShowOxxoForConstancia(!showOxxoForConstancia); setShowTransferFormForConstancia(false); setShowCuponForConstancia(false); }}
+                            className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition shadow-sm"
+                        >
+                            <Store className="w-5 h-5 mr-2" />
+                            Enviar comprobante oxxo
+                        </button>
+                        <button
+                            onClick={() => { setShowCuponForConstancia(!showCuponForConstancia); setShowTransferFormForConstancia(false); setShowOxxoForConstancia(false); }}
+                            className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-yellow-800 bg-yellow-100 hover:bg-yellow-200 transition shadow-sm"
+                        >
+                            <Ticket className="w-5 h-5 mr-2" />
+                            Cupón
                         </button>
                     </div>
 
@@ -484,10 +600,12 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                             <li><strong>Cuenta:</strong> 0123456789</li>
                             <li><strong>CLABE:</strong> 012345678901234567</li>
                             <li><strong>Titular:</strong> Instituto Educativo S.C.</li>
-                            {precioCurso && <li className="font-bold text-blue-700 mt-1"><strong>Monto:</strong> ${precioCurso} MXN</li>}
+                            {precioCurso !== undefined && montoPagado !== undefined && (
+                                <li className="font-bold text-blue-700 mt-1"><strong>Monto Restante:</strong> ${Math.max(0, precioCurso - montoPagado)} MXN</li>
+                            )}
                         </ul>
 
-                        <form onSubmit={handleSubirPagoConstancia} className="flex flex-col gap-3 mt-4">
+                        <form onSubmit={(e) => handleSubirPagoConstancia(e, 'transferencia')} className="flex flex-col gap-3 mt-4">
                             <div
                                 className="border-2 border-dashed border-amber-300 rounded-lg p-4 flex flex-col items-center justify-center bg-amber-50 hover:bg-amber-100 transition cursor-pointer"
                                 onClick={() => document.getElementById('comprobante-constancia-upload')?.click()}
@@ -517,6 +635,70 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                                 </p>
                             )}
                         </form>
+                    </div>
+                    )}
+
+                    {/* Sección de OXXO para constancia */}
+                    {showOxxoForConstancia && (
+                    <div className="bg-white p-4 rounded-lg border border-red-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
+                        <p className="mb-2 font-bold text-gray-800 flex items-center"><Store className="mr-2 text-red-600 w-4 h-4" /> Reportar Pago en Oxxo:</p>
+                        <p className="mb-4">Sube una foto clara de tu ticket de depósito o transferencia recibida de Oxxo.</p>
+
+                        <form onSubmit={(e) => handleSubirPagoConstancia(e, 'oxxo')} className="flex flex-col gap-3 mt-4">
+                            <div
+                                className="border-2 border-dashed border-red-300 rounded-lg p-4 flex flex-col items-center justify-center bg-red-50 hover:bg-red-100 transition cursor-pointer"
+                                onClick={() => document.getElementById('comprobante-constancia-oxxo-upload')?.click()}
+                            >
+                                <UploadCloud className="w-8 h-8 text-red-400 mb-1" />
+                                <span className="text-sm font-medium text-red-700">
+                                    {fileConstancia ? fileConstancia.name : 'Subir ticket de Oxxo'}
+                                </span>
+                                <input
+                                    id="comprobante-constancia-oxxo-upload"
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    className="hidden"
+                                    onChange={(e) => setFileConstancia(e.target.files?.[0] || null)}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={uploadingConstancia || !fileConstancia}
+                                className="w-full bg-red-600 text-white px-5 py-3 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50 flex items-center justify-center transition"
+                            >
+                                {uploadingConstancia ? 'Enviando...' : 'Enviar comprobante oxxo'}
+                            </button>
+                            {pagoConstanciaMensaje && (
+                                <p className={`text-sm font-medium text-center ${pagoConstanciaMensaje.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+                                    {pagoConstanciaMensaje}
+                                </p>
+                            )}
+                        </form>
+                    </div>
+                    )}
+
+                    {/* Sección de Cupón para constancia */}
+                    {showCuponForConstancia && (
+                    <div className="bg-white p-4 rounded-lg border border-yellow-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
+                        <p className="mb-2 font-bold text-gray-800">Canjear Cupón o Bono para Constancia:</p>
+                        <form onSubmit={handleCanjearCupon} className="flex flex-col sm:flex-row gap-2 mt-2">
+                            <input
+                                type="text"
+                                placeholder="Ej: BECA100"
+                                value={cuponCodigo}
+                                onChange={(e) => setCuponCodigo(e.target.value.toUpperCase())}
+                                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 uppercase px-4 py-2 border"
+                            />
+                            <button
+                                type="submit"
+                                disabled={loading || !cuponCodigo.trim()}
+                                className="w-full sm:w-auto bg-gray-900 text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 disabled:opacity-50"
+                            >
+                                Aplicar
+                            </button>
+                        </form>
+                        {cuponError && <p className="mt-2 text-sm text-red-600 font-medium">{cuponError}</p>}
+                        {cuponSuccess && <p className="mt-2 text-sm text-green-600 font-medium">{cuponSuccess}</p>}
                     </div>
                     )}
                 </div>

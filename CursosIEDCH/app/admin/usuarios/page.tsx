@@ -112,20 +112,37 @@ export default function AdminUsuariosPage() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{nombreCompleto}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email || 'N/A'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.rol === 'admin' ? 'bg-purple-100 text-purple-800' : u.rol === 'profesor' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                        {u.rol}
-                                    </span>
+                                    <div className="flex flex-col gap-1">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-max ${
+                                            u.rol === 'admin' ? 'bg-purple-100 text-purple-800' : 
+                                            u.rol === 'profesor' ? 'bg-green-100 text-green-800' : 
+                                            u.rol === 'vendedor' ? 'bg-blue-100 text-blue-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
+                                            {u.rol}
+                                        </span>
+                                        {u.referral_code && (
+                                            <span className="text-xs font-mono bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded w-max">
+                                                🔑 {u.referral_code}
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 flex items-center gap-2">
-                                    <select
-                                        value={u.rol}
-                                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                                        className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
-                                    >
-                                        <option value="alumno">Alumno</option>
-                                        <option value="profesor">Profesor</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
+                                    {u.rol === 'financiero' ? (
+                                        <span className="block w-full px-3 py-2 text-sm text-gray-500 font-medium">Financiero (Especial)</span>
+                                    ) : (
+                                        <select
+                                            value={u.rol}
+                                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                                            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
+                                        >
+                                            <option value="alumno">Alumno</option>
+                                            <option value="profesor">Profesor</option>
+                                            <option value="vendedor">Vendedor</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    )}
                                     <button
                                         onClick={() => handleEliminarUsuario(u.id)}
                                         className="text-red-600 hover:text-red-900 p-1.5 bg-red-50 hover:bg-red-100 rounded transition-colors"

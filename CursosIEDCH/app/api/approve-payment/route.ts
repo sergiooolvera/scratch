@@ -5,7 +5,7 @@ import { Resend } from 'resend'
 export async function POST(req: Request) {
     try {
         const supabaseAdmin = await createClient()
-        const { pagoId, userId, cursoId, userEmail, userName, cursoTitulo, accion, notas, esPagoCompleto } = await req.json()
+        const { pagoId, userId, cursoId, userEmail, userName, cursoTitulo, accion, notas, esPagoCompleto, referredBy } = await req.json()
 
         // Inicializar Resend solo si tenemos la llave (para evitar crasheos si falta .env)
         const resendApiKey = process.env.RESEND_API_KEY || ''
@@ -31,7 +31,13 @@ export async function POST(req: Request) {
             if (!existe) {
                 const { error: insertError } = await supabaseAdmin
                     .from('ie_compras')
-                    .insert({ user_id: userId, curso_id: cursoId, pagado: true, pago_completo: esPagoCompleto !== undefined ? esPagoCompleto : true })
+                    .insert({ 
+                        user_id: userId, 
+                        curso_id: cursoId, 
+                        pagado: true, 
+                        pago_completo: esPagoCompleto !== undefined ? esPagoCompleto : true,
+                        ...(referredBy ? { referred_by: referredBy } : {}),
+                    })
 
                 if (insertError) throw insertError
             } else if (esPagoCompleto) {
@@ -71,12 +77,31 @@ export async function POST(req: Request) {
 
         } else if (accion === 'rechazar') {
             // 1. Marcar como rechazado
-            const { error: updateError } = await supabaseAdmin
+            const { data: pagoAfectado, error: updateError } = await supabaseAdmin
                 .from('ie_pagos_manuales')
                 .update({ estado: 'rechazado', notas: notas, fecha_revision: new Date() })
                 .eq('id', pagoId)
+                .select()
+                .single()
 
             if (updateError) throw updateError
+
+            // Revertir compra si fue un pago OXXO con acceso automático
+            if (pagoAfectado && pagoAfectado.notas?.includes('automático')) {
+                if (pagoAfectado.notas.includes('(Constancia)')) {
+                    // Revertir pago completo de constancia
+                    await supabaseAdmin.from('ie_compras')
+                        .update({ pago_completo: false })
+                        .eq('user_id', userId)
+                        .eq('curso_id', cursoId)
+                } else {
+                    // Eliminar la compra entera
+                    await supabaseAdmin.from('ie_compras')
+                        .delete()
+                        .eq('user_id', userId)
+                        .eq('curso_id', cursoId)
+                }
+            }
 
             // 2. Send rejection email
             if (resendApiKey && userEmail && resend) {

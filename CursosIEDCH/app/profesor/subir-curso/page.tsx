@@ -308,7 +308,8 @@ export default function SubirCursoPage() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Título del Curso</label>
-                                <input type="text" name="titulo" required value={formData.titulo} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
+                                <input type="text" name="titulo" required maxLength={60} value={formData.titulo} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
+                                <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 60 caracteres para que quepa en una sola línea del certificado.</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Descripción</label>
@@ -519,7 +520,8 @@ export default function SubirCursoPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Duración Estructurada (Ej. "10 Horas", "5 Módulos")</label>
-                                <input type="text" name="duracion" required value={formData.duracion} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
+                                <input type="text" name="duracion" required maxLength={30} value={formData.duracion} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
+                                <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 30 caracteres (para el certificado). Usa la nota para horarios completos.</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Precio de Venta (MXN)</label>

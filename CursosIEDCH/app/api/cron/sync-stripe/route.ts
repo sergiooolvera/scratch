@@ -78,6 +78,13 @@ export async function GET(req: Request) {
                 .eq("curso_id", cursoId)
                 .single();
 
+            // Si el cron confirma el pago, marcamos cualquier registro pendiente como aprobado
+            await supabaseAdmin.from('ie_pagos_manuales')
+                .update({ estado: 'aprobado', fecha_revision: new Date(), notas: 'Aprobado automáticamente por confirmación de Stripe (Cron)' })
+                .eq('user_id', userId)
+                .eq('curso_id', cursoId)
+                .eq('estado', 'pendiente');
+
             // Si NO existe en la base de datos pero el pago SÍ fue exitoso en Stripe
             if (!existe) {
                 console.log(`[CRON] Identificada compra faltante. Sincronizando... User: ${userId}, Curso: ${cursoId}`);

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins } from 'lucide-react'
 
 export default function Navbar() {
     const supabase = createClient()
@@ -14,6 +14,7 @@ export default function Navbar() {
     const [profile, setProfile] = useState<any>(null)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isProfMenuOpen, setIsProfMenuOpen] = useState(false)
+    const [isFinMenuOpen, setIsFinMenuOpen] = useState(false)
 
     useEffect(() => {
         const fetchUser = async (sessionUser: any) => {
@@ -83,6 +84,26 @@ export default function Navbar() {
                                     <Link href="/mis-cursos" className={navItemClass('/mis-cursos')}>
                                         <GraduationCap className="h-4 w-4" /> <span>Mis Cursos</span>
                                     </Link>
+                                )}
+                                {profile?.rol === 'financiero' && (
+                                    <div className="relative group">
+                                        <button
+                                            onClick={() => setIsFinMenuOpen(!isFinMenuOpen)}
+                                            className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 focus:outline-none"
+                                        >
+                                            <Landmark className="h-4 w-4" /> <span>Finanzas</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isFinMenuOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        <div className={`absolute left-0 mt-0 w-52 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-[100] pt-2 ${isFinMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'}`}>
+                                            <div className="py-1 bg-white rounded-md border border-gray-100" role="menu">
+                                                <Link href="/financiero" onClick={() => setIsFinMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                                                    <LayoutDashboard className="h-4 w-4" /> Dashboard Financiero
+                                                </Link>
+                                                <Link href="/financiero/colaboradores" onClick={() => setIsFinMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                                                    <HandCoins className="h-4 w-4" /> Pago de Colaboradores
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
                                 {profile?.rol === 'profesor' && (
                                     <div className="relative group">
@@ -189,6 +210,13 @@ export default function Navbar() {
                                             <GraduationCap className="h-5 w-5" /> <span>Mis Cursos</span>
                                         </Link>
                                     </>
+                                )}
+                                {profile?.rol === 'financiero' && (
+                                    <div className="space-y-1">
+                                        <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Finanzas</div>
+                                        <Link href="/financiero" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Dashboard Financiero</Link>
+                                        <Link href="/financiero/colaboradores" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Pago de Colaboradores</Link>
+                                    </div>
                                 )}
                                 {profile?.rol === 'profesor' && (
                                     <div className="space-y-1">

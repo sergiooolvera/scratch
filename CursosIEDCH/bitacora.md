@@ -26,5 +26,20 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Sistema de Exámenes:** Se corrigió la lógica de calificación para mapear correctamente las respuestas de los estudiantes con las opciones almacenadas en la base de datos (mapeo texto a letra).
 - **Responsive Design:** Se reparó el menú de navegación móvil en el panel de profesor que no se desplegaba correctamente.
 
+### 💰 Rol Financiero y Reportes
+- **Nuevo Rol 'Financiero':** Se agregó el rol exclusivo `financiero` para visualizar ingresos, restringiendo sus permisos en otras áreas administrativas para mayor seguridad.
+- **Precisión de Ingresos (Stripe):** Se migró la consulta de ventas de la vista del Profesor y de Finanzas para obtener los datos **directamente desde Stripe** en lugar de la base de datos local. Esto soluciona discrepancias con cupones de descuento y pagos parciales.
+- **Filtro de Intentos de Pago (OXXO):** Se ajustaron las reglas de validación para excluir fichas de OXXO generadas pero no pagadas, previniendo duplicidad de ventas en los reportes (`payment_status === 'paid'`).
+- **Dashboard Financiero Avanzado:** Se enriqueció la tabla de transacciones añadiendo paginación (20 resultados por hoja), exportación de tabla a Excel (CSV), y filtros combinables por Profesor, Curso, Alumno y Método de Pago. Adicionalmente, se aseguró que el título de los cursos no se trunque.
+
+### 📢 Sistema de Referidos y Precisión Financiera (Mayo 2026)
+- **Atribución de Comisiones:** Se implementó una lógica de cruce avanzada para referidos:
+    - **Pagos Stripe:** El referido se extrae del metadata de la sesión de Stripe, asegurando que solo se cuente si el código fue usado en el checkout específico.
+    - **Pagos Manuales:** Se introdujo una validación de ventana temporal (±48 horas) para asociar referidos de la base de datos con transferencias bancarias, evitando que pagos antiguos hereden referidos nuevos por error.
+- **Validación en Checkout:** Se añadió un botón de "Verificar" en el flujo de compra que valida códigos de referido en tiempo real antes de proceder al pago, mejorando la experiencia del usuario y la integridad de los datos.
+- **Sincronización de Datos (`referred_by`):** Se corrigió el endpoint de verificación de checkout para persistir el código de referido desde Stripe hacia la base de datos local (`ie_compras`) tras un pago exitoso.
+- **Módulo de Colaboradores:** Se habilitó el cálculo de comisiones (30/40/20%) incluyendo tanto ventas de Stripe como pagos manuales, con filtros avanzados por colaborador, curso y periodo (Mes/Año).
+- **Integridad de Reportes:** Se consolidó la regla de que solo sesiones con `payment_status: 'paid'` en Stripe (especialmente para OXXO) se contabilicen en los reportes de ventas y comisiones.
+
 ---
-*Última actualización: 29 de Marzo de 2026*
+*Última actualización: 02 de Mayo de 2026*

@@ -22,30 +22,63 @@ export async function GET() {
             .eq('id', user.id)
             .single();
 
-        if (profile?.rol !== 'admin') return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 });
+        if (profile?.rol !== 'admin' && profile?.rol !== 'financiero' && profile?.rol !== 'profesor') return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 });
 
         const supabaseAdmin = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
 
+        let profCursoIds: Set<string> | null = null;
+        if (profile?.rol === 'profesor') {
+            const { data: profCursos } = await supabaseAdmin.from('ie_cursos').select('id').eq('creado_por', user.id);
+            profCursoIds = new Set(profCursos?.map(c => c.id) || []);
+        }
+
         // Fetch cursos
-        const { data: cursos } = await supabaseAdmin.from('ie_cursos').select('id, titulo, precio');
-        const cursoMap: Record<string, { titulo: string, precio: number }> = {};
-        cursos?.forEach(c => { cursoMap[c.id] = { titulo: c.titulo, precio: c.precio } });
+        const { data: cursos } = await supabaseAdmin.from('ie_cursos').select('id, titulo, precio, creado_por');
+        const cursoMap: Record<string, { titulo: string, precio: number, profesor_id: string }> = {};
+        cursos?.forEach(c => { cursoMap[c.id] = { titulo: c.titulo, precio: c.precio, profesor_id: c.creado_por } });
 
         const matchedKeys = new Set<string>();
 
         // Fetch perfiles (para no tener N/A en nombres)
-        const { data: perfiles } = await supabaseAdmin.from('ie_profiles').select('id, nombre');
+        const { data: perfiles } = await supabaseAdmin.from('ie_profiles').select('id, nombre, apellido_paterno, apellido_materno');
         const profileNameMap: Record<string, string> = {};
-        perfiles?.forEach(p => { profileNameMap[p.id] = p.nombre });
-
-        // Fetch Stripe
-        const sessions = await stripe.checkout.sessions.list({ 
-            limit: 100,
-            expand: ['data.payment_intent.latest_charge', 'data.total_details']
+        perfiles?.forEach(p => { 
+            profileNameMap[p.id] = `${p.nombre || ''} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.trim() || 'Desconocido'
         });
+
+        // Fetch referidos desde ie_compras para cruzar con transacciones
+        const { data: comprasReferidas } = await supabaseAdmin
+            .from('ie_compras')
+            .select('user_id, curso_id, referred_by, fecha_compra')
+            .not('referred_by', 'is', null);
+        // Almacenar referido CON fecha de compra para poder hacer match preciso
+        const referralMap: Record<string, { referred_by: string; fecha: string }> = {};
+        comprasReferidas?.forEach(c => {
+            if (c.referred_by) referralMap[`${c.user_id}_${c.curso_id}`] = { referred_by: c.referred_by, fecha: c.fecha_compra };
+        });
+
+        // Fetch Stripe - paginación completa para traer TODAS las sesiones
+        const allSessionsData: Stripe.Checkout.Session[] = [];
+        let hasMore = true;
+        let startingAfter: string | undefined = undefined;
+
+        while (hasMore) {
+            const page = await stripe.checkout.sessions.list({
+                limit: 100,
+                ...(startingAfter ? { starting_after: startingAfter } : {}),
+                expand: ['data.payment_intent.latest_charge', 'data.total_details'],
+            });
+            allSessionsData.push(...page.data);
+            hasMore = page.has_more;
+            if (page.data.length > 0) {
+                startingAfter = page.data[page.data.length - 1].id;
+            }
+        }
+
+        const sessions = { data: allSessionsData };
 
         const stripeTransactions = sessions.data.map(session => {
             const pi = session.payment_intent as any;
@@ -80,6 +113,8 @@ export async function GET() {
                 customerName = profileNameMap[uid || ''] || 'N/A';
             }
 
+            const cData = cursoMap[cid || ''];
+
             return {
                 id: session.id,
                 origin: 'Stripe',
@@ -91,8 +126,13 @@ export async function GET() {
                 payment_status: session.payment_status,
                 customer_email: session.customer_details?.email || session.metadata?.email || 'N/A',
                 customer_name: customerName,
-                curso_titulo: cursoMap[cid || '']?.titulo || 'Curso desconocido',
+                curso_id: cid,
+                curso_titulo: cData?.titulo || 'Curso desconocido',
+                profesor_id: cData?.profesor_id || null,
+                profesor_nombre: profileNameMap[cData?.profesor_id] || 'Desconocido',
                 method: methodLabel + bonoLabel,
+                // referred_by viene del metadata de STRIPE (solo si el alumno usó código en ESE checkout)
+                referred_by: session.metadata?.referred_by || null,
             };
         });
 
@@ -115,7 +155,17 @@ export async function GET() {
 
             matchedKeys.add(`${m.user_id}_${m.curso_id}`);
             
-            return {
+                // Solo asignar referido si la fecha del pago manual coincide con la fecha de la compra referida (±48h)
+                let manualReferredBy: string | null = null;
+                const refEntry = referralMap[`${m.user_id}_${m.curso_id}`];
+                if (refEntry) {
+                    const compraDate = new Date(refEntry.fecha).getTime();
+                    const manualDate = new Date(m.fecha_solicitud).getTime();
+                    const diffHours = Math.abs(compraDate - manualDate) / (1000 * 60 * 60);
+                    if (diffHours < 48) manualReferredBy = refEntry.referred_by;
+                }
+
+                return {
                 id: m.id,
                 origin: 'Manual',
                 created: Math.floor(new Date(m.fecha_solicitud).getTime() / 1000),
@@ -126,8 +176,12 @@ export async function GET() {
                 payment_status: m.estado === 'aprobado' ? 'paid' : 'unpaid',
                 customer_email: email,
                 customer_name: name,
+                curso_id: m.curso_id,
                 curso_titulo: curso?.titulo || 'Curso desconocido',
+                profesor_id: curso?.profesor_id || null,
+                profesor_nombre: profileNameMap[curso?.profesor_id] || 'Desconocido',
                 method: 'Transferencia/Depósito / Efectivo',
+                referred_by: manualReferredBy,
             };
         }));
 
@@ -144,8 +198,8 @@ export async function GET() {
             try {
                 const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(c.user_id);
                 if (authUser?.user?.email) email = authUser.user.email;
-                const { data: prof } = await supabaseAdmin.from('ie_profiles').select('nombre').eq('id', c.user_id).single();
-                if (prof?.nombre) name = prof.nombre;
+                const { data: prof } = await supabaseAdmin.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', c.user_id).single();
+                if (prof) name = `${prof.nombre || ''} ${prof.apellido_paterno || ''} ${prof.apellido_materno || ''}`.trim() || 'Desconocido';
             } catch {}
 
             const montoPago = c.monto_pagado ?? 0;
@@ -171,13 +225,19 @@ export async function GET() {
                 payment_status: 'paid',
                 customer_email: email,
                 customer_name: name,
+                curso_id: c.curso_id,
                 curso_titulo: curso?.titulo || 'Curso desconocido',
+                profesor_nombre: profileNameMap[curso?.profesor_id] || 'Desconocido',
                 method: finalMethod,
             };
         }));
 
-        const allTransactions = [...stripeTransactions, ...manualTransactions, ...comprasUnmatched]
+        let allTransactions = [...stripeTransactions, ...manualTransactions, ...comprasUnmatched]
             .sort((a, b) => b.created - a.created);
+
+        if (profCursoIds) {
+            allTransactions = allTransactions.filter(t => profCursoIds!.has(t.curso_id));
+        }
 
         return NextResponse.json({ data: allTransactions });
 

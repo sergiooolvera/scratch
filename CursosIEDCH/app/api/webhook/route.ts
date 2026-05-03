@@ -37,25 +37,36 @@ export async function POST(req: Request) {
         const cursoId = session.metadata?.curso_id;
 
         if (userId && cursoId) {
-            // Verificar si ya existe para no duplicar (útil si hay reintento de webhook)
+            // Determinar si pago_completo es true o false desde los metadatos de Stripe.
+        const pagoCompleto = session.metadata?.pago_completo === 'false' ? false : true;
+            const montoPagado = session.metadata?.monto_pagado ? Number(session.metadata.monto_pagado) : session.amount_total ? session.amount_total / 100 : 0;
+            const referredBy = session.metadata?.referred_by || null;
+
             const { data: existe } = await supabaseAdmin.from("ie_compras")
                                         .select("id").eq("user_id", userId).eq("curso_id", cursoId).single();
+                                        
+            // Si el webhook confirma el pago, marcamos cualquier registro pendiente como aprobado
+            await supabaseAdmin.from('ie_pagos_manuales')
+                .update({ estado: 'aprobado', fecha_revision: new Date(), notas: 'Aprobado automáticamente por confirmación de Stripe' })
+                .eq('user_id', userId)
+                .eq('curso_id', cursoId)
+                .eq('estado', 'pendiente');
+
             if (existe) {
-                console.log(`Compra ya existía: User ${userId}, Curso ${cursoId}`);
+                console.log(`Compra ya existía: User ${userId}, Curso ${cursoId}. Actualizando.`);
+                await supabaseAdmin.from('ie_compras')
+                    .update({ pago_completo: pagoCompleto, monto_pagado: montoPagado })
+                    .eq('id', existe.id);
                 return;
             }
-
-            // Determinar si pago_completo es true o false desde los metadatos de Stripe.
-            // Si la regla de negocio es que OXXO no acepta cupones de 100%, todos los pagos de OXXO / Tarjeta de mas de $0 deberían ser pago completo (a menos que haya sido un cupón parcial, en cuyo caso la metadata tiene la última palabra).
-            const pagoCompleto = session.metadata?.pago_completo === 'false' ? false : true;
-            const montoPagado = session.metadata?.monto_pagado ? Number(session.metadata.monto_pagado) : session.amount_total ? session.amount_total / 100 : 0;
 
             const insertData: any = {
                 user_id: userId,
                 curso_id: cursoId,
                 pagado: true,
                 pago_completo: pagoCompleto,
-                monto_pagado: montoPagado
+                monto_pagado: montoPagado,
+                ...(referredBy ? { referred_by: referredBy } : {}),
             };
 
             // Registrar compra

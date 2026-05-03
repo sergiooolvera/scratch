@@ -4,6 +4,30 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+// Genera un código de referido único tipo "CARLOS247"
+async function generateReferralCode(supabaseAdmin: any, nombre: string): Promise<string> {
+    const base = (nombre || 'USER')
+        .toUpperCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar acentos
+        .replace(/[^A-Z0-9]/g, '')
+        .substring(0, 8)
+    
+    let attempts = 0
+    while (attempts < 10) {
+        const suffix = Math.floor(100 + Math.random() * 900).toString() // 3 dígitos
+        const code = `${base}${suffix}`
+        const { data } = await supabaseAdmin
+            .from('ie_profiles')
+            .select('id')
+            .eq('referral_code', code)
+            .maybeSingle()
+        if (!data) return code // código disponible
+        attempts++
+    }
+    // Fallback con timestamp si hubo colisiones
+    return `${base}${Date.now().toString().slice(-4)}`
+}
+
 export async function POST(request: Request) {
     const supabaseSession = await createServerClient()
     const { data: { user } } = await supabaseSession.auth.getUser()
@@ -35,18 +59,35 @@ export async function POST(request: Request) {
             process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         )
 
+        // Actualización a aplicar
+        const updatePayload: Record<string, any> = { rol: newRole }
+
+        // Si el nuevo rol es profesor o vendedor, generar código de referido si no tiene uno
+        if (newRole === 'profesor' || newRole === 'vendedor') {
+            const { data: targetProfile } = await supabaseAdmin
+                .from('ie_profiles')
+                .select('nombre, referral_code')
+                .eq('id', userId)
+                .single()
+
+            if (!targetProfile?.referral_code) {
+                updatePayload.referral_code = await generateReferralCode(supabaseAdmin, targetProfile?.nombre || '')
+            }
+        }
+
         const { error } = await supabaseAdmin
             .from('ie_profiles')
-            .update({ rol: newRole })
+            .update(updatePayload)
             .eq('id', userId)
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 })
         }
 
-        return NextResponse.json({ success: true })
+        return NextResponse.json({ success: true, referral_code: updatePayload.referral_code || null })
 
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 })
     }
 }
+

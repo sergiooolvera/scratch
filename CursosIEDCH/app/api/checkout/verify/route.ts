@@ -35,11 +35,13 @@ export async function GET(req: Request) {
             if (userId && cursoId) {
                 // Leer si el pago fue completo desde el metadata de Stripe
                 const pagoCompleto = session.metadata?.pago_completo !== 'false';
+                const montoPagadoMetadata = parseFloat(session.metadata?.monto_pagado || '0');
+                const referredBy = session.metadata?.referred_by || null;
 
                 // Primero verificar si ya se guardó la compra (por webhook u otro lado)
                 const { data: existe } = await supabaseAdmin
                     .from('ie_compras')
-                    .select('id')
+                    .select('id, referred_by')
                     .eq('user_id', userId)
                     .eq('curso_id', cursoId)
                     .single()
@@ -51,20 +53,28 @@ export async function GET(req: Request) {
                         curso_id: cursoId,
                         pagado: true,
                         pago_completo: pagoCompleto,
+                        monto_pagado: montoPagadoMetadata,
+                        ...(referredBy ? { referred_by: referredBy } : {}),
                     })
 
                     if (error) console.error('Error registrando compra en DB:', error)
                     else console.log('Compra validada y registrada correctamente vía redirección.')
                 } else {
-                    // Si ya existe, actualizar pago_completo si es true (puede venir de webhook sin ese campo)
-                    if (pagoCompleto) {
+                    // Si ya existe, actualizar campos faltantes (referred_by puede llegar después)
+                    const updates: Record<string, any> = {}
+                    if (pagoCompleto) updates.pago_completo = true
+                    if (montoPagadoMetadata > 0) updates.monto_pagado = montoPagadoMetadata
+                    if (referredBy && !existe.referred_by) updates.referred_by = referredBy
+
+                    if (Object.keys(updates).length > 0) {
                         await supabaseAdmin.from('ie_compras')
-                            .update({ pago_completo: true })
+                            .update(updates)
                             .eq('user_id', userId)
                             .eq('curso_id', cursoId)
                     }
                 }
             }
+
             return NextResponse.redirect(new URL('/mis-cursos?compra_exitosa=true', req.url))
         } else if (session.payment_status === 'unpaid') {
             let voucherUrl = ''

@@ -141,7 +141,8 @@ export default function AdminPagosOxxoPage() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500 text-sm"
                     >
                         <option value="todos">Todos</option>
-                        <option value="pendiente">Pendientes</option>
+                        <option value="pendiente">Pendientes de Aprobación</option>
+                        <option value="pendiente_oxxo">Pendientes OXXO (Auto-acceso)</option>
                         <option value="aprobado">Aprobados</option>
                         <option value="rechazado">Rechazados</option>
                     </select>
@@ -180,7 +181,9 @@ export default function AdminPagosOxxoPage() {
                                             (p.curso?.titulo || '').toLowerCase().includes(textoBusqueda);
                                         return coincideEstado && coincideTexto;
                                     })
-                                    .map((pago) => (
+                                    .map((pago) => {
+                                        const isPendienteOxxo = pago.estado === 'pendiente' && (pago.metodo_pago === 'oxxo' || pago.notas?.includes('OXXO') || pago.notas?.includes('oxxo'));
+                                        return (
                                     <tr key={pago.id} className={pago.estado === 'pendiente' ? 'bg-yellow-50/30' : ''}>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900 font-bold">{pago.perfil?.nombre || 'Desconocido'}</div>
@@ -203,12 +206,29 @@ export default function AdminPagosOxxoPage() {
                                             </a>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            {pago.estado === 'pendiente' && (
+                                            {pago.estado === 'pendiente' && !isPendienteOxxo && (
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                                     <Clock className="w-3 h-3 mr-1" /> Pendiente
                                                 </span>
                                             )}
-                                            {pago.estado === 'aprobado' && (
+                                            {isPendienteOxxo && (
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                        <Clock className="w-3 h-3 mr-1" /> Pendiente OXXO
+                                                    </span>
+                                                    {(() => {
+                                                        const fechaSol = new Date(pago.fecha_solicitud);
+                                                        const hoy = new Date();
+                                                        const diffTime = Math.abs(hoy.getTime() - fechaSol.getTime());
+                                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        if (diffDays > 10) {
+                                                            return <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200 uppercase mt-1">¡Han pasado {diffDays} días!</span>;
+                                                        }
+                                                        return <span className="text-[10px] text-gray-500">Días transcurridos: {diffDays}</span>;
+                                                    })()}
+                                                </div>
+                                            )}
+                                            {(pago.estado === 'aprobado') && (
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                     <Check className="w-3 h-3 mr-1" /> Aprobado
                                                 </span>
@@ -223,7 +243,7 @@ export default function AdminPagosOxxoPage() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            {pago.estado === 'pendiente' && (
+                                            {pago.estado === 'pendiente' && !isPendienteOxxo && (
                                                 <div className="flex justify-end space-x-2">
                                                     <button
                                                         onClick={() => handleAprobar(pago)}
@@ -239,12 +259,33 @@ export default function AdminPagosOxxoPage() {
                                                     </button>
                                                 </div>
                                             )}
+                                            {isPendienteOxxo && (
+                                                <div className="flex justify-end space-x-2">
+                                                    <button
+                                                        onClick={() => handleAprobar(pago)}
+                                                        className="text-green-600 hover:text-green-900 bg-green-50 px-2 py-1 rounded border border-green-200 transition text-xs"
+                                                    >
+                                                        Marcar Pagado Manual
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if(confirm('¿Seguro que quieres cancelar y eliminar los accesos otorgados? Esta acción es irreversible.')) {
+                                                                handleRechazar(pago)
+                                                            }
+                                                        }}
+                                                        className="text-red-600 font-bold hover:text-red-900 bg-red-50 px-2 py-1 rounded border border-red-200 transition text-xs"
+                                                    >
+                                                        Rechazar y Revocar Acceso
+                                                    </button>
+                                                </div>
+                                            )}
                                             {pago.estado !== 'pendiente' && (
                                                 <span className="text-gray-400 text-xs italic">Procesado</span>
                                             )}
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

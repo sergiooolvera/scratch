@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
     try {
-        const { cursoId, userId, cuponCodigo } = await req.json()
+        const { cursoId, userId, cuponCodigo, esConstancia, referralCode } = await req.json()
 
         // 1. Verificar sesión de Supabase
         const supabase = await createClient()
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
             return new NextResponse('Unauthorized', { status: 401 })
         }
 
-        // 2. Obtener detalles del curso desde la Base de Datos
+        // 2. Obtener detalles del curso
         const { data: curso } = await supabase
             .from('ie_cursos')
             .select('*')
@@ -29,10 +29,43 @@ export async function POST(req: Request) {
             return new NextResponse('Course not found', { status: 404 })
         }
 
-        // 3. Procesar Cupón si existe
-        let porcentajeDescuento = 0;
-        let finalPrice = curso.precio;
-        let usoCupon = false; // Track si se aplicó algún cupón de descuento
+        // 3. Resolver código de referido (opcional, se ignora si inválido)
+        let referredById: string | null = null
+        if (referralCode) {
+            const { data: referrer } = await supabase
+                .from('ie_profiles')
+                .select('id, rol')
+                .eq('referral_code', referralCode.trim().toUpperCase())
+                .maybeSingle()
+
+            if (referrer) {
+                const esSelfReferral = referrer.id === userId
+                const esProfesor = referrer.rol === 'profesor'
+                const esCursoPropio = curso.creado_por === referrer.id
+                // Profesores solo pueden referir sus propios cursos. Vendedores: cualquier curso.
+                const codigoValido = !esSelfReferral && (!esProfesor || esCursoPropio)
+                if (codigoValido) referredById = referrer.id
+            }
+        }
+
+        // 4. Obtener monto previamente pagado si existe
+        let montoPrevio = 0
+        const { data: compraPrevia } = await supabase
+            .from('ie_compras')
+            .select('monto_pagado')
+            .eq('user_id', userId)
+            .eq('curso_id', cursoId)
+            .single()
+        
+        if (compraPrevia?.monto_pagado) {
+            montoPrevio = compraPrevia.monto_pagado
+        }
+
+        // 5. Procesar Cupón si existe
+        let porcentajeDescuento = 0
+        let finalPrice = esConstancia ? Math.max(0, curso.precio - montoPrevio) : curso.precio
+        let basePrice = finalPrice
+        let usoCupon = false
 
         if (cuponCodigo) {
             const { data: cupon } = await supabase
@@ -43,27 +76,19 @@ export async function POST(req: Request) {
                 .single()
 
             if (cupon) {
-                // Verificar si el cupón está asignado a un curso específico
                 if (cupon.curso_id && cupon.curso_id !== cursoId) {
                     return NextResponse.json({ error: 'Cupón no válido para este curso' }, { status: 400 })
                 }
-
-                porcentajeDescuento = cupon.descuento_porcentaje;
-                usoCupon = true; // Se aplicó un cupón → pago NO es completo
-                // Calculamos el precio con descuento
-                if (porcentajeDescuento === 100) {
-                    finalPrice = 0;
-                } else {
-                    finalPrice = curso.precio - (curso.precio * (porcentajeDescuento / 100));
-                }
+                porcentajeDescuento = cupon.descuento_porcentaje
+                usoCupon = true
+                finalPrice = porcentajeDescuento === 100 ? 0 : basePrice - (basePrice * (porcentajeDescuento / 100))
             } else {
                 return NextResponse.json({ error: 'Cupón inválido o expirado' }, { status: 400 })
             }
         }
 
-        // 4. Si el precio final es 0 (Cupón del 100%), lo registramos directo sin Stripe
+        // 6. Si el precio final es 0, registramos directo sin Stripe
         if (finalPrice <= 0) {
-            // Check si ya lo tiene para no duplicar
             const { data: existe } = await supabase
                 .from('ie_compras')
                 .select('id')
@@ -72,28 +97,30 @@ export async function POST(req: Request) {
                 .single()
 
             if (!existe) {
-                // Cupón 100%: acceso al curso pero pago_completo=false
                 await supabase.from('ie_compras').insert({
                     user_id: userId,
                     curso_id: cursoId,
                     pagado: true,
-                    pago_completo: false, // Cupón del 100% no cubre la constancia
-                    monto_pagado: 0,
+                    pago_completo: esConstancia ? true : false,
+                    monto_pagado: montoPrevio,
+                    ...(referredById ? { referred_by: referredById } : {}),
                 })
+            } else if (esConstancia) {
+                await supabase.from('ie_compras')
+                    .update({ pago_completo: true })
+                    .eq('id', existe.id)
             }
             return NextResponse.json({ success: true, url: null })
         } else if (finalPrice < 10) {
             return NextResponse.json({ error: 'El monto mínimo procesable por Stripe (Tarjeta/OXXO) es de $10.00 MXN. Por favor, selecciona otro método de pago o comunícate con soporte.' }, { status: 400 })
         }
 
-        // Determinar el dominio usando el 'Referer' que el navegador siempre envía,
-        // o usando directamente el enlace público de Vercel como parche de seguridad absoluto.
-        const referer = req.headers.get('referer');
+        const referer = req.headers.get('referer')
         const absoluteUrl = referer 
             ? new URL(referer).origin 
-            : (process.env.NEXT_PUBLIC_APP_URL || 'https://cursos-iedch.vercel.app');
+            : (process.env.NEXT_PUBLIC_APP_URL || 'https://cursos-iedch.vercel.app')
 
-        // 5. Crear sesión de Stripe Checkout si hay un costo > 0
+        // 7. Crear sesión de Stripe Checkout
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card', 'oxxo'],
             customer_email: user.email,
@@ -105,7 +132,7 @@ export async function POST(req: Request) {
                             name: `Curso: ${curso.titulo}${porcentajeDescuento > 0 ? ` (Descuento ${porcentajeDescuento}%)` : ''}`,
                             description: curso.descripcion ? curso.descripcion.substring(0, 250) : undefined,
                         },
-                        unit_amount: Math.round(finalPrice * 100), // Stripe usa centavos
+                        unit_amount: Math.round(finalPrice * 100),
                     },
                     quantity: 1,
                 },
@@ -117,8 +144,9 @@ export async function POST(req: Request) {
             metadata: {
                 curso_id: curso.id,
                 user_id: userId,
-                pago_completo: usoCupon ? 'false' : 'true', // Stripe metadata es string
-                monto_pagado: finalPrice.toString(),
+                pago_completo: (esConstancia || !usoCupon) ? 'true' : 'false',
+                monto_pagado: (montoPrevio + finalPrice).toString(),
+                ...(referredById ? { referred_by: referredById } : {}),
             }
         })
 

@@ -93,6 +93,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                         requiereExamen={curso.requiere_examen}
                         userId={user.id}
                         precioCurso={curso.precio}
+                        montoPagado={compra?.monto_pagado || 0}
                     />
                 </div>
             </div>

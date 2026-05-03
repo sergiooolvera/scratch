@@ -18,66 +18,39 @@ export default function ProfesorVentasPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        const { data: misCursos, error: cursosError } = await supabase
-            .from('ie_cursos')
-            .select('id, titulo, precio, porcentaje_profesor')
-            .eq('creado_por', user.id)
-
-        console.log('[ventas] misCursos:', misCursos, 'error:', cursosError)
-
-        if (!misCursos || misCursos.length === 0) {
-            setVentas([])
-            setLoading(false)
-            return
-        }
-
-        const cursoIds = misCursos.map(c => c.id)
-
-        const { data: comprasData, error } = await supabase
-            .from('ie_compras')
-            .select(`id, fecha_compra, curso_id, user_id, monto_pagado, pago_completo`)
-            .in('curso_id', cursoIds)
-            .eq('pagado', true)
-            .order('fecha_compra', { ascending: false })
-
-        if (error) {
-            console.error('Error fetching sales:', error)
-            setLoading(false)
-            return
-        }
-
-        if (comprasData) {
-            let total = 0
-            const misVentasMapping = comprasData.map((compra: any) => {
-                const cursoRef = misCursos.find(c => c.id === compra.curso_id)
-                const fallback = compra.pago_completo === false ? 0 : (cursoRef?.precio || 0);
-                // Si existe monto_pagado, lo usamos. Si compran viejo sin él, cae al precio original o 0 si usó cupón total
-                const montoPagadoPorAlumno = compra.monto_pagado !== null && compra.monto_pagado !== undefined 
-                    ? Number(compra.monto_pagado) 
-                    : Number(fallback)
+        try {
+            const res = await fetch('/api/admin/stripe-sessions')
+            const result = await res.json()
+            if (res.ok) {
+                // Stripe + Transferencias manuales aprobadas
+                const txs = result.data.filter((t: any) => 
+                    t.payment_status === 'paid' && 
+                    (t.origin === 'Stripe' || t.origin === 'Stripe (Historial)' || t.origin === 'Manual')
+                )
                 
-                total += montoPagadoPorAlumno;
-                return { ...compra, curso_titulo: cursoRef?.titulo || 'Desconocido', monto: montoPagadoPorAlumno }
-            })
-
-            const userIds = [...new Set(misVentasMapping.map(v => v.user_id))]
-            const { data: usersData } = await supabase
-                .from('ie_profiles')
-                .select('id, nombre, apellido_paterno, apellido_materno')
-                .in('id', userIds)
-
-            const ventasCompletas = misVentasMapping.map(venta => {
-                const u = usersData?.find(user => user.id === venta.user_id)
-                const nombreCompleto = u 
-                    ? `${u.nombre || ''} ${u.apellido_paterno || ''} ${u.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() 
-                    : 'Alumno (No encontrado)';
-                return { ...venta, alumno_nombre: nombreCompleto }
-            })
-
-            setVentas(ventasCompletas)
-            setTotalMonto(total)
+                let total = 0
+                const mappedVentas = txs.map((t: any) => {
+                    total += t.amount
+                    return {
+                        id: t.id,
+                        fecha_compra_timestamp: (t.paid_at || t.created),
+                        fecha_compra: new Date((t.paid_at || t.created) * 1000).toISOString(),
+                        alumno_nombre: t.customer_name,
+                        curso_titulo: t.curso_titulo,
+                        monto: t.amount
+                    }
+                }).sort((a: any, b: any) => b.fecha_compra_timestamp - a.fecha_compra_timestamp)
+                
+                setVentas(mappedVentas)
+                setTotalMonto(total)
+            } else {
+                console.error('Error fetching stripe sessions:', result.error)
+            }
+        } catch (error) {
+            console.error('Fetch error:', error)
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
     }
 
     // ── Omitimos datos de gráficos ────────────────────────────────
@@ -88,7 +61,11 @@ export default function ProfesorVentasPage() {
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8">Mis Ventas de Cursos</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Ventas de Cursos</h1>
+            
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 mb-8 text-sm">
+                <strong>Nota:</strong> Incluye ventas de Stripe y transferencias/depósitos aprobados. Es un aproximado; falta hacer el corte final de cursos vendidos vs dinero ingresado.
+            </div>
 
             {/* KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
