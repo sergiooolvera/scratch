@@ -406,7 +406,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                                 <li><strong>Banco:</strong> BBVA Bancomer</li>
                                 <li><strong>Cuenta:</strong> 047 011 9024</li>
                                 <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
-                                <li><strong>Titular:</strong> Instituto Educativo S.C.</li>
+                                <li><strong>Titular:</strong> Sergio Olvera</li>
                             </ul>
                             <p className="mt-3 text-xs text-gray-500">Una vez realizado el pago, toma una foto del ticket o guarda el comprobante de transferencia y súbelo aquí.</p>
                         </div>
@@ -602,7 +602,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                             <li><strong>Banco:</strong> BBVA Bancomer</li>
                             <li><strong>Cuenta:</strong> 047 011 9024</li>
                             <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
-                            <li><strong>Titular:</strong> Instituto Educativo S.C.</li>
+                            <li><strong>Titular:</strong> Sergio Olvera</li>
                             {precioCurso !== undefined && montoPagado !== undefined && (
                                 <li className="font-bold text-blue-700 mt-1"><strong>Monto Restante:</strong> ${Math.max(0, precioCurso - montoPagado)} MXN</li>
                             )}
