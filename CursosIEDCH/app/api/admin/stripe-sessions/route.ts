@@ -66,15 +66,17 @@ export async function GET() {
         let startingAfter: string | undefined = undefined;
 
         while (hasMore) {
-            const page = await stripe.checkout.sessions.list({
+            const params: Stripe.Checkout.SessionListParams = {
                 limit: 100,
-                ...(startingAfter ? { starting_after: startingAfter } : {}),
                 expand: ['data.payment_intent.latest_charge', 'data.total_details'],
-            });
-            allSessionsData.push(...page.data);
-            hasMore = page.has_more;
-            if (page.data.length > 0) {
-                startingAfter = page.data[page.data.length - 1].id;
+            };
+            if (startingAfter) params.starting_after = startingAfter;
+
+            const response = await stripe.checkout.sessions.list(params);
+            allSessionsData.push(...response.data);
+            hasMore = response.has_more;
+            if (response.data.length > 0) {
+                startingAfter = response.data[response.data.length - 1].id;
             }
         }
 
