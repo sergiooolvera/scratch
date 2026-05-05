@@ -12,6 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link href="/admin/pagos-manuales" className="px-3 py-2 rounded-md hover:bg-gray-700 transition text-green-300">Pagos Transferencia</Link>
                     <Link href="/admin/pagos-oxxo" className="px-3 py-2 rounded-md bg-red-900/50 hover:bg-red-800 transition text-red-100 border border-red-800">Pagos Oxxo</Link>
                     <Link href="/admin/transacciones" className="px-3 py-2 rounded-md hover:bg-gray-700 transition">Transacciones Stripe</Link>
+                    <Link href="/admin/solicitudes" className="px-3 py-2 rounded-md bg-amber-900/50 hover:bg-amber-800 transition text-amber-100 border border-amber-800">Solicitudes Ajuste</Link>
                     <Link href="/admin/actividad" className="px-3 py-2 rounded-md hover:bg-gray-700 transition">Estadísticas</Link>
                 </div>
             </div>

@@ -15,6 +15,8 @@ export default function PerfilPage() {
     const [telefono, setTelefono] = useState('')
     const [banco, setBanco] = useState('')
     const [clabe, setClabe] = useState('')
+    const [datosBancariosCapturados, setDatosBancariosCapturados] = useState(false)
+    const [solicitudCambioDatos, setSolicitudCambioDatos] = useState(false)
     const [copiado, setCopiado] = useState(false)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -48,6 +50,8 @@ export default function PerfilPage() {
                 setTelefono(prof.telefono || '')
                 setBanco(prof.banco || '')
                 setClabe(prof.clabe || '')
+                setDatosBancariosCapturados(prof.datos_bancarios_capturados || false)
+                setSolicitudCambioDatos(prof.solicitud_cambio_datos || false)
             }
             setLoading(false)
         }
@@ -64,6 +68,8 @@ export default function PerfilPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
+        const nuevosDatosCapturados = (telefono && banco && clabe && !datosBancariosCapturados) ? true : datosBancariosCapturados;
+
         const { error: updateError } = await supabase
             .from('ie_profiles')
             .update({ 
@@ -72,14 +78,36 @@ export default function PerfilPage() {
                 apellido_materno: apellidoMaterno,
                 telefono,
                 banco,
-                clabe
+                clabe,
+                datos_bancarios_capturados: nuevosDatosCapturados
             })
             .eq('id', user.id)
+
+        if (!updateError && nuevosDatosCapturados && !datosBancariosCapturados) {
+            setDatosBancariosCapturados(true);
+        }
 
         if (updateError) {
             setError('Error al actualizar el perfil: ' + updateError.message)
         } else {
             setSuccess('Perfil actualizado correctamente.')
+        }
+        setSaving(false)
+    }
+
+    const solicitarAjuste = async () => {
+        setSaving(true)
+        try {
+            const res = await fetch('/api/perfil/solicitar-ajuste', { method: 'POST' })
+            if (res.ok) {
+                setSolicitudCambioDatos(true)
+                setSuccess('Solicitud enviada. Un administrador revisará tu petición pronto.')
+            } else {
+                const data = await res.json()
+                setError(data.error || 'Error al enviar la solicitud.')
+            }
+        } catch (err) {
+            setError('Error de conexión al solicitar ajuste.')
         }
         setSaving(false)
     }
@@ -211,10 +239,11 @@ export default function PerfilPage() {
                                     <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Obligatorio</span>
                                 </div>
                                 <p className="text-sm text-gray-500 mb-5 leading-relaxed">
-                                    Como profesor o vendedor, estos datos son obligatorios para poder gestionar cursos y recibir tus comisiones.
+                                    Como profesor o vendedor, estos datos son obligatorios para poder gestionar cursos y recibir tus comisiones. 
+                                    {datosBancariosCapturados && !solicitudCambioDatos && " Por seguridad, estos datos están bloqueados tras su captura."}
                                 </p>
                                 
-                                <div className="space-y-4">
+                                <div className={`space-y-4 ${datosBancariosCapturados ? 'opacity-75' : ''}`}>
                                     <div>
                                         <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
                                         <input 
@@ -222,7 +251,8 @@ export default function PerfilPage() {
                                             required={rol === 'profesor' || rol === 'vendedor'}
                                             value={telefono} 
                                             onChange={(e) => setTelefono(e.target.value)}
-                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            disabled={datosBancariosCapturados}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium disabled:bg-gray-100 disabled:text-gray-500"
                                             placeholder="Ej. 961 123 4567"
                                         />
                                     </div>
@@ -234,7 +264,8 @@ export default function PerfilPage() {
                                                 required={rol === 'profesor' || rol === 'vendedor'}
                                                 value={banco} 
                                                 onChange={(e) => setBanco(e.target.value)}
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                                disabled={datosBancariosCapturados}
+                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium disabled:bg-gray-100 disabled:text-gray-500"
                                                 placeholder="Ej. BBVA, Banorte..."
                                             />
                                         </div>
@@ -245,13 +276,33 @@ export default function PerfilPage() {
                                                 required={rol === 'profesor' || rol === 'vendedor'}
                                                 value={clabe} 
                                                 onChange={(e) => setClabe(e.target.value)}
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                                disabled={datosBancariosCapturados}
+                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium disabled:bg-gray-100 disabled:text-gray-500"
                                                 placeholder="18 dígitos"
                                                 maxLength={18}
                                             />
                                         </div>
                                     </div>
                                 </div>
+                                
+                                {datosBancariosCapturados && (
+                                    <div className="mt-4 flex justify-end">
+                                        {solicitudCambioDatos ? (
+                                            <span className="text-sm font-semibold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
+                                                Solicitud de ajuste pendiente de revisión
+                                            </span>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={solicitarAjuste}
+                                                disabled={saving}
+                                                className="text-sm font-bold text-blue-600 hover:text-blue-800 underline disabled:opacity-50"
+                                            >
+                                                Solicitar ajuste de datos
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
 
