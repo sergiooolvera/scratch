@@ -229,7 +229,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                 <div className="grid grid-cols-2 gap-3 mb-5">
                     <button onClick={handleComprarStrípe} disabled={uploadingComp} className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm disabled:opacity-50">
                         <CreditCard className="w-4 h-4 mr-2" />
-                        Pagar con Tarjeta
+                        Pagar con Tarjeta/Oxxo
                     </button>
                     <button
                         onClick={() => setShowPagoForm(!showPagoForm)}

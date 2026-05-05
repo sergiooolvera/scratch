@@ -12,6 +12,9 @@ export default function PerfilPage() {
     const [email, setEmail] = useState('')
     const [rol, setRol] = useState('')
     const [referralCode, setReferralCode] = useState<string | null>(null)
+    const [telefono, setTelefono] = useState('')
+    const [banco, setBanco] = useState('')
+    const [clabe, setClabe] = useState('')
     const [copiado, setCopiado] = useState(false)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -42,6 +45,9 @@ export default function PerfilPage() {
                 setApellidoMaterno(prof.apellido_materno || '')
                 setRol(prof.rol || 'alumno')
                 setReferralCode(prof.referral_code || null)
+                setTelefono(prof.telefono || '')
+                setBanco(prof.banco || '')
+                setClabe(prof.clabe || '')
             }
             setLoading(false)
         }
@@ -63,7 +69,10 @@ export default function PerfilPage() {
             .update({ 
                 nombre,
                 apellido_paterno: apellidoPaterno,
-                apellido_materno: apellidoMaterno
+                apellido_materno: apellidoMaterno,
+                telefono,
+                banco,
+                clabe
             })
             .eq('id', user.id)
 
@@ -191,6 +200,59 @@ export default function PerfilPage() {
                                         className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
                                         placeholder="Ej. García"
                                     />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-bold text-gray-800">Datos de Contacto y Pago</h2>
+                                {(rol === 'profesor' || rol === 'vendedor') && (
+                                    <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Obligatorio</span>
+                                )}
+                            </div>
+                            <p className="text-sm text-gray-500 mb-5 leading-relaxed">
+                                {rol === 'profesor' || rol === 'vendedor' 
+                                    ? 'Como profesor o vendedor, estos datos son obligatorios para poder gestionar cursos y recibir tus comisiones.'
+                                    : 'Estos datos nos ayudan a contactarte y procesar cualquier reembolso si fuera necesario.'}
+                            </p>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
+                                    <input 
+                                        type="tel" 
+                                        required={rol === 'profesor' || rol === 'vendedor'}
+                                        value={telefono} 
+                                        onChange={(e) => setTelefono(e.target.value)}
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                        placeholder="Ej. 961 123 4567"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Banco</label>
+                                        <input 
+                                            type="text" 
+                                            required={rol === 'profesor' || rol === 'vendedor'}
+                                            value={banco} 
+                                            onChange={(e) => setBanco(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. BBVA, Banorte..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">CLABE Interbancaria</label>
+                                        <input 
+                                            type="text" 
+                                            required={rol === 'profesor' || rol === 'vendedor'}
+                                            value={clabe} 
+                                            onChange={(e) => setClabe(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="18 dígitos"
+                                            maxLength={18}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

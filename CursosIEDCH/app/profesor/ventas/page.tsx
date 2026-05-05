@@ -8,6 +8,7 @@ export default function ProfesorVentasPage() {
     const [ventas, setVentas] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [totalMonto, setTotalMonto] = useState(0)
+    const [perfilIncompleto, setPerfilIncompleto] = useState(false)
     const supabase = createClient()
 
     useEffect(() => {
@@ -17,6 +18,18 @@ export default function ProfesorVentasPage() {
     const fetchVentas = async () => {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
+
+        // Validar perfil
+        const resP = await fetch('/api/perfil')
+        const resultP = await resP.json()
+        const prof = resultP.data
+        if (prof && (prof.rol === 'profesor' || prof.rol === 'vendedor')) {
+            if (!prof.telefono || !prof.banco || !prof.clabe) {
+                setPerfilIncompleto(true)
+                setLoading(false)
+                return
+            }
+        }
 
         try {
             const res = await fetch('/api/admin/stripe-sessions')
@@ -63,9 +76,31 @@ export default function ProfesorVentasPage() {
         <div className="max-w-6xl mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Mis Ventas de Cursos</h1>
             
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 mb-8 text-sm">
-                <strong>Nota:</strong> Incluye ventas de Stripe y transferencias/depósitos aprobados. Es un aproximado; falta hacer el corte final de cursos vendidos vs dinero ingresado.
-            </div>
+            {perfilIncompleto ? (
+                <div className="mt-12 bg-white border border-gray-200 rounded-3xl p-12 flex flex-col items-center text-center shadow-xl">
+                    <div className="h-20 w-20 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h2 className="text-2xl font-black text-gray-900 mb-4">¡Acceso Restringido!</h2>
+                    <p className="text-gray-600 mb-8 max-w-md text-lg">
+                        Para visualizar tus reportes de ventas y comisiones, es obligatorio completar tu perfil con tu <strong>teléfono, banco y CLABE interbancaria</strong>.
+                    </p>
+                    <a 
+                        href="/perfil"
+                        className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg hover:scale-105 active:scale-95"
+                    >
+                        Completar mi Perfil
+                    </a>
+                    <p className="mt-6 text-sm text-gray-400 font-medium uppercase tracking-widest">Falta agregar/actualizar información</p>
+                </div>
+            ) : (
+                <>
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 mb-8 text-sm">
+                        <strong>Nota:</strong> Incluye ventas de Stripe y transferencias/depósitos aprobados. Es un aproximado; falta hacer el corte final de cursos vendidos vs dinero ingresado.
+                    </div>
+
 
             {/* KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -134,6 +169,8 @@ export default function ProfesorVentasPage() {
                     </table>
                 </div>
             </div>
+            </>
+            )}
         </div>
     )
 }

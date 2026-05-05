@@ -328,7 +328,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                         className="flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition"
                     >
                         <CreditCard className="w-5 h-5 mr-2" />
-                        Pagar con Tarjeta
+                        Pagar con Tarjeta/Oxxo
                     </button>
 
                     <button

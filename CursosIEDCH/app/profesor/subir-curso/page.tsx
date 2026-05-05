@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Trash2, FileText, CheckCircle, Activity, Plus } from 'lucide-react'
@@ -45,10 +45,36 @@ export default function SubirCursoPage() {
     const [preguntasExtraidas, setPreguntasExtraidas] = useState<PreguntaParsed[]>([])
     const [isParsing, setIsParsing] = useState(false)
 
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
     const [mensaje, setMensaje] = useState('')
+    const [perfilIncompleto, setPerfilIncompleto] = useState(false)
     const router = useRouter()
     const supabase = createClient()
+
+    useEffect(() => {
+        async function checkProfile() {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                router.push('/login')
+                return
+            }
+
+            const res = await fetch('/api/perfil')
+            const result = await res.json()
+            const prof = result.data
+
+            if (prof) {
+                // Solo validamos si es profesor o vendedor
+                if (prof.rol === 'profesor' || prof.rol === 'vendedor') {
+                    if (!prof.telefono || !prof.banco || !prof.clabe) {
+                        setPerfilIncompleto(true)
+                    }
+                }
+            }
+            setLoading(false)
+        }
+        checkProfile()
+    }, [router, supabase])
 
     const handleAgregarModulo = () => {
         setModulos([...modulos, { titulo: '', tipo: 'video', url_contenido: '', archivoPdf: null }])
@@ -294,7 +320,26 @@ export default function SubirCursoPage() {
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Subir Nuevo Curso</h1>
-            <div className="bg-white shadow rounded-lg p-6 lg:p-8">
+            
+            {perfilIncompleto && (
+                <div className="mb-8 bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex flex-col items-center text-center">
+                    <div className="h-12 w-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                        <Activity className="h-6 w-6" />
+                    </div>
+                    <h2 className="text-xl font-bold text-red-900 mb-2">¡Atención! Falta agregar/actualizar información</h2>
+                    <p className="text-red-700 mb-6 max-w-md">
+                        Para poder subir o editar cursos, es obligatorio que completes tu perfil con tu <strong>teléfono, banco y CLABE interbancaria</strong>.
+                    </p>
+                    <button 
+                        onClick={() => router.push('/perfil')}
+                        className="bg-red-600 text-white px-8 py-3 rounded-full font-bold hover:bg-red-700 transition-all shadow-lg"
+                    >
+                        Ir a mi Perfil ahora
+                    </button>
+                </div>
+            )}
+
+            <div className={`bg-white shadow rounded-lg p-6 lg:p-8 ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 {mensaje && (
                     <div className={`mb-6 p-4 rounded-md border ${mensaje.includes('Error') ? 'bg-red-50 border-red-200 text-red-800' : (mensaje.includes('Sube') || mensaje.includes('Subiendo') || mensaje.includes('Guardando') || mensaje.includes('analizado') ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-green-50 border-green-200 text-green-800')}`}>
                         <p className="font-medium text-sm">{mensaje}</p>

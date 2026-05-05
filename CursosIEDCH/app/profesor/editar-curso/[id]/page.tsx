@@ -53,6 +53,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [mensaje, setMensaje] = useState('')
+    const [perfilIncompleto, setPerfilIncompleto] = useState(false)
     const [historialMensaje, setHistorialMensaje] = useState('Se actualizaron datos generales del curso.')
     
     const router = useRouter()
@@ -60,6 +61,24 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
     useEffect(() => {
         const fetchCurso = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                router.push('/login')
+                return
+            }
+
+            // Validar perfil
+            const resP = await fetch('/api/perfil')
+            const resultP = await resP.json()
+            const prof = resultP.data
+            if (prof && (prof.rol === 'profesor' || prof.rol === 'vendedor')) {
+                if (!prof.telefono || !prof.banco || !prof.clabe) {
+                    setPerfilIncompleto(true)
+                    setLoading(false)
+                    return
+                }
+            }
+
             const { data: curso, error } = await supabase
                 .from('ie_cursos')
                 .select('*')
@@ -423,7 +442,25 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 </span>
             </div>
 
-            <div className="bg-white shadow rounded-lg p-6 lg:p-8">
+            {perfilIncompleto && (
+                <div className="mb-8 bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex flex-col items-center text-center">
+                    <div className="h-12 w-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                        <Activity className="h-6 w-6" />
+                    </div>
+                    <h2 className="text-xl font-bold text-red-900 mb-2">¡Atención! Falta agregar/actualizar información</h2>
+                    <p className="text-red-700 mb-6 max-w-md">
+                        Para poder subir o editar cursos, es obligatorio que completes tu perfil con tu <strong>teléfono, banco y CLABE interbancaria</strong>.
+                    </p>
+                    <button 
+                        onClick={() => router.push('/perfil')}
+                        className="bg-red-600 text-white px-8 py-3 rounded-full font-bold hover:bg-red-700 transition-all shadow-lg"
+                    >
+                        Ir a mi Perfil ahora
+                    </button>
+                </div>
+            )}
+
+            <div className={`bg-white shadow rounded-lg p-6 lg:p-8 ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 {mensaje && (
                     <div className={`mb-6 p-4 rounded-md border ${mensaje.includes('Error') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
                         <p className="font-medium text-sm">{mensaje}</p>
