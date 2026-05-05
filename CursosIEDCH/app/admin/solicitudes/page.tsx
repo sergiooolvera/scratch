@@ -86,7 +86,7 @@ export default function SolicitudesAjustePage() {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-bold text-gray-900">{solicitud.nombre} {solicitud.apellido_paterno}</span>
-                                                <span className="text-xs text-gray-500">{solicitud.email || solicitud.id.substring(0,8)}</span>
+                                                <span className="text-xs text-gray-500">ID: {solicitud.id.substring(0,8)}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

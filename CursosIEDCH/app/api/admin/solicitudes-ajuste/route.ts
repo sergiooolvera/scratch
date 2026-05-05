@@ -33,7 +33,7 @@ export async function GET() {
         // Obtener usuarios con solicitudes
         const { data: solicitudes, error } = await supabaseAdmin
             .from('ie_profiles')
-            .select('id, nombre, apellido_paterno, apellido_materno, rol, email, created_at')
+            .select('id, nombre, apellido_paterno, apellido_materno, rol, created_at')
             .eq('solicitud_cambio_datos', true)
             .order('created_at', { ascending: false })
 
