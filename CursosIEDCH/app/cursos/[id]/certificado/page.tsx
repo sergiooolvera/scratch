@@ -15,8 +15,19 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos, requiere_pago_completo, requiere_examen').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por').eq('id', id).single()
     if (!curso) notFound()
+
+    // Verificar si el creador es instructor
+    let esCreadoPorInstructor = false
+    if (curso?.creado_por) {
+        const { data: creatorProfile } = await supabase
+            .from('ie_profiles')
+            .select('rol')
+            .eq('id', curso.creado_por)
+            .single()
+        esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
+    }
 
     // Verificar si el pago es completo para desbloquear la constancia
     const { data: compra } = await supabase
@@ -25,7 +36,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
         .eq('curso_id', id)
         .eq('user_id', user.id)
         .single()
-    const cursoPagoRequerido = curso.requiere_pago_completo || false
+    const cursoPagoRequerido = (curso.requiere_pago_completo || false) || esCreadoPorInstructor
     const pagoCompleto = cursoPagoRequerido ? (compra?.pago_completo || false) : true
 
     let fechaAprobacionObj: Date;

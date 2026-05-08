@@ -21,7 +21,7 @@ export async function GET() {
 
         const { data: profile, error } = await supabaseAdmin
             .from('ie_profiles')
-            .select('id, nombre, apellido_paterno, apellido_materno, rol, referral_code, activo, telefono, banco, clabe, datos_bancarios_capturados, solicitud_cambio_datos')
+            .select('id, nombre, apellido_paterno, apellido_materno, rol, referral_code, activo, telefono, banco, clabe, datos_bancarios_capturados, solicitud_cambio_datos, rfc, constancia_situacion_fiscal, fotografia_perfil, identidad_validada, correo_adicional, profesion_especialidad, institucion_labora, estado_municipio, cedula_profesional')
             .eq('id', user.id)
             .single()
 

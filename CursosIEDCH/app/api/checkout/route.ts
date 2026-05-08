@@ -60,9 +60,31 @@ export async function POST(req: Request) {
             montoPrevio = compraPrevia.monto_pagado
         }
 
+        let esCreadoPorInstructor = false
+        if (curso.creado_por) {
+            const { data: creatorProfile } = await supabase
+                .from('ie_profiles')
+                .select('rol')
+                .eq('id', curso.creado_por)
+                .single()
+            esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
+        }
+
         // 5. Procesar Cupón si existe
         let porcentajeDescuento = 0
-        let finalPrice = esConstancia ? Math.max(0, curso.precio - montoPrevio) : curso.precio
+        const PRECIO_CONSTANCIA_INSTRUCTOR = Number(process.env.NEXT_PUBLIC_PRECIO_CONSTANCIA_INSTRUCTOR || '199')
+
+        let finalPrice = curso.precio
+        if (esCreadoPorInstructor) {
+            if (esConstancia) {
+                finalPrice = PRECIO_CONSTANCIA_INSTRUCTOR
+            } else {
+                finalPrice = 0
+            }
+        } else {
+            finalPrice = esConstancia ? Math.max(0, curso.precio - montoPrevio) : curso.precio
+        }
+
         let basePrice = finalPrice
         let usoCupon = false
 

@@ -18,6 +18,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         redirect('/admin/usuarios')
     }
 
+    if (profile?.rol === 'institucion') {
+        redirect('/institucion/registrar-actividad')
+    }
+
     const { data: cursos } = await supabase
         .from('ie_cursos')
         .select('*')

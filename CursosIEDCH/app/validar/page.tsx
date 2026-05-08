@@ -45,7 +45,7 @@ function ValidacionContent() {
 
             if (!examenError && examenData) {
                 // Es un folio de Certificado
-                matchData = examenData;
+                matchData = { ...examenData, tipo: 'curso' };
 
                 const { data: cursoExamenData, error: ceError } = await supabase
                     .from('ie_examenes')
@@ -80,12 +80,93 @@ function ValidacionContent() {
                         id: constanciaData.id,
                         created_at: constanciaData.fecha,
                         calificacion: constanciaData.calificacion,
+                        tipo: 'curso'
                     }
                     const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion').eq('id', constanciaData.curso_id).single()
                     cursoInfoData = cursoData
 
                     const { data: uData } = await supabase.from('ie_profiles').select('nombre').eq('id', constanciaData.user_id).single()
                     userData = uData
+                }
+            }
+
+            if (!matchData) {
+                // Si no se encuentra, buscamos en ie_actividad_alumnos (Constancias Institucionales)
+                const { data: actAlumnoData, error: actError } = await supabase
+                    .from('ie_actividad_alumnos')
+                    .select(`
+                        id, created_at, folio_constancia, nombre_alumno,
+                        actividad:ie_actividad_institucion(nombre_actividad, tipo_actividad, duracion, fecha_ejecucion, institucion_acredita)
+                    `)
+                    .eq('folio_constancia', folioABuscar.trim())
+                    .single()
+
+                if (!actError && actAlumnoData) {
+                    const actividad = actAlumnoData.actividad as any
+                    matchData = {
+                        id: actAlumnoData.folio_constancia,
+                        created_at: actividad?.fecha_ejecucion || actAlumnoData.created_at,
+                        calificacion: 'Acreditado',
+                        tipo: 'actividad_alumno'
+                    }
+                    cursoInfoData = {
+                        titulo: `${actividad?.tipo_actividad}: ${actividad?.nombre_actividad}`,
+                        duracion: actividad?.duracion,
+                        vigencia_anos: 3
+                    }
+                    userData = { nombre: actAlumnoData.nombre_alumno }
+                }
+            }
+
+            if (!matchData) {
+                // Buscamos en ie_compras (Inscripciones de cursos pagados)
+                const { data: compraData, error: compraError } = await supabase
+                    .from('ie_compras')
+                    .select('id, user_id, curso_id, fecha_compra, pagado')
+                    .eq('id', folioABuscar.trim())
+                    .eq('pagado', true)
+                    .single()
+
+                if (!compraError && compraData) {
+                    matchData = {
+                        id: compraData.id,
+                        created_at: compraData.fecha_compra,
+                        calificacion: 'Acreditado / Inscrito',
+                        tipo: 'curso'
+                    }
+                    const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion').eq('id', compraData.curso_id).single()
+                    cursoInfoData = cursoData
+
+                    const { data: uData } = await supabase.from('ie_profiles').select('nombre').eq('id', compraData.user_id).single()
+                    userData = uData
+                }
+            }
+
+            if (!matchData && folioABuscar.trim().toUpperCase().startsWith('IEECDH-')) {
+                // Buscamos Constancia de Registro de Actividad Institucional
+                const idPart = folioABuscar.trim().toUpperCase().replace('IEECDH-', '').toLowerCase()
+                
+                const { data: actData, error: actError } = await supabase
+                    .from('ie_actividad_institucion')
+                    .select('*, ie_profiles:user_id(nombre)')
+                    .gte('id', `${idPart}-0000-0000-0000-000000000000`)
+                    .lte('id', `${idPart}-ffff-ffff-ffff-ffffffffffff`)
+                    .limit(1)
+                    .single()
+
+                if (!actError && actData) {
+                    matchData = {
+                        id: `IEECDH-${idPart.toUpperCase()}`,
+                        created_at: actData.fecha_ejecucion,
+                        calificacion: 'Acreditado Institucionalmente',
+                        tipo: 'registro_actividad'
+                    }
+                    cursoInfoData = {
+                        titulo: `Registro de ${actData.tipo_actividad}: ${actData.nombre_actividad}`,
+                        duracion: actData.duracion,
+                        vigencia_anos: 5
+                    }
+                    userData = { nombre: actData.ie_profiles?.nombre || actData.institucion_acredita || 'Institución' }
                 }
             }
 
@@ -103,6 +184,7 @@ function ValidacionContent() {
                 curso: cursoInfoData?.titulo || 'Curso no encontrado',
                 vigencia_anos: cursoInfoData?.vigencia_anos || 3,
                 duracion: cursoInfoData?.duracion || '40 horas',
+                tipo: (matchData as any).tipo || 'curso'
             })
 
         } catch (err: any) {
@@ -179,7 +261,8 @@ function ValidacionContent() {
                                     <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                                         <div className="sm:col-span-2">
                                             <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <User className="w-4 h-4 mr-1.5" /> Alumno Acreditado
+                                                <User className="w-4 h-4 mr-1.5" /> 
+                                                {resultado.tipo === 'registro_actividad' ? 'Institución / Organizador' : 'Alumno Acreditado'}
                                             </dt>
                                             <dd className="text-xl font-bold text-gray-900 border-b pb-4">
                                                 {resultado.alumno}
@@ -188,7 +271,8 @@ function ValidacionContent() {
 
                                         <div className="sm:col-span-2">
                                             <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <FileText className="w-4 h-4 mr-1.5" /> Nombre del Curso
+                                                <FileText className="w-4 h-4 mr-1.5" /> 
+                                                {resultado.tipo === 'curso' ? 'Nombre del Curso' : 'Nombre de la Actividad'}
                                             </dt>
                                             <dd className="text-lg font-medium text-gray-800 border-b pb-4">
                                                 {resultado.curso}

@@ -3,20 +3,31 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { User, Mail, Lock, UserPlus, GraduationCap, CheckCircle, Eye, EyeOff } from 'lucide-react'
+import { User, Mail, Lock, UserPlus, GraduationCap, CheckCircle, Eye, EyeOff, Building2, Phone, Hash } from 'lucide-react'
 
 export default function RegisterPage() {
+    const [tipoCuenta, setTipoCuenta] = useState<'persona' | 'institucion'>('persona')
+    
+    // Estados compartidos
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [nombre, setNombre] = useState('')
-    const [apellidoPaterno, setApellidoPaterno] = useState('')
-    const [apellidoMaterno, setApellidoMaterno] = useState('')
     const [error, setError] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+    // Estados Persona
+    const [nombre, setNombre] = useState('')
+    const [apellidoPaterno, setApellidoPaterno] = useState('')
+    const [apellidoMaterno, setApellidoMaterno] = useState('')
+
+    // Estados Institucion
+    const [nombreEscuela, setNombreEscuela] = useState('')
+    const [claveCCT, setClaveCCT] = useState('')
+    const [telefono, setTelefono] = useState('')
+
     const supabase = createClient()
 
     const traducirErrorAuth = (msg: string) => {
@@ -43,17 +54,31 @@ export default function RegisterPage() {
 
         setLoading(true)
 
+        let metadata: any = {}
 
+        if (tipoCuenta === 'persona') {
+            metadata = {
+                nombre,
+                apellido_paterno: apellidoPaterno,
+                apellido_materno: apellidoMaterno,
+                rol: 'alumno'
+            }
+        } else {
+            metadata = {
+                nombre: nombreEscuela,
+                apellido_paterno: '',
+                apellido_materno: '',
+                clave_cct: claveCCT,
+                telefono: telefono,
+                rol: 'institucion'
+            }
+        }
 
         const { error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: {
-                    nombre,
-                    apellido_paterno: apellidoPaterno,
-                    apellido_materno: apellidoMaterno
-                }
+                data: metadata
             }
         })
 
@@ -71,17 +96,23 @@ export default function RegisterPage() {
             <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-t from-blue-900 to-indigo-800">
                 <div className="absolute inset-0 h-full w-full object-cover px-16 py-24 flex flex-col justify-center text-center" >
                     <div className="mx-auto bg-white/10 p-6 rounded-full inline-block backdrop-blur-sm shadow-xl mb-8">
-                        <GraduationCap className="h-16 w-16 text-blue-200" />
+                        {tipoCuenta === 'persona' ? <GraduationCap className="h-16 w-16 text-blue-200" /> : <Building2 className="h-16 w-16 text-blue-200" />}
                     </div>
-                    <h2 className="text-4xl font-bold text-white mb-6 leading-tight">Da el primer paso hacia tu futuro</h2>
-                    <p className="text-blue-100 text-lg mx-auto max-w-md">Únete a cientos de estudiantes que ya están transformando su carrera con nuestros cursos de alto impacto.</p>
+                    <h2 className="text-4xl font-bold text-white mb-6 leading-tight">
+                        {tipoCuenta === 'persona' ? 'Da el primer paso hacia tu futuro' : 'Impulsa el aprendizaje en tu institución'}
+                    </h2>
+                    <p className="text-blue-100 text-lg mx-auto max-w-md">
+                        {tipoCuenta === 'persona' 
+                            ? 'Únete a cientos de estudiantes que ya están transformando su carrera con nuestros cursos de alto impacto.'
+                            : 'Registra y certifica las actividades educativas de tu escuela con nuestra plataforma oficial.'}
+                    </p>
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+            <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 overflow-y-auto">
                 <div className="mx-auto w-full max-w-sm lg:w-96">
                     {successMessage ? (
-                        <div className="text-center">
+                        <div className="text-center animate-in fade-in zoom-in duration-500">
                             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
                                 <CheckCircle className="h-8 w-8 text-green-600" />
                             </div>
@@ -101,7 +132,7 @@ export default function RegisterPage() {
                                 <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                                     Crear cuenta
                                 </h2>
-                                <p className="mt-2 text-sm text-gray-600">
+                                <p className="mt-2 text-sm text-gray-600 mb-6">
                                     ¿Ya tienes cuenta?{' '}
                                     <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
                                         Inicia sesión aquí
@@ -109,65 +140,137 @@ export default function RegisterPage() {
                                 </p>
                             </div>
 
-                            <div className="mt-8">
-                                <form onSubmit={handleRegister} className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Nombre(s)
-                                        </label>
-                                        <div className="mt-1 relative rounded-md shadow-sm">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <User className="h-5 w-5 text-gray-400" />
-                                            </div>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
-                                                placeholder="Ej. Juan Carlos"
-                                                value={nombre}
-                                                onChange={(e) => setNombre(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
+                            {/* Pestañas de tipo de cuenta */}
+                            <div className="flex bg-gray-100 p-1 rounded-xl mb-8">
+                                <button
+                                    onClick={() => setTipoCuenta('persona')}
+                                    className={`flex-1 flex items-center justify-center py-2.5 text-sm font-medium rounded-lg transition-all ${
+                                        tipoCuenta === 'persona' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    <User className="w-4 h-4 mr-2" />
+                                    Persona
+                                </button>
+                                <button
+                                    onClick={() => setTipoCuenta('institucion')}
+                                    className={`flex-1 flex items-center justify-center py-2.5 text-sm font-medium rounded-lg transition-all ${
+                                        tipoCuenta === 'institucion' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    <Building2 className="w-4 h-4 mr-2" />
+                                    Institución
+                                </button>
+                            </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Apellido Paterno
-                                        </label>
-                                        <div className="mt-1 relative rounded-md shadow-sm">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <User className="h-5 w-5 text-gray-400" />
+                            <div className="mt-4">
+                                <form onSubmit={handleRegister} className="space-y-5">
+                                    
+                                    {tipoCuenta === 'persona' ? (
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Nombre(s)</label>
+                                                <div className="mt-1 relative rounded-md shadow-sm">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <User className="h-5 w-5 text-gray-400" />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                        placeholder="Ej. Juan Carlos"
+                                                        value={nombre}
+                                                        onChange={(e) => setNombre(e.target.value)}
+                                                    />
+                                                </div>
                                             </div>
-                                            <input
-                                                type="text"
-                                                required
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
-                                                placeholder="Ej. Pérez"
-                                                value={apellidoPaterno}
-                                                onChange={(e) => setApellidoPaterno(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Apellido Materno (Opcional)
-                                        </label>
-                                        <div className="mt-1 relative rounded-md shadow-sm">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <User className="h-5 w-5 text-gray-400" />
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Apellido Paterno</label>
+                                                <div className="mt-1 relative rounded-md shadow-sm">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <User className="h-5 w-5 text-gray-400" />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                        placeholder="Ej. Pérez"
+                                                        value={apellidoPaterno}
+                                                        onChange={(e) => setApellidoPaterno(e.target.value)}
+                                                    />
+                                                </div>
                                             </div>
-                                            <input
-                                                type="text"
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
-                                                placeholder="Ej. García"
-                                                value={apellidoMaterno}
-                                                onChange={(e) => setApellidoMaterno(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
 
-                                    <div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Apellido Materno (Opcional)</label>
+                                                <div className="mt-1 relative rounded-md shadow-sm">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <User className="h-5 w-5 text-gray-400" />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                        placeholder="Ej. García"
+                                                        value={apellidoMaterno}
+                                                        onChange={(e) => setApellidoMaterno(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                                                <label className="block text-sm font-medium text-gray-700">Nombre de la Escuela/Institución</label>
+                                                <div className="mt-1 relative rounded-md shadow-sm">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <Building2 className="h-5 w-5 text-gray-400" />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                        placeholder="Ej. Escuela Primaria Benito Juárez"
+                                                        value={nombreEscuela}
+                                                        onChange={(e) => setNombreEscuela(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="animate-in fade-in slide-in-from-right-4 duration-300 delay-75">
+                                                <label className="block text-sm font-medium text-gray-700">Clave/CCT <span className="text-gray-400 font-normal">(Opcional)</span></label>
+                                                <div className="mt-1 relative rounded-md shadow-sm">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <Hash className="h-5 w-5 text-gray-400" />
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border uppercase"
+                                                        placeholder="Ej. 12DPR0001X"
+                                                        value={claveCCT}
+                                                        onChange={(e) => setClaveCCT(e.target.value.toUpperCase())}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="animate-in fade-in slide-in-from-right-4 duration-300 delay-150">
+                                                <label className="block text-sm font-medium text-gray-700">Teléfono <span className="text-gray-400 font-normal">(Opcional)</span></label>
+                                                <div className="mt-1 relative rounded-md shadow-sm">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <Phone className="h-5 w-5 text-gray-400" />
+                                                    </div>
+                                                    <input
+                                                        type="tel"
+                                                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                        placeholder="Ej. 55 1234 5678"
+                                                        value={telefono}
+                                                        onChange={(e) => setTelefono(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <div className={`border-t border-gray-200 pt-5 mt-2 ${tipoCuenta === 'institucion' ? 'animate-in fade-in slide-in-from-right-4 duration-300 delay-200' : ''}`}>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Correo Electrónico
                                         </label>
@@ -178,7 +281,7 @@ export default function RegisterPage() {
                                             <input
                                                 type="email"
                                                 required
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
                                                 placeholder="tu@correo.com"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
@@ -197,7 +300,7 @@ export default function RegisterPage() {
                                             <input
                                                 type={showPassword ? "text" : "password"}
                                                 required
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
                                                 placeholder="••••••••"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
@@ -224,7 +327,7 @@ export default function RegisterPage() {
                                             <input
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 required
-                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
                                                 placeholder="••••••••"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -251,9 +354,11 @@ export default function RegisterPage() {
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
+                                            className={`w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white ${
+                                                tipoCuenta === 'persona' ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500' : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                                            } focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 transition-all`}
                                         >
-                                            <span>{loading ? 'Procesando...' : 'Crear mi cuenta'}</span>
+                                            <span>{loading ? 'Procesando...' : (tipoCuenta === 'persona' ? 'Crear mi cuenta' : 'Registrar Institución')}</span>
                                             <UserPlus className="h-4 w-4" />
                                         </button>
                                     </div>

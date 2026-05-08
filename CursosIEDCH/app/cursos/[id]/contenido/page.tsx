@@ -102,33 +102,32 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                         </h1>
                         <p className="text-gray-500 mt-1">Impartido por {curso.instructor}</p>
                     </div>
-                    {curso.requiere_examen && (
-                        <div className="mt-4 md:mt-0 space-y-2 text-right">
-                            {examPassed ? (
-                                <>
-                                    <a
-                                        href={`/cursos/${id}/certificado`}
-                                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                    >
-                                        <FileText className="mr-2 h-4 w-4" />
-                                        Descargar Constancia
-                                    </a>
-                                    <p className="text-xs text-green-600 font-medium">¡Examen aprobado!</p>
-                                </>
-                            ) : (
-                                <>
-                                    <Link
-                                        href={`/cursos/${id}/examen`}
-                                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                                    >
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        Hacer Examen
-                                    </Link>
-                                    <p className="text-xs text-gray-500">Demuestra lo aprendido y obtén tu constancia.</p>
-                                </>
-                            )}
-                        </div>
-                    )}
+                    <div className="mt-4 md:mt-0 space-y-2 text-right flex flex-col items-end">
+                        {(curso.requiere_examen ? examPassed : true) && (
+                            <>
+                                <a
+                                    href={`/cursos/${id}/certificado`}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Descargar Constancia
+                                </a>
+                                {curso.requiere_examen && <p className="text-xs text-green-600 font-medium">¡Examen aprobado!</p>}
+                            </>
+                        )}
+                        {curso.requiere_examen && !examPassed && (
+                            <>
+                                <Link
+                                    href={`/cursos/${id}/examen`}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Hacer Examen
+                                </Link>
+                                <p className="text-xs text-gray-500">Demuestra lo aprendido y obtén tu constancia.</p>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {/* Live Meeting and Special Notes */}
@@ -171,6 +170,8 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                         playlist={playlist}
                         requiereExamen={curso.requiere_examen}
                         urlExamen={curso.url_examen}
+                        cursoId={id}
+                        userId={user.id}
                     />
                 </div>
 

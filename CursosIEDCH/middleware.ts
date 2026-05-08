@@ -26,11 +26,11 @@ export async function middleware(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     const pathname = request.nextUrl.pathname
 
-    if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/profesor') || pathname.startsWith('/admin'))) {
+    if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/profesor') || pathname.startsWith('/admin') || pathname.startsWith('/institucion'))) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    if (user && (pathname.startsWith('/profesor') || pathname.startsWith('/admin'))) {
+    if (user && (pathname.startsWith('/profesor') || pathname.startsWith('/admin') || pathname.startsWith('/institucion'))) {
         const { data: profile } = await supabase
             .from('ie_profiles')
             .select('rol')
@@ -43,8 +43,17 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL('/dashboard', request.url))
         }
 
-        if (pathname.startsWith('/profesor') && rol !== 'admin' && rol !== 'profesor' && rol !== 'vendedor') {
+        if (pathname.startsWith('/institucion') && rol !== 'admin' && rol !== 'institucion') {
             return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+
+        if (pathname.startsWith('/profesor')) {
+            if (rol !== 'admin' && rol !== 'profesor' && rol !== 'vendedor' && rol !== 'instructor') {
+                return NextResponse.redirect(new URL('/dashboard', request.url))
+            }
+            if (pathname.startsWith('/profesor/ventas') && rol === 'instructor') {
+                return NextResponse.redirect(new URL('/profesor/cursos', request.url))
+            }
         }
     }
 

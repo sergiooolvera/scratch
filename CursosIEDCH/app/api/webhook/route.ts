@@ -35,10 +35,48 @@ export async function POST(req: Request) {
     const fulfillOrder = async (session: Stripe.Checkout.Session) => {
         const userId = session.metadata?.user_id;
         const cursoId = session.metadata?.curso_id;
+        const tipoCompra = session.metadata?.tipo_compra;
+
+        if (tipoCompra === 'institucion_plan' && userId) {
+            const planId = session.metadata?.plan_id;
+            let creditosAComprar = 1;
+            let vigenciaMeses = 3;
+            
+            if (planId === 'pro') creditosAComprar = 10;
+            else if (planId === 'ultra') creditosAComprar = 100;
+
+            const { data: credsActuales } = await supabaseAdmin
+                .from('ie_institucion_creditos')
+                .select('creditos_restantes')
+                .eq('user_id', userId)
+                .single();
+
+            const creditosActualesInt = credsActuales?.creditos_restantes || 0;
+
+            const vencimientoDate = new Date();
+            vencimientoDate.setMonth(vencimientoDate.getMonth() + vigenciaMeses);
+
+            const { error } = await supabaseAdmin.from('ie_institucion_creditos')
+                .upsert({
+                    user_id: userId,
+                    creditos_restantes: creditosActualesInt + creditosAComprar,
+                    plan_actual: planId?.toUpperCase() || 'INDIVIDUAL',
+                    pago_recurrente: false,
+                    fecha_compra: new Date().toISOString(),
+                    vence_en: vencimientoDate.toISOString(),
+                });
+
+            if (error) {
+                console.error("Error guardando créditos de institución en DB:", error);
+                throw new Error("Database Error");
+            }
+            console.log(`Plan ${planId} acreditado para Institución ${userId}. (+${creditosAComprar} créditos)`);
+            return;
+        }
 
         if (userId && cursoId) {
             // Determinar si pago_completo es true o false desde los metadatos de Stripe.
-        const pagoCompleto = session.metadata?.pago_completo === 'false' ? false : true;
+            const pagoCompleto = session.metadata?.pago_completo === 'false' ? false : true;
             const montoPagado = session.metadata?.monto_pagado ? Number(session.metadata.monto_pagado) : session.amount_total ? session.amount_total / 100 : 0;
             const referredBy = session.metadata?.referred_by || null;
 

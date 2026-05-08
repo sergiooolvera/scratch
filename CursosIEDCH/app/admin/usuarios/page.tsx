@@ -116,7 +116,9 @@ export default function AdminUsuariosPage() {
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-max ${
                                             u.rol === 'admin' ? 'bg-purple-100 text-purple-800' : 
                                             u.rol === 'profesor' ? 'bg-green-100 text-green-800' : 
+                                            u.rol === 'instructor' ? 'bg-emerald-100 text-emerald-800' : 
                                             u.rol === 'vendedor' ? 'bg-blue-100 text-blue-800' :
+                                            u.rol === 'institucion' ? 'bg-indigo-100 text-indigo-800' :
                                             'bg-gray-100 text-gray-800'
                                         }`}>
                                             {u.rol}
@@ -139,7 +141,9 @@ export default function AdminUsuariosPage() {
                                         >
                                             <option value="alumno">Alumno</option>
                                             <option value="profesor">Profesor</option>
+                                            <option value="instructor">Instructor</option>
                                             <option value="vendedor">Vendedor</option>
+                                            <option value="institucion">Institución</option>
                                             <option value="admin">Admin</option>
                                         </select>
                                     )}

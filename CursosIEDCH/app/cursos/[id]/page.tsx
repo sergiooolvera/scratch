@@ -28,10 +28,20 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         .eq('user_id', user.id)
         .single()
 
+    let esCreadoPorInstructor = false
+    if (curso?.creado_por) {
+        const { data: creatorProfile } = await supabase
+            .from('ie_profiles')
+            .select('rol')
+            .eq('id', curso.creado_por)
+            .single()
+        esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
+    }
+
     const isPagado = compra?.pagado || false
     const pagoCompleto = compra?.pago_completo || false
-    // Si el curso requiere pago completo Y el alumno no pagó completo → bloquear constancia
-    const constanciaRequierePago = (curso.requiere_pago_completo || false) && !pagoCompleto
+    // Si el curso requiere pago completo O es creado por instructor, y el alumno no pagó completo → bloquear constancia
+    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || esCreadoPorInstructor) && !pagoCompleto
 
     let isAprobado = false;
 
@@ -61,7 +71,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
             <div className="bg-white shadow rounded-lg p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">{curso.titulo}</h1>
                 <p className="text-gray-600 mb-6">{curso.descripcion}</p>
-
+ 
                 <div className="grid grid-cols-2 gap-4 mb-8">
                     <div>
                         <h3 className="text-sm font-medium text-gray-500">Instructor</h3>
@@ -82,7 +92,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                         </div>
                     )}
                 </div>
-
+ 
                 <div className="border-t border-gray-200 pt-6">
                     <CourseActions
                         cursoId={curso.id}
@@ -94,6 +104,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                         userId={user.id}
                         precioCurso={curso.precio}
                         montoPagado={compra?.monto_pagado || 0}
+                        esCreadoPorInstructor={esCreadoPorInstructor}
                     />
                 </div>
             </div>

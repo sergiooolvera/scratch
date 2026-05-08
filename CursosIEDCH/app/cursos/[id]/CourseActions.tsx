@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { X, UploadCloud, Ticket, CreditCard, Banknote, AlertCircle, Lock, Store, Tag } from 'lucide-react'
 
-export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso, montoPagado }: {
+export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso, montoPagado, esCreadoPorInstructor = false }: {
     cursoId: string,
     isPagado: boolean,
     pagoCompleto: boolean,
@@ -15,7 +15,8 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     requiereExamen: boolean,
     userId: string,
     precioCurso?: number,
-    montoPagado?: number
+    montoPagado?: number,
+    esCreadoPorInstructor?: boolean
 }) {
     const [loading, setLoading] = useState(false)
     const [showCupon, setShowCupon] = useState(false)
@@ -271,6 +272,23 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     }
 
     if (!isPagado) {
+        if (esCreadoPorInstructor || precioCurso === 0) {
+            return (
+                <div className="w-full flex flex-col items-center p-6 bg-blue-50 border border-blue-100 rounded-2xl">
+                    <p className="text-sm font-semibold text-blue-800 mb-4 text-center">
+                        Este curso es gratuito para su estudio. Haz clic en el botón de abajo para inscribirte y comenzar a aprender de inmediato.
+                    </p>
+                    <button
+                        onClick={() => handleComprarStrípe()}
+                        disabled={loading}
+                        className="w-full max-w-md flex items-center justify-center py-3 px-6 border border-transparent rounded-lg shadow-sm text-base font-bold text-white bg-blue-600 hover:bg-blue-700 transition disabled:opacity-50"
+                    >
+                        {loading ? 'Inscribiendo...' : 'Inscribirse Gratis'}
+                    </button>
+                </div>
+            )
+        }
+
         return (
             <div className="w-full space-y-4">
                 {/* Campo de código de referido */}
@@ -556,8 +574,12 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                         <div>
                             <h3 className="text-base font-bold text-amber-900">Constancia pendiente de pago</h3>
                             <p className="text-sm text-amber-800 mt-1 leading-relaxed">
-                                Utilizaste un cupón de descuento para acceder al curso. Para recibir tu constancia deberás cubrir el monto restante
-                                {precioCurso !== undefined && montoPagado !== undefined ? ` ($${Math.max(0, precioCurso - montoPagado)} MXN)` : ''}.
+                                {esCreadoPorInstructor ? (
+                                    'Este curso es gratuito para su estudio. Para tener acceso a la constancia con valor curricular debes cubrir el costo de recuperación de $199 pesos (MXN).'
+                                ) : (
+                                    `Utilizaste un cupón de descuento para acceder al curso. Para recibir tu constancia deberás cubrir el monto restante` +
+                                    (precioCurso !== undefined && montoPagado !== undefined ? ` ($${Math.max(0, precioCurso - montoPagado)} MXN)` : '') + '.'
+                                )}
                             </p>
                         </div>
                     </div>
@@ -569,7 +591,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                             className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm"
                         >
                             <CreditCard className="w-5 h-5 mr-2" />
-                            Tarjeta
+                            Tarjeta/Oxxo
                         </button>
                         <button
                             onClick={() => { setShowTransferFormForConstancia(!showTransferFormForConstancia); setShowOxxoForConstancia(false); setShowCuponForConstancia(false); }}
@@ -603,9 +625,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                             <li><strong>Cuenta:</strong> 047 011 9024</li>
                             <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
                             <li><strong>Titular:</strong> Sergio Olvera</li>
-                            {precioCurso !== undefined && montoPagado !== undefined && (
-                                <li className="font-bold text-blue-700 mt-1"><strong>Monto Restante:</strong> ${Math.max(0, precioCurso - montoPagado)} MXN</li>
-                            )}
+                            <li className="font-bold text-blue-700 mt-1"><strong>Monto a pagar:</strong> ${esCreadoPorInstructor ? 199 : Math.max(0, (precioCurso || 0) - (montoPagado || 0))} MXN</li>
                         </ul>
 
                         <form onSubmit={(e) => handleSubirPagoConstancia(e, 'transferencia')} className="flex flex-col gap-3 mt-4">

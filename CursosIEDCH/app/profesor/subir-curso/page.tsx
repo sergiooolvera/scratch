@@ -48,6 +48,7 @@ export default function SubirCursoPage() {
     const [loading, setLoading] = useState(true)
     const [mensaje, setMensaje] = useState('')
     const [perfilIncompleto, setPerfilIncompleto] = useState(false)
+    const [profile, setProfile] = useState<any>(null)
     const router = useRouter()
     const supabase = createClient()
 
@@ -64,9 +65,13 @@ export default function SubirCursoPage() {
             const prof = result.data
 
             if (prof) {
-                // Solo validamos si es profesor o vendedor
-                if (prof.rol === 'profesor' || prof.rol === 'vendedor') {
-                    if (!prof.telefono || !prof.banco || !prof.clabe) {
+                setProfile(prof)
+                if (prof.rol === 'instructor') {
+                    setFormData(prev => ({ ...prev, precio: 0 }))
+                }
+                
+                if (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'instructor') {
+                    if (!prof.telefono || !prof.banco || !prof.clabe || !prof.identidad_validada) {
                         setPerfilIncompleto(true)
                     }
                 }
@@ -328,7 +333,7 @@ export default function SubirCursoPage() {
                     </div>
                     <h2 className="text-xl font-bold text-red-900 mb-2">¡Atención! Falta agregar/actualizar información</h2>
                     <p className="text-red-700 mb-6 max-w-md">
-                        Para poder subir o editar cursos, es obligatorio que completes tu perfil con tu <strong>teléfono, banco y CLABE interbancaria</strong>.
+                        Para poder operar, es obligatorio que completes tu perfil con tu información completa y que el administrador <strong>valide tu identidad</strong>.
                     </p>
                     <button 
                         onClick={() => router.push('/perfil')}
@@ -563,20 +568,22 @@ export default function SubirCursoPage() {
                     <div>
                         <h2 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2">4. Detalles Adicionales</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
+                            <div className={profile?.rol === 'instructor' ? 'col-span-2' : ''}>
                                 <label className="block text-sm font-medium text-gray-700">Duración Estructurada (Ej. "10 Horas", "5 Módulos")</label>
                                 <input type="text" name="duracion" required maxLength={30} value={formData.duracion} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
                                 <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 30 caracteres (para el certificado). Usa la nota para horarios completos.</p>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Precio de Venta (MXN)</label>
-                                <div className="mt-1 relative rounded-md shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span className="text-gray-500 sm:text-sm">$</span>
+                            {profile?.rol !== 'instructor' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Precio de Venta (MXN)</label>
+                                    <div className="mt-1 relative rounded-md shadow-sm">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span className="text-gray-500 sm:text-sm">$</span>
+                                        </div>
+                                        <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" placeholder="0.00" />
                                     </div>
-                                    <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" placeholder="0.00" />
                                 </div>
-                            </div>
+                            )}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
@@ -595,26 +602,28 @@ export default function SubirCursoPage() {
                                 <p className="text-xs text-gray-500 mt-1">Tiempo de validez de la constancia a partir de su emisión.</p>
                             </div>
                         </div>
-                        <div className="mb-4">
-                            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm">
-                                <label className="flex items-start cursor-pointer gap-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={requierePagoCompleto}
-                                        onChange={(e) => setRequierePagoCompleto(e.target.checked)}
-                                        className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                                    />
-                                    <div>
-                                        <span className="block text-sm font-semibold text-orange-900">
-                                            Requiere el 100% del curso pagado para obtener constancia
-                                        </span>
-                                        <span className="block text-xs text-orange-700 mt-0.5">
-                                            Si se activa, los alumnos que usen cupones de descuento deberán cubrir el valor total del curso antes de descargar su constancia.
-                                        </span>
-                                    </div>
-                                </label>
+                        {profile?.rol !== 'instructor' && (
+                            <div className="mb-4">
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm">
+                                    <label className="flex items-start cursor-pointer gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={requierePagoCompleto}
+                                            onChange={(e) => setRequierePagoCompleto(e.target.checked)}
+                                            className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                        />
+                                        <div>
+                                            <span className="block text-sm font-semibold text-orange-900">
+                                                Requiere el 100% del curso pagado para obtener constancia
+                                            </span>
+                                            <span className="block text-xs text-orange-700 mt-0.5">
+                                                Si se activa, los alumnos que usen cupones de descuento deberán cubrir el valor total del curso antes de descargar su constancia.
+                                            </span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     {/* Clase en Vivo y Notas */}
                     <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 shadow-sm">
                         <h2 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">

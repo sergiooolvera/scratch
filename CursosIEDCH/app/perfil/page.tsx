@@ -17,6 +17,21 @@ export default function PerfilPage() {
     const [clabe, setClabe] = useState('')
     const [datosBancariosCapturados, setDatosBancariosCapturados] = useState(false)
     const [solicitudCambioDatos, setSolicitudCambioDatos] = useState(false)
+    const [rfc, setRfc] = useState('')
+    const [csfUrl, setCsfUrl] = useState('')
+    const [fotografiaPerfil, setFotografiaPerfil] = useState('')
+    const [identidadValidada, setIdentidadValidada] = useState(false)
+    
+    const [correoAdicional, setCorreoAdicional] = useState('')
+    const [profesionEspecialidad, setProfesionEspecialidad] = useState('')
+    const [tipoInstitucion, setTipoInstitucion] = useState('')
+    const [nombreInstitucion, setNombreInstitucion] = useState('')
+    const [estadoMunicipio, setEstadoMunicipio] = useState('')
+    const [cedulaProfesional, setCedulaProfesional] = useState('')
+    
+    const [csfFile, setCsfFile] = useState<File | null>(null)
+    const [fotoFile, setFotoFile] = useState<File | null>(null)
+    
     const [copiado, setCopiado] = useState(false)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -50,8 +65,32 @@ export default function PerfilPage() {
                 setTelefono(prof.telefono || '')
                 setBanco(prof.banco || '')
                 setClabe(prof.clabe || '')
+                setRfc(prof.rfc || '')
+                setCsfUrl(prof.constancia_situacion_fiscal || '')
+                setFotografiaPerfil(prof.fotografia_perfil || '')
+                setIdentidadValidada(prof.identidad_validada || false)
                 setDatosBancariosCapturados(prof.datos_bancarios_capturados || false)
                 setSolicitudCambioDatos(prof.solicitud_cambio_datos || false)
+                setCorreoAdicional(prof.correo_adicional || '')
+                setProfesionEspecialidad(prof.profesion_especialidad || '')
+                setEstadoMunicipio(prof.estado_municipio || '')
+                setCedulaProfesional(prof.cedula_profesional || '')
+                
+                if (prof.institucion_labora) {
+                    if (prof.institucion_labora.startsWith('Pública - ')) {
+                        setTipoInstitucion('Pública');
+                        setNombreInstitucion(prof.institucion_labora.replace('Pública - ', ''));
+                    } else if (prof.institucion_labora.startsWith('Privada - ')) {
+                        setTipoInstitucion('Privada');
+                        setNombreInstitucion(prof.institucion_labora.replace('Privada - ', ''));
+                    } else if (prof.institucion_labora.startsWith('Otra - ')) {
+                        setTipoInstitucion('Otra');
+                        setNombreInstitucion(prof.institucion_labora.replace('Otra - ', ''));
+                    } else {
+                        setTipoInstitucion('Otra');
+                        setNombreInstitucion(prof.institucion_labora);
+                    }
+                }
             }
             setLoading(false)
         }
@@ -68,7 +107,38 @@ export default function PerfilPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
+        let finalCsfUrl = csfUrl;
+        let finalFotoUrl = fotografiaPerfil;
+
+        if (csfFile) {
+            const ext = csfFile.name.split('.').pop();
+            const fileName = `csf_${user.id}_${Date.now()}.${ext}`;
+            const { error: upErr } = await supabase.storage.from('perfiles').upload(fileName, csfFile);
+            if (upErr) {
+                setError('Error subiendo CSF: ' + upErr.message);
+                setSaving(false);
+                return;
+            }
+            finalCsfUrl = supabase.storage.from('perfiles').getPublicUrl(fileName).data.publicUrl;
+        }
+
+        if (fotoFile) {
+            const ext = fotoFile.name.split('.').pop();
+            const fileName = `foto_${user.id}_${Date.now()}.${ext}`;
+            const { error: upErr } = await supabase.storage.from('perfiles').upload(fileName, fotoFile);
+            if (upErr) {
+                setError('Error subiendo Fotografía: ' + upErr.message);
+                setSaving(false);
+                return;
+            }
+            finalFotoUrl = supabase.storage.from('perfiles').getPublicUrl(fileName).data.publicUrl;
+        }
+
         const nuevosDatosCapturados = (telefono && banco && clabe && !datosBancariosCapturados) ? true : datosBancariosCapturados;
+
+        const combinedInstitucion = tipoInstitucion && nombreInstitucion 
+            ? `${tipoInstitucion} - ${nombreInstitucion}` 
+            : (nombreInstitucion || tipoInstitucion || '');
 
         const { error: updateError } = await supabase
             .from('ie_profiles')
@@ -79,7 +149,15 @@ export default function PerfilPage() {
                 telefono,
                 banco,
                 clabe,
-                datos_bancarios_capturados: nuevosDatosCapturados
+                rfc,
+                constancia_situacion_fiscal: finalCsfUrl,
+                fotografia_perfil: finalFotoUrl,
+                datos_bancarios_capturados: nuevosDatosCapturados,
+                correo_adicional: correoAdicional,
+                profesion_especialidad: profesionEspecialidad,
+                institucion_labora: combinedInstitucion,
+                estado_municipio: estadoMunicipio,
+                cedula_profesional: cedulaProfesional
             })
             .eq('id', user.id)
 
@@ -229,10 +307,147 @@ export default function PerfilPage() {
                                         placeholder="Ej. García"
                                     />
                                 </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Correo Electrónico Adicional <span className="text-red-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="email" 
+                                        required 
+                                        value={correoAdicional} 
+                                        onChange={(e) => setCorreoAdicional(e.target.value)}
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                        placeholder="Ej. correo.secundario@gmail.com"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Profesión / Especialidad <span className="text-red-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        value={profesionEspecialidad} 
+                                        onChange={(e) => setProfesionEspecialidad(e.target.value)}
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                        placeholder="Ej. Lic. en Enfermería, Psicólogo Clínico"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Sector Institucional <span className="text-red-500">*</span>
+                                        </label>
+                                        <select 
+                                            required
+                                            value={tipoInstitucion} 
+                                            onChange={(e) => setTipoInstitucion(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium bg-white"
+                                        >
+                                            <option value="">Seleccione sector...</option>
+                                            <option value="Pública">Pública</option>
+                                            <option value="Privada">Privada</option>
+                                            <option value="Otra">Otra / Independiente</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Nombre de la Institución <span className="text-red-500">*</span>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            required
+                                            value={nombreInstitucion} 
+                                            onChange={(e) => setNombreInstitucion(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. IMSS, Hospital Central, Universidad..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Estado y Municipio de Residencia <span className="text-red-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        value={estadoMunicipio} 
+                                        onChange={(e) => setEstadoMunicipio(e.target.value)}
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                        placeholder="Ej. Chiapas, Tuxtla Gutiérrez"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Cédula Profesional (Si aplica)
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={cedulaProfesional} 
+                                        onChange={(e) => setCedulaProfesional(e.target.value)}
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                        placeholder="Ej. 12345678 (Opcional)"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        {(rol === 'profesor' || rol === 'vendedor') && (
+                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor') && (
+                            <div className="pt-4 border-t border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-bold text-gray-800">Validación de Identidad</h2>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${identidadValidada ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                        {identidadValidada ? 'Validado' : 'Pendiente'}
+                                    </span>
+                                </div>
+                                <p className="text-sm text-gray-500 mb-5 leading-relaxed">
+                                    Para operar en la plataforma necesitas completar estos datos. Una vez guardados, el administrador validará tu identidad.
+                                </p>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">RFC</label>
+                                        <input 
+                                            type="text" 
+                                            value={rfc} 
+                                            onChange={(e) => setRfc(e.target.value.toUpperCase())}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. XAXX010101000"
+                                            maxLength={13}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">Constancia de Situación Fiscal (PDF)</label>
+                                            {csfUrl && <p className="text-xs text-blue-600 truncate mb-1">Archivo actual guardado</p>}
+                                            <input 
+                                                type="file" 
+                                                accept=".pdf"
+                                                onChange={(e) => setCsfFile(e.target.files?.[0] || null)}
+                                                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 rounded-md bg-white border-gray-300"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">Fotografía de Perfil</label>
+                                            {fotografiaPerfil && <p className="text-xs text-blue-600 truncate mb-1">Foto actual guardada</p>}
+                                            <input 
+                                                type="file" 
+                                                accept="image/*"
+                                                onChange={(e) => setFotoFile(e.target.files?.[0] || null)}
+                                                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 rounded-md bg-white border-gray-300"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Datos de Contacto y Pago</h2>
@@ -248,7 +463,7 @@ export default function PerfilPage() {
                                         <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
                                         <input 
                                             type="tel" 
-                                            required={rol === 'profesor' || rol === 'vendedor'}
+                                            required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
                                             value={telefono} 
                                             onChange={(e) => setTelefono(e.target.value)}
                                             disabled={datosBancariosCapturados}
@@ -261,7 +476,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">Banco</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'profesor' || rol === 'vendedor'}
+                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
                                                 value={banco} 
                                                 onChange={(e) => setBanco(e.target.value)}
                                                 disabled={datosBancariosCapturados}
@@ -273,7 +488,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">CLABE Interbancaria</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'profesor' || rol === 'vendedor'}
+                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
                                                 value={clabe} 
                                                 onChange={(e) => setClabe(e.target.value)}
                                                 disabled={datosBancariosCapturados}

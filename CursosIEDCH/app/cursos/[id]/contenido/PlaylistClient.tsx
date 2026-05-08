@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 type Modulo = {
     id: string;
@@ -13,13 +14,62 @@ type Modulo = {
 export default function PlaylistClient({
     playlist,
     requiereExamen,
-    urlExamen
+    urlExamen,
+    cursoId,
+    userId
 }: {
     playlist: Modulo[],
     requiereExamen?: boolean,
-    urlExamen?: string | null
+    urlExamen?: string | null,
+    cursoId: string,
+    userId: string
 }) {
     const [currentIndex, setCurrentIndex] = useState(0)
+    const [modulosVistos, setModulosVistos] = useState<string[]>([])
+    const [savingProgress, setSavingProgress] = useState(false)
+    const supabase = createClient()
+
+    useEffect(() => {
+        fetchProgreso()
+    }, [cursoId, userId])
+
+    const fetchProgreso = async () => {
+        const { data } = await supabase
+            .from('ie_progreso_modulos')
+            .select('modulo_id')
+            .eq('user_id', userId)
+            .eq('curso_id', cursoId)
+            .eq('visto', true)
+        
+        if (data) {
+            setModulosVistos(data.map(p => p.modulo_id))
+        }
+    }
+
+    const marcarComoVisto = async () => {
+        const currentId = playlist[currentIndex].id || `modulo-${currentIndex}`
+        setSavingProgress(true)
+
+        const { error } = await supabase
+            .from('ie_progreso_modulos')
+            .upsert({
+                user_id: userId,
+                curso_id: cursoId,
+                modulo_id: currentId,
+                visto: true
+            }, { onConflict: 'user_id, curso_id, modulo_id' })
+
+        if (!error) {
+            if (!modulosVistos.includes(currentId)) {
+                setModulosVistos([...modulosVistos, currentId])
+            }
+            // Avanzar al siguiente si no es el ultimo
+            if (currentIndex < playlist.length - 1) {
+                setCurrentIndex(currentIndex + 1)
+            }
+        }
+        setSavingProgress(false)
+    }
 
     if (!playlist || playlist.length === 0) {
         return (
@@ -47,8 +97,25 @@ export default function PlaylistClient({
                             <p className="text-sm text-gray-500">Módulo {currentIndex + 1} de {playlist.length}</p>
                         )}
                     </div>
-                    <div className="p-4 sm:p-6 bg-gray-50">
+                    <div className="p-4 sm:p-6 bg-gray-50 flex flex-col items-center">
                         <ContentViewer url={currentItem.url_contenido} />
+                        
+                        <div className="mt-8 flex justify-center w-full">
+                            <button
+                                onClick={marcarComoVisto}
+                                disabled={savingProgress || modulosVistos.includes(currentItem.id || `modulo-${currentIndex}`)}
+                                className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all shadow-sm ${
+                                    modulosVistos.includes(currentItem.id || `modulo-${currentIndex}`)
+                                    ? 'bg-green-100 text-green-700 cursor-default'
+                                    : 'bg-green-600 text-white hover:bg-green-700'
+                                }`}
+                            >
+                                <CheckCircle className="h-5 w-5" />
+                                {modulosVistos.includes(currentItem.id || `modulo-${currentIndex}`)
+                                    ? 'Tema Completado'
+                                    : (savingProgress ? 'Marcando...' : 'Marcar como Visto y Continuar')}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -72,7 +139,11 @@ export default function PlaylistClient({
                                             onClick={() => setCurrentIndex(index)}
                                             className={`w-full text-left px-4 py-4 flex items-start transition-colors hover:bg-gray-50 ${isActive ? 'bg-blue-50 border-l-4 border-blue-600' : 'border-l-4 border-transparent'}`}
                                         >
-                                            <PlayCircle className={`h-5 w-5 mt-0.5 mr-3 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                                            {modulosVistos.includes(item.id || `modulo-${index}`) ? (
+                                                <CheckCircle className="h-5 w-5 mt-0.5 mr-3 flex-shrink-0 text-green-500" />
+                                            ) : (
+                                                <PlayCircle className={`h-5 w-5 mt-0.5 mr-3 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                                            )}
                                             <div>
                                                 <p className={`text-sm font-medium ${isActive ? 'text-blue-900' : 'text-gray-700'}`}>
                                                     {index + 1}. {item.titulo}

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2 } from 'lucide-react'
 
 export default function Navbar() {
     const supabase = createClient()
@@ -15,6 +15,8 @@ export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isProfMenuOpen, setIsProfMenuOpen] = useState(false)
     const [isFinMenuOpen, setIsFinMenuOpen] = useState(false)
+    const [isInstMenuOpen, setIsInstMenuOpen] = useState(false)
+    const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false)
 
     useEffect(() => {
         const fetchUser = async (sessionUser: any) => {
@@ -57,7 +59,7 @@ export default function Navbar() {
         `flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${pathname.startsWith(path) ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'}`
 
     return (
-        <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 print:hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-16">
                     <div className="flex">
@@ -105,20 +107,38 @@ export default function Navbar() {
                                         </div>
                                     </div>
                                 )}
-                                {profile?.rol === 'profesor' && (
+                                {profile?.rol === 'institucion' && (
+                                    <div className="relative group">
+                                        <button
+                                            onClick={() => setIsInstMenuOpen(!isInstMenuOpen)}
+                                            className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-gray-50 focus:outline-none"
+                                        >
+                                            <Building2 className="h-4 w-4" /> <span>Panel Institución</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isInstMenuOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        <div className={`absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-[100] pt-2 ${isInstMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'}`}>
+                                            <div className="py-1 bg-white rounded-md border border-gray-100" role="menu">
+                                                <Link href="/institucion/registrar-actividad" onClick={() => setIsInstMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">Registrar Actividad</Link>
+                                                <Link href="/institucion/expediente" onClick={() => setIsInstMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700">Ver Expediente</Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                {(profile?.rol === 'profesor' || profile?.rol === 'instructor') && (
                                     <div className="relative group">
                                         <button 
                                             onClick={() => setIsProfMenuOpen(!isProfMenuOpen)}
                                             className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 focus:outline-none"
                                         >
-                                            <BookOpen className="h-4 w-4" /> <span>Panel Profesor</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isProfMenuOpen ? 'rotate-180' : ''}`} />
+                                            <BookOpen className="h-4 w-4" /> <span>{profile?.rol === 'instructor' ? 'Panel Instructor' : 'Panel Profesor'}</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isProfMenuOpen ? 'rotate-180' : ''}`} />
                                         </button>
                                         <div className={`absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-[100] pt-2 ${isProfMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'}`}>
                                             <div className="py-1 bg-white rounded-md border border-gray-100" role="menu">
                                                 <Link href="/profesor/cursos" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Cursos Creados</Link>
                                                 <Link href="/profesor/subir-curso" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Subir Curso</Link>
                                                 <Link href="/profesor/preguntas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Dudas de Alumnos</Link>
-                                                <Link href="/profesor/ventas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Ventas</Link>
+                                                {profile?.rol !== 'instructor' && (
+                                                    <Link href="/profesor/ventas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Ventas</Link>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -129,9 +149,21 @@ export default function Navbar() {
                                     </Link>
                                 )}
                                 {profile?.rol === 'admin' && (
-                                    <Link href="/admin/usuarios" className={navItemClass('/admin')}>
-                                        <Users className="h-4 w-4" /> <span>Admin Panel</span>
-                                    </Link>
+                                    <div className="relative group">
+                                        <button
+                                            onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
+                                            className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 focus:outline-none"
+                                        >
+                                            <Users className="h-4 w-4" /> <span>Panel Admin</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isAdminMenuOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        <div className={`absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-[100] pt-2 ${isAdminMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'}`}>
+                                            <div className="py-1 bg-white rounded-md border border-gray-100" role="menu">
+                                                <Link href="/admin/usuarios" onClick={() => setIsAdminMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Usuarios y Cursos</Link>
+                                                <Link href="/admin/validaciones" onClick={() => setIsAdminMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Validar Identidades</Link>
+                                                <Link href="/admin/solicitudes" onClick={() => setIsAdminMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Solicitudes de Ajuste</Link>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -148,8 +180,12 @@ export default function Navbar() {
                                         </span>
                                         <span className="text-xs text-gray-500 capitalize">{profile?.rol || 'Alumno'}</span>
                                     </div>
-                                    <Link href="/perfil" className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 rounded-full transition-colors border border-transparent" title="Mi Perfil">
-                                        <User className="h-5 w-5" />
+                                    <Link href="/perfil" className="p-1 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 rounded-full transition-colors border border-transparent overflow-hidden flex items-center justify-center w-9 h-9" title="Mi Perfil">
+                                        {(profile?.fotografia_perfil && profile?.identidad_validada) ? (
+                                            <img src={profile.fotografia_perfil} alt="Perfil" className="w-full h-full object-cover rounded-full" />
+                                        ) : (
+                                            <User className="h-5 w-5" />
+                                        )}
                                     </Link>
                                     <button
                                         onClick={handleLogout}
@@ -223,13 +259,22 @@ export default function Navbar() {
                                         <Link href="/financiero/colaboradores" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Pago de Colaboradores</Link>
                                     </div>
                                 )}
-                                {profile?.rol === 'profesor' && (
+                                {profile?.rol === 'institucion' && (
                                     <div className="space-y-1">
-                                        <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Panel Profesor</div>
+                                        <div className="px-3 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Panel Institución</div>
+                                        <Link href="/institucion/registrar-actividad" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-indigo-50 border-l-2 border-transparent hover:border-indigo-500">Registrar Actividad</Link>
+                                        <Link href="/institucion/expediente" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-indigo-50 border-l-2 border-transparent hover:border-indigo-500">Ver Expediente</Link>
+                                    </div>
+                                )}
+                                {(profile?.rol === 'profesor' || profile?.rol === 'instructor') && (
+                                    <div className="space-y-1">
+                                        <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Panel {profile?.rol === 'instructor' ? 'Instructor' : 'Profesor'}</div>
                                         <Link href="/profesor/cursos" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Cursos Creados</Link>
                                         <Link href="/profesor/subir-curso" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Subir Curso</Link>
                                         <Link href="/profesor/preguntas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Dudas de Alumnos</Link>
-                                        <Link href="/profesor/ventas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Ventas</Link>
+                                        {profile?.rol !== 'instructor' && (
+                                            <Link href="/profesor/ventas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Ventas</Link>
+                                        )}
                                     </div>
                                 )}
                                 {profile?.rol === 'vendedor' && (
@@ -238,9 +283,12 @@ export default function Navbar() {
                                     </Link>
                                 )}
                                 {profile?.rol === 'admin' && (
-                                    <Link href="/admin/usuarios" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
-                                        <Users className="h-5 w-5" /> <span>Admin Panel</span>
-                                    </Link>
+                                    <div className="space-y-1">
+                                        <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Panel Admin</div>
+                                        <Link href="/admin/usuarios" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Usuarios y Cursos</Link>
+                                        <Link href="/admin/validaciones" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Validar Identidades</Link>
+                                        <Link href="/admin/solicitudes" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Solicitudes de Ajuste</Link>
+                                    </div>
                                 )}
                                 <Link href="/perfil" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
                                     <User className="h-5 w-5" /> <span>Mi Perfil</span>

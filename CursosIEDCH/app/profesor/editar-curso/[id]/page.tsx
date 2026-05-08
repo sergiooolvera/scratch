@@ -54,6 +54,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [saving, setSaving] = useState(false)
     const [mensaje, setMensaje] = useState('')
     const [perfilIncompleto, setPerfilIncompleto] = useState(false)
+    const [profile, setProfile] = useState<any>(null)
     const [historialMensaje, setHistorialMensaje] = useState('Se actualizaron datos generales del curso.')
     
     const router = useRouter()
@@ -71,11 +72,14 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             const resP = await fetch('/api/perfil')
             const resultP = await resP.json()
             const prof = resultP.data
-            if (prof && (prof.rol === 'profesor' || prof.rol === 'vendedor')) {
-                if (!prof.telefono || !prof.banco || !prof.clabe) {
-                    setPerfilIncompleto(true)
-                    setLoading(false)
-                    return
+            if (prof) {
+                setProfile(prof)
+                if (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'instructor') {
+                    if (!prof.telefono || !prof.banco || !prof.clabe || !prof.identidad_validada) {
+                        setPerfilIncompleto(true)
+                        setLoading(false)
+                        return
+                    }
                 }
             }
 
@@ -327,7 +331,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 descripcion: formData.descripcion,
                 beneficios: formData.beneficios,
                 duracion: formData.duracion,
-                precio: Number(formData.precio),
+                precio: profile?.rol === 'instructor' ? 0 : Number(formData.precio),
                 instructor: formData.instructor,
                 vigencia_anos: vigenciaAnos,
                 requiere_pago_completo: requierePagoCompleto,
@@ -355,7 +359,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     descripcion: formData.descripcion,
                     beneficios: formData.beneficios,
                     duracion: formData.duracion,
-                    precio: Number(formData.precio),
+                    precio: profile?.rol === 'instructor' ? 0 : Number(formData.precio),
                     instructor: formData.instructor,
                     vigencia_anos: vigenciaAnos,
                     requiere_pago_completo: requierePagoCompleto,
@@ -449,7 +453,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     </div>
                     <h2 className="text-xl font-bold text-red-900 mb-2">¡Atención! Falta agregar/actualizar información</h2>
                     <p className="text-red-700 mb-6 max-w-md">
-                        Para poder subir o editar cursos, es obligatorio que completes tu perfil con tu <strong>teléfono, banco y CLABE interbancaria</strong>.
+                        Para poder operar, es obligatorio que completes tu perfil con tu información completa y que el administrador <strong>valide tu identidad</strong>.
                     </p>
                     <button 
                         onClick={() => router.push('/perfil')}
@@ -481,15 +485,17 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 <label className="block text-sm font-medium text-gray-700">Descripción</label>
                                 <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
                             </div>
-                            <div>
+                            <div className={profile?.rol === 'instructor' ? 'col-span-2' : ''}>
                                 <label className="block text-sm font-medium text-gray-700">Duración</label>
                                 <input type="text" name="duracion" required maxLength={30} value={formData.duracion} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black bg-white" />
                                 <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 30 caracteres (para el certificado). Usa la nota para horarios completos.</p>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Precio de Venta (MXN)</label>
-                                <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black bg-white" />
-                            </div>
+                            {profile?.rol !== 'instructor' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Precio de Venta (MXN)</label>
+                                    <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black bg-white" />
+                                </div>
+                            )}
                             <div className="col-span-2">
                                 <label className="block text-sm font-medium text-gray-700">Beneficios</label>
                                 <textarea name="beneficios" required value={formData.beneficios} onChange={handleChange} rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-black bg-white" />
@@ -549,26 +555,28 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                     <option value={10}>10 años</option>
                                 </select>
                             </div>
-                            <div className="col-span-2">
-                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                                    <label className="flex items-start cursor-pointer gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={requierePagoCompleto}
-                                            onChange={(e) => setRequierePagoCompleto(e.target.checked)}
-                                            className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                                        />
-                                        <div>
-                                            <span className="block text-sm font-semibold text-orange-900">
-                                                Requiere el 100% del curso pagado para obtener constancia
-                                            </span>
-                                            <span className="block text-xs text-orange-700 mt-0.5">
-                                                Si se activa, los alumnos que usen cupones de descuento deberán cubrir el valor total del curso antes de descargar su constancia.
-                                            </span>
-                                        </div>
-                                    </label>
+                            {profile?.rol !== 'instructor' && (
+                                <div className="col-span-2">
+                                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                        <label className="flex items-start cursor-pointer gap-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={requierePagoCompleto}
+                                                onChange={(e) => setRequierePagoCompleto(e.target.checked)}
+                                                className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                            />
+                                            <div>
+                                                <span className="block text-sm font-semibold text-orange-900">
+                                                    Requiere el 100% del curso pagado para obtener constancia
+                                                </span>
+                                                <span className="block text-xs text-orange-700 mt-0.5">
+                                                    Si se activa, los alumnos que usen cupones de descuento deberán cubrir el valor total del curso antes de descargar su constancia.
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 
