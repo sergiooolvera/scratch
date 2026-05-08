@@ -2,9 +2,31 @@
 
 Esta bitácora resume los avances realizados recientemente en el proyecto, organizados por áreas clave.
 
-## 📅 Resumen de Avances Recientes (Marzo 2026)
+## 📅 Resumen de Avances Recientes (Mayo 2026)
 
-### 🎓 Certificación y Documentos
+### 🏢 Módulo de Instituciones, Registro de Actividades y Verificación (08 de Mayo de 2026)
+- **Asignación de Rol Dinámico:** Se adaptó el flujo de registro e inicio de sesión para identificar automáticamente correos institucionales de empresas u organizaciones, asignándoles el rol exclusivo de `institucion`.
+- **Sistema de Créditos de Cortesía (Free Trial):** Se programó una regla de negocio que otorga automáticamente un saldo de **3 créditos gratis** a cualquier institución que ingrese por primera vez para registrar hasta 3 actividades académicas libres de costo.
+- **Formulario de Registro de Actividad:**
+  - Registro con campos detallados: Nombre, Tipo de Actividad (Seminario, Curso, Taller, etc.), Duración Curricular, Fecha de Ejecución, Facilitador/Instructor, Ubicación y la Institución que acredita.
+  - Integración de carga de múltiples evidencias físicas (documentos PDF, imágenes JPG, PNG, etc.) almacenadas en un bucket dedicado de Supabase Storage (`actividades-evidencias`).
+  - Lógica adaptativa de checkout: Si el costo del registro de la actividad es de 0 créditos (o free trial), el botón cambia automáticamente a "Tomar Curso" / "Registrar Actividad", omitiendo opciones de pago con Tarjeta/Oxxo y flujos manuales de manera limpia.
+- **Expediente de Actividades Institucionales:**
+  - Panel interactivo de consulta para la institución donde visualiza sus actividades registradas con su estado, saldos en tiempo real y buscador inteligente.
+  - Modal de **"Ver Detalle"** rediseñado desde cero bajo altos estándares estéticos (tarjetas interactivas en cuadrícula, micro-animaciones hover y paleta de colores índigo/oro).
+  - Remoción de paneles obsoletos de generación de alumnos/constancias individuales para simplificar el expediente de manera que el registro general sea el documento verificado directo.
+  - Soporte de visualización de evidencias de respaldo que permite abrir fotografías o PDFs adjuntos con un solo clic.
+- **Constancias con QR y Validador Dinámico:**
+  - Plantilla vertical de certificado institucional oficial con firmas de seguridad, logotipos de candados digitales y sello de agua.
+  - Generación de códigos QR adaptativos que resuelven dinámicamente la URL en base a `window.location.origin` (apunta a `localhost` en desarrollo y a `cursos-iedch.vercel.app` en producción) facilitando pruebas móviles.
+  - Motor de búsqueda del validador optimizado para UUID de PostgreSQL: se reemplazó el filtro `ilike` por consultas de rangos de frontera binaria (`gte` y `lte`) permitiendo consultar folios parciales instantáneamente a nivel de base de datos sin errores de tipos.
+  - Soporte extendido para folios de compra: el buscador ahora también valida identificadores de inscripciones activas (`ie_compras` donde `pagado = true`), mostrando el nombre del alumno, curso, vigencia y detalles oficiales de la compra con éxito.
+
+---
+
+## 📅 Historial de Avances Anteriores
+
+### 🎓 Certificación y Documentos (Marzo 2026)
 - **Unificación de Componentes:** Se consolidó el código duplicado de la página de certificados y constancias en un único componente reutilizable: `CertificadoDocument.tsx`.
 - **Ajustes de Diseño:** Se corrigió el espaciado vertical en el encabezado de los certificados (eliminando el espacio en blanco innecesario) y se ajustó la posición de la línea negra decorativa.
 - **Corrección de PDF:** Se resolvieron errores de generación de PDF relacionados con `html2canvas`, específicamente problemas de CORS con imágenes y límites de tamaño del canvas, asegurando descargas fiables en producción (Vercel).
@@ -32,7 +54,7 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Filtro de Intentos de Pago (OXXO):** Se ajustaron las reglas de validación para excluir fichas de OXXO generadas pero no pagadas, previniendo duplicidad de ventas en los reportes (`payment_status === 'paid'`).
 - **Dashboard Financiero Avanzado:** Se enriqueció la tabla de transacciones añadiendo paginación (20 resultados por hoja), exportación de tabla a Excel (CSV), y filtros combinables por Profesor, Curso, Alumno y Método de Pago. Adicionalmente, se aseguró que el título de los cursos no se trunque.
 
-### 📢 Sistema de Referidos y Precisión Financiera (Mayo 2026)
+### 📢 Sistema de Referidos y Precisión Financiera
 - **Atribución de Comisiones:** Se implementó una lógica de cruce avanzada para referidos:
     - **Pagos Stripe:** El referido se extrae del metadata de la sesión de Stripe, asegurando que solo se cuente si el código fue usado en el checkout específico.
     - **Pagos Manuales:** Se introdujo una validación de ventana temporal (±48 horas) para asociar referidos de la base de datos con transferencias bancarias, evitando que pagos antiguos hereden referidos nuevos por error.
@@ -41,10 +63,10 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Módulo de Colaboradores:** Se habilitó el cálculo de comisiones (30/40/20%) incluyendo tanto ventas de Stripe como pagos manuales, con filtros avanzados por colaborador, curso y periodo (Mes/Año).
 - **Integridad de Reportes:** Se consolidó la regla de que solo sesiones con `payment_status: 'paid'` en Stripe (especialmente para OXXO) se contabilicen en los reportes de ventas y comisiones.
 
-### 🧹 Limpieza y Optimización Final (03 de Mayo de 2026)
+### 🧹 Limpieza y Optimización Final
 - **Precisión en Referidos Manuales:** Se sincronizó el Frontend y Backend para asegurar que los códigos de referido verificados se guarden correctamente en la base de datos al realizar pagos por transferencia/depósito, cerrando la brecha de atribución que existía fuera de Stripe.
 - **Auditoría de Base de Datos:** Se realizó una limpieza profunda eliminando 21 registros de pagos manuales excedentes/duplicados que inflaban los reportes de comisiones de colaboradores.
 - **Simplificación de Dashboard:** Se optimizó el Dashboard Financiero eliminando gráficos y resúmenes redundantes para ofrecer una vista centrada en el listado detallado de transacciones y filtros de búsqueda.
 
 ---
-*Última actualización: 03 de Mayo de 2026*
+*Última actualización: 08 de Mayo de 2026*
