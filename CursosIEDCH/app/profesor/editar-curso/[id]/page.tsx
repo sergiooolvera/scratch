@@ -35,6 +35,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         instructor: '',
         reunion_url: '',
         nota_profesor: '',
+        categoria: 'desarrollo',
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
@@ -104,6 +105,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 instructor: curso.instructor,
                 reunion_url: curso.reunion_url || '',
                 nota_profesor: curso.nota_profesor || '',
+                categoria: curso.categoria || 'desarrollo',
             })
             setVigenciaAnos(curso.vigencia_anos || 3)
             setEstadoActual(curso.estado)
@@ -122,6 +124,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     instructor: borrador.instructor || curso.instructor,
                     reunion_url: borrador.reunion_url || curso.reunion_url || '',
                     nota_profesor: borrador.nota_profesor || curso.nota_profesor || '',
+                    categoria: borrador.categoria || curso.categoria || 'desarrollo',
                 })
                 setVigenciaAnos(borrador.vigencia_anos || curso.vigencia_anos || 3)
                 setRequiereExamen(borrador.requiere_examen !== undefined ? borrador.requiere_examen : (curso.requiere_examen || false))
@@ -337,6 +340,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 requiere_pago_completo: requierePagoCompleto,
                 reunion_url: formData.reunion_url?.trim() || null,
                 nota_profesor: formData.nota_profesor?.trim() || null,
+                categoria: formData.categoria,
                 modulos: modulosFinales,
                 requiere_examen: requiereExamen,
                 examen: requiereExamen ? {
@@ -365,6 +369,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     requiere_pago_completo: requierePagoCompleto,
                     reunion_url: formData.reunion_url?.trim() || null,
                     nota_profesor: formData.nota_profesor?.trim() || null,
+                    categoria: formData.categoria,
                     requiere_examen: requiereExamen,
                     estado: 'pendiente', 
                 })
@@ -553,6 +558,21 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                     <option value={3}>3 años</option>
                                     <option value={5}>5 años</option>
                                     <option value={10}>10 años</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Categoría del Curso</label>
+                                <select
+                                    name="categoria"
+                                    value={formData.categoria}
+                                    onChange={handleChange}
+                                    className="mt-1 block w-full rounded-md border-gray-300 p-2 border bg-white text-black"
+                                >
+                                    <option value="desarrollo">🧠 Desarrollo Humano</option>
+                                    <option value="salud">🩺 Salud y Medicina</option>
+                                    <option value="arte">🎨 Arte y Cultura</option>
+                                    <option value="tecnologia">💻 Tecnología y Ciencia</option>
+                                    <option value="educacion">📚 Educación</option>
                                 </select>
                             </div>
                             {profile?.rol !== 'instructor' && (

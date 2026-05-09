@@ -30,6 +30,7 @@ export default function SubirCursoPage() {
         precio: 0,
         reunion_url: '',
         nota_profesor: '',
+        categoria: 'desarrollo',
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
@@ -600,6 +601,21 @@ export default function SubirCursoPage() {
                                     <option value={10}>10 años</option>
                                 </select>
                                 <p className="text-xs text-gray-500 mt-1">Tiempo de validez de la constancia a partir de su emisión.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Categoría del Curso</label>
+                                <select
+                                    value={formData.categoria}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white"
+                                >
+                                    <option value="desarrollo">🧠 Desarrollo Humano</option>
+                                    <option value="salud">🩺 Salud y Medicina</option>
+                                    <option value="arte">🎨 Arte y Cultura</option>
+                                    <option value="tecnologia">💻 Tecnología y Ciencia</option>
+                                    <option value="educacion">📚 Educación</option>
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">Clasificación temática del curso para el catálogo.</p>
                             </div>
                         </div>
                         {profile?.rol !== 'instructor' && (

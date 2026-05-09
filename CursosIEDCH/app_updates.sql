@@ -399,3 +399,8 @@ CREATE POLICY "Permitir actualizar/eliminar su propia valoracion" ON public.ie_r
 GRANT ALL ON TABLE public.ie_reviews TO authenticated;
 GRANT ALL ON TABLE public.ie_reviews TO service_role;
 
+
+-- 6. Agregar columna de categoria a la tabla de cursos (ie_cursos)
+ALTER TABLE public.ie_cursos 
+  ADD COLUMN IF NOT EXISTS categoria TEXT DEFAULT 'desarrollo';
+
