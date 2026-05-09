@@ -365,3 +365,37 @@ GRANT ALL ON TABLE public.ie_examenes TO service_role;
 GRANT ALL ON TABLE public.ie_preguntas TO authenticated;
 GRANT ALL ON TABLE public.ie_preguntas TO service_role;
 
+
+-- 5. Crear tabla de valoraciones/comentarios de cursos (ie_reviews)
+CREATE TABLE IF NOT EXISTS public.ie_reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    curso_id UUID REFERENCES public.ie_cursos(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.ie_profiles(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comentario TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    UNIQUE(curso_id, user_id)
+);
+
+-- Habilitar RLS
+ALTER TABLE public.ie_reviews ENABLE ROW LEVEL SECURITY;
+
+-- Crear políticas
+DROP POLICY IF EXISTS "Permitir lectura publica de valoraciones" ON public.ie_reviews;
+CREATE POLICY "Permitir lectura publica de valoraciones" ON public.ie_reviews
+    FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Permitir insertar valoraciones a usuarios autenticados" ON public.ie_reviews;
+CREATE POLICY "Permitir insertar valoraciones a usuarios autenticados" ON public.ie_reviews
+    FOR INSERT WITH CHECK (
+        auth.uid() = user_id
+    );
+
+DROP POLICY IF EXISTS "Permitir actualizar/eliminar su propia valoracion" ON public.ie_reviews;
+CREATE POLICY "Permitir actualizar/eliminar su propia valoracion" ON public.ie_reviews
+    FOR ALL USING (auth.uid() = user_id);
+
+-- Otorgar accesos
+GRANT ALL ON TABLE public.ie_reviews TO authenticated;
+GRANT ALL ON TABLE public.ie_reviews TO service_role;
+

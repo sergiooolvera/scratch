@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import CourseActions from './CourseActions'
+import CourseReviews from './CourseReviews'
 
 export default async function CursoDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -108,6 +109,12 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                     />
                 </div>
             </div>
+
+            <CourseReviews 
+                cursoId={curso.id}
+                isPagado={isPagado}
+                currentUserId={user.id}
+            />
         </div>
     )
 }
