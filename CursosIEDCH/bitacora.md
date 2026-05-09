@@ -4,6 +4,21 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 📅 Resumen de Avances Recientes (Mayo 2026)
 
+### 🏷️ Clasificación de Cursos y Filtros del Catálogo (09 de Mayo de 2026)
+- **Atributo de Categoría en Cursos:** Se integró la columna `categoria` en la tabla `ie_cursos` con valor predeterminado `'desarrollo'` para dar clasificación temática oficial a todos los cursos.
+- **Formularios de Creación y Edición Actualizados:**
+  - Se añadieron menús de selección de categorías visuales y estilizados en la página de **Subir Curso** (`app/profesor/subir-curso/page.tsx`) y de **Editar Curso** (`app/profesor/editar-curso/[id]/page.tsx`).
+  - El sistema captura y persiste la categoría en borrador (cuando el curso está aprobado) y de forma directa cuando está en proceso de diseño/pendiente, manteniendo la integridad del flujo de revisión.
+- **Píldoras de Filtro Interactivas (Category Pills):**
+  - Se diseñó e implementó un bloque horizontal de píldoras en la parte superior del catálogo del alumno (`app/dashboard/page.tsx`).
+  - Cuenta con un diseño premium y adaptativo con micro-animaciones hover y colores representativos de marca: 🧠 Desarrollo Humano (Púrpura), 🩺 Salud y Medicina (Esmeralda), 🎨 Arte y Cultura (Rosa), 💻 Tecnología (Azul) y 📚 Educación (Ámbar).
+  - Las píldoras reaccionan interactivamente conservando de forma transparente cualquier término de búsqueda textual (`q`) ingresado por el estudiante.
+- **Insignias Dinámicas en Tarjetas de Curso (CourseCard Badges):**
+  - Se actualizó el componente `CourseCard` para renderizar el badge con la categoría temática respectiva del curso, usando una tipografía premium (Inter/Outfit) y bordes redondeados completos.
+- **Despliegue y Pruebas Exitosas:**
+  - Verificación de compilación de producción con Next.js y TypeScript completado con éxito (código de salida 0).
+  - Cambios respaldados en Git y desplegados de manera inmediata a producción en Vercel ([cursos-iedch.vercel.app](https://cursos-iedch.vercel.app)).
+
 ### 🏢 Módulo de Instituciones, Registro de Actividades y Verificación (08 de Mayo de 2026)
 - **Asignación de Rol Dinámico:** Se adaptó el flujo de registro e inicio de sesión para identificar automáticamente correos institucionales de empresas u organizaciones, asignándoles el rol exclusivo de `institucion`.
 - **Sistema de Créditos de Cortesía (Free Trial):** Se programó una regla de negocio que otorga automáticamente un saldo de **3 créditos gratis** a cualquier institución que ingrese por primera vez para registrar hasta 3 actividades académicas libres de costo.
@@ -69,4 +84,4 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Simplificación de Dashboard:** Se optimizó el Dashboard Financiero eliminando gráficos y resúmenes redundantes para ofrecer una vista centrada en el listado detallado de transacciones y filtros de búsqueda.
 
 ---
-*Última actualización: 08 de Mayo de 2026*
+*Última actualización: 09 de Mayo de 2026*
