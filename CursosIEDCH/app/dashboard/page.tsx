@@ -4,9 +4,10 @@ import CourseCard from '@/components/CourseCard'
 import { BookMarked, User, Search } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function DashboardPage({ searchParams }: { searchParams: { q?: string; category?: string } }) {
-    const query = searchParams.q?.toLowerCase() || ''
-    const activeCategory = searchParams.category || 'todas'
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ q?: string; category?: string }> }) {
+    const resolvedParams = await searchParams
+    const query = resolvedParams.q?.toLowerCase() || ''
+    const activeCategory = resolvedParams.category || 'todas'
     
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -139,6 +140,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
                             <Link 
                                 href={linkUrl} 
                                 key={cat.id}
+                                scroll={false}
                                 className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${badgeStyle}`}
                             >
                                 <span className="text-base">{cat.icon}</span>
