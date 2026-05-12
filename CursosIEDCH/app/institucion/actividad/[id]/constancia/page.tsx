@@ -5,6 +5,31 @@ import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import { FileDown, ArrowLeft, Printer, GraduationCap, BookOpen, Clock, Calendar, MapPin, User, Building, ShieldCheck, Lock } from 'lucide-react'
 
+const CornerOrnament = ({ className }: { className?: string }) => (
+    <svg className={`w-16 h-16 pointer-events-none ${className}`} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Outer Gold Border Line segment */}
+        <path d="M0 0 H64" stroke="#d4af37" strokeWidth={1.5} />
+        <path d="M0 0 V64" stroke="#d4af37" strokeWidth={1.5} />
+
+        {/* Inner Navy Border Line segment */}
+        <path d="M8 8 H64" stroke="#0a1128" strokeWidth={3} />
+        <path d="M8 8 V64" stroke="#0a1128" strokeWidth={3} />
+
+        {/* Thin Gold Border Line segment */}
+        <path d="M16 16 H64" stroke="#d4af37" strokeWidth={1} strokeOpacity={0.7} />
+        <path d="M16 16 V64" stroke="#d4af37" strokeWidth={1} strokeOpacity={0.7} />
+
+        {/* Outer Corner Accent Square */}
+        <rect x="0" y="0" width="12" height="12" fill="#d4af37" />
+        <path d="M6 2 L10 6 L6 10 L2 6 Z" fill="#0a1128" />
+
+        {/* Center Corner Star Ornament (at 20,20) */}
+        <path d="M20 12 L24 20 L20 28 L16 20 Z" fill="#d4af37" />
+        <path d="M12 20 L20 24 L28 20 L20 16 Z" fill="#d4af37" />
+        <circle cx="20" cy="20" r="2" fill="#0a1128" />
+    </svg>
+)
+
 export default function CertificadoActividadPage() {
     const params = useParams()
     const router = useRouter()
@@ -58,6 +83,70 @@ export default function CertificadoActividadPage() {
                 .text-navy { color: #0f172a; }
                 .text-gold { color: #d4af37; }
                 .bg-navy { background-color: #0a1128; }
+
+                /* Border and Frame Styles */
+                .cert-border-outer {
+                    position: absolute;
+                    top: 16px;
+                    left: 16px;
+                    right: 16px;
+                    bottom: 16px;
+                    border: 1.5px solid #d4af37;
+                    pointer-events: none;
+                    z-index: 10;
+                }
+                .cert-border-inner {
+                    position: absolute;
+                    top: 24px;
+                    left: 24px;
+                    right: 24px;
+                    bottom: 24px;
+                    border: 3px solid #0a1128;
+                    pointer-events: none;
+                    z-index: 10;
+                }
+                .cert-border-thin {
+                    position: absolute;
+                    top: 32px;
+                    left: 32px;
+                    right: 32px;
+                    bottom: 32px;
+                    border: 1px solid #d4af37;
+                    opacity: 0.7;
+                    pointer-events: none;
+                    z-index: 10;
+                }
+                .cert-corner-tl {
+                    position: absolute;
+                    top: 16px;
+                    left: 16px;
+                    z-index: 15;
+                    pointer-events: none;
+                }
+                .cert-corner-tr {
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
+                    z-index: 15;
+                    pointer-events: none;
+                    transform: rotate(90deg);
+                }
+                .cert-corner-br {
+                    position: absolute;
+                    bottom: 16px;
+                    right: 16px;
+                    z-index: 15;
+                    pointer-events: none;
+                    transform: rotate(180deg);
+                }
+                .cert-corner-bl {
+                    position: absolute;
+                    bottom: 16px;
+                    left: 16px;
+                    z-index: 15;
+                    pointer-events: none;
+                    transform: rotate(270deg);
+                }
 
                 @media print {
                     @page { 
@@ -128,7 +217,18 @@ export default function CertificadoActividadPage() {
             <div className="print-cert-container w-full max-w-[800px] cert-bg shadow-2xl print:shadow-none relative overflow-hidden flex flex-col font-inter" 
                  style={{ aspectRatio: '8.5 / 11' }}>
                 
-                <div className="flex flex-col px-16 pt-8 pb-12 h-full relative z-20 print:justify-center">
+                {/* Marco de Certificado */}
+                <div className="cert-border-outer" />
+                <div className="cert-border-inner" />
+                <div className="cert-border-thin" />
+
+                {/* Esquinas Decorativas */}
+                <CornerOrnament className="cert-corner-tl" />
+                <CornerOrnament className="cert-corner-tr" />
+                <CornerOrnament className="cert-corner-br" />
+                <CornerOrnament className="cert-corner-bl" />
+                
+                <div className="flex flex-col px-16 pt-16 pb-16 h-full relative z-20 print:justify-center">
                     
                     {/* Header */}
                     <div className="text-center mb-4">
