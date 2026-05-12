@@ -1,3 +1,12 @@
+# --- RESTRICTION: TRACK ONLY CURSOSIEDCH ---
+# Ignore everything in the root folder
+/*
+# But DO NOT ignore the root .gitignore file
+!.gitignore
+# But DO NOT ignore the CursosIEDCH folder and all its contents
+!/CursosIEDCH/
+
+
 # --- GENERAL SYSTEM FILES ---
 .DS_Store
 Thumbs.db
