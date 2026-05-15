@@ -74,7 +74,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
 
     const isSpecialCourse = curso.titulo === 'Recursos y Estrategias para la Práctica Docente';
     if (isSpecialCourse) {
-        let selectedDate = new Date(compra.fecha_compra || Date.now());
+        let selectedDate = new Date(compra?.fecha_compra || Date.now());
         const y = selectedDate.getFullYear();
         const m = selectedDate.getMonth() + 1;
         
