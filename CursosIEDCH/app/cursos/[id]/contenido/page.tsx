@@ -3,8 +3,9 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, PlayCircle, FileText, CheckCircle, Video, Info } from 'lucide-react'
 import ContentViewer from './ContentViewer'
-import PlaylistClient from './PlaylistClient' // We'll extract client logic to a child component
+import PlaylistClient from './PlaylistClient'
 import CourseQA from './CourseQA'
+import CourseDateSelector from '../CourseDateSelector'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,6 +85,8 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
         url_contenido: curso.url_contenido
     }] : []
 
+    const constanciaHref = `/cursos/${id}/certificado`
+
     return (
         <div className="bg-zinc-50 min-h-[calc(100vh-64px)] font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -100,13 +103,21 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                             {curso.titulo}
                         </h1>
-                        <p className="text-gray-500 mt-1">Impartido por {curso.instructor}</p>
+                        <p className="text-gray-500 mt-1 mb-4">Impartido por {curso.instructor}</p>
+                        {curso.titulo === 'Recursos y Estrategias para la Práctica Docente' && (
+                            <div className="mt-2">
+                                <CourseDateSelector 
+                                    savedDateStr={compra?.fecha_compra ? new Date(compra.fecha_compra).toISOString().substring(0, 10) : undefined} 
+                                    cursoId={id}
+                                />
+                            </div>
+                        )}
                     </div>
                     <div className="mt-4 md:mt-0 space-y-2 text-right flex flex-col items-end">
                         {(curso.requiere_examen ? examPassed : true) && (
                             <>
                                 <a
-                                    href={`/cursos/${id}/certificado`}
+                                    href={constanciaHref}
                                     className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                 >
                                     <FileText className="mr-2 h-4 w-4" />

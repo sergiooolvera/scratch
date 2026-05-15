@@ -308,11 +308,10 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                                 setReferralNombre('')
                                 setReferralError('')
                             }}
-                            className={`flex-1 rounded-md shadow-sm text-sm px-3 py-2 border uppercase bg-white focus:ring-2 ${
-                                referralValid === true ? 'border-green-400 focus:ring-green-200' :
-                                referralValid === false ? 'border-red-400 focus:ring-red-200' :
-                                'border-indigo-200 focus:ring-indigo-300 focus:border-indigo-400'
-                            }`}
+                            className={`flex-1 rounded-md shadow-sm text-sm px-3 py-2 border uppercase bg-white focus:ring-2 ${referralValid === true ? 'border-green-400 focus:ring-green-200' :
+                                    referralValid === false ? 'border-red-400 focus:ring-red-200' :
+                                        'border-indigo-200 focus:ring-indigo-300 focus:border-indigo-400'
+                                }`}
                             maxLength={15}
                         />
                         {referralCode.trim() && referralValid === null && (
@@ -465,7 +464,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                     <div className="mt-4 p-6 bg-white border border-red-200 shadow-xl rounded-xl flex flex-col relative transition-all animate-in fade-in slide-in-from-top-4">
                         <button onClick={() => setShowOxxo(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
                         <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center"><Store className="mr-2 text-red-600" /> Reportar Pago en Oxxo</h3>
-                        
+
                         <p className="text-sm text-gray-600 mb-4">Sube una foto clara de tu ticket de depósito o transferencia recibida de Oxxo.</p>
 
                         <form onSubmit={(e) => handleSubirPago(e, 'oxxo')} className="flex flex-col gap-4">
@@ -515,13 +514,13 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                     href={`/cursos/${cursoId}/contenido`}
                     className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                 >
-                    Tomar Curso
+                    Ir a Curso
                 </Link>
 
                 {!requiereExamen ? (
                     puedeVerConstancia ? (
                         <Link
-                            href={`/cursos/${cursoId}/certificado`}
+                            href={constanciaHref}
                             className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600"
                         >
                             Obtener Constancia
@@ -545,7 +544,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                 ) : (
                     puedeVerConstancia ? (
                         <Link
-                            href={`/cursos/${cursoId}/certificado`}
+                            href={constanciaHref}
                             className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600"
                         >
                             Obtener Constancia
@@ -618,111 +617,111 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
 
                     {/* Sección de transferencia */}
                     {showTransferFormForConstancia && (
-                    <div id="constancia-efectivo-section" className="bg-white p-4 rounded-lg border border-amber-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
-                        <p className="mb-2 font-bold text-gray-800">Datos para Transferencia:</p>
-                        <ul className="list-none space-y-1 font-mono bg-gray-50 p-3 rounded border border-gray-200">
-                            <li><strong>Banco:</strong> BBVA Bancomer</li>
-                            <li><strong>Cuenta:</strong> 047 011 9024</li>
-                            <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
-                            <li><strong>Titular:</strong> Sergio Olvera</li>
-                            <li className="font-bold text-blue-700 mt-1"><strong>Monto a pagar:</strong> ${esCreadoPorInstructor ? 199 : Math.max(0, (precioCurso || 0) - (montoPagado || 0))} MXN</li>
-                        </ul>
+                        <div id="constancia-efectivo-section" className="bg-white p-4 rounded-lg border border-amber-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
+                            <p className="mb-2 font-bold text-gray-800">Datos para Transferencia:</p>
+                            <ul className="list-none space-y-1 font-mono bg-gray-50 p-3 rounded border border-gray-200">
+                                <li><strong>Banco:</strong> BBVA Bancomer</li>
+                                <li><strong>Cuenta:</strong> 047 011 9024</li>
+                                <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
+                                <li><strong>Titular:</strong> Sergio Olvera</li>
+                                <li className="font-bold text-blue-700 mt-1"><strong>Monto a pagar:</strong> ${esCreadoPorInstructor ? 199 : Math.max(0, (precioCurso || 0) - (montoPagado || 0))} MXN</li>
+                            </ul>
 
-                        <form onSubmit={(e) => handleSubirPagoConstancia(e, 'transferencia')} className="flex flex-col gap-3 mt-4">
-                            <div
-                                className="border-2 border-dashed border-amber-300 rounded-lg p-4 flex flex-col items-center justify-center bg-amber-50 hover:bg-amber-100 transition cursor-pointer"
-                                onClick={() => document.getElementById('comprobante-constancia-upload')?.click()}
-                            >
-                                <UploadCloud className="w-8 h-8 text-amber-400 mb-1" />
-                                <span className="text-sm font-medium text-amber-700">
-                                    {fileConstancia ? fileConstancia.name : 'Subir comprobante de pago'}
-                                </span>
-                                <input
-                                    id="comprobante-constancia-upload"
-                                    type="file"
-                                    accept="image/*,.pdf"
-                                    className="hidden"
-                                    onChange={(e) => setFileConstancia(e.target.files?.[0] || null)}
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={uploadingConstancia || !fileConstancia}
-                                className="w-full bg-amber-600 text-white px-5 py-3 rounded-lg font-bold hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center transition"
-                            >
-                                {uploadingConstancia ? 'Enviando...' : 'Enviar Comprobante'}
-                            </button>
-                            {pagoConstanciaMensaje && (
-                                <p className={`text-sm font-medium text-center ${pagoConstanciaMensaje.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-                                    {pagoConstanciaMensaje}
-                                </p>
-                            )}
-                        </form>
-                    </div>
+                            <form onSubmit={(e) => handleSubirPagoConstancia(e, 'transferencia')} className="flex flex-col gap-3 mt-4">
+                                <div
+                                    className="border-2 border-dashed border-amber-300 rounded-lg p-4 flex flex-col items-center justify-center bg-amber-50 hover:bg-amber-100 transition cursor-pointer"
+                                    onClick={() => document.getElementById('comprobante-constancia-upload')?.click()}
+                                >
+                                    <UploadCloud className="w-8 h-8 text-amber-400 mb-1" />
+                                    <span className="text-sm font-medium text-amber-700">
+                                        {fileConstancia ? fileConstancia.name : 'Subir comprobante de pago'}
+                                    </span>
+                                    <input
+                                        id="comprobante-constancia-upload"
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        className="hidden"
+                                        onChange={(e) => setFileConstancia(e.target.files?.[0] || null)}
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={uploadingConstancia || !fileConstancia}
+                                    className="w-full bg-amber-600 text-white px-5 py-3 rounded-lg font-bold hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center transition"
+                                >
+                                    {uploadingConstancia ? 'Enviando...' : 'Enviar Comprobante'}
+                                </button>
+                                {pagoConstanciaMensaje && (
+                                    <p className={`text-sm font-medium text-center ${pagoConstanciaMensaje.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+                                        {pagoConstanciaMensaje}
+                                    </p>
+                                )}
+                            </form>
+                        </div>
                     )}
 
                     {/* Sección de OXXO para constancia */}
                     {showOxxoForConstancia && (
-                    <div className="bg-white p-4 rounded-lg border border-red-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
-                        <p className="mb-2 font-bold text-gray-800 flex items-center"><Store className="mr-2 text-red-600 w-4 h-4" /> Reportar Pago en Oxxo:</p>
-                        <p className="mb-4">Sube una foto clara de tu ticket de depósito o transferencia recibida de Oxxo.</p>
+                        <div className="bg-white p-4 rounded-lg border border-red-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
+                            <p className="mb-2 font-bold text-gray-800 flex items-center"><Store className="mr-2 text-red-600 w-4 h-4" /> Reportar Pago en Oxxo:</p>
+                            <p className="mb-4">Sube una foto clara de tu ticket de depósito o transferencia recibida de Oxxo.</p>
 
-                        <form onSubmit={(e) => handleSubirPagoConstancia(e, 'oxxo')} className="flex flex-col gap-3 mt-4">
-                            <div
-                                className="border-2 border-dashed border-red-300 rounded-lg p-4 flex flex-col items-center justify-center bg-red-50 hover:bg-red-100 transition cursor-pointer"
-                                onClick={() => document.getElementById('comprobante-constancia-oxxo-upload')?.click()}
-                            >
-                                <UploadCloud className="w-8 h-8 text-red-400 mb-1" />
-                                <span className="text-sm font-medium text-red-700">
-                                    {fileConstancia ? fileConstancia.name : 'Subir ticket de Oxxo'}
-                                </span>
-                                <input
-                                    id="comprobante-constancia-oxxo-upload"
-                                    type="file"
-                                    accept="image/*,.pdf"
-                                    className="hidden"
-                                    onChange={(e) => setFileConstancia(e.target.files?.[0] || null)}
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={uploadingConstancia || !fileConstancia}
-                                className="w-full bg-red-600 text-white px-5 py-3 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50 flex items-center justify-center transition"
-                            >
-                                {uploadingConstancia ? 'Enviando...' : 'Enviar comprobante oxxo'}
-                            </button>
-                            {pagoConstanciaMensaje && (
-                                <p className={`text-sm font-medium text-center ${pagoConstanciaMensaje.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-                                    {pagoConstanciaMensaje}
-                                </p>
-                            )}
-                        </form>
-                    </div>
+                            <form onSubmit={(e) => handleSubirPagoConstancia(e, 'oxxo')} className="flex flex-col gap-3 mt-4">
+                                <div
+                                    className="border-2 border-dashed border-red-300 rounded-lg p-4 flex flex-col items-center justify-center bg-red-50 hover:bg-red-100 transition cursor-pointer"
+                                    onClick={() => document.getElementById('comprobante-constancia-oxxo-upload')?.click()}
+                                >
+                                    <UploadCloud className="w-8 h-8 text-red-400 mb-1" />
+                                    <span className="text-sm font-medium text-red-700">
+                                        {fileConstancia ? fileConstancia.name : 'Subir ticket de Oxxo'}
+                                    </span>
+                                    <input
+                                        id="comprobante-constancia-oxxo-upload"
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        className="hidden"
+                                        onChange={(e) => setFileConstancia(e.target.files?.[0] || null)}
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={uploadingConstancia || !fileConstancia}
+                                    className="w-full bg-red-600 text-white px-5 py-3 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50 flex items-center justify-center transition"
+                                >
+                                    {uploadingConstancia ? 'Enviando...' : 'Enviar comprobante oxxo'}
+                                </button>
+                                {pagoConstanciaMensaje && (
+                                    <p className={`text-sm font-medium text-center ${pagoConstanciaMensaje.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
+                                        {pagoConstanciaMensaje}
+                                    </p>
+                                )}
+                            </form>
+                        </div>
                     )}
 
                     {/* Sección de Cupón para constancia */}
                     {showCuponForConstancia && (
-                    <div className="bg-white p-4 rounded-lg border border-yellow-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
-                        <p className="mb-2 font-bold text-gray-800">Canjear Cupón o Bono para Constancia:</p>
-                        <form onSubmit={handleCanjearCupon} className="flex flex-col sm:flex-row gap-2 mt-2">
-                            <input
-                                type="text"
-                                placeholder="Ej: BECA100"
-                                value={cuponCodigo}
-                                onChange={(e) => setCuponCodigo(e.target.value.toUpperCase())}
-                                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 uppercase px-4 py-2 border"
-                            />
-                            <button
-                                type="submit"
-                                disabled={loading || !cuponCodigo.trim()}
-                                className="w-full sm:w-auto bg-gray-900 text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 disabled:opacity-50"
-                            >
-                                Aplicar
-                            </button>
-                        </form>
-                        {cuponError && <p className="mt-2 text-sm text-red-600 font-medium">{cuponError}</p>}
-                        {cuponSuccess && <p className="mt-2 text-sm text-green-600 font-medium">{cuponSuccess}</p>}
-                    </div>
+                        <div className="bg-white p-4 rounded-lg border border-yellow-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
+                            <p className="mb-2 font-bold text-gray-800">Canjear Cupón o Bono para Constancia:</p>
+                            <form onSubmit={handleCanjearCupon} className="flex flex-col sm:flex-row gap-2 mt-2">
+                                <input
+                                    type="text"
+                                    placeholder="Ej: BECA100"
+                                    value={cuponCodigo}
+                                    onChange={(e) => setCuponCodigo(e.target.value.toUpperCase())}
+                                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 uppercase px-4 py-2 border"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={loading || !cuponCodigo.trim()}
+                                    className="w-full sm:w-auto bg-gray-900 text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 disabled:opacity-50"
+                                >
+                                    Aplicar
+                                </button>
+                            </form>
+                            {cuponError && <p className="mt-2 text-sm text-red-600 font-medium">{cuponError}</p>}
+                            {cuponSuccess && <p className="mt-2 text-sm text-green-600 font-medium">{cuponSuccess}</p>}
+                        </div>
                     )}
                 </div>
             )}

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Lock, CreditCard } from 'lucide-react'
@@ -70,6 +71,32 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
         fechaAprobacionObj = new Date(compra.fecha_compra || Date.now()); // Fallback por seguridad
         folioVenta = compra.id.toUpperCase();
     }
+
+    const isSpecialCourse = curso.titulo === 'Recursos y Estrategias para la Práctica Docente';
+    if (isSpecialCourse) {
+        let selectedDate = new Date(compra.fecha_compra || Date.now());
+        const y = selectedDate.getFullYear();
+        const m = selectedDate.getMonth() + 1;
+        
+        let validDate = false;
+        if ((y === 2025 && m >= 5) || (y === 2026 && m <= 5)) {
+            validDate = true;
+        }
+
+        if (!validDate) {
+            selectedDate = new Date(2025, 10, 24, 12, 0, 0); // 24 de Noviembre de 2025
+            
+            if (compra && compra.id) {
+                const adminSupabase = createSupabaseClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.SUPABASE_SERVICE_ROLE_KEY!
+                )
+                await adminSupabase.from('ie_compras').update({ fecha_compra: selectedDate.toISOString() }).eq('id', compra.id);
+            }
+        }
+        fechaAprobacionObj = selectedDate;
+    }
+
 
     const { data: profile } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
     const alumnoNombre = profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Alumno' : 'Alumno'

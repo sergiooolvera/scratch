@@ -71,7 +71,7 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                             : 'bg-blue-600 hover:bg-blue-700 hover:shadow-blue-100')
                     }
                 >
-                    {isPagado ? 'Ir al Curso' : 'Ver Detalles'}
+                    {isPagado ? 'Ir a Curso' : 'Ver Detalles'}
                 </Link>
             </div>
         </div>
