@@ -58,14 +58,14 @@ export default function CertificadoDocument({
                 </p>
 
                 {/* CONSTANCIA */}
-                <h1 className="mt-4 text-[60px] font-normal tracking-wide text-black">
+                <h1 className="mt-3 text-[48px] font-normal tracking-wide text-black">
                     CONSTANCIA
                 </h1>
 
-                <p className="mt-0 text-xl text-black font-semibold">a:</p>
+                <p className="mt-1 text-lg text-black font-semibold">a:</p>
 
                 {/* Name */}
-                <h2 className="mt-2 text-[52px] text-black tracking-wide leading-tight">
+                <h2 className={`mt-1 text-black tracking-wide leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[850px] text-center ${alumnoNombre.length > 30 ? 'text-[34px]' : alumnoNombre.length > 22 ? 'text-[40px]' : 'text-[48px]'}`}>
                     {alumnoNombre}
                 </h2>
 
