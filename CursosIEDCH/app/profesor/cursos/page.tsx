@@ -65,9 +65,14 @@ export default function ProfesorCursosPage() {
                         </h1>
                         <p className="text-gray-500 mt-2">Gestiona y edita los cursos que has publicado.</p>
                     </div>
-                    <Link href="/profesor/subir-curso" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-medium shadow-sm hover:bg-blue-700 transition">
-                        + Subir Nuevo Curso
-                    </Link>
+                    <div className="flex gap-2">
+                        <Link href="/profesor/revision-examen" className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded-full font-medium shadow-sm hover:bg-gray-50 transition">
+                            Revisión de Exámenes
+                        </Link>
+                        <Link href="/profesor/subir-curso" className="bg-blue-600 text-white px-5 py-2.5 rounded-full font-medium shadow-sm hover:bg-blue-700 transition">
+                            + Subir Nuevo Curso
+                        </Link>
+                    </div>
                 </div>
 
                 {cursos.length === 0 ? (

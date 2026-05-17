@@ -47,6 +47,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     // Exam state
     const [requiereExamen, setRequiereExamen] = useState(false)
     const [minAprobacion, setMinAprobacion] = useState(80)
+    const [conTiempo, setConTiempo] = useState(false)
+    const [tiempoExamen, setTiempoExamen] = useState(60)
+    const [seguridadAumentada, setSeguridadAumentada] = useState(false)
+    const [maxCambios, setMaxCambios] = useState(3)
+    const [intentosPermitidos, setIntentosPermitidos] = useState(3)
     const [preguntasExtraidas, setPreguntasExtraidas] = useState<PreguntaParsed[]>([])
     const [isParsing, setIsParsing] = useState(false)
     const [archivoExamen, setArchivoExamen] = useState<File | null>(null)
@@ -141,12 +146,27 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 
                 if (borrador.examen) {
                     setMinAprobacion(borrador.examen.min_aprobacion);
+                    if (borrador.examen.tiempo_limite) {
+                        setConTiempo(true);
+                        setTiempoExamen(borrador.examen.tiempo_limite);
+                    }
+                    setSeguridadAumentada(borrador.examen.seguridad_aumentada || false);
+                    setMaxCambios(borrador.examen.max_cambios_pantalla || 3);
+                    setIntentosPermitidos(borrador.examen.intentos_permitidos || 3);
                     setPreguntasExtraidas(borrador.examen.preguntas || []);
                 } else {
                     // Cargar examen original si hay borrador pero no del examen
                     const { data: exm } = await supabase.from('ie_examenes').select('*').eq('curso_id', id).single();
                     if (exm) {
                         setMinAprobacion(exm.min_aprobacion);
+                        if (exm.tiempo_limite) {
+                            setConTiempo(true);
+                            setTiempoExamen(exm.tiempo_limite);
+                        }
+                        setSeguridadAumentada(exm.seguridad_aumentada || false);
+                        setMaxCambios(exm.max_cambios_pantalla || 3);
+                        setIntentosPermitidos(exm.intentos_permitidos || 3);
+                        
                         const { data: pregs } = await supabase.from('ie_preguntas').select('*').eq('examen_id', exm.id).order('orden', { ascending: true });
                         if (pregs) setPreguntasExtraidas(pregs);
                     }
@@ -177,6 +197,13 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             const { data: exm } = await supabase.from('ie_examenes').select('*').eq('curso_id', id).single();
             if (exm) {
                 setMinAprobacion(exm.min_aprobacion);
+                if (exm.tiempo_limite) {
+                    setConTiempo(true);
+                    setTiempoExamen(exm.tiempo_limite);
+                }
+                setSeguridadAumentada(exm.seguridad_aumentada || false);
+                setMaxCambios(exm.max_cambios_pantalla || 3);
+                
                 const { data: pregs } = await supabase.from('ie_preguntas').select('*').eq('examen_id', exm.id).order('orden', { ascending: true });
                 if (pregs) setPreguntasExtraidas(pregs);
             }
@@ -345,6 +372,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 requiere_examen: requiereExamen,
                 examen: requiereExamen ? {
                     min_aprobacion: minAprobacion,
+                    tiempo_limite: conTiempo ? tiempoExamen : null,
+                    seguridad_aumentada: seguridadAumentada,
+                    max_cambios_pantalla: seguridadAumentada ? maxCambios : 3,
+                    intentos_permitidos: intentosPermitidos,
                     preguntas: preguntasExtraidas.map((p, idx) => ({ ...p, orden: idx + 1 }))
                 } : null
             }
@@ -401,10 +432,21 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setMensaje('Actualizando examen final...')
                 let { data: exm } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single()
                 if (!exm) {
-                    const { data: newExm } = await supabase.from('ie_examenes').insert({ curso_id: id, min_aprobacion: minAprobacion }).select().single()
+                    const { data: newExm } = await supabase.from('ie_examenes').insert({ 
+                        curso_id: id, 
+                        min_aprobacion: minAprobacion,
+                        tiempo_limite: conTiempo ? tiempoExamen : null,
+                        seguridad_aumentada: seguridadAumentada,
+                        max_cambios_pantalla: seguridadAumentada ? maxCambios : 3
+                    }).select().single()
                     exm = newExm
                 } else {
-                    await supabase.from('ie_examenes').update({ min_aprobacion: minAprobacion }).eq('id', exm.id)
+                    await supabase.from('ie_examenes').update({ 
+                        min_aprobacion: minAprobacion,
+                        tiempo_limite: conTiempo ? tiempoExamen : null,
+                        seguridad_aumentada: seguridadAumentada,
+                        max_cambios_pantalla: seguridadAumentada ? maxCambios : 3
+                    }).eq('id', exm.id)
                 }
 
                 if (exm) {
@@ -683,6 +725,70 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">Sugerencia: Cargar PDF para extraer preguntas</label>
                                             <input type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-300 rounded bg-white p-1" />
                                             {isParsing && <p className="text-[10px] font-bold text-green-600 mt-1 animate-pulse italic">Analizando...</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-green-200">
+                                        <div>
+                                            <label className="flex items-center cursor-pointer mb-2">
+                                                <input type="checkbox" checked={conTiempo} onChange={(e) => setConTiempo(e.target.checked)} className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                                <span className="ml-2 block text-sm font-semibold text-gray-700">
+                                                    Agregar tiempo para resolución de examen
+                                                </span>
+                                            </label>
+                                            {conTiempo && (
+                                                <div className="mt-2 flex items-center gap-2">
+                                                    <input 
+                                                        type="number" 
+                                                        min="2" 
+                                                        max="300" 
+                                                        value={tiempoExamen} 
+                                                        onChange={(e) => setTiempoExamen(Number(e.target.value))} 
+                                                        className="w-24 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
+                                                    />
+                                                    <span className="text-sm text-gray-600">minutos (Máx. 300)</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <label className="text-sm font-semibold text-gray-700">Intentos permitidos para aprobar:</label>
+                                                <input 
+                                                    type="number" 
+                                                    min="1" 
+                                                    max="10" 
+                                                    value={intentosPermitidos} 
+                                                    onChange={(e) => setIntentosPermitidos(Number(e.target.value))} 
+                                                    className="w-20 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
+                                                />
+                                                <span className="text-sm text-gray-600">intentos</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="flex items-center cursor-pointer mb-2">
+                                                <input type="checkbox" checked={seguridadAumentada} onChange={(e) => setSeguridadAumentada(e.target.checked)} className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                                <span className="ml-2 block text-sm font-semibold text-gray-700">
+                                                    El examen debe hacerse con Seguridad Aumentada
+                                                </span>
+                                            </label>
+                                            {seguridadAumentada && (
+                                                <div className="mt-2 space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <label className="text-xs font-semibold text-gray-600">Max. Cambios de Pantalla:</label>
+                                                        <input 
+                                                            type="number" 
+                                                            min="1" 
+                                                            max="10" 
+                                                            value={maxCambios} 
+                                                            onChange={(e) => setMaxCambios(Number(e.target.value))} 
+                                                            className="w-16 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
+                                                        />
+                                                    </div>
+                                                    <p className="text-[10px] text-orange-600 font-medium">
+                                                        ⚠️ Se le avisará al alumno que debe permanecer en pantalla completa. Si cambia de ventana más de {maxCambios} veces, el examen se bloqueará/enviará.
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

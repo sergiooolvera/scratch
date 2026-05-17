@@ -48,7 +48,7 @@ export default async function ExamenContenidoPage({ params }: { params: Promise<
     // Fetch the exam
     const { data: examen, error: exmError } = await supabase
         .from('ie_examenes')
-        .select('id')
+        .select('id, tiempo_limite, seguridad_aumentada, max_cambios_pantalla, intentos_permitidos')
         .eq('curso_id', id)
         .single()
 
@@ -57,6 +57,37 @@ export default async function ExamenContenidoPage({ params }: { params: Promise<
             <div className="max-w-3xl mx-auto px-4 py-12 text-center text-red-700">
                 <h1 className="text-3xl font-bold mb-4">Error cargando evaluación</h1>
                 <p>El maestro indicó que requiere examen, pero no se ha cargado el formulario interactivo.</p>
+                <a href={`/cursos/${id}/contenido`} className="text-blue-600 hover:underline mt-6 inline-block">Volver al contenido</a>
+            </div>
+        );
+    }
+
+    // Check attempts and if already passed
+    const { data: intentos } = await supabase
+        .from('ie_resultados_examenes')
+        .select('aprobado')
+        .eq('examen_id', examen.id)
+        .eq('user_id', user.id)
+
+    const yaAprobo = intentos?.some(i => i.aprobado);
+    const intentosUsados = intentos?.length || 0;
+    const maxIntentos = examen.intentos_permitidos || 3;
+
+    if (yaAprobo) {
+        return (
+            <div className="max-w-3xl mx-auto px-4 py-12 text-center text-green-700">
+                <h1 className="text-3xl font-bold mb-4">Examen Aprobado</h1>
+                <p>Ya has aprobado este examen. No es necesario que lo vuelvas a presentar.</p>
+                <a href={`/cursos/${id}/contenido`} className="text-blue-600 hover:underline mt-6 inline-block">Volver al contenido</a>
+            </div>
+        );
+    }
+
+    if (intentosUsados >= maxIntentos) {
+        return (
+            <div className="max-w-3xl mx-auto px-4 py-12 text-center text-red-700">
+                <h1 className="text-3xl font-bold mb-4">Límite de intentos alcanzado</h1>
+                <p>Has utilizado todos tus intentos permitidos ({maxIntentos}) para este examen.</p>
                 <a href={`/cursos/${id}/contenido`} className="text-blue-600 hover:underline mt-6 inline-block">Volver al contenido</a>
             </div>
         );
@@ -96,6 +127,9 @@ export default async function ExamenContenidoPage({ params }: { params: Promise<
                 cursoId={id}
                 cursoTitulo={curso.titulo}
                 preguntas={preguntasFormateadas}
+                tiempoLimite={examen.tiempo_limite}
+                seguridadAumentada={examen.seguridad_aumentada}
+                maxCambiosPantalla={examen.max_cambios_pantalla}
             />
         </div>
     )

@@ -147,6 +147,7 @@ export default function Navbar() {
                                                 <Link href="/profesor/cursos" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Cursos Creados</Link>
                                                 <Link href="/profesor/subir-curso" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Subir Curso</Link>
                                                 <Link href="/profesor/preguntas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Dudas de Alumnos</Link>
+                                                <Link href="/profesor/revision-examen" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Revisión de Exámenes</Link>
                                                 {profile?.rol !== 'instructor' && (
                                                     <Link href="/profesor/ventas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Ventas</Link>
                                                 )}
@@ -283,6 +284,7 @@ export default function Navbar() {
                                         <Link href="/profesor/cursos" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Cursos Creados</Link>
                                         <Link href="/profesor/subir-curso" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Subir Curso</Link>
                                         <Link href="/profesor/preguntas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Dudas de Alumnos</Link>
+                                        <Link href="/profesor/revision-examen" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Revisión de Exámenes</Link>
                                         {profile?.rol !== 'instructor' && (
                                             <Link href="/profesor/ventas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Ventas</Link>
                                         )}

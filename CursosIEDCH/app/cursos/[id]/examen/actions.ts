@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function submitExamen(cursoId: string, respuestasUsuario: Record<string, string>) {
+export async function submitExamen(cursoId: string, respuestasUsuario: Record<string, string>, explicaciones: Record<string, string>) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -33,16 +33,15 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
     }
 
     // 2. Grade the exam
-    // respuesta_correcta is stored as a letter: 'A', 'B', 'C', or 'D'
-    // The client sends the full option text, so we map it back to the letter first.
     let correctas = 0;
     const total = preguntas.length;
+    const respuestasDetalle: Record<string, { respuesta: string, respuesta_texto: string, explicacion: string, correcta: boolean }> = {};
 
     preguntas.forEach(p => {
         const userAnsText = respuestasUsuario[p.id];
+        const explicacion = explicaciones[p.id] || '';
         if (!userAnsText) return;
 
-        // Map the full option text the user selected to its letter
         const normalize = (s: string) => s?.trim().toLowerCase() ?? '';
         const userText = normalize(userAnsText);
 
@@ -52,10 +51,17 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
         else if (userText === normalize(p.opcion_c)) userLetter = 'C';
         else if (userText === normalize(p.opcion_d)) userLetter = 'D';
 
-        // Compare letter to stored correct answer (also normalize for safety)
-        if (userLetter && userLetter === normalize(p.respuesta_correcta).toUpperCase()) {
+        const esCorrecta = userLetter && userLetter === normalize(p.respuesta_correcta).toUpperCase();
+        if (esCorrecta) {
             correctas++;
         }
+
+        respuestasDetalle[p.id] = {
+            respuesta: userLetter,
+            respuesta_texto: userAnsText,
+            explicacion: explicacion,
+            correcta: esCorrecta
+        };
     })
 
     const calificacionFinal = Math.round((correctas / total) * 100);
@@ -68,14 +74,13 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
             user_id: user.id,
             examen_id: examen.id,
             calificacion: calificacionFinal,
-            aprobado: aprobado
+            aprobado: aprobado,
+            respuestas_detalle: respuestasDetalle
         })
 
     if (insertError) {
         return { error: 'Error guardando tu calificación: ' + insertError.message }
     }
-
-    revalidatePath(`/cursos/${cursoId}/examen`)
 
     return {
         success: true,

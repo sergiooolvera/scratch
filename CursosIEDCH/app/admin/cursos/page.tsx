@@ -10,6 +10,7 @@ export default function AdminCursosPage() {
     const [cursos, setCursos] = useState<Curso[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
+    const [procesandoAccion, setProcesandoAccion] = useState<string | null>(null)
 
     // Preview Modal state
     const [previewCurso, setPreviewCurso] = useState<Curso | null>(null)
@@ -127,6 +128,7 @@ export default function AdminCursosPage() {
         if (!confirmar) return;
 
         try {
+            setProcesandoAccion(cursoId);
             const res = await fetch('/api/admin/aprobar-borrador', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -142,6 +144,8 @@ export default function AdminCursosPage() {
             fetchCursos();
         } catch (err: any) {
             alert("Error aprobando cambios: " + err.message);
+        } finally {
+            setProcesandoAccion(null);
         }
     }
 
@@ -189,7 +193,7 @@ export default function AdminCursosPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8 relative">
+        <div className="max-w-7xl mx-auto px-4 py-8 relative">
             <h1 className="text-2xl font-bold mb-6">Revisión de Cursos</h1>
             <div className="mb-4">
                 <input
@@ -362,9 +366,10 @@ export default function AdminCursosPage() {
                                         <div className="flex gap-2 w-full mt-1">
                                             <button
                                                 onClick={() => handleAprobarCambios(c.id, c.cambios_pendientes)}
-                                                className="flex-1 bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1.5 rounded text-xs font-bold transition-colors shadow-sm border border-green-200"
+                                                disabled={procesandoAccion === c.id}
+                                                className={`flex-1 bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1.5 rounded text-xs font-bold transition-colors shadow-sm border border-green-200 ${procesandoAccion === c.id ? 'opacity-50 cursor-wait' : ''}`}
                                             >
-                                                Aprobar Edición
+                                                {procesandoAccion === c.id ? 'Aprobando...' : 'Aprobar Edición'}
                                             </button>
                                             <button
                                                 onClick={() => handleRechazarCambios(c.id)}

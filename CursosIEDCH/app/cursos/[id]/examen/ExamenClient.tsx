@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { submitExamen } from './actions'
-import { CheckCircle, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { CheckCircle, AlertTriangle, ArrowLeft, Clock, Shield } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 type PreguntaFormateada = {
     id: string;
@@ -17,12 +18,19 @@ type PreguntaFormateada = {
 export default function ExamenClient({
     cursoId,
     preguntas,
-    cursoTitulo
+    cursoTitulo,
+    tiempoLimite,
+    seguridadAumentada,
+    maxCambiosPantalla = 3
 }: {
     cursoId: string,
     preguntas: PreguntaFormateada[],
-    cursoTitulo: string
+    cursoTitulo: string,
+    tiempoLimite?: number | null,
+    seguridadAumentada?: boolean,
+    maxCambiosPantalla?: number
 }) {
+    const router = useRouter()
     const [respuestas, setRespuestas] = useState<Record<string, string>>({})
     const [loading, setLoading] = useState(false)
     const [resultado, setResultado] = useState<{
@@ -33,6 +41,14 @@ export default function ExamenClient({
         error?: string;
     } | null>(null)
 
+    const [tiempoRestante, setTiempoRestante] = useState<number | null>(null)
+    const [examenIniciado, setExamenIniciado] = useState(false)
+    const [cambiosRealizados, setCambiosRealizados] = useState(0)
+    const [explicaciones, setExplicaciones] = useState<Record<string, string>>({})
+    const [mostrarBloqueo, setMostrarBloqueo] = useState(false)
+    const lastBloqueoTime = useRef(0)
+    const enviandoRef = useRef(false)
+
     const handleSelectOption = (preguntaId: string, opcionTexto: string) => {
         setRespuestas(prev => ({ ...prev, [preguntaId]: opcionTexto }))
     }
@@ -40,16 +56,159 @@ export default function ExamenClient({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        // Ensure all questions answered
         if (Object.keys(respuestas).length < preguntas.length) {
             alert('Por favor responde todas las preguntas antes de enviar.');
             return;
         }
 
+        await finalizarExamen();
+    }
+
+    const handleSubmitAutomated = async () => {
+        await finalizarExamen();
+    }
+
+    const finalizarExamen = async () => {
         setLoading(true)
-        const res = await submitExamen(cursoId, respuestas) as any
+        const res = await submitExamen(cursoId, respuestas, explicaciones) as any
         setResultado(res)
         setLoading(false)
+        router.refresh()
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+    }
+
+    const handleIniciarExamen = () => {
+        setExamenIniciado(true);
+        if (tiempoLimite) {
+            setTiempoRestante(tiempoLimite * 60);
+        }
+        if (seguridadAumentada) {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {
+                    alert('Por favor activa la pantalla completa manualmente para continuar.');
+                });
+            }
+        }
+    }
+
+    useEffect(() => {
+        if (!examenIniciado) return;
+
+        let interval: NodeJS.Timeout | null = null;
+        if (tiempoRestante !== null && tiempoRestante > 0) {
+            interval = setInterval(() => {
+                setTiempoRestante(prev => {
+                    if (prev !== null && prev <= 1) {
+                        clearInterval(interval!);
+                        alert('¡El tiempo se ha agotado! El examen se enviará automáticamente.');
+                        handleSubmitAutomated();
+                        return 0;
+                    }
+                    return prev !== null ? prev - 1 : null;
+                });
+            }, 1000);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [examenIniciado]);
+
+    const activarBloqueo = () => {
+        const now = Date.now();
+        if (now - lastBloqueoTime.current < 1000) {
+            return;
+        }
+        lastBloqueoTime.current = now;
+        
+        setMostrarBloqueo(true);
+        setCambiosRealizados(prev => prev + 1);
+    }
+
+    const regresarAPantallaCompleta = () => {
+        document.documentElement.requestFullscreen().then(() => {
+            setMostrarBloqueo(false);
+        }).catch(() => {
+            alert('No se pudo entrar en pantalla completa. Inténtalo de nuevo.');
+        });
+    }
+
+    useEffect(() => {
+        if (!examenIniciado || !seguridadAumentada) return;
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                activarBloqueo();
+            }
+        };
+
+        const handleFullscreenChange = () => {
+            if (!document.fullscreenElement) {
+                activarBloqueo();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        };
+    }, [examenIniciado, seguridadAumentada, maxCambiosPantalla]);
+
+    // Effect to handle automatic submission when limit is reached
+    useEffect(() => {
+        if (examenIniciado && seguridadAumentada && cambiosRealizados >= maxCambiosPantalla) {
+            if (enviandoRef.current) return;
+            enviandoRef.current = true;
+            
+            alert('Has superado el límite de cambios de pantalla o pantalla completa. El examen se enviará automáticamente.');
+            handleSubmitAutomated();
+        }
+    }, [cambiosRealizados, maxCambiosPantalla, examenIniciado, seguridadAumentada]);
+
+    if ((seguridadAumentada || tiempoLimite) && !examenIniciado) {
+        return (
+            <div className="max-w-3xl mx-auto px-4 py-12">
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-8 text-center">
+                    <Shield className="mx-auto h-12 w-12 text-blue-600 mb-4" />
+                    <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Preparación para el Examen</h2>
+                    <p className="text-gray-600 mb-6">{cursoTitulo}</p>
+                    
+                    <div className="space-y-4 mb-8">
+                        {tiempoLimite && (
+                            <div className="flex items-center justify-center gap-2 text-gray-700">
+                                <Clock className="h-5 w-5 text-gray-500" />
+                                <span>Tiempo límite: <strong>{tiempoLimite} minutos</strong></span>
+                            </div>
+                        )}
+                        {seguridadAumentada && (
+                            <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl text-orange-800 text-sm">
+                                <p className="font-bold mb-1">🔒 Seguridad Aumentada Activada</p>
+                                <p>
+                                    Este examen requiere pantalla completa. Si sales de ella o cambias de pestaña más de <strong>{maxCambiosPantalla} veces</strong>, el examen se enviará automáticamente.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <button 
+                        onClick={handleIniciarExamen}
+                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                    >
+                        Comenzar Examen
+                    </button>
+                    <div className="mt-4">
+                        <Link href={`/cursos/${cursoId}/contenido`} className="text-sm text-gray-500 hover:text-gray-700">
+                            Volver al curso
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     if (resultado?.success) {
@@ -106,7 +265,7 @@ export default function ExamenClient({
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
             <Link
                 href={`/cursos/${cursoId}/contenido`}
                 className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 mb-6 transition-colors"
@@ -116,7 +275,13 @@ export default function ExamenClient({
             </Link>
 
             <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 pt-8 pb-12 px-8 sm:px-12">
-                <div className="mb-8 border-b border-gray-100 pb-6 text-center">
+                <div className="mb-8 border-b border-gray-100 pb-6 text-center relative">
+                    {tiempoRestante !== null && (
+                        <div className="absolute top-0 right-0 bg-red-50 border border-red-200 text-red-700 px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {Math.floor(tiempoRestante / 60)}:{(tiempoRestante % 60).toString().padStart(2, '0')}
+                        </div>
+                    )}
                     <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">
                         Examen Final
                     </h1>
@@ -160,6 +325,17 @@ export default function ExamenClient({
                                     </label>
                                 ))}
                             </div>
+
+                            <div className="mt-4 pl-2 sm:pl-6">
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">Explica tu respuesta (Opcional):</label>
+                                <textarea 
+                                    value={explicaciones[p.id] || ''} 
+                                    onChange={(e) => setExplicaciones(prev => ({ ...prev, [p.id]: e.target.value }))} 
+                                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" 
+                                    rows={2}
+                                    placeholder="Escribe aquí tu justificación..."
+                                />
+                            </div>
                         </div>
                     ))}
 
@@ -178,6 +354,24 @@ export default function ExamenClient({
                         </p>
                     )}
                 </form>
+                {mostrarBloqueo && (
+                    <div className="fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex flex-col items-center justify-center text-white p-6">
+                        <Shield className="h-16 w-16 text-orange-500 mb-4" />
+                        <h2 className="text-3xl font-bold mb-2">Pantalla Completa Requerida</h2>
+                        <p className="text-gray-300 mb-6 text-center max-w-md">
+                            Has salido del modo de pantalla completa o has cambiado de ventana. 
+                            Para continuar con el examen, debes regresar a pantalla completa.
+                            <br/>
+                            <span className="text-orange-400 font-bold">Intento {cambiosRealizados} de {maxCambiosPantalla}</span>
+                        </p>
+                        <button
+                            onClick={regresarAPantallaCompleta}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-bold transition-colors"
+                        >
+                            Regresar a Pantalla Completa
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )

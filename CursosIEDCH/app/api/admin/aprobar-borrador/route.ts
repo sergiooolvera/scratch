@@ -53,11 +53,24 @@ export async function POST(req: Request) {
 
             if (exmExistente) {
                 examenId = exmExistente.id;
-                await supabaseAdmin.from('ie_examenes').update({ min_aprobacion: examen.min_aprobacion }).eq('id', examenId)
+                await supabaseAdmin.from('ie_examenes').update({ 
+                    min_aprobacion: examen.min_aprobacion,
+                    tiempo_limite: examen.tiempo_limite,
+                    seguridad_aumentada: examen.seguridad_aumentada,
+                    max_cambios_pantalla: examen.max_cambios_pantalla,
+                    intentos_permitidos: examen.intentos_permitidos
+                }).eq('id', examenId)
             } else {
                 const { data: nuevoExm, error: nExError } = await supabaseAdmin
                     .from('ie_examenes')
-                    .insert({ curso_id: cursoId, min_aprobacion: examen.min_aprobacion })
+                    .insert({ 
+                        curso_id: cursoId, 
+                        min_aprobacion: examen.min_aprobacion,
+                        tiempo_limite: examen.tiempo_limite,
+                        seguridad_aumentada: examen.seguridad_aumentada,
+                        max_cambios_pantalla: examen.max_cambios_pantalla,
+                        intentos_permitidos: examen.intentos_permitidos
+                    })
                     .select()
                     .single()
                 
