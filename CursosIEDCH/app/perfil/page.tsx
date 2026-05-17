@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { User, Save, CheckCircle, GraduationCap, Copy, Link2 } from 'lucide-react'
@@ -37,9 +37,69 @@ export default function PerfilPage() {
     const [saving, setSaving] = useState(false)
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
+    const [uploadingAvatar, setUploadingAvatar] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
     
     const router = useRouter()
     const supabase = createClient()
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click()
+    }
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        // Validaciones
+        if (!file.type.startsWith('image/')) {
+            setError('Por favor, selecciona un archivo de imagen válido.')
+            return
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            setError('La imagen no debe pesar más de 2MB.')
+            return
+        }
+
+        setUploadingAvatar(true)
+        setError('')
+        setSuccess('')
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            const ext = file.name.split('.').pop()
+            const fileName = `foto_${user.id}_${Date.now()}.${ext}`
+            const { error: upErr } = await supabase.storage.from('perfiles').upload(fileName, file)
+            
+            if (upErr) {
+                setError('Error subiendo Fotografía: ' + upErr.message)
+                setUploadingAvatar(false)
+                return
+            }
+
+            const publicUrl = supabase.storage.from('perfiles').getPublicUrl(fileName).data.publicUrl
+            setFotografiaPerfil(publicUrl)
+
+            // Actualizar el perfil en la BD inmediatamente
+            const { error: updateError } = await supabase
+                .from('ie_profiles')
+                .update({ fotografia_perfil: publicUrl })
+                .eq('id', user.id)
+
+            if (updateError) {
+                setError('Error al actualizar la foto en el perfil: ' + updateError.message)
+            } else {
+                setSuccess('Foto de perfil actualizada correctamente.')
+                window.dispatchEvent(new Event('profile-updated'))
+            }
+        } catch (err) {
+            setError('Error al procesar la imagen.')
+        } finally {
+            setUploadingAvatar(false)
+        }
+    }
 
     useEffect(() => {
         async function loadProfile() {
@@ -200,9 +260,28 @@ export default function PerfilPage() {
         <div className="min-h-[calc(100vh-64px)] bg-zinc-50 font-sans py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-xl mx-auto">
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
-                    <div className="flex items-center justify-center h-16 w-16 bg-blue-100 text-blue-600 rounded-full mx-auto mb-6">
-                        <User className="h-8 w-8" />
+                    <div 
+                        onClick={handleAvatarClick}
+                        className="relative flex items-center justify-center h-20 w-20 bg-blue-100 text-blue-600 rounded-full mx-auto mb-6 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
+                    >
+                        {fotografiaPerfil ? (
+                            <img src={fotografiaPerfil} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : (
+                            <User className="h-10 w-10" />
+                        )}
+                        {uploadingAvatar && (
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                <div className="border-4 border-t-blue-500 border-gray-200 rounded-full h-6 w-6 animate-spin"></div>
+                            </div>
+                        )}
                     </div>
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleAvatarChange} 
+                        accept="image/*" 
+                        className="hidden" 
+                    />
                     
                     <h1 className="text-2xl font-bold text-gray-900 text-center mb-8">Mi Perfil</h1>
 
@@ -336,36 +415,21 @@ export default function PerfilPage() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">
-                                            Sector Institucional <span className="text-red-500">*</span>
-                                        </label>
-                                        <select 
-                                            required
-                                            value={tipoInstitucion} 
-                                            onChange={(e) => setTipoInstitucion(e.target.value)}
-                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium bg-white"
-                                        >
-                                            <option value="">Seleccione sector...</option>
-                                            <option value="Pública">Pública</option>
-                                            <option value="Privada">Privada</option>
-                                            <option value="Otra">Otra / Independiente</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">
-                                            Nombre de la Institución <span className="text-red-500">*</span>
-                                        </label>
-                                        <input 
-                                            type="text" 
-                                            required
-                                            value={nombreInstitucion} 
-                                            onChange={(e) => setNombreInstitucion(e.target.value)}
-                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                            placeholder="Ej. IMSS, Hospital Central, Universidad..."
-                                        />
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">
+                                        Sector Institucional <span className="text-red-500">*</span>
+                                    </label>
+                                    <select 
+                                        required
+                                        value={tipoInstitucion} 
+                                        onChange={(e) => setTipoInstitucion(e.target.value)}
+                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium bg-white"
+                                    >
+                                        <option value="">Seleccione sector...</option>
+                                        <option value="Pública">Pública</option>
+                                        <option value="Privada">Privada</option>
+                                        <option value="Otra">Otra / Independiente</option>
+                                    </select>
                                 </div>
 
                                 <div>
@@ -421,27 +485,15 @@ export default function PerfilPage() {
                                             maxLength={13}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-1">Constancia de Situación Fiscal (PDF)</label>
-                                            {csfUrl && <p className="text-xs text-blue-600 truncate mb-1">Archivo actual guardado</p>}
-                                            <input 
-                                                type="file" 
-                                                accept=".pdf"
-                                                onChange={(e) => setCsfFile(e.target.files?.[0] || null)}
-                                                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 rounded-md bg-white border-gray-300"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-1">Fotografía de Perfil</label>
-                                            {fotografiaPerfil && <p className="text-xs text-blue-600 truncate mb-1">Foto actual guardada</p>}
-                                            <input 
-                                                type="file" 
-                                                accept="image/*"
-                                                onChange={(e) => setFotoFile(e.target.files?.[0] || null)}
-                                                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 rounded-md bg-white border-gray-300"
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Constancia de Situación Fiscal (PDF) (Opcional)</label>
+                                        {csfUrl && <p className="text-xs text-blue-600 truncate mb-1">Archivo actual guardado</p>}
+                                        <input 
+                                            type="file" 
+                                            accept=".pdf"
+                                            onChange={(e) => setCsfFile(e.target.files?.[0] || null)}
+                                            className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 rounded-md bg-white border-gray-300"
+                                        />
                                     </div>
                                 </div>
                             </div>

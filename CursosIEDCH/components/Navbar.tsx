@@ -45,8 +45,19 @@ export default function Navbar() {
             }
         })
 
+        const handleProfileUpdate = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data } = await supabase.from('ie_profiles').select('*').eq('id', user.id).single()
+                setProfile(data)
+            }
+        }
+
+        window.addEventListener('profile-updated', handleProfileUpdate)
+
         return () => {
             authListener.subscription.unsubscribe()
+            window.removeEventListener('profile-updated', handleProfileUpdate)
         }
     }, [supabase, router])
 
@@ -181,7 +192,7 @@ export default function Navbar() {
                                         <span className="text-xs text-gray-500 capitalize">{profile?.rol || 'Alumno'}</span>
                                     </div>
                                     <Link href="/perfil" className="p-1 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 rounded-full transition-colors border border-transparent overflow-hidden flex items-center justify-center w-9 h-9" title="Mi Perfil">
-                                        {(profile?.fotografia_perfil && profile?.identidad_validada) ? (
+                                        {profile?.fotografia_perfil ? (
                                             <img src={profile.fotografia_perfil} alt="Perfil" className="w-full h-full object-cover rounded-full" />
                                         ) : (
                                             <User className="h-5 w-5" />
