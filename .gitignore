@@ -1,10 +1,12 @@
-# --- RESTRICTION: TRACK ONLY CURSOSIEDCH ---
+# --- RESTRICTION: TRACK ONLY SPECIFIC FOLDERS ---
 # Ignore everything in the root folder
 /*
 # But DO NOT ignore the root .gitignore file
 !.gitignore
 # But DO NOT ignore the CursosIEDCH folder and all its contents
 !/CursosIEDCH/
+# But DO NOT ignore the peluches folder and all its contents
+!/peluches/
 
 
 # --- GENERAL SYSTEM FILES ---
