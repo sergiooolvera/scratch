@@ -11,6 +11,13 @@ export interface ShippingAddress {
   state: string;
 }
 
+export interface ShippingRate {
+  carrier: string;
+  service_name: string;
+  price: number;
+  estimated_delivery: string;
+}
+
 const stateMapping: { [key: string]: string } = {
   'ciudad de méxico': 'DF',
   'cdmx': 'DF',
