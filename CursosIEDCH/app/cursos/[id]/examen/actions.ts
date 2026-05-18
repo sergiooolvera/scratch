@@ -51,7 +51,7 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
         else if (userText === normalize(p.opcion_c)) userLetter = 'C';
         else if (userText === normalize(p.opcion_d)) userLetter = 'D';
 
-        const esCorrecta = userLetter && userLetter === normalize(p.respuesta_correcta).toUpperCase();
+        const esCorrecta = !!userLetter && userLetter === normalize(p.respuesta_correcta).toUpperCase();
         if (esCorrecta) {
             correctas++;
         }
