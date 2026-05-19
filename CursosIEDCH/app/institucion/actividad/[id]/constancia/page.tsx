@@ -267,16 +267,19 @@ export default function CertificadoActividadPage() {
                                 { icon: Calendar, label: 'Fecha de ejecución', value: new Date(actividad.fecha_ejecucion).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' }) },
                                 { icon: MapPin, label: 'Ubicación', value: actividad.ubicacion || 'México' },
                                 { icon: User, label: 'Autor / Facilitador', value: actividad.autor },
+                                { icon: Building, label: 'Institución', value: actividad.ie_profiles?.nombre },
                                 { icon: Building, label: 'Institución que acredita', value: actividad.institucion_acredita }
                             ].map((item, idx, arr) => (
-                                <div key={idx} className={`flex py-2.5 ${idx !== arr.length - 1 ? 'border-b border-gray-200' : ''}`}>
-                                    <div className="bg-navy rounded-full p-1.5 mr-4 flex-shrink-0 self-start mt-0.5">
-                                        <item.icon className="h-4 w-4 text-white" />
+                                <div key={idx} className={`flex flex-col py-1 ${idx !== arr.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                                    <div className="flex items-center mb-0.5">
+                                        <div className="bg-navy rounded-full p-1 mr-2 flex-shrink-0">
+                                            <item.icon className="h-3.5 w-3.5 text-white" />
+                                        </div>
+                                        <div className="font-bold text-sm text-gray-800">
+                                            {item.label}:
+                                        </div>
                                     </div>
-                                    <div className="w-52 flex-shrink-0 font-bold text-sm text-gray-800 pr-2">
-                                        {item.label}:
-                                    </div>
-                                    <div className="flex-1 text-sm text-gray-700 break-words">
+                                    <div className="text-sm text-gray-700 break-words pl-8">
                                         {item.value}
                                     </div>
                                 </div>
@@ -332,7 +335,7 @@ export default function CertificadoActividadPage() {
                             <img 
                                 src="/logotiposello.jpg" 
                                 alt="Sello Institucional" 
-                                className="w-32 h-32 object-contain"
+                                className="w-24 h-24 object-contain"
                                 onError={(e) => {
                                     e.currentTarget.style.display = 'none';
                                     e.currentTarget.nextElementSibling?.classList.remove('hidden');

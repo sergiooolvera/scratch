@@ -4,6 +4,18 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 📅 Resumen de Avances Recientes (Mayo 2026)
 
+### 📜 Constancias Institucionales y Validación (18 de Mayo de 2026)
+- **Mejora en Generación de PDF:** Se cambió `html2canvas` por `html-to-image` en la constancia institucional para corregir problemas de renderizado en dispositivos móviles (celulares y tabletas).
+- **Ajuste de Diseño de Constancia:** Se modificó la vista de detalles de la actividad para usar una disposición vertical (apilada) en lugar de horizontal, permitiendo que textos largos (como el nombre de la institución) ocupen todo el renglón y no desborden la hoja. También se redujo el tamaño del sello institucional.
+- **Validación con Nombre de Institución:** Se agregó la visualización del nombre de la institución en la página de validación de constancias (`app/validar/page.tsx`) para constancias institucionales y registros de actividad.
+
+### 📝 Revisión de Exámenes, PDF y Validación de Intentos (17 de Mayo de 2026)
+- **Revisión de Exámenes para Profesores:** Se creó una nueva vista y API para que los profesores puedan revisar los resultados de los exámenes de sus alumnos, saltando las restricciones de RLS mediante una Server Action con privilegios de admin.
+- **Descarga de Examen en PDF:** Se implementó la descarga del examen contestado por el alumno en formato PDF usando `html2pdf.js`, generando un HTML temporal con estilos para la exportación.
+- **Límite de Intentos en Exámenes:** Se agregó el campo `intentos_permitidos` en la creación y edición de cursos (guardándose en el borrador) y se implementó la validación en la pantalla del examen para bloquear al alumno si ya aprobó o si agotó sus intentos.
+- **Mejoras en Panel de Administrador:** Se añadió un estado de carga (Loading) al botón de "Aprobar Edición" y se amplió el ancho del grid de la tabla de cursos (`max-w-7xl`) para mejorar la visualización.
+- **Corrección de Errores de Compilación (TS):** Se solucionaron errores de tipado en `actions.ts` (asegurando booleano en `esCorrecta`) y en `page.tsx` de revisión de examen (usando `as any` en las opciones de `html2pdf.js` para evitar incompatibilidades).
+
 ### 🏷️ Clasificación de Cursos y Filtros del Catálogo (09 de Mayo de 2026)
 - **Atributo de Categoría en Cursos:** Se integró la columna `categoria` en la tabla `ie_cursos` con valor predeterminado `'desarrollo'` para dar clasificación temática oficial a todos los cursos.
 - **Formularios de Creación y Edición Actualizados:**
@@ -84,4 +96,4 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Simplificación de Dashboard:** Se optimizó el Dashboard Financiero eliminando gráficos y resúmenes redundantes para ofrecer una vista centrada en el listado detallado de transacciones y filtros de búsqueda.
 
 ---
-*Última actualización: 09 de Mayo de 2026*
+*Última actualización: 17 de Mayo de 2026*

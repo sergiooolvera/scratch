@@ -12,6 +12,7 @@ interface ActividadConstanciaDocumentProps {
     ubicacion: string;
     folio: string;
     qrUrl: string;
+    institucionNombre?: string;
     id?: string;
     documentRef?: React.Ref<HTMLDivElement>;
     className?: string;
@@ -27,6 +28,7 @@ export default function ActividadConstanciaDocument({
     ubicacion,
     folio,
     qrUrl,
+    institucionNombre,
     id,
     documentRef,
     className = ""
@@ -91,6 +93,11 @@ export default function ActividadConstanciaDocument({
                 <p className="mt-1 text-[18px] text-black font-sans tracking-wide font-medium">
                     Facilitador: <span className="font-bold">{facilitador}</span>
                 </p>
+                {institucionNombre && (
+                    <p className="mt-1 text-[18px] text-black font-sans tracking-wide font-medium">
+                        Institución: <span className="font-bold">{institucionNombre}</span>
+                    </p>
+                )}
 
                 <p className="mt-2 text-[18px] font-bold text-black font-sans tracking-wide">
                     {ubicacion ? `${ubicacion}, ` : ''}{fechaAprobacion}

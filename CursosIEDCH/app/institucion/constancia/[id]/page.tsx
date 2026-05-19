@@ -5,8 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import ActividadConstanciaDocument from '@/components/ActividadConstanciaDocument'
 import { Download, AlertTriangle, ArrowLeft } from 'lucide-react'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
 
 export default function VerConstanciaInstitucional() {
     const params = useParams()
@@ -55,23 +53,31 @@ export default function VerConstanciaInstitucional() {
         setDownloading(true);
 
         try {
+            const [htmlToImage, jsPDF] = await Promise.all([
+                import('html-to-image'),
+                import('jspdf').then(mod => mod.jsPDF)
+            ]);
+
             const element = constanciaRef.current;
-            const canvas = await html2canvas(element, {
-                scale: 2, 
-                useCORS: true, 
-                logging: false,
+
+            const dataUrl = await htmlToImage.toPng(element, { 
+                quality: 1.0, 
+                pixelRatio: 2,
                 width: 1056,
                 height: 816,
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left'
+                }
             });
 
-            const imgData = canvas.toDataURL('image/jpeg', 1.0);
             const pdf = new jsPDF({
                 orientation: 'landscape',
                 unit: 'px',
                 format: [1056, 816] 
             });
 
-            pdf.addImage(imgData, 'JPEG', 0, 0, 1056, 816);
+            pdf.addImage(dataUrl, 'PNG', 0, 0, 1056, 816);
             pdf.save(`Constancia_${constanciaData.nombre_alumno.replace(/[^a-z0-9]/gi, '_')}.pdf`);
             
         } catch (error) {
@@ -133,6 +139,7 @@ export default function VerConstanciaInstitucional() {
                         ubicacion={constanciaData.actividad.ubicacion}
                         folio={constanciaData.folio_constancia}
                         qrUrl={validacionUrl}
+                        institucionNombre={constanciaData.actividad.institucion_acredita}
                     />
                 </div>
             </div>

@@ -107,7 +107,8 @@ function ValidacionContent() {
                         id: actAlumnoData.folio_constancia,
                         created_at: actividad?.fecha_ejecucion || actAlumnoData.created_at,
                         calificacion: 'Acreditado',
-                        tipo: 'actividad_alumno'
+                        tipo: 'actividad_alumno',
+                        institucion: actividad?.institucion_acredita
                     }
                     cursoInfoData = {
                         titulo: `${actividad?.tipo_actividad}: ${actividad?.nombre_actividad}`,
@@ -159,7 +160,8 @@ function ValidacionContent() {
                         id: `IEECDH-${idPart.toUpperCase()}`,
                         created_at: actData.fecha_ejecucion,
                         calificacion: 'Acreditado Institucionalmente',
-                        tipo: 'registro_actividad'
+                        tipo: 'registro_actividad',
+                        institucion: actData.institucion_acredita
                     }
                     cursoInfoData = {
                         titulo: `Registro de ${actData.tipo_actividad}: ${actData.nombre_actividad}`,
@@ -184,7 +186,8 @@ function ValidacionContent() {
                 curso: cursoInfoData?.titulo || 'Curso no encontrado',
                 vigencia_anos: cursoInfoData?.vigencia_anos || 3,
                 duracion: cursoInfoData?.duracion || '40 horas',
-                tipo: (matchData as any).tipo || 'curso'
+                tipo: (matchData as any).tipo || 'curso',
+                institucion: (matchData as any).institucion || null
             })
 
         } catch (err: any) {
@@ -278,6 +281,18 @@ function ValidacionContent() {
                                                 {resultado.curso}
                                             </dd>
                                         </div>
+
+                                        {resultado.institucion && (
+                                            <div className="sm:col-span-2">
+                                                <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                                    <ShieldCheck className="w-4 h-4 mr-1.5" /> 
+                                                    Institución
+                                                </dt>
+                                                <dd className="text-lg font-medium text-gray-800 border-b pb-4">
+                                                    {resultado.institucion}
+                                                </dd>
+                                            </div>
+                                        )}
 
                                         <div className="sm:col-span-1">
                                             <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
