@@ -214,8 +214,9 @@ export default function CertificadoActividadPage() {
             </div>
 
             {/* Certificado Container - Formato Vertical */}
-            <div className="print-cert-container w-full max-w-[800px] cert-bg shadow-2xl print:shadow-none relative overflow-hidden flex flex-col font-inter" 
-                 style={{ aspectRatio: '8.5 / 11' }}>
+            <div className="w-full overflow-x-auto flex justify-center pb-6">
+                <div className="print-cert-container w-[800px] flex-shrink-0 cert-bg shadow-2xl print:shadow-none relative overflow-hidden flex flex-col font-inter" 
+                     style={{ aspectRatio: '8.5 / 11' }}>
                 
                 {/* Marco de Certificado */}
                 <div className="cert-border-outer" />
@@ -379,6 +380,7 @@ export default function CertificadoActividadPage() {
                     </div>
 
                 </div>
+            </div>
             </div>
 
         </div>
