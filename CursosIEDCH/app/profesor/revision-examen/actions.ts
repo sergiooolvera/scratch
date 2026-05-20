@@ -33,44 +33,79 @@ export async function getResultadosExamen(cursoId: string) {
         process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const { data: examen } = await supabaseAdmin
+    const { data: examenes, error: examenesError } = await supabaseAdmin
         .from('ie_examenes')
-        .select('id')
+        .select('id, modulo_id, min_aprobacion')
         .eq('curso_id', cursoId)
-        .single()
 
-    if (!examen) {
-        return { error: 'Examen no encontrado' }
+    if (examenesError) {
+        return { error: 'Error al buscar exámenes: ' + examenesError.message }
     }
+
+    if (!examenes || examenes.length === 0) {
+        return { success: true, data: [], preguntas: [] }
+    }
+
+    const examenIds = examenes.map(e => e.id)
+    const moduloIds = examenes.map(e => e.modulo_id).filter(Boolean)
+
+    const { data: modulos } = moduloIds.length > 0
+        ? await supabaseAdmin
+            .from('ie_curso_modulos')
+            .select('id, titulo, orden')
+            .in('id', moduloIds)
+        : { data: [] }
+
+    const examenMeta = new Map(examenes.map(examen => {
+        const modulo = modulos?.find(m => m.id === examen.modulo_id)
+        return [examen.id, {
+            id: examen.id,
+            modulo_id: examen.modulo_id,
+            titulo: modulo ? `Módulo ${modulo.orden || ''}: ${modulo.titulo}`.trim() : 'Examen final',
+            tipo: modulo ? 'modular' : 'final',
+            orden: modulo?.orden || 0
+        }]
+    }))
+
+    const examenesOrdenados = Array.from(examenMeta.values()).sort((a: any, b: any) => {
+        if (a.tipo !== b.tipo) return a.tipo === 'final' ? -1 : 1
+        return (a.orden || 0) - (b.orden || 0)
+    })
 
     const { data: res, error: resError } = await supabaseAdmin
         .from('ie_resultados_examenes')
         .select('*')
-        .eq('examen_id', examen.id)
+        .in('examen_id', examenIds)
         .order('created_at', { ascending: false })
 
     if (resError) {
         return { error: 'Error al buscar resultados: ' + resError.message }
     }
 
+    const { data: preguntas } = await supabaseAdmin
+        .from('ie_preguntas')
+        .select('*')
+        .in('examen_id', examenIds)
+        .order('orden', { ascending: true })
+
     if (res && res.length > 0) {
-        // Fetch profiles for these users
         const userIds = res.map(r => r.user_id);
         const { data: profiles } = await supabaseAdmin
             .from('ie_profiles')
             .select('id, nombre')
             .in('id', userIds);
-        
-        // Map profiles to results
+
         const resWithProfiles = res.map(r => {
             const profile = profiles?.find(p => p.id === r.user_id);
             return {
                 ...r,
+                examen: examenMeta.get(r.examen_id),
                 ie_profiles: profile
             };
         });
-        return { success: true, data: resWithProfiles };
+
+        return { success: true, data: resWithProfiles, preguntas: preguntas || [], examenes: examenesOrdenados };
     }
 
-    return { success: true, data: [] };
+    return { success: true, data: [], preguntas: preguntas || [], examenes: examenesOrdenados };
 }

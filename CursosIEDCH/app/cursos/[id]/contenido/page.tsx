@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, PlayCircle, FileText, CheckCircle, Video, Info } from 'lucide-react'
@@ -39,8 +40,15 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
         redirect(`/cursos/${id}`)
     }
 
+    const supabaseContent = process.env.SUPABASE_SERVICE_ROLE_KEY
+        ? createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+        : supabase
+
     // Fetch course details
-    const { data: curso } = await supabase
+    const { data: curso } = await supabaseContent
         .from('ie_cursos')
         .select('*')
         .eq('id', id)
@@ -51,7 +59,7 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
     }
 
     // Fetch modules if available
-    const { data: modulos } = await supabase
+    const { data: modulos } = await supabaseContent
         .from('ie_curso_modulos')
         .select('*')
         .eq('curso_id', id)
@@ -60,9 +68,14 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
     // Check exam status
     let examPassed = false;
     if (curso.requiere_examen) {
-        const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single();
+        const { data: examenRow } = await supabaseContent
+            .from('ie_examenes')
+            .select('id')
+            .eq('curso_id', id)
+            .is('modulo_id', null)
+            .single();
         if (examenRow) {
-            const { data: resultRow } = await supabase
+            const { data: resultRow } = await supabaseContent
                 .from('ie_resultados_examenes')
                 .select('aprobado')
                 .eq('examen_id', examenRow.id)
@@ -75,15 +88,45 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
         }
     }
 
-    // Build the initial list of items. Support legacy courses (single url_contenido) or new modular ones.
+    // Build the initial list of items. Support multiple resources per module, legacy modules, and course-level content.
+    let playlist: any[] = [];
     const hasModulos = modulos && modulos.length > 0;
 
-    // Legacy fallback structure so we treat everything like a list
-    const playlist = hasModulos ? modulos : curso.url_contenido ? [{
-        id: 'main',
-        titulo: curso.titulo,
-        url_contenido: curso.url_contenido
-    }] : []
+    if (hasModulos) {
+        const moduloIds = modulos.map(m => m.id);
+        const { data: recursos } = await supabaseContent
+            .from('ie_modulo_recursos')
+            .select('*')
+            .in('modulo_id', moduloIds)
+            .order('orden', { ascending: true });
+
+        playlist = modulos.map(m => {
+            const modRecursos = recursos?.filter(r => r.modulo_id === m.id) || [];
+            return {
+                ...m,
+                recursos: modRecursos.length > 0 ? modRecursos : (m.url_contenido ? [{
+                    id: `legacy-${m.id}`,
+                    modulo_id: m.id,
+                    titulo: 'Material de Estudio',
+                    url_contenido: m.url_contenido,
+                    orden: 1
+                }] : [])
+            };
+        });
+    } else if (curso.url_contenido) {
+        playlist = [{
+            id: 'main',
+            titulo: curso.titulo,
+            url_contenido: curso.url_contenido,
+            recursos: [{
+                id: 'legacy-main',
+                modulo_id: 'main',
+                titulo: 'Material de Estudio',
+                url_contenido: curso.url_contenido,
+                orden: 1
+            }]
+        }];
+    }
 
     const constanciaHref = `/cursos/${id}/certificado`
 

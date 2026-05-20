@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplo de Formato de Examen PDF — IEDCH</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        /* ── Top bar ─────────────────────────────── */
+        .topbar {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 24px 32px;
+            text-align: center;
+        }
+        .topbar h1 { font-size: 1.5rem; font-weight: 800; }
+        .topbar p { font-size: 0.85rem; opacity: 0.7; margin-top: 4px; }
+
+        .container {
+            max-width: 820px;
+            margin: 32px auto;
+            padding: 0 20px;
+        }
+
+        /* ── Instructions card ───────────────────── */
+        .instructions {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 32px;
+        }
+        .instructions h2 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+        .instructions li {
+            position: relative;
+            padding: 8px 0 8px 28px;
+            font-size: 0.85rem;
+            color: #475569;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .instructions li:last-child { border-bottom: none; }
+        .instructions li::before {
+            content: '✓';
+            position: absolute;
+            left: 4px;
+            color: #10b981;
+            font-weight: 800;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            vertical-align: middle;
+        }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-blue  { background: #dbeafe; color: #1e40af; }
+        .badge-amber { background: #fef3c7; color: #92400e; }
+
+        .warning-box {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 16px;
+            font-size: 0.8rem;
+            color: #92400e;
+        }
+        .warning-box strong { display: block; margin-bottom: 4px; }
+
+        /* ── Format selector tabs ────────────────── */
+        .format-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .format-tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+        .format-tab:hover { border-color: #6366f1; }
+        .format-tab.active {
+            background: #eef2ff;
+            border-color: #6366f1;
+            color: #4338ca;
+        }
+        .format-tab small {
+            display: block;
+            font-weight: 500;
+            font-size: 0.7rem;
+            opacity: 0.6;
+            margin-top: 2px;
+        }
+
+        /* ── Example document card ───────────────── */
+        .example-doc {
+            background: white;
+            border: 2px solid #c7d2fe;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 24px rgba(99,102,241,0.08);
+        }
+        .example-doc-header {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            padding: 16px 24px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .example-doc-header small {
+            font-weight: 500;
+            opacity: 0.8;
+            font-size: 0.75rem;
+        }
+        .example-doc-body {
+            padding: 28px 32px;
+            font-size: 0.88rem;
+            line-height: 1.9;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            color: #334155;
+            background: #fafbff;
+        }
+        .highlight-line {
+            background: #fef9c3;
+            border-left: 3px solid #eab308;
+            padding: 2px 8px;
+            margin: 0 -8px;
+            display: inline-block;
+            width: calc(100% + 16px);
+        }
+        .comment {
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 0.78rem;
+        }
+
+        /* ── Buttons ─────────────────────────────── */
+        .btn-row {
+            text-align: center;
+            margin: 32px 0;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99,102,241,0.4);
+        }
+
+        /* ── Print styles ────────────────────────── */
+        @media print {
+            .topbar, .instructions, .format-tabs, .btn-row, .no-print, .comment { display: none !important; }
+            body { background: white; }
+            .container { margin: 0; padding: 0; max-width: 100%; }
+            .example-doc { border: none; box-shadow: none; border-radius: 0; }
+            .example-doc-header { display: none; }
+            .example-doc-body {
+                padding: 40px;
+                font-size: 12pt;
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>📄 Formato de Examen PDF — Guía para Profesores</h1>
+    <p>Utiliza este documento como referencia para crear tu archivo PDF de evaluación</p>
+</div>
+
+<div class="container">
+
+    <!-- Instructions -->
+    <div class="instructions no-print">
+        <h2>📋 Instrucciones de Formato</h2>
+        <ul>
+            <li>
+                Cada pregunta debe iniciar con <strong>"Pregunta N"</strong> o con un <strong>número seguido de punto</strong> (ej. <code>1.</code>). 
+                <span class="badge badge-green">Obligatorio</span>
+            </li>
+            <li>
+                Las preguntas de <strong>opción múltiple</strong> deben tener exactamente <strong>4 opciones</strong>, cada una en su propia línea. 
+                <span class="badge badge-blue">A, B, C, D</span>
+            </li>
+            <li>
+                La <strong>respuesta correcta</strong> se indica entre paréntesis al final del bloque: <code>(A)</code>, <code>(B)</code>, <code>(C)</code> o <code>(D)</code>. 
+                <span class="badge badge-green">Obligatorio para opción múltiple</span>
+            </li>
+            <li>
+                Para preguntas de <strong>respuesta libre</strong> (abiertas), incluye el texto <code>(Respuesta Libre)</code> después de la pregunta. 
+                <span class="badge badge-amber">No necesita opciones</span>
+            </li>
+            <li>
+                Puedes <strong>mezclar</strong> preguntas de opción múltiple y respuesta libre en el mismo PDF.
+            </li>
+            <li>
+                El sistema acepta <strong>2 formatos</strong>. Elige el que te sea más cómodo. Ambos se detectan automáticamente.
+            </li>
+        </ul>
+
+        <div class="warning-box">
+            <strong>⚠️ Importante</strong>
+            • No uses tablas, imágenes ni columnas. El texto debe fluir línea por línea.<br>
+            • Cada opción (A, B, C, D) debe estar en su propia línea separada.<br>
+            • Asegúrate de que el PDF sea de texto (no imagen escaneada).<br>
+            • Puedes crear el PDF desde Word, Google Docs o cualquier editor de texto.<br>
+            • Para <strong>descargar este ejemplo como PDF</strong>, haz clic en el botón de abajo o usa <kbd>Ctrl+P</kbd> → "Guardar como PDF".
+        </div>
+    </div>
+
+    <!-- Format Tabs -->
+    <div class="format-tabs no-print">
+        <div class="format-tab active" onclick="showFormat('a')">
+            📝 Formato A
+            <small>"Pregunta 1", "Pregunta 2"...</small>
+        </div>
+        <div class="format-tab" onclick="showFormat('b')">
+            📝 Formato B
+            <small>"1.", "2.", "3."...</small>
+        </div>
+    </div>
+
+    <!-- ═══ FORMAT A ═══ -->
+    <div id="format-a" class="example-doc">
+        <div class="example-doc-header">
+            <span>📄 Formato A — Ejemplo Completo</span>
+            <small>Usa "Pregunta N" como encabezado</small>
+        </div>
+        <div class="example-doc-body">
+<span class="comment">── Pregunta de Opción Múltiple ──────────────────</span>
+
+<span class="highlight-line">Pregunta 1 ¿Cuál es la función principal del sistema nervioso central?</span>
+A) Regular la temperatura corporal exclusivamente
+B) Coordinar y procesar la información del organismo
+C) Producir hormonas para el crecimiento
+D) Transportar oxígeno a las células
+<span class="highlight-line">(B)</span>
+
+<span class="comment">── Otra pregunta de Opción Múltiple ─────────────</span>
+
+<span class="highlight-line">Pregunta 2 ¿En qué año se promulgó la Constitución Política de los Estados Unidos Mexicanos vigente?</span>
+A) 1910
+B) 1921
+C) 1917
+D) 1857
+<span class="highlight-line">(C)</span>
+
+<span class="comment">── Pregunta de Respuesta Libre (Abierta) ────────</span>
+
+<span class="highlight-line">Pregunta 3 Describe con tus propias palabras la importancia de la ética profesional en el ejercicio de la medicina.</span>
+<span class="highlight-line">(Respuesta Libre)</span>
+
+<span class="comment">── Más preguntas de Opción Múltiple ─────────────</span>
+
+<span class="highlight-line">Pregunta 4 ¿Qué tipo de enlace químico se forma entre un metal y un no metal?</span>
+A) Enlace covalente
+B) Enlace iónico
+C) Enlace metálico
+D) Puente de hidrógeno
+<span class="highlight-line">(B)</span>
+
+<span class="comment">── Otra pregunta de Respuesta Libre ─────────────</span>
+
+<span class="highlight-line">Pregunta 5 Explica brevemente el proceso de fotosíntesis y su importancia para los ecosistemas.</span>
+<span class="highlight-line">(Respuesta Libre)</span></div>
+    </div>
+
+    <!-- ═══ FORMAT B ═══ -->
+    <div id="format-b" class="example-doc" style="display:none;">
+        <div class="example-doc-header">
+            <span>📄 Formato B — Ejemplo Completo</span>
+            <small>Usa "1.", "2.", "3." como enumeración</small>
+        </div>
+        <div class="example-doc-body">
+<span class="comment">── Pregunta de Opción Múltiple ──────────────────</span>
+
+<span class="highlight-line">1. ¿Cuál es la función principal del sistema nervioso central?</span>
+A) Regular la temperatura corporal exclusivamente
+B) Coordinar y procesar la información del organismo
+C) Producir hormonas para el crecimiento
+D) Transportar oxígeno a las células
+<span class="highlight-line">(Coordinar B)</span>
+
+<span class="comment">── Otra pregunta de Opción Múltiple ─────────────</span>
+
+<span class="highlight-line">2. ¿En qué año se promulgó la Constitución Política de los Estados Unidos Mexicanos vigente?</span>
+A) 1910
+B) 1921
+C) 1917
+D) 1857
+<span class="highlight-line">(Constitución C)</span>
+
+<span class="comment">── Pregunta de Respuesta Libre (Abierta) ────────</span>
+
+<span class="highlight-line">3. Describe con tus propias palabras la importancia de la ética profesional en el ejercicio de la medicina.</span>
+<span class="highlight-line">(Respuesta Libre)</span>
+
+<span class="comment">── Más preguntas de Opción Múltiple ─────────────</span>
+
+<span class="highlight-line">4. ¿Qué tipo de enlace químico se forma entre un metal y un no metal?</span>
+A) Enlace covalente
+B) Enlace iónico
+C) Enlace metálico
+D) Puente de hidrógeno
+<span class="highlight-line">(Iónico B)</span>
+
+<span class="comment">── Otra pregunta de Respuesta Libre ─────────────</span>
+
+<span class="highlight-line">5. Explica brevemente el proceso de fotosíntesis y su importancia para los ecosistemas.</span>
+<span class="highlight-line">(Respuesta Libre)</span></div>
+    </div>
+
+    <!-- Download button -->
+    <div class="btn-row no-print">
+        <button class="btn btn-primary" onclick="window.print()">
+            🖨️ Imprimir / Guardar como PDF
+        </button>
+    </div>
+
+</div>
+
+<script>
+    function showFormat(f) {
+        document.getElementById('format-a').style.display = f === 'a' ? 'block' : 'none';
+        document.getElementById('format-b').style.display = f === 'b' ? 'block' : 'none';
+        document.querySelectorAll('.format-tab').forEach((tab, i) => {
+            tab.classList.toggle('active', (f === 'a' && i === 0) || (f === 'b' && i === 1));
+        });
+    }
+</script>
+
+</body>
+</html>

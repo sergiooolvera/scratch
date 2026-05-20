@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Eye, X, FileText, PlayCircle, Trash2 } from 'lucide-react'
+import { Eye, X, FileText, PlayCircle, Trash2, Activity } from 'lucide-react'
 
 type Curso = any;
 
@@ -16,6 +16,12 @@ export default function AdminCursosPage() {
     const [previewCurso, setPreviewCurso] = useState<Curso | null>(null)
     const [previewModulos, setPreviewModulos] = useState<any[]>([])
     const [loadingPreview, setLoadingPreview] = useState(false)
+
+    // Draft audit modal state
+    const [auditCurso, setAuditCurso] = useState<Curso | null>(null)
+    const [auditOriginal, setAuditOriginal] = useState<any | null>(null)
+    const [auditDraft, setAuditDraft] = useState<any | null>(null)
+    const [loadingAudit, setLoadingAudit] = useState(false)
 
     const supabase = createClient()
 
@@ -142,6 +148,7 @@ export default function AdminCursosPage() {
 
             alert("Los cambios han sido aprobados y el curso está actualizado");
             fetchCursos();
+            closeAudit();
         } catch (err: any) {
             alert("Error aprobando cambios: " + err.message);
         } finally {
@@ -190,6 +197,275 @@ export default function AdminCursosPage() {
     const closePreview = () => {
         setPreviewCurso(null)
         setPreviewModulos([])
+    }
+
+    const inferTipoRecurso = (url?: string, fallback?: string) => {
+        if (fallback) return fallback
+        const ext = (url || '').split('?')[0].split('.').pop()?.toLowerCase()
+        if (ext === 'pdf') return 'pdf'
+        if (ext === 'ppt' || ext === 'pptx') return 'ppt'
+        if (ext === 'html' || ext === 'htm') return 'html'
+        return 'video'
+    }
+
+    const normalizePregunta = (p: any, idx: number) => ({
+        pregunta: p?.pregunta || '',
+        tipo_pregunta: p?.tipo_pregunta || 'opcion_multiple',
+        opcion_a: p?.opcion_a || '',
+        opcion_b: p?.opcion_b || '',
+        opcion_c: p?.opcion_c || '',
+        opcion_d: p?.opcion_d || '',
+        respuesta_correcta: p?.respuesta_correcta || 'A',
+        orden: p?.orden || idx + 1
+    })
+
+    const normalizeDraftModule = (m: any, idx: number) => ({
+        titulo: m?.titulo || '',
+        orden: m?.orden || idx + 1,
+        url_contenido: m?.url_contenido || '',
+        recursos: (m?.recursos && Array.isArray(m.recursos) ? m.recursos : (m?.url_contenido ? [{ titulo: 'Material del Módulo', url_contenido: m.url_contenido }] : [])).map((r: any, rIdx: number) => ({
+            titulo: r?.titulo || `Recurso ${rIdx + 1}`,
+            tipo: inferTipoRecurso(r?.url_contenido, r?.tipo),
+            url_contenido: r?.url_contenido || '',
+            orden: r?.orden || rIdx + 1
+        })),
+        examen: m?.examen ? {
+            min_aprobacion: m.examen.min_aprobacion ?? 80,
+            preguntas: (m.examen.preguntas || []).map(normalizePregunta)
+        } : null
+    })
+
+    const normalizeExam = (exam: any, preguntas: any[] = []) => exam ? ({
+        min_aprobacion: exam.min_aprobacion ?? 80,
+        tiempo_limite: exam.tiempo_limite ?? null,
+        seguridad_aumentada: !!exam.seguridad_aumentada,
+        max_cambios_pantalla: exam.max_cambios_pantalla ?? 3,
+        intentos_permitidos: exam.intentos_permitidos ?? 3,
+        preguntas: preguntas.map(normalizePregunta)
+    }) : null
+
+    const handleOpenAudit = async (curso: Curso) => {
+        setAuditCurso(curso)
+        setAuditDraft({
+            ...curso.cambios_pendientes,
+            modulos: (curso.cambios_pendientes?.modulos || []).map(normalizeDraftModule),
+            examen: curso.cambios_pendientes?.examen ? normalizeExam(curso.cambios_pendientes.examen, curso.cambios_pendientes.examen.preguntas || []) : null
+        })
+        setAuditOriginal(null)
+        setLoadingAudit(true)
+
+        const [{ data: modulos }, { data: examenes }] = await Promise.all([
+            supabase
+                .from('ie_curso_modulos')
+                .select('*')
+                .eq('curso_id', curso.id)
+                .order('orden', { ascending: true }),
+            supabase
+                .from('ie_examenes')
+                .select('*')
+                .eq('curso_id', curso.id)
+        ])
+
+        const moduloIds = (modulos || []).map((m: any) => m.id)
+        const examenIds = (examenes || []).map((e: any) => e.id)
+
+        const [{ data: recursos }, { data: preguntas }] = await Promise.all([
+            moduloIds.length > 0
+                ? supabase
+                    .from('ie_modulo_recursos')
+                    .select('*')
+                    .in('modulo_id', moduloIds)
+                    .order('orden', { ascending: true })
+                : Promise.resolve({ data: [] } as any),
+            examenIds.length > 0
+                ? supabase
+                    .from('ie_preguntas')
+                    .select('*')
+                    .in('examen_id', examenIds)
+                    .order('orden', { ascending: true })
+                : Promise.resolve({ data: [] } as any)
+        ])
+
+        const normalizedModules = (modulos || []).map((m: any, idx: number) => {
+            const moduloRecursos = (recursos || []).filter((r: any) => r.modulo_id === m.id)
+            const moduloExam = (examenes || []).find((e: any) => e.modulo_id === m.id)
+            const moduloPreguntas = moduloExam ? (preguntas || []).filter((p: any) => p.examen_id === moduloExam.id) : []
+
+            return {
+                titulo: m.titulo || '',
+                orden: m.orden || idx + 1,
+                url_contenido: m.url_contenido || '',
+                recursos: (moduloRecursos.length > 0 ? moduloRecursos : (m.url_contenido ? [{ titulo: 'Material del Módulo', url_contenido: m.url_contenido, orden: 1 }] : [])).map((r: any, rIdx: number) => ({
+                    titulo: r.titulo || `Recurso ${rIdx + 1}`,
+                    tipo: inferTipoRecurso(r.url_contenido, r.tipo),
+                    url_contenido: r.url_contenido || '',
+                    orden: r.orden || rIdx + 1
+                })),
+                examen: moduloExam ? normalizeExam(moduloExam, moduloPreguntas) : null
+            }
+        })
+
+        const finalExam = (examenes || []).find((e: any) => !e.modulo_id)
+        const finalQuestions = finalExam ? (preguntas || []).filter((p: any) => p.examen_id === finalExam.id) : []
+
+        setAuditOriginal({
+            titulo: curso.titulo,
+            descripcion: curso.descripcion,
+            beneficios: curso.beneficios,
+            duracion: curso.duracion,
+            precio: curso.precio,
+            instructor: curso.instructor,
+            categoria: curso.categoria,
+            vigencia_anos: curso.vigencia_anos,
+            requiere_pago_completo: curso.requiere_pago_completo,
+            requiere_examen: curso.requiere_examen,
+            reunion_url: curso.reunion_url,
+            nota_profesor: curso.nota_profesor,
+            modulos: normalizedModules,
+            examen: normalizeExam(finalExam, finalQuestions)
+        })
+        setLoadingAudit(false)
+    }
+
+    const closeAudit = () => {
+        setAuditCurso(null)
+        setAuditOriginal(null)
+        setAuditDraft(null)
+        setLoadingAudit(false)
+    }
+
+    const sameValue = (a: any, b: any) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
+    const textValue = (value: any) => {
+        if (value === true) return 'Sí'
+        if (value === false) return 'No'
+        if (value === null || value === undefined || value === '') return 'Sin dato'
+        return String(value)
+    }
+
+    const renderFieldCompare = (label: string, key: string) => {
+        const originalValue = auditOriginal?.[key]
+        const draftValue = auditDraft?.[key]
+        const changed = !sameValue(originalValue, draftValue)
+
+        return (
+            <div className={`grid grid-cols-1 md:grid-cols-[180px_1fr_1fr] gap-3 p-3 border rounded-lg ${changed ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">{label}</div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Original</p>
+                    <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">{textValue(originalValue)}</p>
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Nuevo</p>
+                    <p className={`text-sm whitespace-pre-wrap break-words ${changed ? 'font-semibold text-amber-900' : 'text-gray-900'}`}>{textValue(draftValue)}</p>
+                </div>
+            </div>
+        )
+    }
+
+    const renderQuestionList = (preguntas: any[] = []) => {
+        if (!preguntas.length) return <p className="text-xs text-gray-500 italic">Sin preguntas</p>
+        return (
+            <ol className="space-y-2">
+                {preguntas.map((p: any, idx: number) => (
+                    <li key={idx} className="text-xs text-gray-700 border border-gray-100 rounded p-2 bg-white">
+                        <p className="font-semibold text-gray-900">{idx + 1}. {p.pregunta || 'Pregunta sin texto'}</p>
+                        <p className="mt-1 text-gray-500">Tipo: {p.tipo_pregunta || 'opcion_multiple'} · Respuesta: {p.respuesta_correcta || 'A'}</p>
+                    </li>
+                ))}
+            </ol>
+        )
+    }
+
+    const renderModuleColumn = (mod: any) => {
+        if (!mod) return <p className="text-sm text-gray-400 italic">No existe</p>
+        return (
+            <div className="space-y-3">
+                <div>
+                    <p className="font-semibold text-gray-900">{mod.orden}. {mod.titulo || 'Módulo sin título'}</p>
+                    {mod.url_contenido && <p className="text-xs text-blue-600 break-all mt-1">{mod.url_contenido}</p>}
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Recursos</p>
+                    {mod.recursos?.length ? (
+                        <ul className="space-y-1">
+                            {mod.recursos.map((r: any, idx: number) => (
+                                <li key={idx} className="text-xs text-gray-700">
+                                    <span className="font-medium">{idx + 1}. {r.titulo}</span>
+                                    <span className="text-gray-400"> ({r.tipo})</span>
+                                    <p className="text-blue-600 break-all">{r.url_contenido}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-xs text-gray-500 italic">Sin recursos</p>}
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Examen del módulo</p>
+                    {mod.examen ? (
+                        <div className="space-y-2">
+                            <p className="text-xs text-gray-700">Mínimo: {mod.examen.min_aprobacion}%</p>
+                            {renderQuestionList(mod.examen.preguntas || [])}
+                        </div>
+                    ) : <p className="text-xs text-gray-500 italic">Sin examen modular</p>}
+                </div>
+            </div>
+        )
+    }
+
+    const renderModulesCompare = () => {
+        const originals = auditOriginal?.modulos || []
+        const drafts = auditDraft?.modulos || []
+        const maxLength = Math.max(originals.length, drafts.length)
+        if (!maxLength) return <p className="text-sm text-gray-500 italic">No hay módulos en ninguna versión.</p>
+
+        return Array.from({ length: maxLength }).map((_, idx) => {
+            const original = originals[idx]
+            const draft = drafts[idx]
+            const changed = !sameValue(original, draft)
+            return (
+                <div key={idx} className={`border rounded-xl p-4 ${changed ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-bold text-gray-900">Módulo {idx + 1}</h4>
+                        {changed && <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-100 px-2 py-1 rounded-full">Cambió</span>}
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Original</p>
+                            {renderModuleColumn(original)}
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Nuevo</p>
+                            {renderModuleColumn(draft)}
+                        </div>
+                    </div>
+                </div>
+            )
+        })
+    }
+
+    const renderFinalExamCompare = () => {
+        const changed = !sameValue(auditOriginal?.examen, auditDraft?.examen)
+        return (
+            <div className={`border rounded-xl p-4 ${changed ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+                <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-gray-900">Examen final</h4>
+                    {changed && <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-100 px-2 py-1 rounded-full">Cambió</span>}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {[['Original', auditOriginal?.examen], ['Nuevo', auditDraft?.examen]].map(([label, exam]: any) => (
+                        <div key={label}>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">{label}</p>
+                            {exam ? (
+                                <div className="space-y-2">
+                                    <p className="text-xs text-gray-700">Mínimo: {exam.min_aprobacion}% · Tiempo: {exam.tiempo_limite || 'Sin límite'} · Intentos: {exam.intentos_permitidos || 3}</p>
+                                    <p className="text-xs text-gray-700">Seguridad aumentada: {textValue(exam.seguridad_aumentada)} · Cambios de pantalla: {exam.max_cambios_pantalla || 3}</p>
+                                    {renderQuestionList(exam.preguntas || [])}
+                                </div>
+                            ) : <p className="text-sm text-gray-400 italic">No existe</p>}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -287,6 +563,80 @@ export default function AdminCursosPage() {
                 </div>
             )}
 
+            {/* Modal Auditoría de Borrador */}
+            {auditCurso && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75 overflow-y-auto">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col">
+                        <div className="flex justify-between items-start p-5 border-b border-gray-200">
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
+                                    <Activity className="h-4 w-4" /> Comparación de borrador pendiente
+                                </p>
+                                <h2 className="text-xl font-bold text-gray-900 mt-1">{auditCurso.titulo}</h2>
+                                <p className="text-sm text-gray-500 mt-1">Revisa exactamente qué se reemplazará al aprobar la edición.</p>
+                            </div>
+                            <button onClick={closeAudit} className="text-gray-400 hover:text-gray-600 transition p-1">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto bg-gray-50 flex-grow space-y-6">
+                            {loadingAudit ? (
+                                <p className="text-gray-500 text-sm py-10 text-center">Cargando comparación completa...</p>
+                            ) : (
+                                <>
+                                    <section className="space-y-3">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Datos generales</h3>
+                                            <p className="text-xs text-gray-500 mt-1">Las filas en amarillo indican valores distintos entre la versión publicada y el borrador.</p>
+                                        </div>
+                                        {renderFieldCompare('Título', 'titulo')}
+                                        {renderFieldCompare('Descripción', 'descripcion')}
+                                        {renderFieldCompare('Beneficios', 'beneficios')}
+                                        {renderFieldCompare('Duración', 'duracion')}
+                                        {renderFieldCompare('Precio', 'precio')}
+                                        {renderFieldCompare('Instructor', 'instructor')}
+                                        {renderFieldCompare('Categoría', 'categoria')}
+                                        {renderFieldCompare('Vigencia años', 'vigencia_anos')}
+                                        {renderFieldCompare('Pago completo', 'requiere_pago_completo')}
+                                        {renderFieldCompare('Requiere examen', 'requiere_examen')}
+                                        {renderFieldCompare('Enlace reunión', 'reunion_url')}
+                                        {renderFieldCompare('Nota profesor', 'nota_profesor')}
+                                    </section>
+
+                                    <section className="space-y-3">
+                                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Módulos, recursos y exámenes modulares</h3>
+                                        {renderModulesCompare()}
+                                    </section>
+
+                                    <section className="space-y-3">
+                                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Examen final</h3>
+                                        {renderFinalExamCompare()}
+                                    </section>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="p-5 border-t border-gray-200 bg-white flex justify-end gap-3">
+                            <button onClick={closeAudit} className="px-5 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                Cerrar
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (auditCurso?.cambios_pendientes) {
+                                        handleAprobarCambios(auditCurso.id, auditCurso.cambios_pendientes)
+                                    }
+                                }}
+                                disabled={procesandoAccion === auditCurso.id || loadingAudit}
+                                className="px-5 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-md text-sm font-bold transition"
+                            >
+                                {procesandoAccion === auditCurso.id ? 'Aprobando...' : 'Aprobar edición'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Main Table */}
             <div className="bg-white shadow rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
@@ -335,10 +685,10 @@ export default function AdminCursosPage() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                     <button
-                                        onClick={() => handleOpenPreview(c)}
+                                        onClick={() => c.cambios_pendientes ? handleOpenAudit(c) : handleOpenPreview(c)}
                                         className="inline-flex items-center px-3 py-1.5 border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-md text-xs font-medium transition-colors"
                                     >
-                                        <Eye className="h-4 w-4 mr-1" /> Ver Módulos
+                                        <Eye className="h-4 w-4 mr-1" /> {c.cambios_pendientes ? 'Ver Cambios' : 'Ver Módulos'}
                                     </button>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500 flex flex-col gap-2">

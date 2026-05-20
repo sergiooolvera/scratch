@@ -3,13 +3,23 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles } from 'lucide-react'
+
+type Recurso = {
+    id?: string;
+    titulo: string;
+    tipo: 'video' | 'pdf' | 'html' | 'ppt';
+    url_contenido: string;
+    archivoPdf: File | null;
+}
 
 type Modulo = {
+    id?: string;
     titulo: string;
-    tipo: 'video' | 'pdf' | 'html';
-    url_contenido: string; // Used if type is video
-    archivoPdf: File | null; // Used if type is pdf/html
+    recursos: Recurso[];
+    requiereExamen: boolean;
+    examenMinAprobacion: number;
+    examenPreguntas: PreguntaParsed[];
 }
 
 type PreguntaParsed = {
@@ -19,9 +29,11 @@ type PreguntaParsed = {
     opcion_c: string;
     opcion_d: string;
     respuesta_correcta: string;
+    tipo_pregunta: 'opcion_multiple' | 'respuesta_libre';
 }
 
 export default function SubirCursoPage() {
+    const [activeTab, setActiveTab] = useState<'info' | 'modulos' | 'examen' | 'avisos'>('info')
     const [formData, setFormData] = useState({
         titulo: '',
         descripcion: '',
@@ -35,10 +47,16 @@ export default function SubirCursoPage() {
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
 
-    // Modules state (Mixed content)
-    const [modulos, setModulos] = useState<Modulo[]>([{ titulo: '', tipo: 'video', url_contenido: '', archivoPdf: null }])
+    // Modules state
+    const [modulos, setModulos] = useState<Modulo[]>([{
+        titulo: '',
+        recursos: [],
+        requiereExamen: false,
+        examenMinAprobacion: 80,
+        examenPreguntas: []
+    }])
 
-    // Exam state
+    // Exam state (Final exam)
     const [requiereExamen, setRequiereExamen] = useState(false)
     const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
     const [minAprobacion, setMinAprobacion] = useState<number | ''>(80)
@@ -50,6 +68,7 @@ export default function SubirCursoPage() {
     const [archivoExamen, setArchivoExamen] = useState<File | null>(null)
     const [preguntasExtraidas, setPreguntasExtraidas] = useState<PreguntaParsed[]>([])
     const [isParsing, setIsParsing] = useState(false)
+    const [modalMessage, setModalMessage] = useState<{ title: string; content: string; type: 'success' | 'error' | 'info'; redirectUrl?: string } | null>(null)
 
     const [loading, setLoading] = useState(true)
     const [mensaje, setMensaje] = useState('')
@@ -88,7 +107,13 @@ export default function SubirCursoPage() {
     }, [router, supabase])
 
     const handleAgregarModulo = () => {
-        setModulos([...modulos, { titulo: '', tipo: 'video', url_contenido: '', archivoPdf: null }])
+        setModulos([...modulos, {
+            titulo: '',
+            recursos: [],
+            requiereExamen: false,
+            examenMinAprobacion: 80,
+            examenPreguntas: []
+        }])
     }
 
     const handleEliminarModulo = (index: number) => {
@@ -98,16 +123,71 @@ export default function SubirCursoPage() {
     const handleModuloChange = (index: number, field: keyof Modulo, value: any) => {
         const nuevosModulos = [...modulos]
         nuevosModulos[index] = { ...nuevosModulos[index], [field]: value }
-
-        // Reset the other field when switching types
-        if (field === 'tipo') {
-            if (value === 'video') nuevosModulos[index].archivoPdf = null
-            if (value === 'pdf' || value === 'html') nuevosModulos[index].url_contenido = ''
-        }
-
         setModulos(nuevosModulos)
     }
 
+    // Modular resources helpers
+    const handleAgregarRecurso = (moduloIdx: number) => {
+        const nuevosModulos = [...modulos]
+        nuevosModulos[moduloIdx].recursos.push({
+            titulo: '',
+            tipo: 'video',
+            url_contenido: '',
+            archivoPdf: null
+        })
+        setModulos(nuevosModulos)
+    }
+
+    const handleEliminarRecurso = (moduloIdx: number, recursoIdx: number) => {
+        const nuevosModulos = [...modulos]
+        nuevosModulos[moduloIdx].recursos = nuevosModulos[moduloIdx].recursos.filter((_, i) => i !== recursoIdx)
+        setModulos(nuevosModulos)
+    }
+
+    const handleRecursoChange = (moduloIdx: number, recursoIdx: number, field: keyof Recurso, value: any) => {
+        const nuevosModulos = [...modulos]
+        nuevosModulos[moduloIdx].recursos[recursoIdx] = {
+            ...nuevosModulos[moduloIdx].recursos[recursoIdx],
+            [field]: value
+        }
+        if (field === 'tipo') {
+            if (value === 'video') nuevosModulos[moduloIdx].recursos[recursoIdx].archivoPdf = null
+            if (value === 'pdf' || value === 'html' || value === 'ppt') nuevosModulos[moduloIdx].recursos[recursoIdx].url_contenido = ''
+        }
+        setModulos(nuevosModulos)
+    }
+
+    // Modular exams helpers
+    const handleAgregarPreguntaModulo = (moduloIdx: number) => {
+        const nuevosModulos = [...modulos]
+        nuevosModulos[moduloIdx].examenPreguntas.push({
+            pregunta: '',
+            opcion_a: '',
+            opcion_b: '',
+            opcion_c: '',
+            opcion_d: '',
+            respuesta_correcta: 'A',
+            tipo_pregunta: 'opcion_multiple'
+        })
+        setModulos(nuevosModulos)
+    }
+
+    const handleEliminarPreguntaModulo = (moduloIdx: number, preguntaIdx: number) => {
+        const nuevosModulos = [...modulos]
+        nuevosModulos[moduloIdx].examenPreguntas = nuevosModulos[moduloIdx].examenPreguntas.filter((_, i) => i !== preguntaIdx)
+        setModulos(nuevosModulos)
+    }
+
+    const handlePreguntaModuloChange = (moduloIdx: number, preguntaIdx: number, field: keyof PreguntaParsed, value: string) => {
+        const nuevosModulos = [...modulos]
+        nuevosModulos[moduloIdx].examenPreguntas[preguntaIdx] = {
+            ...nuevosModulos[moduloIdx].examenPreguntas[preguntaIdx],
+            [field]: value
+        }
+        setModulos(nuevosModulos)
+    }
+
+    // Final exam helpers
     const handleUploadExamenHelper = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
         setArchivoExamen(file);
@@ -127,7 +207,6 @@ export default function SubirCursoPage() {
                 const data = await response.json();
 
                 if (response.ok && data.questions) {
-                    // Append questions to existing ones instead of overwriting
                     setPreguntasExtraidas(prev => [...prev, ...data.questions]);
                     setMensaje(`¡Examen analizado! Se detectaron ${data.questions.length} preguntas adicionales.`);
                 } else {
@@ -148,7 +227,8 @@ export default function SubirCursoPage() {
             opcion_b: '',
             opcion_c: '',
             opcion_d: '',
-            respuesta_correcta: 'A'
+            respuesta_correcta: 'A',
+            tipo_pregunta: 'opcion_multiple'
         }]);
     }
 
@@ -160,9 +240,7 @@ export default function SubirCursoPage() {
         const nuevas = [...preguntasExtraidas];
         nuevas[index] = { ...nuevas[index], [field]: value };
         setPreguntasExtraidas(nuevas);
-    }
-
-    const handleSubmit = async (e: React.FormEvent) => {
+        const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setMensaje('')
@@ -175,54 +253,150 @@ export default function SubirCursoPage() {
 
         // Validate modules
         if (modulos.length === 0) {
-            setMensaje('Agrega al menos un módulo al curso.');
+            setModalMessage({
+                title: 'Faltan Módulos',
+                content: 'Error: Agrega al menos un módulo al curso.',
+                type: 'error'
+            });
             setLoading(false)
             return
         }
 
-        for (const m of modulos) {
-            if (!m.titulo || (m.tipo === 'video' && !m.url_contenido) || (m.tipo !== 'video' && !m.archivoPdf)) {
-                setMensaje('Por favor, completa los títulos y el contenido (URL o Archivo PDF) de todos los módulos.');
+        for (let i = 0; i < modulos.length; i++) {
+            const m = modulos[i];
+            if (!m.titulo) {
+                setModalMessage({
+                    title: 'Faltan Campos',
+                    content: `Error: Por favor especifica el título del módulo ${i + 1}.`,
+                    type: 'error'
+                });
                 setLoading(false)
                 return
+            }
+
+            // Check resources
+            for (let rIdx = 0; rIdx < m.recursos.length; rIdx++) {
+                const rec = m.recursos[rIdx];
+                if (!rec.titulo) {
+                    setModalMessage({
+                        title: 'Título de Recurso Obligatorio',
+                        content: `Error: Por favor escribe un título para el recurso ${rIdx + 1} del módulo "${m.titulo}".`,
+                        type: 'error'
+                    });
+                    setLoading(false)
+                    return
+                }
+                if (rec.tipo === 'video' && !rec.url_contenido) {
+                    setModalMessage({
+                        title: 'Enlace Obligatorio',
+                        content: `Error: Por favor escribe el enlace de video para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
+                        type: 'error'
+                    });
+                    setLoading(false)
+                    return
+                }
+                if (rec.tipo !== 'video' && !rec.archivoPdf) {
+                    setModalMessage({
+                        title: 'Archivo Obligatorio',
+                        content: `Error: Por favor sube un archivo (PDF/PPT/HTML) para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
+                        type: 'error'
+                    });
+                    setLoading(false)
+                    return
+                }
+            }
+
+            // If module requires exam, validate questions
+            if (m.requiereExamen) {
+                if (m.examenPreguntas.length === 0) {
+                    setModalMessage({
+                        title: 'Examen Vacío',
+                        content: `Error: El módulo "${m.titulo}" requiere examen pero no tiene preguntas.`,
+                        type: 'error'
+                    });
+                    setLoading(false)
+                    return
+                }
+                for (let pIdx = 0; pIdx < m.examenPreguntas.length; pIdx++) {
+                    const p = m.examenPreguntas[pIdx];
+                    if (!p.pregunta) {
+                        setModalMessage({
+                            title: 'Pregunta Incompleta',
+                            content: `Error: Completa la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                            type: 'error'
+                        });
+                        setLoading(false)
+                        return
+                    }
+                    if (p.tipo_pregunta !== 'respuesta_libre') {
+                        if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
+                            setModalMessage({
+                                title: 'Opciones Incompletas',
+                                content: `Error: Completa al menos las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                                type: 'error'
+                            });
+                            setLoading(false)
+                            return
+                        }
+                    }
+                }
             }
         }
 
-        // Validate exam status
+        // Validate final exam status
         if (requiereExamen) {
             if (preguntasExtraidas.length === 0) {
-                setMensaje('Has marcado que el curso requiere examen, por favor añade al menos una pregunta o sube un PDF.');
+                setModalMessage({
+                    title: 'Cuestionario Vacío',
+                    content: 'Error: Has marcado que el curso requiere examen final, por favor añade al menos una pregunta.',
+                    type: 'error'
+                });
                 setLoading(false)
                 return
             }
-            // Check if all questions are filled
-            for (const p of preguntasExtraidas) {
-                if (!p.pregunta || !p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
-                    setMensaje('Por favor, completa todas las preguntas y al menos 2 opciones de respuesta (A y B).');
+            for (let pIdx = 0; pIdx < preguntasExtraidas.length; pIdx++) {
+                const p = preguntasExtraidas[pIdx];
+                if (!p.pregunta) {
+                    setModalMessage({
+                        title: 'Pregunta Incompleta',
+                        content: `Error: Por favor completa el texto para la pregunta ${pIdx + 1} del examen final.`,
+                        type: 'error'
+                    });
                     setLoading(false)
                     return
+                }
+                if (p.tipo_pregunta !== 'respuesta_libre') {
+                    if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
+                        setModalMessage({
+                            title: 'Opciones Incompletas',
+                            content: `Error: Por favor completa las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} del examen final.`,
+                            type: 'error'
+                        });
+                        setLoading(false)
+                        return
+                    }
                 }
             }
         }
 
         let firstUrlContenido = '';
 
-        // 1. Crear el Curso en la base de datos primero (necesitamos el ID)
+        // 1. Create Course
         setMensaje('Guardando información del curso...')
         
-        const { data: profile } = await supabase.from('ie_profiles').select('*').eq('id', user.id).single()
-        const instructorNombre = `${profile?.nombre || ''} ${profile?.apellido_paterno || ''} ${profile?.apellido_materno || ''}`.trim() || user.email;
+        const { data: profileRow } = await supabase.from('ie_profiles').select('*').eq('id', user.id).single()
+        const instructorNombre = `${profileRow?.nombre || ''} ${profileRow?.apellido_paterno || ''} ${profileRow?.apellido_materno || ''}`.trim() || user.email;
 
         const cursoDraftObj: any = {
             ...formData,
             instructor: instructorNombre,
-            url_contenido: 'processing', // Temporary placeholder
+            url_contenido: 'processing',
             precio: Number(formData.precio),
             estado: 'pendiente',
             creado_por: user.id,
             requiere_examen: requiereExamen,
             requiere_pago_completo: requierePagoCompleto,
-            url_examen: null, // Deprecated effectively, but kept for legacy views
+            url_examen: null,
             vigencia_anos: vigenciaAnos,
             reunion_url: formData.reunion_url?.trim() || null,
             nota_profesor: formData.nota_profesor?.trim() || null
@@ -231,62 +405,138 @@ export default function SubirCursoPage() {
         const { data: cursoGuardado, error: errorCurso } = await supabase.from('ie_cursos').insert(cursoDraftObj).select().single()
 
         if (errorCurso || !cursoGuardado) {
-            setMensaje('Error al crear el curso en la base de datos: ' + errorCurso?.message)
+            setModalMessage({
+                title: 'Error al Crear Curso',
+                content: 'Error al crear el curso en la base de datos: ' + errorCurso?.message,
+                type: 'error'
+            });
             setLoading(false)
             return
         }
 
-        // 2. Subir Pdfs de módulos si existen y guardarlos
+        // 2. Upload assets and insert modules & modular exams
         setMensaje('Subiendo contenidos y módulos...')
-        const finalModulosObj = [];
         for (let i = 0; i < modulos.length; i++) {
-            let finalUrl = modulos[i].url_contenido;
-            if (modulos[i].tipo !== 'video' && modulos[i].archivoPdf) {
-                const file = modulos[i].archivoPdf as File;
-                const fileExt = file.name.split('.').pop()
-                const fileName = `modulo_${cursoGuardado.id}_${i}_${Date.now()}.${fileExt}`
+            const currentMod = modulos[i];
 
-                const ext = (fileExt || '').toLowerCase()
-                const contentType = ext === 'pdf'
-                    ? 'application/pdf'
-                    : (ext === 'html' || ext === 'htm' || file.type === 'text/html')
-                        ? 'text/html; charset=utf-8'
-                        : (file.type || 'application/octet-stream')
+            // Upload files for each resource of this module
+            for (let rIdx = 0; rIdx < currentMod.recursos.length; rIdx++) {
+                const rec = currentMod.recursos[rIdx];
+                if (rec.tipo !== 'video' && rec.archivoPdf) {
+                    const file = rec.archivoPdf as File;
+                    const fileExt = file.name.split('.').pop()
+                    const fileName = `modulo_recurso_${cursoGuardado.id}_${i}_${rIdx}_${Date.now()}.${fileExt}`
 
-                const { error: uploadError } = await supabase.storage.from('cursos_contenido').upload(fileName, file, { contentType })
-                if (uploadError) {
-                    setMensaje(`Error subiendo el PDF del módulo ${i + 1}: ${uploadError.message}`);
-                    setLoading(false);
-                    return;
+                    const ext = (fileExt || '').toLowerCase()
+                    let contentType = 'application/octet-stream'
+                    if (ext === 'pdf') {
+                        contentType = 'application/pdf'
+                    } else if (ext === 'html' || ext === 'htm') {
+                        contentType = 'text/html; charset=utf-8'
+                    } else if (ext === 'ppt' || ext === 'pptx') {
+                        contentType = 'application/vnd.ms-powerpoint'
+                    }
+
+                    const { error: uploadError } = await supabase.storage.from('cursos_contenido').upload(fileName, file, { contentType })
+                    if (uploadError) {
+                        setModalMessage({
+                            title: 'Error de Archivo',
+                            content: `Error subiendo el archivo del recurso "${rec.titulo}" en el módulo ${i + 1}: ${uploadError.message}`,
+                            type: 'error'
+                        });
+                        setLoading(false);
+                        return;
+                    }
+                    rec.url_contenido = supabase.storage.from('cursos_contenido').getPublicUrl(fileName).data.publicUrl
                 }
-                finalUrl = supabase.storage.from('cursos_contenido').getPublicUrl(fileName).data.publicUrl
             }
 
-            if (i === 0) firstUrlContenido = finalUrl;
+            // Legacy url_contenido field: use the first resource's url if available
+            let legacyUrl = '';
+            if (currentMod.recursos.length > 0) {
+                legacyUrl = currentMod.recursos[0].url_contenido;
+            }
+            if (i === 0) firstUrlContenido = legacyUrl;
 
-            finalModulosObj.push({
-                curso_id: cursoGuardado.id,
-                titulo: modulos[i].titulo,
-                url_contenido: finalUrl,
-                orden: i + 1
-            });
+            // Insert Module
+            const { data: moduloInsertado, error: errorModulo } = await supabase
+                .from('ie_curso_modulos')
+                .insert({
+                    curso_id: cursoGuardado.id,
+                    titulo: currentMod.titulo,
+                    url_contenido: legacyUrl,
+                    orden: i + 1
+                })
+                .select()
+                .single()
+
+            if (errorModulo || !moduloInsertado) {
+                setModalMessage({
+                    title: 'Error de Módulo',
+                    content: `Error guardando el módulo ${i + 1}: ${errorModulo?.message}`,
+                    type: 'error'
+                });
+                setLoading(false)
+                return
+            }
+
+            // Insert resources into public.ie_modulo_recursos
+            for (let rIdx = 0; rIdx < currentMod.recursos.length; rIdx++) {
+                const rec = currentMod.recursos[rIdx];
+                const { error: errorRecurso } = await supabase
+                    .from('ie_modulo_recursos')
+                    .insert({
+                        modulo_id: moduloInsertado.id,
+                        titulo: rec.titulo,
+                        url_contenido: rec.url_contenido,
+                        orden: rIdx + 1
+                    });
+                if (errorRecurso) {
+                    console.error('Error insertando recurso en DB:', errorRecurso);
+                }
+            }
+
+            // Insert Modular Exam if checked
+            if (currentMod.requiereExamen && currentMod.examenPreguntas.length > 0) {
+                const { data: examGuardado, error: errorExamen } = await supabase
+                    .from('ie_examenes')
+                    .insert({
+                        curso_id: cursoGuardado.id,
+                        modulo_id: moduloInsertado.id, // Link to module!
+                        min_aprobacion: currentMod.examenMinAprobacion,
+                        tiempo_limite: null,
+                        seguridad_aumentada: false,
+                        max_cambios_pantalla: 3,
+                        intentos_permitidos: 3
+                    })
+                    .select()
+                    .single()
+
+                if (errorExamen || !examGuardado) {
+                    console.error(`Error creando evaluación del módulo ${i + 1}:`, errorExamen?.message);
+                } else {
+                    const preguntasModulo = currentMod.examenPreguntas.map((p, pIndex) => ({
+                        examen_id: examGuardado.id,
+                        pregunta: p.pregunta,
+                        opcion_a: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_a,
+                        opcion_b: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_b,
+                        opcion_c: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_c,
+                        opcion_d: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_d,
+                        respuesta_correcta: p.tipo_pregunta === 'respuesta_libre' ? 'A' : p.respuesta_correcta,
+                        tipo_pregunta: p.tipo_pregunta || 'opcion_multiple',
+                        orden: pIndex + 1
+                    }))
+                    await supabase.from('ie_preguntas').insert(preguntasModulo)
+                }
+            }
         }
 
-        const { error: errorModulos } = await supabase.from('ie_curso_modulos').insert(finalModulosObj)
-        if (errorModulos) {
-            setMensaje('Error guardando los módulos: ' + errorModulos.message)
-            setLoading(false)
-            return
-        }
-
-        // 3. Update Course with legacy first URL (so legacy view doesn't break)
+        // 3. Update legacy course content pointer
         await supabase.from('ie_cursos').update({ url_contenido: firstUrlContenido }).eq('id', cursoGuardado.id);
 
-
-        // 4. Crear el Examen Interactivo
+        // 4. Create final exam
         if (requiereExamen && preguntasExtraidas.length > 0) {
-            setMensaje('Registrando preguntas del examen interactivo...')
-            // Subir PDF original de examen también (opcional pero lo dejamos de respaldo como url_examen)
+            setMensaje('Registrando preguntas del examen final...')
             let urlExamenPdf = null;
             if (archivoExamen) {
                 const fExt = archivoExamen.name.split('.').pop()
@@ -296,7 +546,6 @@ export default function SubirCursoPage() {
                 await supabase.from('ie_cursos').update({ url_examen: urlExamenPdf }).eq('id', cursoGuardado.id);
             }
 
-            // Insertar ie_examenes
             const { data: examenGuardado, error: errorExamen } = await supabase.from('ie_examenes').insert({
                 curso_id: cursoGuardado.id,
                 min_aprobacion: minAprobacion === '' ? 80 : minAprobacion,
@@ -307,25 +556,34 @@ export default function SubirCursoPage() {
             }).select().single()
 
             if (errorExamen) {
-                setMensaje('El curso se creó, pero hubo un error generando el cuestionario reactivo.');
+                setModalMessage({
+                    title: 'Error de Examen Final',
+                    content: 'El curso se creó, pero hubo un error generando el cuestionario reactivo final: ' + errorExamen.message,
+                    type: 'error'
+                });
             } else if (examenGuardado) {
-                // Insertar preguntas
                 const preguntasAInsertar = preguntasExtraidas.map((p, pIndex) => ({
                     examen_id: examenGuardado.id,
                     pregunta: p.pregunta,
-                    opcion_a: p.opcion_a,
-                    opcion_b: p.opcion_b,
-                    opcion_c: p.opcion_c,
-                    opcion_d: p.opcion_d,
-                    respuesta_correcta: p.respuesta_correcta,
+                    opcion_a: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_a,
+                    opcion_b: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_b,
+                    opcion_c: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_c,
+                    opcion_d: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_d,
+                    respuesta_correcta: p.tipo_pregunta === 'respuesta_libre' ? 'A' : p.respuesta_correcta,
+                    tipo_pregunta: p.tipo_pregunta || 'opcion_multiple',
                     orden: pIndex + 1
                 }));
                 await supabase.from('ie_preguntas').insert(preguntasAInsertar);
             }
         }
 
-        alert('Creado correctamente. Esperando a la validación.')
-        router.push('/profesor/cursos')
+        setModalMessage({
+            title: '¡Curso Creado!',
+            content: 'El curso se ha creado correctamente y ha sido enviado a revisión por el administrador.',
+            type: 'success',
+            redirectUrl: '/profesor/cursos'
+        });
+        setLoading(false)
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -333,8 +591,16 @@ export default function SubirCursoPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Subir Nuevo Curso</h1>
+        <div className="max-w-5xl mx-auto px-4 py-8">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2">
+                        <Sparkles className="text-blue-600 h-8 w-8" />
+                        Subir Nuevo Curso
+                    </h1>
+                    <p className="text-gray-500 text-sm mt-1">Estructura un curso premium por pestañas e integra evaluaciones modulares.</p>
+                </div>
+            </div>
             
             {perfilIncompleto && (
                 <div className="mb-8 bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex flex-col items-center text-center">
@@ -354,425 +620,759 @@ export default function SubirCursoPage() {
                 </div>
             )}
 
-            <div className={`bg-white shadow rounded-lg p-6 lg:p-8 ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            {/* Navigation Tabs */}
+            <div className={`flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-px ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                <button
+                    onClick={() => setActiveTab('info')}
+                    className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
+                        activeTab === 'info'
+                            ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                            : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-zinc-50'
+                    }`}
+                >
+                    <Layout className="h-4 w-4" />
+                    📝 Información General
+                </button>
+                <button
+                    onClick={() => setActiveTab('modulos')}
+                    className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
+                        activeTab === 'modulos'
+                            ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                            : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-zinc-50'
+                    }`}
+                >
+                    <BookOpen className="h-4 w-4" />
+                    📚 Temario y Clases
+                </button>
+                <button
+                    onClick={() => setActiveTab('examen')}
+                    className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
+                        activeTab === 'examen'
+                            ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                            : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-zinc-50'
+                    }`}
+                >
+                    <BrainCircuit className="h-4 w-4" />
+                    🧠 Evaluación Final (Examen)
+                </button>
+                <button
+                    onClick={() => setActiveTab('avisos')}
+                    className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
+                        activeTab === 'avisos'
+                            ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                            : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-zinc-50'
+                    }`}
+                >
+                    <MessageSquare className="h-4 w-4" />
+                    🚀 Avisos y Enlaces
+                </button>
+            </div>
+
+            <div className={`bg-white shadow-xl rounded-2xl border border-zinc-100 p-6 lg:p-8 ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 {mensaje && (
-                    <div className={`mb-6 p-4 rounded-md border ${mensaje.includes('Error') ? 'bg-red-50 border-red-200 text-red-800' : (mensaje.includes('Sube') || mensaje.includes('Subiendo') || mensaje.includes('Guardando') || mensaje.includes('analizado') ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-green-50 border-green-200 text-green-800')}`}>
-                        <p className="font-medium text-sm">{mensaje}</p>
+                    <div className={`mb-6 p-4 rounded-xl border ${mensaje.includes('Error') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
+                        <p className="font-semibold text-sm">{mensaje}</p>
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-8">
-                    {/* Información Básica */}
-                    <div>
-                        <h2 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2">1. Información Básica</h2>
-                        <div className="space-y-4">
+                    
+                    {/* Tab 1: Info General */}
+                    {activeTab === 'info' && (
+                        <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Título del Curso</label>
-                                <input type="text" name="titulo" required maxLength={60} value={formData.titulo} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
-                                <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 60 caracteres para que quepa en una sola línea del certificado.</p>
+                                <h2 className="text-xl font-bold text-gray-900">1. Información Básica del Curso</h2>
+                                <p className="text-gray-500 text-xs mt-0.5">Define los aspects centrales y de cobro del programa académico.</p>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Descripción</label>
-                                <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
-                            </div>
-                        </div>
-                    </div>
+                            <div className="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Título del Curso</label>
+                                    <input type="text" name="titulo" required maxLength={60} value={formData.titulo} onChange={handleChange} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Ej. Fundamentos de la Práctica Médica Moderna" />
+                                    <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 60 caracteres. Se renderizará en el certificado del alumno.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
+                                    <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Describe los temas que cubre el curso..." />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Beneficios / ¿Qué aprenderá el alumno?</label>
+                                    <textarea name="beneficios" required value={formData.beneficios} onChange={handleChange} rows={3} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Ej. Al finalizar este curso dominarás las técnicas de..." />
+                                </div>
 
-                    {/* Contenido Modular */}
-                    <div>
-                        <h2 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2">2. Temario del Curso (Módulos)</h2>
-                        <p className="text-sm text-gray-600 mb-4">Añade en orden las clases de tu curso. Cada clase puede ser un video externo o un archivo PDF de lectura.</p>
-
-                        <div className="space-y-4">
-                            {modulos.map((modulo, index) => (
-                                <div key={index} className="bg-gray-50 border border-gray-200 p-4 rounded-lg relative shadow-sm">
-                                    <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center">
-                                        Módulo {index + 1}
-                                        {modulos.length > 1 && (
-                                            <button type="button" onClick={() => handleEliminarModulo(index)} className="ml-auto text-red-500 hover:text-red-700 flex items-center text-xs">
-                                                <Trash2 className="h-4 w-4 mr-1" /> Eliminar Módulo
-                                            </button>
-                                        )}
-                                    </h3>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="col-span-1 md:col-span-2">
-                                            <label className="block text-xs font-semibold text-gray-600 mb-1">Título de la Clase / Lectura</label>
-                                            <input type="text" required placeholder="Ej. Introducción a los algoritmos" value={modulo.titulo} onChange={(e) => handleModuloChange(index, 'titulo', e.target.value)} className="w-full text-sm border-gray-300 rounded p-2 border bg-white text-black" />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-600 mb-2">Formato de este módulo</label>
-                                            <div className="flex gap-4">
-                                                <label className="flex items-center text-sm text-gray-800">
-                                                    <input type="radio" checked={modulo.tipo === 'video'} onChange={() => handleModuloChange(index, 'tipo', 'video')} className="mr-2 border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                                    Video (YouTube/Vimeo)
-                                                </label>
-                                                <label className="flex items-center text-sm text-gray-800">
-                                                    <input type="radio" checked={modulo.tipo === 'pdf'} onChange={() => handleModuloChange(index, 'tipo', 'pdf')} className="mr-2 border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                                    Documento (PDF)
-                                                </label>
-                                                <label className="flex items-center text-sm text-gray-800">
-                                                    <input type="radio" checked={modulo.tipo === 'html'} onChange={() => handleModuloChange(index, 'tipo', 'html')} className="mr-2 border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                                    Web (HTML)
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-end">
-                                            {modulo.tipo === 'video' ? (
-                                                <div className="w-full">
-                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">URL (YouTube o Vimeo)</label>
-                                                    <input type="url" required placeholder="https://youtube.com/watch?v=..." value={modulo.url_contenido} onChange={(e) => handleModuloChange(index, 'url_contenido', e.target.value)} className="w-full text-sm border-gray-300 rounded p-2 border bg-white text-black" />
-                                                </div>
-                                            ) : (
-                                                <div className="w-full">
-                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">
-                                                        {modulo.tipo === 'html' ? 'Seleccionar HTML' : 'Seleccionar PDF'}
-                                                    </label>
-                                                    <input
-                                                        type="file"
-                                                        required
-                                                        accept={modulo.tipo === 'html' ? '.html,.htm,text/html' : '.pdf,application/pdf'}
-                                                        onChange={(e) => handleModuloChange(index, 'archivoPdf', e.target.files?.[0] || null)}
-                                                        className="w-full text-sm text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 border-gray-300 rounded bg-white"
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-100">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Duración Estructurada</label>
+                                        <input type="text" name="duracion" required maxLength={30} value={formData.duracion} onChange={handleChange} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Ej: 10 Horas Académicas" />
+                                        <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 30 caracteres. Se imprime en el certificado.</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Vigencia de la Constancia</label>
+                                        <select
+                                            value={vigenciaAnos}
+                                            onChange={(e) => setVigenciaAnos(Number(e.target.value))}
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                        >
+                                            <option value={1}>1 año</option>
+                                            <option value={2}>2 años</option>
+                                            <option value={3}>3 años</option>
+                                            <option value={5}>5 años</option>
+                                            <option value={10}>10 años</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Categoría</label>
+                                        <select
+                                            value={formData.categoria}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                        >
+                                            <option value="desarrollo">🧠 Desarrollo Humano</option>
+                                            <option value="salud">🩺 Salud y Medicina</option>
+                                            <option value="arte">🎨 Arte y Cultura</option>
+                                            <option value="tecnologia">💻 Tecnología y Ciencia</option>
+                                            <option value="educacion">📚 Educación</option>
+                                        </select>
                                     </div>
                                 </div>
-                            ))}
 
-                            <button type="button" onClick={handleAgregarModulo} className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 font-medium hover:border-blue-400 hover:text-blue-600 transition-colors flex justify-center items-center text-sm">
-                                + Agregar Objeto de Aprendizaje
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Examen Interactivo */}
-                    <div>
-                        <h2 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2">3. Evaluación (Examen Final)</h2>
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-5 shadow-sm">
-                            <label className="flex items-center cursor-pointer mb-2">
-                                <input type="checkbox" checked={requiereExamen} onChange={(e) => setRequiereExamen(e.target.checked)} className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                                <span className="ml-2 block text-sm font-bold text-green-900">
-                                    Este curso requiere que el alumno apruebe un examen final
-                                </span>
-                            </label>
-
-                            {requiereExamen && (
-                                <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-green-300 space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+                                    {profile?.rol !== 'instructor' ? (
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
-                                            <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(e.target.value === '' ? '' : Number(e.target.value))} className="w-full sm:w-32 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" />
-                                            <p className="text-[10px] text-gray-500 mt-1 italic">Si el alumno saca al menos esta puntuación, aprueba.</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Cargar PDF (Automático)</label>
-                                            <input type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-300 rounded bg-white p-1" />
-                                            {isParsing && <p className="text-[10px] font-bold text-green-600 mt-1 animate-pulse italic">Analizando PDF...</p>}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-green-200">
-                                        <div>
-                                            <label className="flex items-center cursor-pointer mb-2">
-                                                <input type="checkbox" checked={conTiempo} onChange={(e) => setConTiempo(e.target.checked)} className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                                                <span className="ml-2 block text-sm font-semibold text-gray-700">
-                                                    Agregar tiempo para resolución de examen
-                                                </span>
-                                            </label>
-                                            {conTiempo && (
-                                                <div className="mt-2 flex items-center gap-2">
-                                                    <input 
-                                                        type="number" 
-                                                        min="2" 
-                                                        max="300" 
-                                                        value={tiempoExamen} 
-                                                        onChange={(e) => setTiempoExamen(e.target.value === '' ? '' : Number(e.target.value))} 
-                                                        className="w-24 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
-                                                    />
-                                                    <span className="text-sm text-gray-600">minutos (Máx. 300)</span>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Precio de Venta (MXN)</label>
+                                            <div className="relative rounded-xl shadow-sm">
+                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                    <span className="text-gray-500">$</span>
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <label className="text-sm font-semibold text-gray-700">Intentos permitidos para aprobar:</label>
-                                                <input 
-                                                    type="number" 
-                                                    min="1" 
-                                                    max="10" 
-                                                    value={intentosPermitidos} 
-                                                    onChange={(e) => setIntentosPermitidos(e.target.value === '' ? '' : Number(e.target.value))} 
-                                                    className="w-20 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
-                                                />
-                                                <span className="text-sm text-gray-600">intentos</span>
+                                                <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-8 w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="0.00" />
                                             </div>
                                         </div>
-                                        <div>
-                                            <label className="flex items-center cursor-pointer mb-2">
-                                                <input type="checkbox" checked={seguridadAumentada} onChange={(e) => setSeguridadAumentada(e.target.checked)} className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                                                <span className="ml-2 block text-sm font-semibold text-gray-700">
-                                                    El examen debe hacerse con Seguridad Aumentada
-                                                </span>
+                                    ) : (
+                                        <div className="bg-gray-50 rounded-xl p-4 flex items-center">
+                                            <p className="text-sm text-gray-500 italic">Eres un instructor validado. Tus cursos son gratuitos o gestionados por la institución.</p>
+                                        </div>
+                                    )}
+
+                                    {profile?.rol !== 'instructor' && (
+                                        <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-start gap-3">
+                                            <input
+                                                type="checkbox"
+                                                id="requierePagoCompleto"
+                                                checked={requierePagoCompleto}
+                                                onChange={(e) => setRequierePagoCompleto(e.target.checked)}
+                                                className="h-4 w-4 mt-1 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                            />
+                                            <label htmlFor="requierePagoCompleto" className="cursor-pointer">
+                                                <span className="block text-sm font-semibold text-orange-950">Pago Completo Obligatorio</span>
+                                                <span className="block text-[11px] text-orange-700 mt-0.5">Los alumnos que usen cupones deberán pagar la diferencia restante para poder obtener la constancia.</span>
+                                            </label>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex justify-end pt-4">
+                                <button type="button" onClick={() => setActiveTab('modulos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+                                    Siguiente: Clases y Temas
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tab 2: Temario y Clases (Módulos & Múltiples Recursos & Exámenes Modulares) */}
+                    {activeTab === 'modulos' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">2. Temario del Curso (Módulos)</h2>
+                                <p className="text-gray-500 text-xs mt-0.5">Organiza las clases y lecturas del temario. Puedes añadir múltiples recursos (videos, archivos PDF, presentaciones PowerPoint, u HTMLs) a cada módulo.</p>
+                            </div>
+
+                            <div className="space-y-6">
+                                {modulos.map((modulo, index) => (
+                                    <div key={index} className="bg-white border-2 border-zinc-150 p-6 rounded-2xl relative shadow-md hover:border-zinc-200 transition">
+                                        <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                                            <h3 className="text-md font-bold text-gray-800 flex items-center gap-2">
+                                                <span className="bg-blue-600 text-white text-xs h-6 w-6 rounded-full flex items-center justify-center font-black">{index + 1}</span>
+                                                Clase / Módulo de Aprendizaje
+                                            </h3>
+                                            {modulos.length > 1 && (
+                                                <button type="button" onClick={() => handleEliminarModulo(index)} className="text-red-500 hover:text-red-700 flex items-center text-xs font-bold transition">
+                                                    <Trash2 className="h-4 w-4 mr-1" /> Eliminar Módulo
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Título del Módulo</label>
+                                                <input type="text" required placeholder="Ej. Introducción a la Fisiología" value={modulo.titulo} onChange={(e) => handleModuloChange(index, 'titulo', e.target.value)} className="w-full text-sm rounded-lg border-gray-300 p-2.5 border bg-white text-black font-semibold" />
+                                            </div>
+
+                                            {/* Resources List */}
+                                            <div className="space-y-4 pt-2">
+                                                <div className="flex justify-between items-center">
+                                                    <label className="block text-xs font-extrabold text-gray-600 uppercase tracking-wider">Recursos del Módulo ({modulo.recursos.length})</label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAgregarRecurso(index)}
+                                                        className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-extrabold transition flex items-center gap-1 border border-blue-200"
+                                                    >
+                                                        <Plus className="h-3.5 w-3.5" /> Añadir Recurso
+                                                    </button>
+                                                </div>
+
+                                                {modulo.recursos.length === 0 ? (
+                                                    <p className="text-xs text-gray-500 italic py-4 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-center">No hay recursos en este módulo. Los alumnos verán solo el título y la evaluación (si requiere).</p>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        {modulo.recursos.map((recurso, rIdx) => (
+                                                            <div key={rIdx} className="bg-zinc-50 border border-zinc-200/80 rounded-xl p-4 relative shadow-sm hover:shadow transition">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleEliminarRecurso(index, rIdx)}
+                                                                    className="absolute top-3 right-3 text-zinc-400 hover:text-red-500 transition"
+                                                                    title="Eliminar recurso"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Título del Recurso</label>
+                                                                        <input
+                                                                            type="text"
+                                                                            required
+                                                                            placeholder="Ej. Diapositivas de la clase o Lectura obligatoria"
+                                                                            value={recurso.titulo}
+                                                                            onChange={(e) => handleRecursoChange(index, rIdx, 'titulo', e.target.value)}
+                                                                            className="w-full text-xs rounded border-gray-300 p-2 border bg-white text-black font-medium"
+                                                                        />
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Tipo de Recurso</label>
+                                                                        <div className="flex flex-wrap gap-3">
+                                                                            {(['video', 'pdf', 'ppt', 'html'] as const).map(tipoOpt => (
+                                                                                <label key={tipoOpt} className="flex items-center text-xs font-semibold text-gray-700 cursor-pointer">
+                                                                                    <input
+                                                                                        type="radio"
+                                                                                        checked={recurso.tipo === tipoOpt}
+                                                                                        onChange={() => handleRecursoChange(index, rIdx, 'tipo', tipoOpt)}
+                                                                                        className="mr-1.5 h-3.5 w-3.5 text-blue-600 focus:ring-blue-500"
+                                                                                    />
+                                                                                    {tipoOpt.toUpperCase()}
+                                                                                </label>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="col-span-full pt-1">
+                                                                        {recurso.tipo === 'video' ? (
+                                                                            <div>
+                                                                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Enlace del Video (YouTube o Vimeo)</label>
+                                                                                <input
+                                                                                    type="url"
+                                                                                    required
+                                                                                    placeholder="https://www.youtube.com/watch?v=..."
+                                                                                    value={recurso.url_contenido}
+                                                                                    onChange={(e) => handleRecursoChange(index, rIdx, 'url_contenido', e.target.value)}
+                                                                                    className="w-full text-xs rounded border-gray-300 p-2 border bg-white text-black"
+                                                                                />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div>
+                                                                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                                                                    {recurso.tipo === 'html' ? 'Seleccionar archivo HTML' : recurso.tipo === 'ppt' ? 'Seleccionar presentación PowerPoint (.ppt, .pptx)' : 'Seleccionar archivo PDF'}
+                                                                                </label>
+                                                                                <input
+                                                                                    type="file"
+                                                                                    required
+                                                                                    accept={
+                                                                                        recurso.tipo === 'html'
+                                                                                            ? '.html,.htm,text/html'
+                                                                                            : recurso.tipo === 'ppt'
+                                                                                                ? '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation'
+                                                                                                : '.pdf,application/pdf'
+                                                                                    }
+                                                                                    onChange={(e) => handleRecursoChange(index, rIdx, 'archivoPdf', e.target.files?.[0] || null)}
+                                                                                    className="w-full text-xs text-gray-500 border border-gray-200 p-1 rounded bg-white file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                                                                                />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Optional Modular Exam Box */}
+                                        <div className="mt-6 pt-4 border-t border-zinc-100">
+                                            <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={modulo.requiereExamen}
+                                                        onChange={(e) => handleModuloChange(index, 'requiereExamen', e.target.checked)}
+                                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                                    />
+                                                    <span className="text-sm font-bold text-indigo-900 flex items-center gap-1.5">
+                                                        <BrainCircuit className="h-4 w-4" />
+                                                        ¿Este módulo requiere un examen de comprensión?
+                                                    </span>
+                                                </label>
+
+                                                {modulo.requiereExamen && (
+                                                    <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-indigo-200 space-y-4">
+                                                        <div className="flex flex-wrap justify-between items-center gap-4 border-b border-indigo-100/50 pb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <label className="block text-xs font-semibold text-gray-700">Calificación Mínima Aprobatoria (0-100):</label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    value={modulo.examenMinAprobacion}
+                                                                    onChange={(e) => handleModuloChange(index, 'examenMinAprobacion', Number(e.target.value))}
+                                                                    className="w-20 text-xs rounded border-gray-300 p-1.5 border bg-white text-black"
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleAgregarPreguntaModulo(index)}
+                                                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition flex items-center gap-1"
+                                                            >
+                                                                <Plus className="h-3.5 w-3.5" /> Agregar Pregunta al Examen
+                                                            </button>
+                                                        </div>
+
+                                                        {modulo.examenPreguntas.length === 0 ? (
+                                                            <p className="text-xs text-indigo-600/80 italic text-center py-4 bg-white/40 border border-dashed border-indigo-100 rounded-lg">No hay preguntas registradas. Haz clic en "Agregar Pregunta" para iniciar.</p>
+                                                        ) : (
+                                                            <div className="space-y-4">
+                                                                {modulo.examenPreguntas.map((pregunta, pIdx) => (
+                                                                    <div key={pIdx} className="bg-white p-4 rounded-xl border border-indigo-100 relative shadow-sm">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleEliminarPreguntaModulo(index, pIdx)}
+                                                                            className="absolute top-3 right-3 text-zinc-300 hover:text-red-500 transition"
+                                                                            title="Eliminar pregunta"
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </button>
+
+                                                                        <div className="grid grid-cols-1 gap-3">
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                                <div>
+                                                                                    <label className="block text-[10px] font-bold text-gray-500 uppercase">Pregunta #{pIdx + 1}</label>
+                                                                                    <textarea
+                                                                                        required
+                                                                                        rows={2}
+                                                                                        placeholder="Ej. ¿Qué estructura celular es la encargada de producir energía?"
+                                                                                        value={pregunta.pregunta}
+                                                                                        onChange={(e) => handlePreguntaModuloChange(index, pIdx, 'pregunta', e.target.value)}
+                                                                                        className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black font-medium resize-y min-h-[2.5rem]"
+                                                                                    />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <label className="block text-[10px] font-bold text-gray-500 uppercase">Tipo de Pregunta</label>
+                                                                                    <select
+                                                                                        value={pregunta.tipo_pregunta || 'opcion_multiple'}
+                                                                                        onChange={(e) => handlePreguntaModuloChange(index, pIdx, 'tipo_pregunta', e.target.value as any)}
+                                                                                        className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black"
+                                                                                    >
+                                                                                        <option value="opcion_multiple">🔘 Opción Múltiple</option>
+                                                                                        <option value="respuesta_libre">✏️ Respuesta Libre (Abierta)</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {pregunta.tipo_pregunta !== 'respuesta_libre' ? (
+                                                                                <>
+                                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                                                        {(['a', 'b', 'c', 'd'] as const).map(opt => (
+                                                                                            <div key={opt}>
+                                                                                                <label className="block text-[9px] font-semibold text-gray-400 uppercase">Opción {opt.toUpperCase()}</label>
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    required={opt === 'a' || opt === 'b'}
+                                                                                                    placeholder={`Opción ${opt.toUpperCase()}`}
+                                                                                                    value={(pregunta as any)[`opcion_${opt}`]}
+                                                                                                    onChange={(e) => handlePreguntaModuloChange(index, pIdx, `opcion_${opt}` as any, e.target.value)}
+                                                                                                    className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black"
+                                                                                                />
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+
+                                                                                    <div className="flex items-center gap-3 border-t border-zinc-100 pt-2 text-xs">
+                                                                                        <span className="font-bold text-indigo-900">Respuesta Correcta:</span>
+                                                                                        <div className="flex gap-4">
+                                                                                            {['A', 'B', 'C', 'D'].map(letter => (
+                                                                                                <label key={letter} className="flex items-center gap-1 cursor-pointer">
+                                                                                                    <input
+                                                                                                        type="radio"
+                                                                                                        name={`correct_${index}_${pIdx}`}
+                                                                                                        checked={pregunta.respuesta_correcta === letter}
+                                                                                                        onChange={() => handlePreguntaModuloChange(index, pIdx, 'respuesta_correcta', letter)}
+                                                                                                        className="h-3 w-3 text-indigo-600"
+                                                                                                    />
+                                                                                                    <span className={`font-black ${pregunta.respuesta_correcta === letter ? 'text-indigo-600' : 'text-gray-400'}`}>{letter}</span>
+                                                                                                </label>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </>
+                                                                            ) : (
+                                                                                <div className="bg-indigo-50/40 p-3 rounded-lg border border-dashed border-indigo-150 text-[11px] text-indigo-700 italic">
+                                                                                    📝 Esta pregunta es de respuesta libre. Se mostrará una caja de texto al alumno y se aprobará de forma no-bloqueante al escribir cualquier respuesta no vacía.
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <button type="button" onClick={handleAgregarModulo} className="w-full py-4 border-2 border-dashed border-zinc-300 rounded-2xl text-zinc-500 font-bold hover:border-blue-500 hover:text-blue-600 transition flex justify-center items-center gap-2">
+                                    <Plus className="h-5 w-5" /> Añadir Objeto de Aprendizaje (Módulo)
+                                </button>
+                            </div>
+
+                            <div className="flex justify-between pt-4 border-t border-gray-100">
+                                <button type="button" onClick={() => setActiveTab('info')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
+                                    Atrás
+                                </button>
+                                <button type="button" onClick={() => setActiveTab('examen')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+                                    Siguiente: Examen Final
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tab 3: Examen Final */}
+                    {activeTab === 'examen' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">3. Evaluación (Examen Final del Curso)</h2>
+                                <p className="text-gray-500 text-xs mt-0.5">Configura un examen general que abarque todos los temas. Este examen es obligatorio para otorgar la constancia si se activa.</p>
+                            </div>
+
+                            <div className="bg-emerald-50/50 border border-emerald-150 rounded-2xl p-6 shadow-sm">
+                                <label className="flex items-center cursor-pointer gap-2">
+                                    <input type="checkbox" checked={requiereExamen} onChange={(e) => setRequiereExamen(e.target.checked)} className="h-5 w-5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded" />
+                                    <span className="block text-sm font-bold text-emerald-950">
+                                        Este curso requiere un examen final integral
+                                    </span>
+                                </label>
+
+                                {requiereExamen && (
+                                    <div className="mt-6 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-emerald-200 space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
+                                                <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(e.target.value === '' ? '' : Number(e.target.value))} className="w-full sm:w-32 rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5 text-black bg-white" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Subir Evaluación desde PDF (Carga masiva)</label>
+                                                <input type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-200 rounded-xl bg-white p-1" />
+                                                {isParsing && <p className="text-[10px] font-bold text-green-600 mt-1 animate-pulse italic">Analizando examen PDF...</p>}
+                                                <a href="/ejemplo-examen.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline underline-offset-2 transition-colors">
+                                                    📄 Ver ejemplo del formato correcto del PDF
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-emerald-100">
+                                            <div>
+                                                <label className="flex items-center cursor-pointer gap-2">
+                                                    <input type="checkbox" checked={conTiempo} onChange={(e) => setConTiempo(e.target.checked)} className="h-4 w-4 text-emerald-600 focus:ring-emerald-500" />
+                                                    <span className="block text-sm font-semibold text-gray-700">Limitar el tiempo de resolución</span>
+                                                </label>
+                                                {conTiempo && (
+                                                    <div className="mt-2 flex items-center gap-2">
+                                                        <input 
+                                                            type="number" 
+                                                            min="2" 
+                                                            max="300" 
+                                                            value={tiempoExamen} 
+                                                            onChange={(e) => setTiempoExamen(e.target.value === '' ? '' : Number(e.target.value))} 
+                                                            className="w-24 rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
+                                                        />
+                                                        <span className="text-sm text-gray-600">minutos (Máx. 300)</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <label className="text-sm font-semibold text-gray-700">Número de intentos permitidos:</label>
+                                                    <input 
+                                                        type="number" 
+                                                        min="1" 
+                                                        max="10" 
+                                                        value={intentosPermitidos} 
+                                                        onChange={(e) => setIntentosPermitidos(e.target.value === '' ? '' : Number(e.target.value))} 
+                                                        className="w-20 rounded-xl border-gray-300 shadow-sm border p-2 text-black bg-white" 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-emerald-100">
+                                            <label className="flex items-center cursor-pointer gap-2">
+                                                <input type="checkbox" checked={seguridadAumentada} onChange={(e) => setSeguridadAumentada(e.target.checked)} className="h-4 w-4 text-emerald-600 focus:ring-emerald-500" />
+                                                <span className="block text-sm font-semibold text-gray-700">Habilitar Seguridad Aumentada (Pantalla Completa Obligatoria)</span>
                                             </label>
                                             {seguridadAumentada && (
-                                                <div className="mt-2 space-y-2">
+                                                <div className="mt-3 space-y-2 max-w-xl">
                                                     <div className="flex items-center gap-2">
-                                                        <label className="text-xs font-semibold text-gray-600">Max. Cambios de Pantalla:</label>
+                                                        <label className="text-xs font-semibold text-gray-600">Máx. Cambios de ventana antes de envío automático:</label>
                                                         <input 
                                                             type="number" 
                                                             min="1" 
                                                             max="10" 
                                                             value={maxCambios} 
                                                             onChange={(e) => setMaxCambios(e.target.value === '' ? '' : Number(e.target.value))} 
-                                                            className="w-16 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
+                                                            className="w-16 rounded-xl border-gray-300 shadow-sm border p-2 text-black bg-white" 
                                                         />
                                                     </div>
-                                                    <p className="text-[10px] text-orange-600 font-medium">
-                                                        ⚠️ Se le avisará al alumno que debe permanecer en pantalla completa. Si cambia de ventana más de {maxCambios} veces, el examen se bloqueará/enviará.
+                                                    <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 p-2 rounded-lg leading-normal">
+                                                        🔒 Si el estudiante cambia de pestaña o sale del modo pantalla completa más de las veces especificadas, sus respuestas se enviarán de forma automática.
                                                     </p>
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
 
-                                    {/* Manual Questions Section */}
-                                    <div className="pt-4 border-t border-green-200">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h3 className="text-sm font-bold text-green-800 flex items-center gap-2">
-                                                <FileText className="h-4 w-4" /> Preguntas del Examen ({preguntasExtraidas.length})
-                                            </h3>
-                                            <button 
-                                                type="button" 
-                                                onClick={handleAgregarPreguntaManual}
-                                                className="bg-green-600 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-green-700 transition-colors flex items-center gap-1 shadow-sm"
-                                            >
-                                                <Plus className="h-3 w-3" /> Agregar Pregunta
-                                            </button>
-                                        </div>
-
-                                        {preguntasExtraidas.length === 0 && !isParsing && (
-                                            <div className="text-center py-8 bg-white/50 border-2 border-dashed border-green-200 rounded-lg">
-                                                <p className="text-xs text-gray-500 italic">No hay preguntas aún. Sube un PDF o agrégalas manualmente.</p>
+                                        {/* Final Exam Questions */}
+                                        <div className="pt-6 border-t border-emerald-150">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h3 className="text-sm font-bold text-emerald-800 flex items-center gap-2">
+                                                    <FileText className="h-4 w-4" /> Preguntas del Examen ({preguntasExtraidas.length})
+                                                </h3>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={handleAgregarPreguntaManual}
+                                                    className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition flex items-center gap-1 shadow-sm"
+                                                >
+                                                    <Plus className="h-3.5 w-3.5" /> Agregar Pregunta
+                                                </button>
                                             </div>
-                                        )}
 
-                                        <div className="space-y-4">
-                                            {preguntasExtraidas.map((p, i) => (
-                                                <div key={i} className="bg-white p-4 rounded-lg border border-green-100 shadow-sm hover:border-green-300 transition-all relative">
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => handleEliminarPreguntaManual(i)}
-                                                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500 transition-colors"
-                                                        title="Eliminar pregunta"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                    
-                                                    <div className="grid grid-cols-1 gap-4">
-                                                        <div className="col-span-full">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">#{i + 1}</span>
-                                                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Texto de la Pregunta</label>
-                                                            </div>
-                                                            <textarea 
-                                                                required
-                                                                value={p.pregunta} 
-                                                                onChange={(e) => handlePreguntaChange(i, 'pregunta', e.target.value)}
-                                                                placeholder="Ej. ¿Cuál es el componente encargado de...?"
-                                                                rows={2}
-                                                                className="w-full text-sm font-medium border-0 border-b-2 border-gray-50 focus:border-green-500 focus:ring-0 px-0 pb-1 bg-transparent text-black resize-none"
-                                                            />
-                                                        </div>
+                                            {preguntasExtraidas.length === 0 && !isParsing && (
+                                                <div className="text-center py-8 bg-white border border-dashed border-emerald-250 rounded-xl">
+                                                    <p className="text-xs text-gray-500 italic">No hay preguntas agregadas para el examen final. Créalas de forma manual o sube un PDF.</p>
+                                                </div>
+                                            )}
 
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-                                                            {(['a', 'b', 'c', 'd'] as const).map(opt => (
-                                                                <div key={opt}>
+                                            <div className="space-y-4">
+                                                {preguntasExtraidas.map((p, i) => (
+                                                    <div key={i} className="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm hover:border-emerald-250 transition relative">
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => handleEliminarPreguntaManual(i)}
+                                                            className="absolute top-2 right-2 text-gray-300 hover:text-red-500 transition"
+                                                            title="Eliminar pregunta"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                        
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                <div>
                                                                     <div className="flex items-center gap-2 mb-1">
-                                                                        <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${p.respuesta_correcta === opt.toUpperCase() ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                                                                            {opt.toUpperCase()}
-                                                                        </span>
-                                                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Opción {opt.toUpperCase()}</label>
+                                                                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">#{i + 1}</span>
+                                                                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Texto de la Pregunta</label>
                                                                     </div>
-                                                                    <input 
-                                                                        type="text" 
-                                                                        required={opt === 'a' || opt === 'b'} // At least 2 options
-                                                                        value={(p as any)[`opcion_${opt}`]} 
-                                                                        onChange={(e) => handlePreguntaChange(i, `opcion_${opt}` as any, e.target.value)}
-                                                                        className="w-full text-xs border-0 border-b border-gray-50 focus:border-green-400 focus:ring-0 px-0 py-1 bg-transparent text-black"
+                                                                    <textarea 
+                                                                        required
+                                                                        rows={2}
+                                                                        value={p.pregunta} 
+                                                                        onChange={(e) => handlePreguntaChange(i, 'pregunta', e.target.value)}
+                                                                        placeholder="Escribe la pregunta..."
+                                                                        className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black font-medium resize-y min-h-[2.5rem]"
                                                                     />
                                                                 </div>
-                                                            ))}
-                                                        </div>
-
-                                                        <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
-                                                            <label className="text-xs font-bold text-gray-600 italic">Respuesta Correcta:</label>
-                                                            <div className="flex gap-4">
-                                                                {['A', 'B', 'C', 'D'].map(letter => (
-                                                                    <label key={letter} className="flex items-center gap-1.5 cursor-pointer group">
-                                                                        <input 
-                                                                            type="radio" 
-                                                                            name={`correct_${i}`} 
-                                                                            checked={p.respuesta_correcta === letter}
-                                                                            onChange={() => handlePreguntaChange(i, 'respuesta_correcta', letter)}
-                                                                            className="h-3 w-3 text-green-600 focus:ring-green-500 border-gray-300"
-                                                                        />
-                                                                        <span className={`text-xs font-bold transition-colors ${p.respuesta_correcta === letter ? 'text-green-700' : 'text-gray-400 group-hover:text-gray-600'}`}>
-                                                                            {letter}
-                                                                        </span>
-                                                                    </label>
-                                                                ))}
+                                                                <div>
+                                                                    <label className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tipo de Pregunta</label>
+                                                                    <select
+                                                                        value={p.tipo_pregunta || 'opcion_multiple'}
+                                                                        onChange={(e) => handlePreguntaChange(i, 'tipo_pregunta', e.target.value as any)}
+                                                                        className="w-full text-xs rounded border-gray-200 p-2.5 border bg-white text-black"
+                                                                    >
+                                                                        <option value="opcion_multiple">🔘 Opción Múltiple</option>
+                                                                        <option value="respuesta_libre">✏️ Respuesta Libre (Abierta)</option>
+                                                                    </select>
+                                                                </div>
                                                             </div>
+
+                                                            {p.tipo_pregunta !== 'respuesta_libre' ? (
+                                                                <>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                                        {(['a', 'b', 'c', 'd'] as const).map(opt => (
+                                                                            <div key={opt}>
+                                                                                <label className="block text-[9px] font-semibold text-gray-455 uppercase">Opción {opt.toUpperCase()}</label>
+                                                                                <input 
+                                                                                    type="text" 
+                                                                                    required={opt === 'a' || opt === 'b'}
+                                                                                    value={(p as any)[`opcion_${opt}`]} 
+                                                                                    onChange={(e) => handlePreguntaChange(i, `opcion_${opt}` as any, e.target.value)}
+                                                                                    className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black"
+                                                                                />
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-4 pt-2 border-t border-gray-50 text-xs">
+                                                                        <span className="font-bold text-emerald-800">Respuesta Correcta:</span>
+                                                                        <div className="flex gap-4">
+                                                                            {['A', 'B', 'C', 'D'].map(letter => (
+                                                                                <label key={letter} className="flex items-center gap-1.5 cursor-pointer">
+                                                                                    <input 
+                                                                                        type="radio" 
+                                                                                        name={`correct_final_${i}`} 
+                                                                                        checked={p.respuesta_correcta === letter}
+                                                                                        onChange={() => handlePreguntaChange(i, 'respuesta_correcta', letter)}
+                                                                                        className="h-3.5 w-3.5 text-emerald-600"
+                                                                                    />
+                                                                                    <span className={`font-bold ${p.respuesta_correcta === letter ? 'text-emerald-700' : 'text-gray-400'}`}>{letter}</span>
+                                                                                </label>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="bg-emerald-50/40 p-3 rounded-lg border border-dashed border-emerald-150 text-[11px] text-emerald-700 italic">
+                                                                    📝 Esta pregunta es de respuesta libre. Se mostrará una caja de texto al alumno y se aprobará de forma no-bloqueante al escribir cualquier respuesta no vacía.
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                )}
+                            </div>
 
-                    {/* Detalles Adicionales */}
-                    <div>
-                        <h2 className="text-lg font-medium text-gray-900 mb-4 border-b pb-2">4. Detalles Adicionales</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className={profile?.rol === 'instructor' ? 'col-span-2' : ''}>
-                                <label className="block text-sm font-medium text-gray-700">Duración Estructurada (Ej. "10 Horas", "5 Módulos")</label>
-                                <input type="text" name="duracion" required maxLength={30} value={formData.duracion} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" />
-                                <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 30 caracteres (para el certificado). Usa la nota para horarios completos.</p>
+                            <div className="flex justify-between pt-4 border-t border-gray-100">
+                                <button type="button" onClick={() => setActiveTab('modulos')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
+                                    Atrás
+                                </button>
+                                <button type="button" onClick={() => setActiveTab('avisos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+                                    Siguiente: Avisos y Enlaces
+                                </button>
                             </div>
-                            {profile?.rol !== 'instructor' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Precio de Venta (MXN)</label>
-                                    <div className="mt-1 relative rounded-md shadow-sm">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <span className="text-gray-500 sm:text-sm">$</span>
+                        </div>
+                    )}
+
+                    {/* Tab 4: Avisos e Historial (Clases en vivo y notas) */}
+                    {activeTab === 'avisos' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">4. Clase en Vivo / Enlace e Indicaciones</h2>
+                                <p className="text-gray-500 text-xs mt-0.5 font-medium">Especifica links de Zoom, Teams o Meet y avisa a los alumnos sobre fechas de reunión o lecturas importantes.</p>
+                            </div>
+
+                            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 shadow-sm space-y-6">
+                                <h3 className="text-md font-bold text-blue-950 flex items-center gap-2">
+                                    <Activity className="h-5 w-5 text-blue-600" />
+                                    Clase en Vivo y Enlace Especial (Opcional)
+                                </h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="block text-sm font-semibold text-gray-700">Enlace de la Videoconferencia</label>
+                                            {formData.reunion_url && (
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, reunion_url: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
+                                                    ✕ LIMPIAR ENLACE
+                                                </button>
+                                            )}
                                         </div>
-                                        <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" placeholder="0.00" />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Vigencia de la Constancia</label>
-                                <select
-                                    value={vigenciaAnos}
-                                    onChange={(e) => setVigenciaAnos(Number(e.target.value))}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white"
-                                >
-                                    <option value={1}>1 año</option>
-                                    <option value={2}>2 años</option>
-                                    <option value={3}>3 años</option>
-                                    <option value={5}>5 años</option>
-                                    <option value={10}>10 años</option>
-                                </select>
-                                <p className="text-xs text-gray-500 mt-1">Tiempo de validez de la constancia a partir de su emisión.</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Categoría del Curso</label>
-                                <select
-                                    value={formData.categoria}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white"
-                                >
-                                    <option value="desarrollo">🧠 Desarrollo Humano</option>
-                                    <option value="salud">🩺 Salud y Medicina</option>
-                                    <option value="arte">🎨 Arte y Cultura</option>
-                                    <option value="tecnologia">💻 Tecnología y Ciencia</option>
-                                    <option value="educacion">📚 Educación</option>
-                                </select>
-                                <p className="text-xs text-gray-500 mt-1">Clasificación temática del curso para el catálogo.</p>
-                            </div>
-                        </div>
-                        {profile?.rol !== 'instructor' && (
-                            <div className="mb-4">
-                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm">
-                                    <label className="flex items-start cursor-pointer gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={requierePagoCompleto}
-                                            onChange={(e) => setRequierePagoCompleto(e.target.checked)}
-                                            className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                        <input 
+                                            type="url" 
+                                            name="reunion_url" 
+                                            value={formData.reunion_url} 
+                                            onChange={handleChange} 
+                                            placeholder="https://zoom.us/j/... o https://meet.google.com/..." 
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" 
                                         />
-                                        <div>
-                                            <span className="block text-sm font-semibold text-orange-900">
-                                                Requiere el 100% del curso pagado para obtener constancia
-                                            </span>
-                                            <span className="block text-xs text-orange-700 mt-0.5">
-                                                Si se activa, los alumnos que usen cupones de descuento deberán cubrir el valor total del curso antes de descargar su constancia.
-                                            </span>
+                                        <p className="text-xs text-gray-500 mt-1 italic">Este link se mostrará destacado para los alumnos dentro del salón de clases.</p>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="block text-sm font-semibold text-gray-700">Nota del Profesor para los Estudiantes</label>
+                                            {formData.nota_profesor && (
+                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, reunion_url: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
+                                                    ✕ QUITAR NOTA
+                                                </button>
+                                            )}
                                         </div>
-                                    </label>
+                                        <textarea 
+                                            name="nota_profesor" 
+                                            value={formData.nota_profesor} 
+                                            onChange={handleChange} 
+                                            rows={4} 
+                                            placeholder="Escribe indicaciones sobre las clases, fechas de entrega o saludos para tus alumnos..." 
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" 
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                    {/* Clase en Vivo y Notas */}
-                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 shadow-sm">
-                        <h2 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
-                            <Activity className="h-5 w-5 text-blue-600" /> 5. Clase en Vivo / Avisos (Opcional)
-                        </h2>
-                        <div className="space-y-4">
-                            <div>
-                                <div className="flex justify-between items-center mb-1">
-                                    <label className="block text-sm font-medium text-gray-700">Enlace de Reunión (Zoom, Meet, etc.)</label>
-                                    {formData.reunion_url && (
-                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, reunion_url: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
-                                            ✕ LIMPIAR ENLACE
-                                        </button>
-                                    )}
-                                </div>
-                                <input 
-                                    type="url" 
-                                    name="reunion_url" 
-                                    value={formData.reunion_url} 
-                                    onChange={handleChange} 
-                                    placeholder="https://zoom.us/j/..." 
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" 
-                                />
-                                <p className="text-xs text-gray-500 mt-1 italic">Este enlace aparecerá destacado en el contenido del curso.</p>
-                            </div>
-                            <div>
-                                <div className="flex justify-between items-center mb-1">
-                                    <label className="block text-sm font-medium text-gray-700">Nota o Aviso para Alumnos</label>
-                                    {formData.nota_profesor && (
-                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, nota_profesor: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
-                                            ✕ QUITAR NOTA
-                                        </button>
-                                    )}
-                                </div>
-                                <textarea 
-                                    name="nota_profesor" 
-                                    value={formData.nota_profesor} 
-                                    onChange={handleChange} 
-                                    rows={3} 
-                                    placeholder="Ej: La clase en vivo será el próximo viernes a las 6:00 PM..." 
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" 
-                                />
+
+                            <div className="flex justify-between pt-4 border-t border-gray-100">
+                                <button type="button" onClick={() => setActiveTab('examen')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
+                                    Atrás
+                                </button>
+                                <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 flex items-center gap-2">
+                                    {loading ? 'Registrando curso...' : 'Enviar Curso a Revisión'}
+                                </button>
                             </div>
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Beneficios / ¿Qué aprenderá el alumno?</label>
-                        <textarea name="beneficios" required value={formData.beneficios} onChange={handleChange} rows={2} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white" placeholder="Ej. Al finalizar este curso dominarás..." />
-                    </div>
-                    </div>
-
-                    {/* Submit */}
-                    <div className="pt-6 border-t border-gray-200">
-                        <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all shadow-lg active:scale-[0.98]">
-                            {loading ? 'Subiendo archivos y registrando curso...' : 'Enviar Curso a Revisión'}
-                        </button>
-                    </div>
+                    )}
                 </form>
             </div>
+
+            {/* Premium Glassmorphic Modal message dialog */}
+            {modalMessage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/20 p-6 max-w-md w-full shadow-2xl animate-scale-up text-center">
+                        <div className="flex flex-col items-center">
+                            {modalMessage.type === 'success' ? (
+                                <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                                    <CheckCircle className="h-10 w-10 animate-bounce" />
+                                </div>
+                            ) : modalMessage.type === 'error' ? (
+                                <div className="h-16 w-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-4">
+                                    <Activity className="h-10 w-10 text-rose-600 animate-pulse" />
+                                </div>
+                            ) : (
+                                <div className="h-16 w-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                                    <FileText className="h-10 w-10 text-blue-600" />
+                                </div>
+                            )}
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{modalMessage.title}</h3>
+                            <p className="text-gray-600 text-sm mb-6 leading-relaxed whitespace-pre-line">{modalMessage.content}</p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const url = modalMessage.redirectUrl;
+                                    setModalMessage(null);
+                                    if (url) router.push(url);
+                                }}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-blue-500/20"
+                            >
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
+}
 }

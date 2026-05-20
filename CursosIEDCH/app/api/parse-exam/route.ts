@@ -28,21 +28,49 @@ export async function POST(req: Request) {
         if (bloqPregunta && bloqPregunta.length > 0) {
             for (const block of bloqPregunta) {
                 const lines = block.split('\n').map((l: string) => l.trim()).filter((l: string) => l !== '');
-                if (lines.length >= 5) {
-                    const pregunta = lines[0];
-                    const opcion_a = lines[1];
-                    const opcion_b = lines[2];
-                    const opcion_c = lines[3];
-                    const opcion_d = lines[4];
-                    let respuesta_correcta = '';
-                    const lastLine = lines[lines.length - 1];
-                    if (lastLine.startsWith('(') && lastLine.endsWith(')')) {
-                        respuesta_correcta = lastLine.substring(1, lastLine.length - 1).trim();
-                    } else {
-                        const matchCorrect = block.match(/\((.*?)\)/);
-                        if (matchCorrect) respuesta_correcta = matchCorrect[1].trim();
+                if (lines.length > 0) {
+                    const isLibre = block.toLowerCase().includes('(respuesta libre)') || block.toLowerCase().includes('(respuestalibre)');
+                    if (isLibre) {
+                        const preguntaLine = lines[0];
+                        let preguntaText = lines.slice(1).filter((l: string) => !l.toLowerCase().includes('(respuesta libre') && !l.toLowerCase().includes('(respuestalibre')).join(' ');
+                        if (!preguntaText) {
+                            preguntaText = preguntaLine;
+                        } else {
+                            preguntaText = preguntaLine + ' ' + preguntaText;
+                        }
+                        questions.push({
+                            pregunta: preguntaText,
+                            opcion_a: '',
+                            opcion_b: '',
+                            opcion_c: '',
+                            opcion_d: '',
+                            respuesta_correcta: '',
+                            tipo_pregunta: 'respuesta_libre'
+                        });
+                    } else if (lines.length >= 5) {
+                        const pregunta = lines[0];
+                        const opcion_a = lines[1];
+                        const opcion_b = lines[2];
+                        const opcion_c = lines[3];
+                        const opcion_d = lines[4];
+                        let respuesta_correcta = '';
+                        const lastLine = lines[lines.length - 1];
+                        if (lastLine.startsWith('(') && lastLine.endsWith(')')) {
+                            respuesta_correcta = lastLine.substring(1, lastLine.length - 1).trim();
+                        } else {
+                            const matchCorrect = block.match(/\((.*?)\)/);
+                            if (matchCorrect) respuesta_correcta = matchCorrect[1].trim();
+                        }
+                        questions.push({
+                            pregunta,
+                            opcion_a,
+                            opcion_b,
+                            opcion_c,
+                            opcion_d,
+                            respuesta_correcta,
+                            tipo_pregunta: 'opcion_multiple'
+                        });
                     }
-                    questions.push({ pregunta, opcion_a, opcion_b, opcion_c, opcion_d, respuesta_correcta });
                 }
             }
         }
@@ -60,10 +88,22 @@ export async function POST(req: Request) {
 
             let currentQuestion: string | null = null;
             let currentOptions: string[] = [];
-            let currentAnswer = '';
 
             const saveQuestion = (answer: string) => {
-                if (currentQuestion && currentOptions.length >= 4) {
+                if (!currentQuestion) return;
+                const isLibre = answer.toLowerCase().includes('respuesta libre') || answer.toLowerCase().includes('respuestalibre');
+
+                if (isLibre) {
+                    questions.push({
+                        pregunta: currentQuestion,
+                        opcion_a: '',
+                        opcion_b: '',
+                        opcion_c: '',
+                        opcion_d: '',
+                        respuesta_correcta: '',
+                        tipo_pregunta: 'respuesta_libre'
+                    });
+                } else if (currentOptions.length >= 4) {
                     questions.push({
                         pregunta: currentQuestion,
                         opcion_a: currentOptions[0].replace(/^[A-D][.)]\s*/i, '').trim(),
@@ -71,18 +111,24 @@ export async function POST(req: Request) {
                         opcion_c: currentOptions[2].replace(/^[A-D][.)]\s*/i, '').trim(),
                         opcion_d: currentOptions[3].replace(/^[A-D][.)]\s*/i, '').trim(),
                         respuesta_correcta: answer,
+                        tipo_pregunta: 'opcion_multiple'
                     });
                 }
             };
 
             for (const line of lines) {
-                // ¿Es línea de respuesta? Formato: (Texto LETRA) ej. (Hipótesis B)
+                // ¿Es línea de respuesta? Formato: (Texto LETRA) ej. (Hipótesis B) o (Respuesta Libre)
                 const answerMatch = line.match(/^\((.+)\)$/);
                 if (answerMatch) {
                     const inner = answerMatch[1].trim();
-                    const letterMatch = inner.match(/\b([A-D])\s*$/i);
-                    const resp = letterMatch ? letterMatch[1].toUpperCase() : inner;
-                    saveQuestion(resp);
+                    const isLibre = inner.toLowerCase().includes('respuesta libre') || inner.toLowerCase().includes('respuestalibre');
+                    if (isLibre) {
+                        saveQuestion(inner);
+                    } else {
+                        const letterMatch = inner.match(/\b([A-D])\s*$/i);
+                        const resp = letterMatch ? letterMatch[1].toUpperCase() : inner;
+                        saveQuestion(resp);
+                    }
                     currentQuestion = null;
                     currentOptions = [];
                     continue;
@@ -120,15 +166,15 @@ export async function POST(req: Request) {
             }, { status: 400 });
         }
 
-        // Verificar que todas las preguntas tengan respuesta
+        // Verificar que todas las preguntas de opción múltiple tengan respuesta
         const sinRespuesta = questions
             .map((q: any, i: number) => ({ num: i + 1, q }))
-            .filter(({ q }: { q: any }) => !q.respuesta_correcta);
+            .filter(({ q }: { q: any }) => q.tipo_pregunta === 'opcion_multiple' && !q.respuesta_correcta);
 
         if (sinRespuesta.length > 0) {
             const nums = sinRespuesta.map(({ num }: { num: number }) => num).join(', ');
             return NextResponse.json({
-                error: `No se detectó la respuesta correcta para la(s) pregunta(s): ${nums}. Verifica que el PDF tenga el formato (Respuesta LETRA) en cada pregunta.`
+                error: `No se detectó la respuesta correcta para la(s) pregunta(s) de opción múltiple: ${nums}. Verifica que el PDF tenga el formato (Respuesta LETRA) en cada pregunta.`
             }, { status: 400 });
         }
 

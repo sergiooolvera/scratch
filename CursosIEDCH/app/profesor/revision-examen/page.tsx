@@ -10,6 +10,7 @@ export default function RevisionExamenPage() {
     const [cursos, setCursos] = useState<any[]>([])
     const [selectedCurso, setSelectedCurso] = useState<string>('')
     const [resultados, setResultados] = useState<any[]>([])
+    const [examenes, setExamenes] = useState<any[]>([])
     const [selectedResultado, setSelectedResultado] = useState<any>(null)
     const [preguntas, setPreguntas] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
@@ -20,12 +21,12 @@ export default function RevisionExamenPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // Fetch courses by this professor that require an exam
+            // Fetch courses by this professor. Some courses only have modular exams,
+            // so filtering by requiere_examen would hide them from this review screen.
             const { data } = await supabase
                 .from('ie_cursos')
                 .select('id, titulo')
                 .eq('creado_por', user.id)
-                .eq('requiere_examen', true)
                 .order('created_at', { ascending: false })
 
             if (data) setCursos(data)
@@ -38,35 +39,23 @@ export default function RevisionExamenPage() {
         const fetchResultados = async () => {
             if (!selectedCurso) {
                 setResultados([])
+                setExamenes([])
+                setPreguntas([])
                 return
             }
 
             setLoading(true)
             // Fetch exam for the selected course
-            const { success, data, error } = await getResultadosExamen(selectedCurso);
+            const { success, data, preguntas: preguntasExamen, examenes: examenesCurso, error } = await getResultadosExamen(selectedCurso);
 
             if (success && data) {
                 setResultados(data);
-                
-                // Fetch questions to show question text later
-                const { data: examen } = await supabase
-                    .from('ie_examenes')
-                    .select('id')
-                    .eq('curso_id', selectedCurso)
-                    .single()
-
-                if (examen) {
-                    const { data: pregs } = await supabase
-                        .from('ie_preguntas')
-                        .select('*')
-                        .eq('examen_id', examen.id)
-                        .order('orden', { ascending: true })
-                    
-                    if (pregs) setPreguntas(pregs)
-                }
+                setExamenes(examenesCurso || [])
+                setPreguntas(preguntasExamen || [])
             } else if (error) {
-                console.error(error);
                 setResultados([]);
+                setExamenes([]);
+                setPreguntas([]);
             }
             setLoading(false)
         }
@@ -76,10 +65,12 @@ export default function RevisionExamenPage() {
     const handleDownload = async () => {
         if (!selectedResultado) return;
 
+        const preguntasResultado = preguntas.filter(p => p.examen_id === selectedResultado.examen_id);
         const alumno = selectedResultado.ie_profiles?.nombre || 'Alumno';
         const fecha = new Date(selectedResultado.created_at).toLocaleString();
         const calificacion = selectedResultado.calificacion;
         const aprobado = selectedResultado.aprobado ? 'APROBADO' : 'REPROBADO';
+        const examenTitulo = selectedResultado.examen?.titulo || 'Examen';
 
         // Create a temporary element to hold the HTML
         const element = document.createElement('div');
@@ -90,6 +81,7 @@ export default function RevisionExamenPage() {
         let content = `
             <div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">
                 <h1 style="color: #1e3a8a;">Reporte de Examen</h1>
+                <p><strong>Examen:</strong> ${examenTitulo}</p>
                 <p><strong>Alumno:</strong> ${alumno}</p>
                 <p><strong>Fecha:</strong> ${fecha}</p>
                 <p><strong>Calificación:</strong> ${calificacion}% (${aprobado})</p>
@@ -97,7 +89,7 @@ export default function RevisionExamenPage() {
             <div>
         `;
 
-        preguntas.forEach((p, index) => {
+        preguntasResultado.forEach((p, index) => {
             const detalle = selectedResultado.respuestas_detalle?.[p.id];
             content += `
                 <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
@@ -149,6 +141,14 @@ export default function RevisionExamenPage() {
         }
     }
 
+    const preguntasResultadoSeleccionado = selectedResultado
+        ? preguntas.filter(p => p.examen_id === selectedResultado.examen_id)
+        : []
+    const examenesConResultados = examenes.map(examen => ({
+        ...examen,
+        resultados: resultados.filter(r => r.examen_id === examen.id)
+    }))
+
     if (loading && cursos.length === 0) return (
         <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-zinc-50">
             <div className="text-gray-500 animate-pulse text-lg">Cargando...</div>
@@ -191,28 +191,42 @@ export default function RevisionExamenPage() {
 
                         {selectedCurso && (
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                <h2 className="font-bold text-gray-900 mb-4">Exámenes Contestados</h2>
-                                {resultados.length === 0 ? (
-                                    <p className="text-gray-500 text-sm">Nadie ha contestado este examen aún.</p>
+                                <h2 className="font-bold text-gray-900 mb-4">Exámenes del curso</h2>
+                                {examenesConResultados.length === 0 ? (
+                                    <p className="text-gray-500 text-sm">Este curso no tiene exámenes configurados.</p>
                                 ) : (
-                                    <div className="space-y-2">
-                                        {resultados.map(r => (
-                                            <button
-                                                key={r.id}
-                                                onClick={() => setSelectedResultado(r)}
-                                                className={`w-full text-left p-3 rounded-lg border transition-colors flex justify-between items-center ${selectedResultado?.id === r.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}
-                                            >
-                                                <div>
-                                                    <p className="font-medium text-gray-900 text-sm flex items-center gap-1">
-                                                        <User className="h-3.5 w-3.5 text-gray-500" />
-                                                        {r.ie_profiles?.nombre || 'Alumno'}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString()}</p>
+                                    <div className="space-y-4">
+                                        {examenesConResultados.map(examen => (
+                                            <div key={examen.id} className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50">
+                                                <div className="px-3 py-2 bg-white border-b border-gray-100">
+                                                    <p className="text-sm font-bold text-gray-900">{examen.titulo}</p>
+                                                    <p className="text-[11px] font-semibold text-gray-500 uppercase">{examen.tipo === 'final' ? 'Examen final' : 'Examen modular'}</p>
                                                 </div>
-                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${r.aprobado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                    {r.calificacion}%
-                                                </span>
-                                            </button>
+                                                {examen.resultados.length === 0 ? (
+                                                    <p className="px-3 py-3 text-xs text-gray-500">Sin alumnos todavía.</p>
+                                                ) : (
+                                                    <div className="p-2 space-y-2">
+                                                        {examen.resultados.map((r: any) => (
+                                                            <button
+                                                                key={r.id}
+                                                                onClick={() => setSelectedResultado(r)}
+                                                                className={`w-full text-left p-3 rounded-lg border transition-colors flex justify-between items-center ${selectedResultado?.id === r.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-100 hover:bg-gray-100'}`}
+                                                            >
+                                                                <div>
+                                                                    <p className="font-medium text-gray-900 text-sm flex items-center gap-1">
+                                                                        <User className="h-3.5 w-3.5 text-gray-500" />
+                                                                        {r.ie_profiles?.nombre || 'Alumno'}
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString()}</p>
+                                                                </div>
+                                                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${r.aprobado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                    {r.calificacion}%
+                                                                </span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 )}
@@ -229,6 +243,9 @@ export default function RevisionExamenPage() {
                                         <h2 className="text-2xl font-bold text-gray-900">
                                             Detalle de: {selectedResultado.ie_profiles?.nombre || 'Alumno'}
                                         </h2>
+                                        <p className="text-sm font-semibold text-blue-700 mb-1">
+                                            {selectedResultado.examen?.titulo || 'Examen'}
+                                        </p>
                                         <p className="text-sm text-gray-500 mb-2">
                                             Fecha: {new Date(selectedResultado.created_at).toLocaleString()}
                                         </p>
@@ -246,7 +263,7 @@ export default function RevisionExamenPage() {
                                 </div>
 
                                 <div className="space-y-6">
-                                    {preguntas.map((p, index) => {
+                                    {preguntasResultadoSeleccionado.map((p, index) => {
                                         const detalle = selectedResultado.respuestas_detalle?.[p.id];
                                         return (
                                             <div key={p.id} className="bg-gray-50 rounded-lg p-5 border border-gray-150">

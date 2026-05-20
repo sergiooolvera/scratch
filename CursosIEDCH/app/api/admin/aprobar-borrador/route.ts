@@ -16,6 +16,43 @@ export async function POST(req: Request) {
             delete (cursoData as any).es_super_curso
         }
 
+        const { data: modulosActuales } = await supabaseAdmin
+            .from('ie_curso_modulos')
+            .select('id, titulo')
+            .eq('curso_id', cursoId)
+
+        const { data: examenesModularesActuales } = await supabaseAdmin
+            .from('ie_examenes')
+            .select('id, modulo_id')
+            .eq('curso_id', cursoId)
+            .not('modulo_id', 'is', null)
+
+        const examenIds = (examenesModularesActuales || []).map((e: any) => e.id)
+        const { data: resultadosModulares } = examenIds.length > 0
+            ? await supabaseAdmin
+                .from('ie_resultados_examenes')
+                .select('examen_id')
+                .in('examen_id', examenIds)
+            : { data: [] }
+
+        const examenesConResultados = new Set((resultadosModulares || []).map((r: any) => r.examen_id))
+        const modulosProtegidos = new Set(
+            (examenesModularesActuales || [])
+                .filter((e: any) => examenesConResultados.has(e.id))
+                .map((e: any) => e.modulo_id)
+        )
+        const draftModuloIds = new Set((modulos || []).map((m: any) => m.id).filter(Boolean))
+        const modulosProtegidosEliminados = (modulosActuales || []).filter((m: any) => modulosProtegidos.has(m.id) && !draftModuloIds.has(m.id))
+
+        if (modulosProtegidosEliminados.length > 0) {
+            throw new Error(`No se puede aprobar el borrador porque intenta eliminar módulos con exámenes modulares contestados: ${modulosProtegidosEliminados.map((m: any) => m.titulo).join(', ')}`)
+        }
+
+        const modulosProtegidosSinExamen = (modulos || []).filter((m: any) => m.id && modulosProtegidos.has(m.id) && !m.examen)
+        if (modulosProtegidosSinExamen.length > 0) {
+            throw new Error(`No se puede aprobar el borrador porque intenta quitar exámenes modulares ya contestados en: ${modulosProtegidosSinExamen.map((m: any) => m.titulo).join(', ')}`)
+        }
+
         // 1. Actualizar el curso base y limpiar el borrador
         const { error: updateErr } = await supabaseAdmin.from('ie_cursos').update({
             ...cursoData,
@@ -24,29 +61,161 @@ export async function POST(req: Request) {
 
         if (updateErr) throw updateErr
 
-        // 2. Actualizar Módulos
-        // Eliminar TODOS los módulos anteriores
-        const { error: delErr } = await supabaseAdmin.from('ie_curso_modulos').delete().eq('curso_id', cursoId)
-        if (delErr) throw delErr
-
-        if (modulos && modulos.length > 0) {
-            const newModulos = modulos.map((m: any) => ({
-                curso_id: cursoId,
-                titulo: m.titulo,
-                url_contenido: m.url_contenido,
-                orden: m.orden
-            }))
-            const { error: insErr } = await supabaseAdmin.from('ie_curso_modulos').insert(newModulos)
-            if (insErr) throw insErr
+        // 2. Actualizar Módulos sin borrar los protegidos por resultados de alumnos.
+        const modulosAEliminar = (modulosActuales || []).filter((m: any) => !draftModuloIds.has(m.id))
+        if (modulosAEliminar.length > 0) {
+            const { error: delErr } = await supabaseAdmin
+                .from('ie_curso_modulos')
+                .delete()
+                .in('id', modulosAEliminar.map((m: any) => m.id))
+            if (delErr) throw delErr
         }
 
-        // 3. Actualizar Examen (NUEVO)
+        let nuevosModulosId: { id: string; orden: number }[] = [];
+        if (modulos && modulos.length > 0) {
+            for (const m of modulos) {
+                const moduloPayload = {
+                    curso_id: cursoId,
+                    titulo: m.titulo,
+                    url_contenido: m.url_contenido,
+                    orden: m.orden
+                }
+
+                if (m.id) {
+                    const { error: updModErr } = await supabaseAdmin
+                        .from('ie_curso_modulos')
+                        .update(moduloPayload)
+                        .eq('id', m.id)
+                    if (updModErr) throw updModErr
+                    nuevosModulosId.push({ id: m.id, orden: m.orden })
+                } else {
+                    const { data: insertedMod, error: insErr } = await supabaseAdmin
+                        .from('ie_curso_modulos')
+                        .insert(moduloPayload)
+                        .select('id, orden')
+                        .single()
+                    if (insErr) throw insErr
+                    if (insertedMod) nuevosModulosId.push(insertedMod)
+                }
+            }
+
+            // Insertar recursos de cada módulo en ie_modulo_recursos
+            for (const m of modulos) {
+                const matchMod = nuevosModulosId.find(item => item.orden === m.orden);
+                if (matchMod) {
+                    const moduloId = matchMod.id;
+                    const recursosPayload = [];
+
+                    await supabaseAdmin.from('ie_modulo_recursos').delete().eq('modulo_id', moduloId);
+
+                    if (m.recursos && Array.isArray(m.recursos) && m.recursos.length > 0) {
+                        m.recursos.forEach((r: any, rIdx: number) => {
+                            recursosPayload.push({
+                                modulo_id: moduloId,
+                                titulo: r.titulo || 'Material del Módulo',
+                                url_contenido: r.url_contenido || '',
+                                orden: rIdx + 1
+                            });
+                        });
+                    } else if (m.url_contenido) {
+                        // Fallback logic
+                        recursosPayload.push({
+                            modulo_id: moduloId,
+                            titulo: 'Material del Módulo',
+                            url_contenido: m.url_contenido,
+                            orden: 1
+                        });
+                    }
+
+                    if (recursosPayload.length > 0) {
+                        const { error: recsErr } = await supabaseAdmin
+                            .from('ie_modulo_recursos')
+                            .insert(recursosPayload);
+                        if (recsErr) throw recsErr;
+                    }
+                }
+            }
+        }
+
+        // 3. Crear y Vincular Exámenes Modulares y Preguntas a partir del Borrador
+        if (modulos && modulos.length > 0) {
+            for (const m of modulos) {
+                const matchMod = nuevosModulosId.find(item => item.orden === m.orden);
+                if (matchMod) {
+                    const moduloId = matchMod.id;
+                    const { data: exmExistente } = await supabaseAdmin
+                        .from('ie_examenes')
+                        .select('id')
+                        .eq('curso_id', cursoId)
+                        .eq('modulo_id', moduloId)
+                        .maybeSingle()
+
+                    if (m.examen) {
+                        const examPayload = {
+                            curso_id: cursoId,
+                            modulo_id: moduloId,
+                            min_aprobacion: m.examen.min_aprobacion,
+                            tiempo_limite: null,
+                            seguridad_aumentada: false,
+                            max_cambios_pantalla: 3,
+                            intentos_permitidos: 3
+                        }
+
+                        let examenId = exmExistente?.id;
+                        if (examenId) {
+                            const { error: errExmMod } = await supabaseAdmin
+                                .from('ie_examenes')
+                                .update(examPayload)
+                                .eq('id', examenId)
+                            if (errExmMod) throw errExmMod
+                        } else {
+                            const { data: nuevoExmModular, error: errExmMod } = await supabaseAdmin
+                            .from('ie_examenes')
+                            .insert(examPayload)
+                            .select('id')
+                            .single()
+                            if (errExmMod) throw errExmMod
+                            examenId = nuevoExmModular?.id
+                        }
+
+                        // Insertar preguntas reactivas modulares en ie_preguntas
+                        if (examenId && !examenesConResultados.has(examenId) && m.examen.preguntas && m.examen.preguntas.length > 0) {
+                            await supabaseAdmin.from('ie_preguntas').delete().eq('examen_id', examenId)
+                            const pregsModularParaInsertar = m.examen.preguntas.map((p: any) => {
+                                const isLibre = p.tipo_pregunta === 'respuesta_libre';
+                                return {
+                                    examen_id: examenId,
+                                    pregunta: p.pregunta,
+                                    opcion_a: isLibre ? '' : (p.opcion_a || ''),
+                                    opcion_b: isLibre ? '' : (p.opcion_b || ''),
+                                    opcion_c: isLibre ? '' : (p.opcion_c || ''),
+                                    opcion_d: isLibre ? '' : (p.opcion_d || ''),
+                                    respuesta_correcta: isLibre ? 'A' : (p.respuesta_correcta || 'A'),
+                                    tipo_pregunta: p.tipo_pregunta || 'opcion_multiple',
+                                    orden: p.orden
+                                };
+                            })
+                            const { error: errPregsMod } = await supabaseAdmin
+                                .from('ie_preguntas')
+                                .insert(pregsModularParaInsertar)
+                            
+                            if (errPregsMod) throw errPregsMod
+                        }
+                    } else if (exmExistente && !examenesConResultados.has(exmExistente.id)) {
+                        await supabaseAdmin.from('ie_examenes').delete().eq('id', exmExistente.id)
+                    }
+                }
+            }
+        }
+
+        // 4. Actualizar Examen Final (modulo_id IS NULL)
         if (examen) {
-            // Buscar si ya existe el examen
+            // Buscar si ya existe el examen final original
             let { data: exmExistente } = await supabaseAdmin
                 .from('ie_examenes')
                 .select('id')
                 .eq('curso_id', cursoId)
+                .is('modulo_id', null)
                 .single()
 
             let examenId: string;
@@ -78,25 +247,38 @@ export async function POST(req: Request) {
                 examenId = nuevoExm.id
             }
 
-            // Reemplazar preguntas
+            // Reemplazar preguntas del examen final
             await supabaseAdmin.from('ie_preguntas').delete().eq('examen_id', examenId)
             
             if (examen.preguntas && examen.preguntas.length > 0) {
-                const pregsParaInsertar = examen.preguntas.map((p: any) => ({
-                    examen_id: examenId,
-                    pregunta: p.pregunta,
-                    opcion_a: p.opcion_a,
-                    opcion_b: p.opcion_b,
-                    opcion_c: p.opcion_c,
-                    opcion_d: p.opcion_d,
-                    respuesta_correcta: p.respuesta_correcta,
-                    orden: p.orden
-                }))
+                const pregsParaInsertar = examen.preguntas.map((p: any) => {
+                    const isLibre = p.tipo_pregunta === 'respuesta_libre';
+                    return {
+                        examen_id: examenId,
+                        pregunta: p.pregunta,
+                        opcion_a: isLibre ? '' : (p.opcion_a || ''),
+                        opcion_b: isLibre ? '' : (p.opcion_b || ''),
+                        opcion_c: isLibre ? '' : (p.opcion_c || ''),
+                        opcion_d: isLibre ? '' : (p.opcion_d || ''),
+                        respuesta_correcta: isLibre ? 'A' : (p.respuesta_correcta || 'A'),
+                        tipo_pregunta: p.tipo_pregunta || 'opcion_multiple',
+                        orden: p.orden
+                    };
+                })
                 await supabaseAdmin.from('ie_preguntas').insert(pregsParaInsertar)
+            }
+        } else {
+            // Si el borrador no especifica examen final y requiere_examen es falso, eliminar examen final existente
+            if (cursoData.requiere_examen === false) {
+                await supabaseAdmin
+                    .from('ie_examenes')
+                    .delete()
+                    .eq('curso_id', cursoId)
+                    .is('modulo_id', null)
             }
         }
 
-        // 4. AUTO-NOTIFY on draft approval
+        // 5. AUTO-NOTIFY on draft approval
         try {
             // Obtener Alumnos Inscritos (Pagados)
             const { data: compras } = await supabaseAdmin

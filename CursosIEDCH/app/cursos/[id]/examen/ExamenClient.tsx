@@ -13,6 +13,7 @@ type PreguntaFormateada = {
     opcion_b: string;
     opcion_c: string;
     opcion_d: string;
+    tipo_pregunta?: string;
 }
 
 export default function ExamenClient({
@@ -46,6 +47,7 @@ export default function ExamenClient({
     const [cambiosRealizados, setCambiosRealizados] = useState(0)
     const [explicaciones, setExplicaciones] = useState<Record<string, string>>({})
     const [mostrarBloqueo, setMostrarBloqueo] = useState(false)
+    const [modalMensaje, setModalMensaje] = useState<string | null>(null)
     const lastBloqueoTime = useRef(0)
     const enviandoRef = useRef(false)
 
@@ -57,7 +59,7 @@ export default function ExamenClient({
         e.preventDefault()
 
         if (Object.keys(respuestas).length < preguntas.length) {
-            alert('Por favor responde todas las preguntas antes de enviar.');
+            setModalMensaje('Por favor responde todas las preguntas antes de enviar.');
             return;
         }
 
@@ -87,7 +89,7 @@ export default function ExamenClient({
         if (seguridadAumentada) {
             if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen().catch(() => {
-                    alert('Por favor activa la pantalla completa manualmente para continuar.');
+                    setModalMensaje('Por favor activa la pantalla completa manualmente para continuar.');
                 });
             }
         }
@@ -102,7 +104,7 @@ export default function ExamenClient({
                 setTiempoRestante(prev => {
                     if (prev !== null && prev <= 1) {
                         clearInterval(interval!);
-                        alert('¡El tiempo se ha agotado! El examen se enviará automáticamente.');
+                        setModalMensaje('¡El tiempo se ha agotado! El examen se enviará automáticamente.');
                         handleSubmitAutomated();
                         return 0;
                     }
@@ -131,7 +133,7 @@ export default function ExamenClient({
         document.documentElement.requestFullscreen().then(() => {
             setMostrarBloqueo(false);
         }).catch(() => {
-            alert('No se pudo entrar en pantalla completa. Inténtalo de nuevo.');
+            setModalMensaje('No se pudo entrar en pantalla completa. Inténtalo de nuevo.');
         });
     }
 
@@ -165,7 +167,7 @@ export default function ExamenClient({
             if (enviandoRef.current) return;
             enviandoRef.current = true;
             
-            alert('Has superado el límite de cambios de pantalla o pantalla completa. El examen se enviará automáticamente.');
+            setModalMensaje('Has superado el límite de cambios de pantalla o pantalla completa. El examen se enviará automáticamente.');
             handleSubmitAutomated();
         }
     }, [cambiosRealizados, maxCambiosPantalla, examenIniciado, seguridadAumentada]);
@@ -173,7 +175,7 @@ export default function ExamenClient({
     if ((seguridadAumentada || tiempoLimite) && !examenIniciado) {
         return (
             <div className="max-w-3xl mx-auto px-4 py-12">
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-8 text-center">
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-8 text-center relative">
                     <Shield className="mx-auto h-12 w-12 text-blue-600 mb-4" />
                     <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Preparación para el Examen</h2>
                     <p className="text-gray-600 mb-6">{cursoTitulo}</p>
@@ -207,6 +209,27 @@ export default function ExamenClient({
                         </Link>
                     </div>
                 </div>
+
+                {modalMensaje && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-zinc-100 transform scale-100 transition-all duration-300 animate-scaleUp">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 text-amber-500 mx-auto mb-4 border border-amber-200">
+                                <AlertCircle className="h-6 w-6" />
+                            </div>
+                            <h3 className="text-xl font-bold text-center text-gray-900 mb-2">Atención</h3>
+                            <p className="text-sm text-gray-600 text-center leading-relaxed mb-6">{modalMensaje}</p>
+                            <div className="flex justify-center">
+                                <button
+                                    type="button"
+                                    onClick={() => setModalMensaje(null)}
+                                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-colors"
+                                >
+                                    Entendido
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         )
     }
@@ -308,23 +331,36 @@ export default function ExamenClient({
                                 <span className="text-blue-600 font-black mr-2">{index + 1}.</span> {p.pregunta}
                             </h3>
 
-                            <div className="space-y-3 pl-2 sm:pl-6">
-                                {[p.opcion_a, p.opcion_b, p.opcion_c, p.opcion_d].map((opcion, i) => (
-                                    <label key={i} className={`flex items-start p-3 rounded-lg border cursor-pointer transition-colors ${respuestas[p.id] === opcion ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400' : 'bg-white border-gray-200 hover:bg-gray-100'}`}>
-                                        <input
-                                            type="radio"
-                                            name={`pregunta_${p.id}`}
-                                            value={opcion}
-                                            checked={respuestas[p.id] === opcion}
-                                            onChange={() => handleSelectOption(p.id, opcion)}
-                                            className="mt-subtitle h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 flex-shrink-0"
-                                        />
-                                        <span className="ml-3 block text-sm font-medium text-gray-800 break-words">
-                                            {opcion}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
+                            {p.tipo_pregunta === 'respuesta_libre' ? (
+                                <div className="mt-1 pl-2 sm:pl-6">
+                                    <textarea
+                                        value={respuestas[p.id] || ''}
+                                        onChange={(e) => handleSelectOption(p.id, e.target.value)}
+                                        className="w-full text-sm rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white focus:outline-none transition"
+                                        rows={4}
+                                        placeholder="Escribe tu respuesta libre aquí..."
+                                        required
+                                    />
+                                </div>
+                            ) : (
+                                <div className="space-y-3 pl-2 sm:pl-6">
+                                    {[p.opcion_a, p.opcion_b, p.opcion_c, p.opcion_d].filter(Boolean).map((opcion, i) => (
+                                        <label key={i} className={`flex items-start p-3 rounded-lg border cursor-pointer transition-colors ${respuestas[p.id] === opcion ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-400' : 'bg-white border-gray-200 hover:bg-gray-100'}`}>
+                                            <input
+                                                type="radio"
+                                                name={`pregunta_${p.id}`}
+                                                value={opcion}
+                                                checked={respuestas[p.id] === opcion}
+                                                onChange={() => handleSelectOption(p.id, opcion)}
+                                                className="mt-subtitle h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                                            />
+                                            <span className="ml-3 block text-sm font-medium text-gray-800 break-words">
+                                                {opcion}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
 
                             <div className="mt-4 pl-2 sm:pl-6">
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Explica tu respuesta (Opcional):</label>
@@ -373,6 +409,29 @@ export default function ExamenClient({
                     </div>
                 )}
             </div>
+
+            {modalMensaje && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-zinc-100 transform scale-100 transition-all duration-300 animate-scaleUp">
+                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 text-amber-500 mx-auto mb-4 border border-amber-200">
+                            <AlertCircle className="h-6 w-6 text-amber-500" />
+                        </div>
+                        <h3 className="text-xl font-bold text-center text-gray-900 mb-2">Atención</h3>
+                        <p className="text-sm text-gray-600 text-center leading-relaxed mb-6">{modalMensaje}</p>
+                        <div className="flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => setModalMensaje(null)}
+                                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-colors"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
+
+import { AlertCircle } from 'lucide-react'

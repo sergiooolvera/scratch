@@ -8,7 +8,8 @@ export default function ContentViewer({ url }: { url: string }) {
 
     // Categorías
     const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(lowerUrl)
-    const isOfficeOrArchive = /\.(doc|docx|xls|xlsx|ppt|pptx|zip|rar)$/i.test(lowerUrl)
+    const isPpt = /\.(ppt|pptx)$/i.test(lowerUrl)
+    const isOfficeOrArchive = /\.(doc|docx|xls|xlsx|zip|rar)$/i.test(lowerUrl)
 
     const isHtml = /\.(html?|xhtml)(?:[?#].*)?$/i.test(lowerUrl)
 
@@ -99,6 +100,19 @@ export default function ContentViewer({ url }: { url: string }) {
         try {
             vimeoId = url.split('vimeo.com/')[1].split('?')[0]
         } catch (e) { /* ignore parse error */ }
+    }
+
+    if (isPpt) {
+        return (
+            <div className="w-full h-[80vh] min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg relative transition-all duration-300">
+                <iframe
+                    src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
+                    className="w-full h-full border-0"
+                    title="Visualizador de Presentación PPT"
+                    allowFullScreen
+                />
+            </div>
+        )
     }
 
     if (isImage) {

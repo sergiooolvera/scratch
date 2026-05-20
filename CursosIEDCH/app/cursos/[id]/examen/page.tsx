@@ -96,7 +96,7 @@ export default async function ExamenContenidoPage({ params }: { params: Promise<
     // Fetch ONLY the questions, explicitly avoiding `respuesta_correcta` so it doesn't leak to the client bundle
     const { data: preguntas, error: pregError } = await supabase
         .from('ie_preguntas')
-        .select('id, pregunta, opcion_a, opcion_b, opcion_c, opcion_d, orden')
+        .select('id, pregunta, opcion_a, opcion_b, opcion_c, opcion_d, orden, tipo_pregunta')
         .eq('examen_id', examen.id)
         .order('orden', { ascending: true })
 
@@ -117,7 +117,8 @@ export default async function ExamenContenidoPage({ params }: { params: Promise<
         opcion_a: p.opcion_a,
         opcion_b: p.opcion_b,
         opcion_c: p.opcion_c,
-        opcion_d: p.opcion_d
+        opcion_d: p.opcion_d,
+        tipo_pregunta: p.tipo_pregunta
     }));
 
 
