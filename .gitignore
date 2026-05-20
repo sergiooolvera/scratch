@@ -7,6 +7,10 @@
 !/CursosIEDCH/
 # But DO NOT ignore the peluches folder and all its contents
 !/peluches/
+# But DO NOT ignore flutter and automatizacionProgramas
+!/flutter/
+!/automatizacionProgramas/
+
 
 
 # --- GENERAL SYSTEM FILES ---
@@ -91,6 +95,9 @@ wheels/
 .env*.local
 *.pem
 *.key
+*service_account.json
+firebase_service_account.json
+
 
 # --- DATABASE / LOCAL DEV TEMP ---
 .supabase/

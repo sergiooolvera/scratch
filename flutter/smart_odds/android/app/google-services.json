@@ -1,0 +1,58 @@
+{
+  "project_info": {
+    "project_number": "69948732099",
+    "firebase_url": "https://relacional-7f17d.firebaseio.com",
+    "project_id": "relacional-7f17d",
+    "storage_bucket": "relacional-7f17d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69948732099:android:493f26a84c6913bf5a2876",
+        "android_client_info": {
+          "package_name": "com.alabolla.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXkjvdUMZWKB4fYuNctAJxd7iJuG3lPRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69948732099:android:d9d86c053ad9f0155a2876",
+        "android_client_info": {
+          "package_name": "com.example.bet_mar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "69948732099-rvb8getbluejljht62qa3ov2dv8l0ued.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bet_mar",
+            "certificate_hash": "243b244302e80b5426ec2566931bb735175e759c"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXkjvdUMZWKB4fYuNctAJxd7iJuG3lPRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
