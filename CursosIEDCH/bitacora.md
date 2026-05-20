@@ -4,6 +4,20 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 📅 Resumen de Avances Recientes (Mayo 2026)
 
+### 📜 Certificados y Constancias Responsivos en Móviles (20 de Mayo de 2026)
+- **Visualización Unificada y Adaptativa:** Se creó el componente cliente inteligente `ResponsiveCertificateWrapper.tsx` que mide el ancho de pantalla del dispositivo y aplica una transformación vectorial matemática (`transform: scale`) con ajuste colapsable de altura en tiempo real.
+- **Integración de Constancias y Certificados:** Se integró el wrapper en las páginas de **Certificado de Cursos** (`app/cursos/[id]/certificado/page.tsx`), **Constancia de Cursos** (`app/cursos/[id]/constancia/page.tsx`) y **Constancia de Actividad Institucional** (`app/institucion/constancia/[id]/page.tsx`), permitiendo que se encojan al 100% de la pantalla del celular sin desbordarse, manteniendo el PDF de descarga en máxima resolución de escritorio (A4).
+
+### ✏️ Inputs Numéricos y Preguntas Multilínea en Exámenes (20 de Mayo de 2026)
+- **Eliminación del Cero en Inputs Numéricos:** Se actualizaron los estados y validaciones en los inputs de parámetros de examen (calificación mínima, tiempo límite, intentos permitidos y límite de cambios de pantalla) para permitir borrar el campo de forma natural (estado `number | ''`) y proveer valores por defecto seguros en el servidor en caso de enviarse vacíos.
+- **Textareas Multilínea para Preguntas:** Se cambiaron los campos de pregunta de `<input type="text">` a `<textarea rows={2} className="resize-none">` en el creador (`subir-curso`) y editor (`editar-curso`) de cursos, logrando que preguntas de gran longitud se ajusten automáticamente a múltiples renglones sin recortarse.
+- **Corrección de Persistencia de Intentos:** Se corrigieron bugs de carga y actualización de la base de datos para asegurar que los `intentos_permitidos` del examen final se carguen y persistan correctamente en el flujo de diseño y en el borrador de curso aprobado.
+
+### 🏢 Extensión de Funciones a Rol Institución y Ajustes de Perfil (19 de Mayo de 2026)
+- **Acceso Autorizado al Panel de Profesor:** Se modificó el `middleware.ts` y el renderizado del `Navbar.tsx` para otorgar acceso completo y transparente a las instituciones (`rol === 'institucion'`) a todas las rutas de `/profesor/*`, incluyendo carga de cursos, listado de alumnos y API de Stripe.
+- **Perfil de Institución Completo:** Se actualizaron las pantallas de perfil (`app/perfil/page.tsx`) y financiero/colaboradores (`app/financiero/colaboradores/page.tsx`) para permitir a las instituciones validar su identidad, subir datos fiscales/bancarios y facturar comisiones bajo el mismo esquema de comisiones de colaboradores oficiales.
+- **Compactador de Enlaces Supabase:** Se simplificó la visualización de módulos cargados en el editor de cursos, reemplazando la URL cruda de Supabase por un enlace limpio: `Actual: Ver archivo actual ↗`, previniendo desbordamientos horizontales en dispositivos móviles.
+
 ### 📜 Constancias Institucionales y Validación (18 de Mayo de 2026)
 - **Mejora en Generación de PDF:** Se cambió `html2canvas` por `html-to-image` en la constancia institucional para corregir problemas de renderizado en dispositivos móviles (celulares y tabletas).
 - **Ajuste de Diseño de Constancia:** Se modificó la vista de detalles de la actividad para usar una disposición vertical (apilada) en lugar de horizontal, permitiendo que textos largos (como el nombre de la institución) ocupen todo el renglón y no desborden la hoja. También se redujo el tamaño del sello institucional.
@@ -81,7 +95,7 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Filtro de Intentos de Pago (OXXO):** Se ajustaron las reglas de validación para excluir fichas de OXXO generadas pero no pagadas, previniendo duplicidad de ventas en los reportes (`payment_status === 'paid'`).
 - **Dashboard Financiero Avanzado:** Se enriqueció la tabla de transacciones añadiendo paginación (20 resultados por hoja), exportación de tabla a Excel (CSV), y filtros combinables por Profesor, Curso, Alumno y Método de Pago. Adicionalmente, se aseguró que el título de los cursos no se trunque.
 
-### 📢 Sistema de Referidos y Precisión Financiera
+### 💰 Rol Financiero y Reportes (Continuación)
 - **Atribución de Comisiones:** Se implementó una lógica de cruce avanzada para referidos:
     - **Pagos Stripe:** El referido se extrae del metadata de la sesión de Stripe, asegurando que solo se cuente si el código fue usado en el checkout específico.
     - **Pagos Manuales:** Se introdujo una validación de ventana temporal (±48 horas) para asociar referidos de la base de datos con transferencias bancarias, evitando que pagos antiguos hereden referidos nuevos por error.
@@ -96,4 +110,4 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Simplificación de Dashboard:** Se optimizó el Dashboard Financiero eliminando gráficos y resúmenes redundantes para ofrecer una vista centrada en el listado detallado de transacciones y filtros de búsqueda.
 
 ---
-*Última actualización: 17 de Mayo de 2026*
+*Última actualización: 20 de Mayo de 2026*
