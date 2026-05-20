@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:smart_odds/presentation/providers/auth_providers.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -78,6 +80,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
+      
+      if (isFirebaseEnabled) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+          if (!userDoc.exists) {
+            // Generate a unique referral code for this user (e.g., first part of email + short uid)
+            final email = user.email ?? '';
+            final myReferralCode = "${email.isNotEmpty ? email.split('@')[0] : 'user'}_${user.uid.substring(0, 4)}";
+            
+            // Save user data and referral info to Firestore
+            await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+              'email': email,
+              'referralCode': myReferralCode,
+              'referredBy': '',
+              'createdAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        }
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

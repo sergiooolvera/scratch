@@ -203,65 +203,79 @@ class FlashscoreScraper:
             await asyncio.sleep(2)
             
             # Locate statistics rows.
-            stat_rows = await page.query_selector_all(".stat__row")
-            logger.info(f"Found {len(stat_rows)} stat rows on page.")
+            # Perform resilient parsing using data-testid attributes
+            stats_data = await page.evaluate("""() => {
+                const stats = {
+                    corners_home: 0, corners_away: 0, corners_total: 0,
+                    yellow_cards_home: 0, yellow_cards_away: 0, yellow_cards_total: 0,
+                    red_cards_home: 0, red_cards_away: 0, red_cards_total: 0,
+                    dangerous_attacks_home: 0, dangerous_attacks_away: 0,
+                    possession_home: 50, possession_away: 50,
+                    shots_total_home: 0, shots_total_away: 0,
+                    shots_on_target_home: 0, shots_on_target_away: 0,
+                    xg_home: 0.0, xg_away: 0.0
+                };
+                
+                const categoryEls = document.querySelectorAll('[data-testid="wcl-statistics-category"]');
+                categoryEls.forEach(catEl => {
+                    const parent = catEl.parentElement;
+                    if (!parent) return;
+                    
+                    const categoryText = catEl.textContent.trim().toLowerCase();
+                    const valueEls = parent.querySelectorAll('[data-testid="wcl-statistics-value"]');
+                    if (valueEls.length < 2) return;
+                    
+                    const homeValStr = valueEls[0].textContent.trim();
+                    const awayValStr = valueEls[1].textContent.trim();
+                    
+                    // Helper to parse ints
+                    const cleanInt = (str) => parseInt(str.replace(/\\D/g, '')) || 0;
+                    
+                    if (categoryText.includes("tiros de esquina") || categoryText.includes("saques de esquina") || categoryText.includes("corners")) {
+                        stats.corners_home = cleanInt(homeValStr);
+                        stats.corners_away = cleanInt(awayValStr);
+                        stats.corners_total = stats.corners_home + stats.corners_away;
+                    }
+                    else if (categoryText.includes("tarjetas amarillas") || categoryText.includes("yellow cards")) {
+                        stats.yellow_cards_home = cleanInt(homeValStr);
+                        stats.yellow_cards_away = cleanInt(awayValStr);
+                        stats.yellow_cards_total = stats.yellow_cards_home + stats.yellow_cards_away;
+                    }
+                    else if (categoryText.includes("tarjetas rojas") || categoryText.includes("red cards")) {
+                        stats.red_cards_home = cleanInt(homeValStr);
+                        stats.red_cards_away = cleanInt(awayValStr);
+                        stats.red_cards_total = stats.red_cards_home + stats.red_cards_away;
+                    }
+                    else if (categoryText.includes("ataques peligrosos") || categoryText.includes("dangerous attacks")) {
+                        stats.dangerous_attacks_home = cleanInt(homeValStr);
+                        stats.dangerous_attacks_away = cleanInt(awayValStr);
+                    }
+                    else if (categoryText.includes("posesión") || categoryText.includes("possession")) {
+                        stats.possession_home = cleanInt(homeValStr);
+                        stats.possession_away = cleanInt(awayValStr);
+                    }
+                    else if (categoryText.includes("remates a puerta") || categoryText.includes("shots on target")) {
+                        stats.shots_on_target_home = cleanInt(homeValStr);
+                        stats.shots_on_target_away = cleanInt(awayValStr);
+                    }
+                    else if (categoryText.includes("remates") || categoryText.includes("shots")) {
+                        stats.shots_total_home = cleanInt(homeValStr);
+                        stats.shots_total_away = cleanInt(awayValStr);
+                    }
+                    else if (categoryText.includes("goles esperados") || categoryText.includes("expected goals") || categoryText.includes("xg")) {
+                        stats.xg_home = parseFloat(homeValStr) || 0.0;
+                        stats.xg_away = parseFloat(awayValStr) || 0.0;
+                    }
+                });
+                
+                return stats;
+            }""")
             
-            for row in stat_rows:
-                category_el = await row.query_selector(".stat__categoryName")
-                if not category_el:
-                    continue
-                category_text = (await category_el.inner_text()).strip().lower()
+            # Merge with default empty stats structure
+            for key, val in stats_data.items():
+                stats[key] = val
                 
-                home_val_el = await row.query_selector(".stat__homeValue")
-                away_val_el = await row.query_selector(".stat__awayValue")
-                
-                home_val_str = (await home_val_el.inner_text()).strip() if home_val_el else "0"
-                away_val_str = (await away_val_el.inner_text()).strip() if away_val_el else "0"
-                
-                # Special handling for xG (floats)
-                if "goles esperados" in category_text or "expected goals" in category_text or "xg" in category_text:
-                    try:
-                        stats["xg_home"] = float("".join(c for c in home_val_str if c.isdigit() or c == '.'))
-                        stats["xg_away"] = float("".join(c for c in away_val_str if c.isdigit() or c == '.'))
-                    except ValueError:
-                        pass
-                    continue
-                
-                # Parse values as integers for the rest
-                home_val = int("".join(filter(str.isdigit, home_val_str)) or 0)
-                away_val = int("".join(filter(str.isdigit, away_val_str)) or 0)
-                
-                if "tiros de esquina" in category_text or "saques de esquina" in category_text or "corners" in category_text:
-                    stats["corners_home"] = home_val
-                    stats["corners_away"] = away_val
-                    stats["corners_total"] = home_val + away_val
-                    
-                elif "tarjetas amarillas" in category_text or "yellow cards" in category_text:
-                    stats["yellow_cards_home"] = home_val
-                    stats["yellow_cards_away"] = away_val
-                    stats["yellow_cards_total"] = home_val + away_val
-                    
-                elif "tarjetas rojas" in category_text or "red cards" in category_text:
-                    stats["red_cards_home"] = home_val
-                    stats["red_cards_away"] = away_val
-                    stats["red_cards_total"] = home_val + away_val
-                    
-                elif "ataques peligrosos" in category_text or "dangerous attacks" in category_text:
-                    stats["dangerous_attacks_home"] = home_val
-                    stats["dangerous_attacks_away"] = away_val
-                    
-                elif "posesión" in category_text or "possession" in category_text:
-                    stats["possession_home"] = home_val
-                    stats["possession_away"] = away_val
-                    
-                elif "remates a puerta" in category_text or "shots on target" in category_text:
-                    stats["shots_on_target_home"] = home_val
-                    stats["shots_on_target_away"] = away_val
-                    
-                elif "remates" in category_text or "shots" in category_text:
-                    stats["shots_total_home"] = home_val
-                    stats["shots_total_away"] = away_val
-                    
+            logger.info(f"Successfully parsed stats: {stats}")
             return stats
             
         except Exception as e:

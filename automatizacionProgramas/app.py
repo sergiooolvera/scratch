@@ -58,6 +58,13 @@ async def startup_event():
         loop = asyncio.get_event_loop()
         loop.run_in_executor(None, firebase_service.cleanup_old_data)
 
+    # Automatically start the real-game scraper polling loop on startup
+    global real_polling_task, real_polling_active
+    if not real_polling_active:
+        real_polling_active = True
+        real_polling_task = asyncio.create_task(_real_game_polling_loop())
+        logger.info("Automatically started real-game background polling loop.")
+
 @app.on_event("shutdown")
 async def shutdown_event():
     # Clean up active simulations
