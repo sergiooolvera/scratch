@@ -93,10 +93,12 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-[calc(100vh-64px)] flex bg-zinc-50 font-sans">
-            <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-t from-blue-900 to-indigo-800">
+            <div className={`hidden lg:block relative w-0 flex-1 bg-gradient-to-t transition-all duration-500 ${
+                tipoCuenta === 'persona' ? 'from-blue-900 to-indigo-800' : 'from-orange-900 to-amber-700'
+            }`}>
                 <div className="absolute inset-0 h-full w-full object-cover px-16 py-24 flex flex-col justify-center text-center" >
                     <div className="mx-auto bg-white/10 p-6 rounded-full inline-block backdrop-blur-sm shadow-xl mb-8">
-                        {tipoCuenta === 'persona' ? <GraduationCap className="h-16 w-16 text-blue-200" /> : <Building2 className="h-16 w-16 text-blue-200" />}
+                        {tipoCuenta === 'persona' ? <GraduationCap className="h-16 w-16 text-blue-200" /> : <Building2 className="h-16 w-16 text-orange-200" />}
                     </div>
                     <h2 className="text-4xl font-bold text-white mb-6 leading-tight">
                         {tipoCuenta === 'persona' ? 'Da el primer paso hacia tu futuro' : 'Impulsa el aprendizaje en tu institución'}
@@ -141,7 +143,7 @@ export default function RegisterPage() {
                             </div>
 
                             {/* Pestañas de tipo de cuenta */}
-                            <div className="flex bg-gray-100 p-1 rounded-xl mb-8">
+                            <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
                                 <button
                                     onClick={() => setTipoCuenta('persona')}
                                     className={`flex-1 flex items-center justify-center py-2.5 text-sm font-medium rounded-lg transition-all ${
@@ -154,13 +156,44 @@ export default function RegisterPage() {
                                 <button
                                     onClick={() => setTipoCuenta('institucion')}
                                     className={`flex-1 flex items-center justify-center py-2.5 text-sm font-medium rounded-lg transition-all ${
-                                        tipoCuenta === 'institucion' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                                        tipoCuenta === 'institucion' ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
                                     }`}
                                 >
                                     <Building2 className="w-4 h-4 mr-2" />
                                     Institución
                                 </button>
                             </div>
+
+                            {/* Panel Identificador Naranja / Azul */}
+                            {tipoCuenta === 'institucion' ? (
+                                <div className="mb-6 p-4 rounded-xl bg-orange-50 border border-orange-200 text-orange-850 animate-in fade-in slide-in-from-top-2 duration-300 shadow-sm">
+                                    <div className="flex items-start">
+                                        <div className="p-2 bg-orange-100 rounded-lg mr-3 text-orange-600 flex-shrink-0">
+                                            <Building2 className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-sm text-orange-900">Registro de Institución</h3>
+                                            <p className="text-xs text-orange-800 mt-1 leading-relaxed">
+                                                Estás registrando una <strong>escuela, academia, agencia o institución</strong>. Esto permitirá emitir certificados institucionales y organizar cursos grupales.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-100 text-blue-850 animate-in fade-in slide-in-from-top-2 duration-300 shadow-sm">
+                                    <div className="flex items-start">
+                                        <div className="p-2 bg-blue-100 rounded-lg mr-3 text-blue-600 flex-shrink-0">
+                                            <User className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-sm text-blue-900">Registro de Persona</h3>
+                                            <p className="text-xs text-blue-800 mt-1 leading-relaxed">
+                                                Estás registrándote como <strong>estudiante individual</strong> para tomar cursos, realizar exámenes y recibir tus certificados personales.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="mt-4">
                                 <form onSubmit={handleRegister} className="space-y-5">
@@ -220,7 +253,7 @@ export default function RegisterPage() {
                                     ) : (
                                         <>
                                             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                                                <label className="block text-sm font-medium text-gray-700">Nombre de la Escuela/Institución</label>
+                                                <label className="block text-sm font-medium text-gray-700">Nombre de la escuela, academia, agencia o institución</label>
                                                 <div className="mt-1 relative rounded-md shadow-sm">
                                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                         <Building2 className="h-5 w-5 text-gray-400" />
@@ -228,8 +261,8 @@ export default function RegisterPage() {
                                                     <input
                                                         type="text"
                                                         required
-                                                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
-                                                        placeholder="Ej. Escuela Primaria Benito Juárez"
+                                                        className="focus:ring-orange-500 focus:border-orange-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                        placeholder="Ej. Escuela Primaria Benito Juárez, Academia de Idiomas"
                                                         value={nombreEscuela}
                                                         onChange={(e) => setNombreEscuela(e.target.value)}
                                                     />
@@ -244,7 +277,7 @@ export default function RegisterPage() {
                                                     </div>
                                                     <input
                                                         type="text"
-                                                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border uppercase"
+                                                        className="focus:ring-orange-500 focus:border-orange-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border uppercase"
                                                         placeholder="Ej. 12DPR0001X"
                                                         value={claveCCT}
                                                         onChange={(e) => setClaveCCT(e.target.value.toUpperCase())}
@@ -260,7 +293,7 @@ export default function RegisterPage() {
                                                     </div>
                                                     <input
                                                         type="tel"
-                                                        className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
+                                                        className="focus:ring-orange-500 focus:border-orange-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border"
                                                         placeholder="Ej. 55 1234 5678"
                                                         value={telefono}
                                                         onChange={(e) => setTelefono(e.target.value)}
@@ -281,7 +314,7 @@ export default function RegisterPage() {
                                             <input
                                                 type="email"
                                                 required
-                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
+                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'orange'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'orange'}-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
                                                 placeholder="tu@correo.com"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
@@ -300,7 +333,7 @@ export default function RegisterPage() {
                                             <input
                                                 type={showPassword ? "text" : "password"}
                                                 required
-                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
+                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'orange'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'orange'}-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
                                                 placeholder="••••••••"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
@@ -327,7 +360,7 @@ export default function RegisterPage() {
                                             <input
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 required
-                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'indigo'}-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
+                                                className={`focus:ring-${tipoCuenta === 'persona' ? 'blue' : 'orange'}-500 focus:border-${tipoCuenta === 'persona' ? 'blue' : 'orange'}-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-3 bg-white text-gray-900 border`}
                                                 placeholder="••••••••"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -355,7 +388,7 @@ export default function RegisterPage() {
                                             type="submit"
                                             disabled={loading}
                                             className={`w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white ${
-                                                tipoCuenta === 'persona' ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500' : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
+                                                tipoCuenta === 'persona' ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500' : 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-500'
                                             } focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 transition-all`}
                                         >
                                             <span>{loading ? 'Procesando...' : (tipoCuenta === 'persona' ? 'Crear mi cuenta' : 'Registrar Institución')}</span>

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import ActividadConstanciaDocument from '@/components/ActividadConstanciaDocument'
 import { Download, AlertTriangle, ArrowLeft } from 'lucide-react'
+import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 
 export default function VerConstanciaInstitucional() {
     const params = useParams()
@@ -126,8 +127,8 @@ export default function VerConstanciaInstitucional() {
                 </button>
             </div>
 
-            <div className="max-w-[1056px] mx-auto overflow-x-auto shadow-2xl rounded-sm ring-1 ring-gray-200 bg-white">
-                <div style={{ width: '1056px' }}>
+            <div className="max-w-[1056px] mx-auto shadow-2xl rounded-sm ring-1 ring-gray-200 bg-white">
+                <ResponsiveCertificateWrapper>
                     <ActividadConstanciaDocument
                         documentRef={constanciaRef}
                         alumnoNombre={constanciaData.nombre_alumno}
@@ -141,7 +142,7 @@ export default function VerConstanciaInstitucional() {
                         qrUrl={validacionUrl}
                         institucionNombre={constanciaData.actividad.institucion_acredita}
                     />
-                </div>
+                </ResponsiveCertificateWrapper>
             </div>
         </div>
     )

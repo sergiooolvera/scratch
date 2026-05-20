@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Lock, CreditCard } from 'lucide-react'
 import BotonDescarga from './BotonDescarga'
 import CertificadoDocument from '@/components/CertificadoDocument'
+import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 
 export default async function CertificadoPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -148,7 +149,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                     </div>
                 ) : (
                     <>
-                        <div className="flex justify-start sm:justify-center w-full overflow-x-auto pb-6">
+                        <ResponsiveCertificateWrapper>
                             {/* Contenedor principal de la constancia imitando una hoja horizontal (landscape) premium */}
                             <CertificadoDocument
                                 id="certificado-content"
@@ -161,7 +162,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                                 qrUrl={`https://cursos-iedch.vercel.app/validar?folio=${folioVenta}`}
                                 className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
                             />
-                        </div>
+                        </ResponsiveCertificateWrapper>
 
                         <div className="flex justify-center mt-12 mb-20 font-sans z-10 relative">
                             <BotonDescarga />

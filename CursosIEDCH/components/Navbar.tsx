@@ -134,7 +134,7 @@ export default function Navbar() {
                                         </div>
                                     </div>
                                 )}
-                                {(profile?.rol === 'profesor' || profile?.rol === 'instructor') && (
+                                {(profile?.rol === 'profesor' || profile?.rol === 'instructor' || profile?.rol === 'institucion') && (
                                     <div className="relative group">
                                         <button 
                                             onClick={() => setIsProfMenuOpen(!isProfMenuOpen)}
@@ -278,7 +278,7 @@ export default function Navbar() {
                                         <Link href="/institucion/expediente" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-indigo-50 border-l-2 border-transparent hover:border-indigo-500">Ver Expediente</Link>
                                     </div>
                                 )}
-                                {(profile?.rol === 'profesor' || profile?.rol === 'instructor') && (
+                                {(profile?.rol === 'profesor' || profile?.rol === 'instructor' || profile?.rol === 'institucion') && (
                                     <div className="space-y-1">
                                         <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Panel {profile?.rol === 'instructor' ? 'Instructor' : 'Profesor'}</div>
                                         <Link href="/profesor/cursos" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Cursos Creados</Link>

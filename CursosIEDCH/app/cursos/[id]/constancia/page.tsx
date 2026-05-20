@@ -7,6 +7,7 @@ import jsPDF from 'jspdf'
 import { Download, ChevronLeft, Lock, BadgeCheck, CreditCard, Banknote, UploadCloud } from 'lucide-react'
 import Link from 'next/link'
 import CertificadoDocument from '@/components/CertificadoDocument'
+import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 
 export default function ConstanciaPage({ params }: { params: Promise<{ id: string }> }) {
     const [curso, setCurso] = useState<any>(null)
@@ -312,7 +313,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                 </div>
 
                 {/* CONTENEDOR DE LA CONSTANCIA */}
-                <div className="overflow-x-auto p-4 flex justify-center bg-gray-300 rounded-xl shadow-inner border border-gray-400">
+                <div className="p-4 flex justify-center bg-gray-300 rounded-xl shadow-inner border border-gray-400">
                     {(() => {
                         const fechaEmision = new Date(examen?.fecha || new Date())
                         const vigAnos = curso?.vigencia_anos || 3
@@ -323,16 +324,18 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                         const qrValue = `https://cursos-iedch.vercel.app/validar?folio=${examen?.id}`
                         
                         return (
-                            <CertificadoDocument
-                                alumnoNombre={profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || profile.email : 'Estudiante'}
-                                cursoTitulo={curso?.titulo || 'Nombre del Curso'}
-                                cursoDuracion={curso?.duracion}
-                                fechaAprobacion={fechaAp}
-                                folio={String(examen?.id).toUpperCase() || '112233445'}
-                                vigenciaStr={`${vigStr} (${vigAnos} ${vigAnos === 1 ? 'año' : 'años'})`}
-                                qrUrl={qrValue}
-                                documentRef={constanciaRef as any}
-                            />
+                            <ResponsiveCertificateWrapper>
+                                <CertificadoDocument
+                                    alumnoNombre={profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || profile.email : 'Estudiante'}
+                                    cursoTitulo={curso?.titulo || 'Nombre del Curso'}
+                                    cursoDuracion={curso?.duracion}
+                                    fechaAprobacion={fechaAp}
+                                    folio={String(examen?.id).toUpperCase() || '112233445'}
+                                    vigenciaStr={`${vigStr} (${vigAnos} ${vigAnos === 1 ? 'año' : 'años'})`}
+                                    qrUrl={qrValue}
+                                    documentRef={constanciaRef as any}
+                                />
+                            </ResponsiveCertificateWrapper>
                         )
                     })()}
                 </div>

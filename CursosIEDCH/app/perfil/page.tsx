@@ -461,7 +461,7 @@ export default function PerfilPage() {
                             </div>
                         </div>
 
-                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor') && (
+                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Validación de Identidad</h2>
@@ -499,7 +499,7 @@ export default function PerfilPage() {
                             </div>
                         )}
 
-                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor') && (
+                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Datos de Contacto y Pago</h2>
@@ -515,7 +515,7 @@ export default function PerfilPage() {
                                         <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
                                         <input 
                                             type="tel" 
-                                            required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
+                                            required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion'}
                                             value={telefono} 
                                             onChange={(e) => setTelefono(e.target.value)}
                                             disabled={datosBancariosCapturados}
@@ -528,7 +528,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">Banco</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
+                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion'}
                                                 value={banco} 
                                                 onChange={(e) => setBanco(e.target.value)}
                                                 disabled={datosBancariosCapturados}
@@ -540,7 +540,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">CLABE Interbancaria</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
+                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion'}
                                                 value={clabe} 
                                                 onChange={(e) => setClabe(e.target.value)}
                                                 disabled={datosBancariosCapturados}

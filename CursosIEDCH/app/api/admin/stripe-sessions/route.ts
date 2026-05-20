@@ -22,7 +22,7 @@ export async function GET() {
             .eq('id', user.id)
             .single();
 
-        if (profile?.rol !== 'admin' && profile?.rol !== 'financiero' && profile?.rol !== 'profesor' && profile?.rol !== 'vendedor') return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 });
+        if (profile?.rol !== 'admin' && profile?.rol !== 'financiero' && profile?.rol !== 'profesor' && profile?.rol !== 'vendedor' && profile?.rol !== 'instructor' && profile?.rol !== 'institucion') return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 });
 
         const supabaseAdmin = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,7 +30,7 @@ export async function GET() {
         );
 
         let profCursoIds: Set<string> | null = null;
-        if (profile?.rol === 'profesor') {
+        if (profile?.rol === 'profesor' || profile?.rol === 'instructor' || profile?.rol === 'institucion') {
             const { data: profCursos } = await supabaseAdmin.from('ie_cursos').select('id').eq('creado_por', user.id);
             profCursoIds = new Set(profCursos?.map(c => c.id) || []);
         }

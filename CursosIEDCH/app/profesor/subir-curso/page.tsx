@@ -41,12 +41,12 @@ export default function SubirCursoPage() {
     // Exam state
     const [requiereExamen, setRequiereExamen] = useState(false)
     const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
-    const [minAprobacion, setMinAprobacion] = useState(80)
+    const [minAprobacion, setMinAprobacion] = useState<number | ''>(80)
     const [conTiempo, setConTiempo] = useState(false)
-    const [tiempoExamen, setTiempoExamen] = useState(60)
+    const [tiempoExamen, setTiempoExamen] = useState<number | ''>(60)
     const [seguridadAumentada, setSeguridadAumentada] = useState(false)
-    const [maxCambios, setMaxCambios] = useState(3)
-    const [intentosPermitidos, setIntentosPermitidos] = useState(3)
+    const [maxCambios, setMaxCambios] = useState<number | ''>(3)
+    const [intentosPermitidos, setIntentosPermitidos] = useState<number | ''>(3)
     const [archivoExamen, setArchivoExamen] = useState<File | null>(null)
     const [preguntasExtraidas, setPreguntasExtraidas] = useState<PreguntaParsed[]>([])
     const [isParsing, setIsParsing] = useState(false)
@@ -76,7 +76,7 @@ export default function SubirCursoPage() {
                     setFormData(prev => ({ ...prev, precio: 0 }))
                 }
                 
-                if (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'instructor') {
+                if (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'instructor' || prof.rol === 'institucion') {
                     if (!prof.telefono || !prof.banco || !prof.clabe || !prof.identidad_validada) {
                         setPerfilIncompleto(true)
                     }
@@ -299,11 +299,11 @@ export default function SubirCursoPage() {
             // Insertar ie_examenes
             const { data: examenGuardado, error: errorExamen } = await supabase.from('ie_examenes').insert({
                 curso_id: cursoGuardado.id,
-                min_aprobacion: minAprobacion,
-                tiempo_limite: conTiempo ? tiempoExamen : null,
+                min_aprobacion: minAprobacion === '' ? 80 : minAprobacion,
+                tiempo_limite: conTiempo ? (tiempoExamen === '' ? 60 : tiempoExamen) : null,
                 seguridad_aumentada: seguridadAumentada,
-                max_cambios_pantalla: seguridadAumentada ? maxCambios : 3,
-                intentos_permitidos: intentosPermitidos
+                max_cambios_pantalla: seguridadAumentada ? (maxCambios === '' ? 3 : maxCambios) : 3,
+                intentos_permitidos: intentosPermitidos === '' ? 3 : intentosPermitidos
             }).select().single()
 
             if (errorExamen) {
@@ -466,7 +466,7 @@ export default function SubirCursoPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
-                                            <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(Number(e.target.value))} className="w-full sm:w-32 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" />
+                                            <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(e.target.value === '' ? '' : Number(e.target.value))} className="w-full sm:w-32 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" />
                                             <p className="text-[10px] text-gray-500 mt-1 italic">Si el alumno saca al menos esta puntuación, aprueba.</p>
                                         </div>
                                         <div>
@@ -491,7 +491,7 @@ export default function SubirCursoPage() {
                                                         min="2" 
                                                         max="300" 
                                                         value={tiempoExamen} 
-                                                        onChange={(e) => setTiempoExamen(Number(e.target.value))} 
+                                                        onChange={(e) => setTiempoExamen(e.target.value === '' ? '' : Number(e.target.value))} 
                                                         className="w-24 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
                                                     />
                                                     <span className="text-sm text-gray-600">minutos (Máx. 300)</span>
@@ -506,7 +506,7 @@ export default function SubirCursoPage() {
                                                     min="1" 
                                                     max="10" 
                                                     value={intentosPermitidos} 
-                                                    onChange={(e) => setIntentosPermitidos(Number(e.target.value))} 
+                                                    onChange={(e) => setIntentosPermitidos(e.target.value === '' ? '' : Number(e.target.value))} 
                                                     className="w-20 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
                                                 />
                                                 <span className="text-sm text-gray-600">intentos</span>
@@ -528,7 +528,7 @@ export default function SubirCursoPage() {
                                                             min="1" 
                                                             max="10" 
                                                             value={maxCambios} 
-                                                            onChange={(e) => setMaxCambios(Number(e.target.value))} 
+                                                            onChange={(e) => setMaxCambios(e.target.value === '' ? '' : Number(e.target.value))} 
                                                             className="w-16 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
                                                         />
                                                     </div>
@@ -579,13 +579,13 @@ export default function SubirCursoPage() {
                                                                 <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">#{i + 1}</span>
                                                                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Texto de la Pregunta</label>
                                                             </div>
-                                                            <input 
-                                                                type="text" 
+                                                            <textarea 
                                                                 required
                                                                 value={p.pregunta} 
                                                                 onChange={(e) => handlePreguntaChange(i, 'pregunta', e.target.value)}
                                                                 placeholder="Ej. ¿Cuál es el componente encargado de...?"
-                                                                className="w-full text-sm font-medium border-0 border-b-2 border-gray-50 focus:border-green-500 focus:ring-0 px-0 pb-1 bg-transparent text-black"
+                                                                rows={2}
+                                                                className="w-full text-sm font-medium border-0 border-b-2 border-gray-50 focus:border-green-500 focus:ring-0 px-0 pb-1 bg-transparent text-black resize-none"
                                                             />
                                                         </div>
 

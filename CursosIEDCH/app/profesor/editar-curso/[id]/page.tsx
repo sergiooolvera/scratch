@@ -46,12 +46,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     
     // Exam state
     const [requiereExamen, setRequiereExamen] = useState(false)
-    const [minAprobacion, setMinAprobacion] = useState(80)
+    const [minAprobacion, setMinAprobacion] = useState<number | ''>(80)
     const [conTiempo, setConTiempo] = useState(false)
-    const [tiempoExamen, setTiempoExamen] = useState(60)
+    const [tiempoExamen, setTiempoExamen] = useState<number | ''>(60)
     const [seguridadAumentada, setSeguridadAumentada] = useState(false)
-    const [maxCambios, setMaxCambios] = useState(3)
-    const [intentosPermitidos, setIntentosPermitidos] = useState(3)
+    const [maxCambios, setMaxCambios] = useState<number | ''>(3)
+    const [intentosPermitidos, setIntentosPermitidos] = useState<number | ''>(3)
     const [preguntasExtraidas, setPreguntasExtraidas] = useState<PreguntaParsed[]>([])
     const [isParsing, setIsParsing] = useState(false)
     const [archivoExamen, setArchivoExamen] = useState<File | null>(null)
@@ -80,7 +80,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             const prof = resultP.data
             if (prof) {
                 setProfile(prof)
-                if (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'instructor') {
+                if (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'instructor' || prof.rol === 'institucion') {
                     if (!prof.telefono || !prof.banco || !prof.clabe || !prof.identidad_validada) {
                         setPerfilIncompleto(true)
                         setLoading(false)
@@ -203,6 +203,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 }
                 setSeguridadAumentada(exm.seguridad_aumentada || false);
                 setMaxCambios(exm.max_cambios_pantalla || 3);
+                setIntentosPermitidos(exm.intentos_permitidos || 3);
                 
                 const { data: pregs } = await supabase.from('ie_preguntas').select('*').eq('examen_id', exm.id).order('orden', { ascending: true });
                 if (pregs) setPreguntasExtraidas(pregs);
@@ -371,11 +372,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 modulos: modulosFinales,
                 requiere_examen: requiereExamen,
                 examen: requiereExamen ? {
-                    min_aprobacion: minAprobacion,
-                    tiempo_limite: conTiempo ? tiempoExamen : null,
+                    min_aprobacion: minAprobacion === '' ? 80 : minAprobacion,
+                    tiempo_limite: conTiempo ? (tiempoExamen === '' ? 60 : tiempoExamen) : null,
                     seguridad_aumentada: seguridadAumentada,
-                    max_cambios_pantalla: seguridadAumentada ? maxCambios : 3,
-                    intentos_permitidos: intentosPermitidos,
+                    max_cambios_pantalla: seguridadAumentada ? (maxCambios === '' ? 3 : maxCambios) : 3,
+                    intentos_permitidos: intentosPermitidos === '' ? 3 : intentosPermitidos,
                     preguntas: preguntasExtraidas.map((p, idx) => ({ ...p, orden: idx + 1 }))
                 } : null
             }
@@ -434,18 +435,20 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 if (!exm) {
                     const { data: newExm } = await supabase.from('ie_examenes').insert({ 
                         curso_id: id, 
-                        min_aprobacion: minAprobacion,
-                        tiempo_limite: conTiempo ? tiempoExamen : null,
+                        min_aprobacion: minAprobacion === '' ? 80 : minAprobacion,
+                        tiempo_limite: conTiempo ? (tiempoExamen === '' ? 60 : tiempoExamen) : null,
                         seguridad_aumentada: seguridadAumentada,
-                        max_cambios_pantalla: seguridadAumentada ? maxCambios : 3
+                        max_cambios_pantalla: seguridadAumentada ? (maxCambios === '' ? 3 : maxCambios) : 3,
+                        intentos_permitidos: intentosPermitidos === '' ? 3 : intentosPermitidos
                     }).select().single()
                     exm = newExm
                 } else {
                     await supabase.from('ie_examenes').update({ 
-                        min_aprobacion: minAprobacion,
-                        tiempo_limite: conTiempo ? tiempoExamen : null,
+                        min_aprobacion: minAprobacion === '' ? 80 : minAprobacion,
+                        tiempo_limite: conTiempo ? (tiempoExamen === '' ? 60 : tiempoExamen) : null,
                         seguridad_aumentada: seguridadAumentada,
-                        max_cambios_pantalla: seguridadAumentada ? maxCambios : 3
+                        max_cambios_pantalla: seguridadAumentada ? (maxCambios === '' ? 3 : maxCambios) : 3,
+                        intentos_permitidos: intentosPermitidos === '' ? 3 : intentosPermitidos
                     }).eq('id', exm.id)
                 }
 
@@ -665,10 +668,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                         </div>
                                         <div>
                                             <label className="block text-xs font-semibold text-gray-600 mb-2">Formato</label>
-                                            <div className="flex gap-4">
-                                                <label className="flex items-center text-sm"><input type="radio" checked={modulo.tipo === 'video'} onChange={() => handleModuloChange(index, 'tipo', 'video')} className="mr-2" /> Video</label>
-                                                <label className="flex items-center text-sm"><input type="radio" checked={modulo.tipo === 'pdf'} onChange={() => handleModuloChange(index, 'tipo', 'pdf')} className="mr-2" /> PDF</label>
-                                                <label className="flex items-center text-sm"><input type="radio" checked={modulo.tipo === 'html'} onChange={() => handleModuloChange(index, 'tipo', 'html')} className="mr-2" /> HTML</label>
+                                            <div className="flex flex-wrap gap-3 sm:gap-4">
+                                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" checked={modulo.tipo === 'video'} onChange={() => handleModuloChange(index, 'tipo', 'video')} className="mr-2" /> Video</label>
+                                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" checked={modulo.tipo === 'pdf'} onChange={() => handleModuloChange(index, 'tipo', 'pdf')} className="mr-2" /> PDF</label>
+                                                <label className="flex items-center text-sm cursor-pointer"><input type="radio" checked={modulo.tipo === 'html'} onChange={() => handleModuloChange(index, 'tipo', 'html')} className="mr-2" /> HTML</label>
                                             </div>
                                         </div>
                                         <div>
@@ -684,7 +687,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                             ? 'Cargar Nuevo Archivo HTML (Opcional si ya existe)'
                                                             : 'Cargar Nuevo Archivo PDF (Opcional si ya existe)'}
                                                     </label>
-                                                    {modulo.id && <p className="text-xs text-blue-600 truncate mb-1">Actual: {modulo.url_contenido}</p>}
+                                                    {modulo.id && (
+                                                        <p className="text-xs text-gray-500 mb-1 truncate max-w-full">
+                                                            Actual: <a href={modulo.url_contenido} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold inline-flex items-center gap-0.5">Ver archivo actual ↗</a>
+                                                        </p>
+                                                    )}
                                                     <input
                                                         type="file"
                                                         accept={modulo.tipo === 'html' ? '.html,.htm,text/html' : '.pdf,application/pdf'}
@@ -719,7 +726,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
-                                            <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(Number(e.target.value))} className="w-full sm:w-32 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" />
+                                            <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(e.target.value === '' ? '' : Number(e.target.value))} className="w-full sm:w-32 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">Sugerencia: Cargar PDF para extraer preguntas</label>
@@ -743,7 +750,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                         min="2" 
                                                         max="300" 
                                                         value={tiempoExamen} 
-                                                        onChange={(e) => setTiempoExamen(Number(e.target.value))} 
+                                                        onChange={(e) => setTiempoExamen(e.target.value === '' ? '' : Number(e.target.value))} 
                                                         className="w-24 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
                                                     />
                                                     <span className="text-sm text-gray-600">minutos (Máx. 300)</span>
@@ -758,7 +765,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                     min="1" 
                                                     max="10" 
                                                     value={intentosPermitidos} 
-                                                    onChange={(e) => setIntentosPermitidos(Number(e.target.value))} 
+                                                    onChange={(e) => setIntentosPermitidos(e.target.value === '' ? '' : Number(e.target.value))} 
                                                     className="w-20 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
                                                 />
                                                 <span className="text-sm text-gray-600">intentos</span>
@@ -780,7 +787,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                             min="1" 
                                                             max="10" 
                                                             value={maxCambios} 
-                                                            onChange={(e) => setMaxCambios(Number(e.target.value))} 
+                                                            onChange={(e) => setMaxCambios(e.target.value === '' ? '' : Number(e.target.value))} 
                                                             className="w-16 rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2 text-black bg-white" 
                                                         />
                                                     </div>
@@ -823,11 +830,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                 <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full">#{i + 1}</span>
                                                                 <label className="text-[10px] font-bold text-gray-500 uppercase">Pregunta</label>
                                                             </div>
-                                                            <input 
-                                                                type="text" 
+                                                            <textarea 
                                                                 value={p.pregunta} 
                                                                 onChange={(e) => handlePreguntaChange(i, 'pregunta', e.target.value)}
-                                                                className="w-full text-sm font-medium border-0 border-b border-gray-100 focus:border-green-500 outline-none px-0 pb-1 bg-transparent text-black"
+                                                                rows={2}
+                                                                className="w-full text-sm font-medium border-0 border-b border-gray-100 focus:border-green-500 outline-none px-0 pb-1 bg-transparent text-black resize-none"
                                                             />
                                                         </div>
 

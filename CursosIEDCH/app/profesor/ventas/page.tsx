@@ -23,7 +23,7 @@ export default function ProfesorVentasPage() {
         const resP = await fetch('/api/perfil')
         const resultP = await resP.json()
         const prof = resultP.data
-        if (prof && (prof.rol === 'profesor' || prof.rol === 'vendedor')) {
+        if (prof && (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'institucion')) {
             if (!prof.telefono || !prof.banco || !prof.clabe) {
                 setPerfilIncompleto(true)
                 setLoading(false)

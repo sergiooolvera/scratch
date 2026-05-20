@@ -8,7 +8,7 @@ import { Users, DollarSign, Search, Filter, X, ChevronDown } from 'lucide-react'
 interface Colaborador {
     id: string
     nombre: string
-    rol: 'profesor' | 'vendedor'
+    rol: 'profesor' | 'vendedor' | 'institucion'
     referral_code: string | null
     curso_titulo: string
     ventas_con_referido: number
@@ -21,7 +21,7 @@ interface Perfil {
     id: string
     nombre: string
     apellido_paterno: string
-    rol: 'profesor' | 'vendedor'
+    rol: 'profesor' | 'vendedor' | 'institucion'
     referral_code: string | null
 }
 
@@ -83,7 +83,7 @@ export default function PagoColaboradoresPage() {
             })
 
             const [{ data: perfilesData }, { data: cursosData }] = await Promise.all([
-                supabase.from('ie_profiles').select('id, nombre, apellido_paterno, rol, referral_code').in('rol', ['profesor', 'vendedor']).eq('activo', true),
+                supabase.from('ie_profiles').select('id, nombre, apellido_paterno, rol, referral_code').in('rol', ['profesor', 'vendedor', 'institucion']).eq('activo', true),
                 supabase.from('ie_cursos').select('id, titulo, creado_por, precio')
             ])
             setPerfiles(perfilesData || [])
@@ -172,7 +172,7 @@ export default function PagoColaboradoresPage() {
                     const esPropio = curso.creado_por === p.id
                     const esReferidoSuyo = t.referred_by === p.id
 
-                    if (p.rol === 'profesor') {
+                    if (p.rol === 'profesor' || p.rol === 'institucion') {
                         if (esPropio) {
                             if (esReferidoSuyo) {
                                 ventasPorCurso[cursoId].conRef++
@@ -407,7 +407,7 @@ export default function PagoColaboradoresPage() {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        col.rol === 'profesor' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
+                                                        (col.rol === 'profesor' || col.rol === 'institucion') ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'
                                                     }`}>
                                                         {col.rol}
                                                     </span>

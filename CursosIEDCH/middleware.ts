@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
         }
 
         if (pathname.startsWith('/profesor')) {
-            if (rol !== 'admin' && rol !== 'profesor' && rol !== 'vendedor' && rol !== 'instructor') {
+            if (rol !== 'admin' && rol !== 'profesor' && rol !== 'vendedor' && rol !== 'instructor' && rol !== 'institucion') {
                 return NextResponse.redirect(new URL('/dashboard', request.url))
             }
             if (pathname.startsWith('/profesor/ventas') && rol === 'instructor') {
