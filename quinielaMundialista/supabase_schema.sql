@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS public.qui_profiles (
     points INTEGER DEFAULT 0,
     exact_scores INTEGER DEFAULT 0, -- 1st Tie-breaker
     goal_difference INTEGER DEFAULT 0, -- 2nd Tie-breaker (closer to total goal diff)
+    referral_code TEXT UNIQUE,
+    referred_by UUID REFERENCES public.qui_profiles(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -226,15 +228,31 @@ CREATE POLICY "Allow users to read their own payments"
 -- 6. TRIGGER FOR AUTOMATED PROFILE CREATION ON SIGNUP (Specific to Quiniela to avoid conflicts)
 CREATE OR REPLACE FUNCTION public.handle_new_user_quiniela()
 RETURNS trigger AS $$
+DECLARE
+  ref_code TEXT;
+  ref_by_id UUID;
 BEGIN
-  INSERT INTO public.qui_profiles (id, username, full_name, avatar_url, is_admin, is_active)
+  -- Generate unique referral code (first 8 characters of UUID)
+  ref_code := UPPER(substring(new.id::text from 1 for 8));
+  
+  -- Look up valid referral code if entered
+  IF new.raw_user_meta_data->>'referral_code_used' IS NOT NULL THEN
+    SELECT id INTO ref_by_id 
+    FROM public.qui_profiles 
+    WHERE referral_code = UPPER(TRIM(new.raw_user_meta_data->>'referral_code_used'))
+    LIMIT 1;
+  END IF;
+
+  INSERT INTO public.qui_profiles (id, username, full_name, avatar_url, is_admin, is_active, referral_code, referred_by)
   VALUES (
     new.id,
     COALESCE(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
     COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     new.raw_user_meta_data->>'avatar_url',
     FALSE,
-    FALSE
+    FALSE,
+    ref_code,
+    ref_by_id
   );
   RETURN new;
 END;

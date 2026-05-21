@@ -17,6 +17,8 @@ export interface Profile {
   exact_scores: number;
   goal_difference: number;
   created_at: string;
+  referral_code?: string;
+  referred_by?: string | null;
 }
 
 interface AuthContextType {

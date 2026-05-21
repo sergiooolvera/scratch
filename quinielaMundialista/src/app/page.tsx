@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Trophy, Calendar, Ticket, ShieldQuestion, Star, Users, Flame, ChevronRight, Activity, Award } from 'lucide-react';
+import { Trophy, Calendar, Ticket, ShieldQuestion, Star, Users, Flame, ChevronRight, Activity, Award, Gift, Copy, Check } from 'lucide-react';
 
 interface Match {
   id: string;
@@ -40,6 +40,13 @@ export default function HomePage() {
 
   const [statsLoading, setStatsLoading] = useState(true);
   const [showTerms, setShowTerms] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const fetchDashboardData = async () => {
     setStatsLoading(true);
@@ -201,6 +208,72 @@ export default function HomePage() {
           ⚽
         </div>
       </div>
+
+      {/* Referral Code Banner */}
+      {user && profile && profile.referral_code && (
+        <div className="glass-panel" style={{
+          background: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid var(--border-glass)',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          marginBottom: '24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+              borderRadius: '50%',
+              padding: '10px',
+              color: 'var(--accent-neon-green)'
+            }}>
+              <Gift size={20} />
+            </div>
+            <div>
+              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>¡Invita a tus amigos a la quiniela!</h4>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Comparte tu código y haz que se registren usándolo para competir juntos.
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-glass)',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontFamily: 'monospace',
+              fontSize: '1rem',
+              fontWeight: 800,
+              color: 'var(--accent-neon-green)',
+              letterSpacing: '1px'
+            }}>
+              {profile.referral_code}
+            </div>
+            <button 
+              onClick={() => handleCopyCode(profile.referral_code || '')}
+              className="btn btn-secondary"
+              style={{ padding: '8px 12px', minWidth: '95px', display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {copied ? (
+                <>
+                  <Check size={14} style={{ color: 'var(--accent-neon-green)' }} />
+                  <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.8rem' }}>Copiado</span>
+                </>
+              ) : (
+                <>
+                  <Copy size={14} />
+                  <span style={{ fontSize: '0.8rem' }}>Copiar</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Dynamic Statistics Grid */}
       <div className="stats-grid">

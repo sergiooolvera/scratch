@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/AuthContext';
-import { Lock, Mail, User, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Lock, Mail, User, ShieldCheck, AlertTriangle, Gift } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -55,6 +56,7 @@ export default function LoginPage() {
             data: {
               username: username.toLowerCase().trim(),
               full_name: fullName.trim(),
+              referral_code_used: referralCode.toUpperCase().trim() || null,
             },
           },
         });
@@ -219,6 +221,21 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
+
+              <div className="form-group">
+                <label className="form-label">Código de Referido (Opcional)</label>
+                <div style={{ position: 'relative' }}>
+                  <Gift size={18} style={{ position: 'absolute', left: '14px', top: '14px', color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Ej. ABCD1234"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    style={{ width: '100%', paddingLeft: '44px', textTransform: 'uppercase' }}
+                  />
+                </div>
+              </div>
             </>
           )}
 
@@ -324,6 +341,7 @@ export default function LoginPage() {
               setIsSignUp(!isSignUp);
               setErrorMsg('');
               setSuccessMsg('');
+              setReferralCode('');
             }}
             style={{
               background: 'none',
