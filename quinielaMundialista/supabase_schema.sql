@@ -223,8 +223,8 @@ CREATE POLICY "Allow users to read their own payments"
     );
 
 
--- 6. TRIGGER FOR AUTOMATED PROFILE CREATION ON SIGNUP
-CREATE OR REPLACE FUNCTION public.handle_new_user()
+-- 6. TRIGGER FOR AUTOMATED PROFILE CREATION ON SIGNUP (Specific to Quiniela to avoid conflicts)
+CREATE OR REPLACE FUNCTION public.handle_new_user_quiniela()
 RETURNS trigger AS $$
 BEGIN
   INSERT INTO public.qui_profiles (id, username, full_name, avatar_url, is_admin, is_active)
@@ -241,10 +241,10 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Bind trigger (drop first to prevent duplicate trigger error)
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created_quiniela ON auth.users;
+CREATE TRIGGER on_auth_user_created_quiniela
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_quiniela();
 
 
 -- 7. INITIAL SEED DATA FOR WORLD CUP 2026 GROUP STAGE MATCHES
