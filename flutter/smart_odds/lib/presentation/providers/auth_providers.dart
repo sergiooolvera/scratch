@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/repositories/auth_repository.dart';
 import '../../core/services/firestore_service.dart';
@@ -81,4 +82,72 @@ final liveMatchesStreamProvider = StreamProvider<List<LiveMatch>>((ref) {
       return <LiveMatch>[];
     });
   }
+});
+
+// Provider to keep track of dismissed alert IDs across screen changes with local persistence
+class DismissedAlertsNotifier extends StateNotifier<Set<String>> {
+  static const String _storageKey = 'dismissed_alerts_keys';
+
+  DismissedAlertsNotifier() : super(<String>{}) {
+    _loadFromPrefs();
+  }
+
+  Future<void> _loadFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList(_storageKey);
+      if (list != null) {
+        state = list.toSet();
+      }
+    } catch (e) {
+      debugPrint("[Prefs] Error loading dismissed alerts: $e");
+    }
+  }
+
+  Future<void> dismissAlert(String id) async {
+    if (state.contains(id)) return;
+    state = {...state, id};
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_storageKey, state.toList());
+    } catch (e) {
+      debugPrint("[Prefs] Error saving dismissed alert: $e");
+    }
+  }
+
+  Future<void> dismissAll(List<String> ids) async {
+    final newState = {...state, ...ids};
+    state = newState;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_storageKey, newState.toList());
+    } catch (e) {
+      debugPrint("[Prefs] Error saving dismissed alerts: $e");
+    }
+  }
+
+  Future<void> restoreAlert(String id) async {
+    if (!state.contains(id)) return;
+    state = state.where((item) => item != id).toSet();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_storageKey, state.toList());
+    } catch (e) {
+      debugPrint("[Prefs] Error restoring alert: $e");
+    }
+  }
+
+  Future<void> clearAll() async {
+    state = <String>{};
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (e) {
+      debugPrint("[Prefs] Error clearing dismissed alerts: $e");
+    }
+  }
+}
+
+final dismissedAlertsProvider = StateNotifierProvider<DismissedAlertsNotifier, Set<String>>((ref) {
+  return DismissedAlertsNotifier();
 });

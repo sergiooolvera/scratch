@@ -14,7 +14,6 @@ class AlertFeedScreen extends ConsumerStatefulWidget {
 class _AlertFeedScreenState extends ConsumerState<AlertFeedScreen> with SingleTickerProviderStateMixin {
   bool _showSpicy = false;
   late TabController _tabController;
-  final Set<String> _dismissedAlertIds = {};
 
   @override
   void initState() {
@@ -35,7 +34,8 @@ class _AlertFeedScreenState extends ConsumerState<AlertFeedScreen> with SingleTi
           ? alerts.where((a) => a.status == 'pending').toList()
           : alerts.where((a) => a.status == 'won' || a.status == 'lost').toList();
 
-      final filteredList = listToDiscard.where((a) => !_dismissedAlertIds.contains(a.id)).toList();
+      final dismissedAlertIds = ref.read(dismissedAlertsProvider);
+      final filteredList = listToDiscard.where((a) => !dismissedAlertIds.contains(a.id)).toList();
 
       if (filteredList.isEmpty) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -64,11 +64,7 @@ class _AlertFeedScreenState extends ConsumerState<AlertFeedScreen> with SingleTi
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  setState(() {
-                    for (var alert in filteredList) {
-                      _dismissedAlertIds.add(alert.id);
-                    }
-                  });
+                  ref.read(dismissedAlertsProvider.notifier).dismissAll(filteredList.map((a) => a.id).toList());
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -179,7 +175,8 @@ class _AlertFeedScreenState extends ConsumerState<AlertFeedScreen> with SingleTi
   }
 
   Widget _buildAlertList(BuildContext context, List<Alert> alerts) {
-    final filteredAlerts = alerts.where((a) => !_dismissedAlertIds.contains(a.id)).toList();
+    final dismissedAlertIds = ref.watch(dismissedAlertsProvider);
+    final filteredAlerts = alerts.where((a) => !dismissedAlertIds.contains(a.id)).toList();
 
     if (filteredAlerts.isEmpty) {
       return Center(
@@ -214,9 +211,7 @@ class _AlertFeedScreenState extends ConsumerState<AlertFeedScreen> with SingleTi
               child: const Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 32),
             ),
             onDismissed: (direction) {
-              setState(() {
-                _dismissedAlertIds.add(alert.id);
-              });
+              ref.read(dismissedAlertsProvider.notifier).dismissAlert(alert.id);
               final messenger = ScaffoldMessenger.of(context);
               messenger.clearSnackBars();
               messenger.showSnackBar(
@@ -228,9 +223,7 @@ class _AlertFeedScreenState extends ConsumerState<AlertFeedScreen> with SingleTi
                     textColor: AppTheme.primaryOrange,
                     onPressed: () {
                       messenger.hideCurrentSnackBar();
-                      setState(() {
-                        _dismissedAlertIds.remove(alert.id);
-                      });
+                      ref.read(dismissedAlertsProvider.notifier).restoreAlert(alert.id);
                     },
                   ),
                 ),

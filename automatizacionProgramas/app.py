@@ -251,14 +251,32 @@ async def _real_game_polling_loop():
                             except Exception as e:
                                 logger.error(f"Error parsing scores for alert resolution: {e}")
                                 
+                        # Case 2: Corners (check if current corners exceed recommended line)
+                        elif market == "Corners":
+                            local_match = simulator.local_matches.get(m_id)
+                            if local_match and "live_stats" in local_match:
+                                curr_corners = local_match["live_stats"].get("corners_total", 0)
+                                rec_line = p_alert.get("line", 0.0)
+                                if curr_corners > rec_line:
+                                    logger.info(f"🏆 Corners Alert {p_alert['id']} WON! Recommended line: {rec_line}, current corners: {curr_corners}.")
+                                    await firebase_service.update_alert_status(p_alert["id"], "won")
+                                    
+                        # Case 3: RedCard (stays pending while game is live to remain in "ACTIVAS")
                         elif market == "RedCard":
-                            await firebase_service.update_alert_status(p_alert["id"], "processed")
+                            pass
                             
                     else:
-                        # Match disappeared from live. Mark as lost for now (simple assumption).
+                        # Match disappeared from live (finished).
                         if market in ["HeavyPressure", "Goals"]:
                             logger.info(f"❌ Alert {p_alert['id']} marked as LOST (Match disappeared from live).")
                             await firebase_service.update_alert_status(p_alert["id"], "lost")
+                        elif market == "Corners":
+                            logger.info(f"❌ Corners Alert {p_alert['id']} marked as LOST (Match finished and line not cleared).")
+                            await firebase_service.update_alert_status(p_alert["id"], "lost")
+                        elif market == "RedCard":
+                            # RedCard alerts are event notifications, they are "won" once the match is over!
+                            logger.info(f"🏆 RedCard Alert {p_alert['id']} marked as WON (Match finished).")
+                            await firebase_service.update_alert_status(p_alert["id"], "won")
 
             # Wait 2 minutes between polling loops to respect live requirements
             logger.info("Finished polling round. Sleeping for 120 seconds (2 minutes)...")

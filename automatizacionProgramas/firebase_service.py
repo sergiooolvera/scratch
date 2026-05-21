@@ -81,6 +81,23 @@ class FirebaseService:
                     title=alert_data["title"],
                     body=alert_data["description"]
                 ),
+                android=messaging.AndroidConfig(
+                    priority="high",
+                    notification=messaging.AndroidNotification(
+                        sound="default",
+                        default_sound=True,
+                        priority="max",
+                        channel_id="alaolla_live_alerts"
+                    )
+                ),
+                apns=messaging.APNSConfig(
+                    payload=messaging.APNSPayload(
+                        aps=messaging.Aps(
+                            sound="default",
+                            badge=1
+                        )
+                    )
+                ),
                 data={
                     "market": alert_data["market"],
                     "match_id": alert_data["match_id"],
