@@ -35,7 +35,7 @@ export default function QuinielaPage() {
   const [predictions, setPredictions] = useState<{ [matchId: string]: Prediction }>({});
   const [savingState, setSavingState] = useState<{ [matchId: string]: 'idle' | 'saving' | 'saved' | 'error' }>({});
   const [pageLoading, setPageLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'group' | 'date'>('group');
+  const [activeTab, setActiveTab] = useState<'group' | 'date'>('date');
   const [toastMessage, setToastMessage] = useState('');
   
   // Simulator lock state for testing
