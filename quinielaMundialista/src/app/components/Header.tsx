@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
@@ -13,6 +14,11 @@ export const Header: React.FC = () => {
   
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifDrawer, setShowNotifDrawer] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActive = (path: string) => pathname === path;
 
@@ -67,6 +73,20 @@ export const Header: React.FC = () => {
       }
     } catch (e) {
       console.error('Error marking notifications as read:', e);
+    }
+  };
+
+  const markAsRead = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('qui_notifications')
+        .update({ read: true })
+        .eq('id', id);
+      if (!error) {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+      }
+    } catch (e) {
+      console.error('Error marking notification as read:', e);
     }
   };
 
@@ -153,7 +173,7 @@ export const Header: React.FC = () => {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
+            <div className="mobile-hide" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
               <span className="sports-font" style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                 {profile?.full_name || user.email?.split('@')[0]}
               </span>
@@ -180,7 +200,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Notification Drawer (Slide-out Glassmorphic Sidebar) */}
-      {showNotifDrawer && (
+      {showNotifDrawer && mounted && createPortal(
         <div style={{
           position: 'fixed',
           top: 0,
@@ -288,14 +308,18 @@ export const Header: React.FC = () => {
                   <div 
                     key={n.id} 
                     className="glass-card" 
+                    onClick={() => !n.read && markAsRead(n.id)}
                     style={{
                       padding: '14px',
                       borderRadius: '12px',
                       borderLeft: !n.read ? '3px solid var(--accent-neon-green)' : '1px solid var(--border-glass)',
                       background: !n.read ? 'rgba(16, 185, 129, 0.03)' : undefined,
                       transition: 'all 0.2s ease',
-                      position: 'relative'
+                      position: 'relative',
+                      cursor: !n.read ? 'pointer' : 'default',
+                      opacity: n.read ? 0.75 : 1
                     }}
+                    title={!n.read ? 'Haga clic para marcar como leída' : undefined}
                   >
                     <p style={{
                       fontSize: '0.85rem',
@@ -317,12 +341,28 @@ export const Header: React.FC = () => {
                         minute: '2-digit'
                       })}
                     </span>
+                    {!n.read && (
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '12px',
+                        right: '12px',
+                        fontSize: '0.65rem',
+                        color: 'var(--accent-neon-green)',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px'
+                      }}>
+                        <Check size={10} /> Nueva
+                      </span>
+                    )}
                   </div>
                 ))
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );

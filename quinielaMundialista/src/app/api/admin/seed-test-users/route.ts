@@ -154,23 +154,30 @@ export async function POST(req: Request) {
 
       let totalPoints = 0;
       let exactCount = 0;
-      let totalGoalDiffError = 0;
+      let totalPredGoals = 0;
+      let totalRealGoals = 0;
 
       userPreds?.forEach((up: any) => {
+        // Solo considerar partidos finalizados (que ya tienen marcador oficial registrado)
+        if (up.qui_matches.home_score === null || up.qui_matches.away_score === null) {
+          return;
+        }
+
         totalPoints += (up.points_earned || 0);
         if (up.is_exact) exactCount++;
 
-        const predDiff = up.home_prediction - up.away_prediction;
-        const realDiff = up.qui_matches.home_score - up.qui_matches.away_score;
-        totalGoalDiffError += Math.abs(predDiff - realDiff);
+        totalPredGoals += (Number(up.home_prediction) + Number(up.away_prediction));
+        totalRealGoals += (Number(up.qui_matches.home_score) + Number(up.qui_matches.away_score));
       });
+
+      const totalGoalDiff = Math.abs(totalPredGoals - totalRealGoals);
 
       await supabaseAdmin
         .from('qui_profiles')
         .update({
           points: totalPoints,
           exact_scores: exactCount,
-          goal_difference: totalGoalDiffError
+          goal_difference: totalGoalDiff
         })
         .eq('id', userId);
     }

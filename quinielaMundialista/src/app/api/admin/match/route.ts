@@ -3,9 +3,9 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function POST(req: Request) {
   try {
-    const { matchId, homeScore, awayScore, adminId } = await req.json();
+    const { matchId, homeScore, awayScore, adminId, matches } = await req.json();
 
-    if (!matchId || homeScore === undefined || awayScore === undefined || !adminId) {
+    if (!adminId) {
       return NextResponse.json({ error: 'Faltan parámetros requeridos.' }, { status: 400 });
     }
 
@@ -18,6 +18,16 @@ export async function POST(req: Request) {
 
     if (adminError || !adminProfile || !adminProfile.is_admin) {
       return NextResponse.json({ error: 'Operación no autorizada. Requiere rol de Administrador.' }, { status: 403 });
+    }
+
+    // Normalize inputs into an array of match updates
+    let updates: { matchId: string; homeScore: number; awayScore: number }[] = [];
+    if (matches && Array.isArray(matches)) {
+      updates = matches;
+    } else if (matchId !== undefined && homeScore !== undefined && awayScore !== undefined) {
+      updates = [{ matchId, homeScore: Number(homeScore), awayScore: Number(awayScore) }];
+    } else {
+      return NextResponse.json({ error: 'Faltan parámetros de partidos para actualizar.' }, { status: 400 });
     }
 
     // 2. Fetch the system settings to get active scoring points configuration
@@ -36,60 +46,65 @@ export async function POST(req: Request) {
     const ptsDraw = Number(settings.points_correct_draw);
     const ptsIncorrect = Number(settings.points_incorrect);
 
-    // 3. Update the match score and set status to finished in qui_matches
-    const { error: matchUpdateError } = await supabaseAdmin
-      .from('qui_matches')
-      .update({
-        home_score: homeScore,
-        away_score: awayScore,
-        status: 'finished'
-      })
-      .eq('id', matchId);
+    // Process each match score and predictions
+    for (const update of updates) {
+      const { matchId: mId, homeScore: hScore, awayScore: aScore } = update;
 
-    if (matchUpdateError) throw matchUpdateError;
+      // 3. Update the match score and set status to finished in qui_matches
+      const { error: matchUpdateError } = await supabaseAdmin
+        .from('qui_matches')
+        .update({
+          home_score: hScore,
+          away_score: aScore,
+          status: 'finished'
+        })
+        .eq('id', mId);
 
-    // 4. Fetch all user predictions for this match
-    const { data: predictions, error: predsError } = await supabaseAdmin
-      .from('qui_predictions')
-      .select('*')
-      .eq('match_id', matchId);
+      if (matchUpdateError) throw matchUpdateError;
 
-    if (predsError) throw predsError;
+      // 4. Fetch all user predictions for this match
+      const { data: predictions, error: predsError } = await supabaseAdmin
+        .from('qui_predictions')
+        .select('*')
+        .eq('match_id', mId);
 
-    // 5. Evaluate points for each prediction and save them
-    if (predictions && predictions.length > 0) {
-      for (const pred of predictions) {
-        let points = ptsIncorrect;
-        let isExact = false;
+      if (predsError) throw predsError;
 
-        const pHome = Number(pred.home_prediction);
-        const pAway = Number(pred.away_prediction);
+      // 5. Evaluate points for each prediction and save them
+      if (predictions && predictions.length > 0) {
+        for (const pred of predictions) {
+          let points = ptsIncorrect;
+          let isExact = false;
 
-        // Actual outcomes
-        const realWinner = homeScore > awayScore ? 'home' : homeScore < awayScore ? 'away' : 'draw';
-        const predWinner = pHome > pAway ? 'home' : pHome < pAway ? 'away' : 'draw';
+          const pHome = Number(pred.home_prediction);
+          const pAway = Number(pred.away_prediction);
 
-        if (pHome === homeScore && pAway === awayScore) {
-          // Exact score
-          points = ptsExact;
-          isExact = true;
-        } else if (realWinner === predWinner) {
-          // Correct winner or correct draw
-          if (realWinner === 'draw') {
-            points = ptsDraw;
-          } else {
-            points = ptsWinner;
+          // Actual outcomes
+          const realWinner = hScore > aScore ? 'home' : hScore < aScore ? 'away' : 'draw';
+          const predWinner = pHome > pAway ? 'home' : pHome < pAway ? 'away' : 'draw';
+
+          if (pHome === hScore && pAway === aScore) {
+            // Exact score
+            points = ptsExact;
+            isExact = true;
+          } else if (realWinner === predWinner) {
+            // Correct winner or correct draw
+            if (realWinner === 'draw') {
+              points = ptsDraw;
+            } else {
+              points = ptsWinner;
+            }
           }
-        }
 
-        // Save prediction outcome
-        await supabaseAdmin
-          .from('qui_predictions')
-          .update({
-            points_earned: points,
-            is_exact: isExact
-          })
-          .eq('id', pred.id);
+          // Save prediction outcome
+          await supabaseAdmin
+            .from('qui_predictions')
+            .update({
+              points_earned: points,
+              is_exact: isExact
+            })
+            .eq('id', pred.id);
+        }
       }
     }
 
@@ -118,19 +133,23 @@ export async function POST(req: Request) {
 
       let totalPoints = 0;
       let exactCount = 0;
-      let totalGoalDiffError = 0;
+      let totalPredGoals = 0;
+      let totalRealGoals = 0;
 
       userPreds?.forEach((up: any) => {
+        // Solo considerar partidos finalizados (que ya tienen marcador oficial registrado)
+        if (up.qui_matches.home_score === null || up.qui_matches.away_score === null) {
+          return;
+        }
+
         totalPoints += (up.points_earned || 0);
         if (up.is_exact) exactCount++;
 
-        // Calculate absolute goal difference error
-        // Predicted goal difference: (home_prediction - away_prediction)
-        // Official goal difference: (home_score - away_score)
-        const predDiff = up.home_prediction - up.away_prediction;
-        const realDiff = up.qui_matches.home_score - up.qui_matches.away_score;
-        totalGoalDiffError += Math.abs(predDiff - realDiff);
+        totalPredGoals += (Number(up.home_prediction) + Number(up.away_prediction));
+        totalRealGoals += (Number(up.qui_matches.home_score) + Number(up.qui_matches.away_score));
       });
+
+      const totalGoalDiff = Math.abs(totalPredGoals - totalRealGoals);
 
       // Update the user's standing metrics
       await supabaseAdmin
@@ -138,91 +157,95 @@ export async function POST(req: Request) {
         .update({
           points: totalPoints,
           exact_scores: exactCount,
-          goal_difference: totalGoalDiffError
+          goal_difference: totalGoalDiff
         })
         .eq('id', prof.id);
     }
 
-    // 7. Generate dynamic scoring recap notifications for all users
-    try {
-      // Fetch match details for the notification message
-      const { data: matchData } = await supabaseAdmin
-        .from('qui_matches')
-        .select('home_team, away_team')
-        .eq('id', matchId)
-        .single();
-      
-      const homeTeamName = matchData?.home_team || 'Local';
-      const awayTeamName = matchData?.away_team || 'Visitante';
+    // 7. Generate dynamic scoring recap notifications for all users for each match
+    for (const update of updates) {
+      const { matchId: mId, homeScore: hScore, awayScore: aScore } = update;
+      try {
+        // Fetch match details for the notification message
+        const { data: matchData } = await supabaseAdmin
+          .from('qui_matches')
+          .select('home_team, away_team')
+          .eq('id', mId)
+          .single();
+        
+        const homeTeamName = matchData?.home_team || 'Local';
+        const awayTeamName = matchData?.away_team || 'Visitante';
 
-      // Fetch all predictions for this match again to get exact prediction numbers
-      const { data: matchPredictions } = await supabaseAdmin
-        .from('qui_predictions')
-        .select('user_id, home_prediction, away_prediction');
-      
-      const predictionMap = new Map();
-      matchPredictions?.forEach(p => {
-        predictionMap.set(p.user_id, p);
-      });
+        // Fetch all predictions for this match again to get exact prediction numbers
+        const { data: matchPredictions } = await supabaseAdmin
+          .from('qui_predictions')
+          .select('user_id, home_prediction, away_prediction')
+          .eq('match_id', mId);
+        
+        const predictionMap = new Map();
+        matchPredictions?.forEach(p => {
+          predictionMap.set(p.user_id, p);
+        });
 
-      // Fetch final rankings sorted by tie-breakers
-      const { data: updatedRankings } = await supabaseAdmin
-        .from('qui_profiles')
-        .select('id, points')
-        .order('points', { ascending: false })
-        .order('exact_scores', { ascending: false })
-        .order('goal_difference', { ascending: true });
+        // Fetch final rankings sorted by tie-breakers
+        const { data: updatedRankings } = await supabaseAdmin
+          .from('qui_profiles')
+          .select('id, points')
+          .order('points', { ascending: false })
+          .order('exact_scores', { ascending: false })
+          .order('goal_difference', { ascending: true });
 
-      if (updatedRankings) {
-        for (let i = 0; i < updatedRankings.length; i++) {
-          const prof = updatedRankings[i];
-          const rank = i + 1;
-          const pred = predictionMap.get(prof.id);
-          
-          let notifMsg = '';
-          if (pred) {
-            const pHome = Number(pred.home_prediction);
-            const pAway = Number(pred.away_prediction);
+        if (updatedRankings) {
+          for (let i = 0; i < updatedRankings.length; i++) {
+            const prof = updatedRankings[i];
+            const rank = i + 1;
+            const pred = predictionMap.get(prof.id);
             
-            let pointsEarned = 0;
-            let matchOutcomeText = 'errado';
-            
-            const realWinner = homeScore > awayScore ? 'home' : homeScore < awayScore ? 'away' : 'draw';
-            const predWinner = pHome > pAway ? 'home' : pHome < pAway ? 'away' : 'draw';
-            
-            if (pHome === homeScore && pAway === awayScore) {
-              pointsEarned = ptsExact;
-              matchOutcomeText = '¡Exacto! 🎯';
-            } else if (realWinner === predWinner) {
-              if (realWinner === 'draw') {
-                pointsEarned = ptsDraw;
-                matchOutcomeText = 'Empate correcto 🤝';
+            let notifMsg = '';
+            if (pred) {
+              const pHome = Number(pred.home_prediction);
+              const pAway = Number(pred.away_prediction);
+              
+              let pointsEarned = 0;
+              let matchOutcomeText = 'errado';
+              
+              const realWinner = hScore > aScore ? 'home' : hScore < aScore ? 'away' : 'draw';
+              const predWinner = pHome > pAway ? 'home' : pHome < pAway ? 'away' : 'draw';
+              
+              if (pHome === hScore && pAway === aScore) {
+                pointsEarned = ptsExact;
+                matchOutcomeText = '¡Exacto! 🎯';
+              } else if (realWinner === predWinner) {
+                if (realWinner === 'draw') {
+                  pointsEarned = ptsDraw;
+                  matchOutcomeText = 'Empate correcto 🤝';
+                } else {
+                  pointsEarned = ptsWinner;
+                  matchOutcomeText = 'Ganador correcto 🏃‍♂️';
+                }
               } else {
-                pointsEarned = ptsWinner;
-                matchOutcomeText = 'Ganador correcto 🏃‍♂️';
+                pointsEarned = ptsIncorrect;
+                matchOutcomeText = 'Errado ❌';
               }
+              
+              notifMsg = `⚽ Marcador oficial: ${homeTeamName} ${hScore} - ${aScore} ${awayTeamName}. Tu pronóstico: ${pHome} - ${pAway} (${matchOutcomeText}). Sumaste +${pointsEarned} pts. Ocupas el puesto #${rank} con ${prof.points} pts.`;
             } else {
-              pointsEarned = ptsIncorrect;
-              matchOutcomeText = 'Errado ❌';
+              notifMsg = `⚽ Marcador oficial: ${homeTeamName} ${hScore} - ${aScore} ${awayTeamName}. No registraste pronóstico para este partido (+0 pts). Ocupas el puesto #${rank} con ${prof.points} pts.`;
             }
-            
-            notifMsg = `⚽ Marcador oficial: ${homeTeamName} ${homeScore} - ${awayScore} ${awayTeamName}. Tu pronóstico: ${pHome} - ${pAway} (${matchOutcomeText}). Sumaste +${pointsEarned} pts. Ocupas el puesto #${rank} con ${prof.points} pts.`;
-          } else {
-            notifMsg = `⚽ Marcador oficial: ${homeTeamName} ${homeScore} - ${awayScore} ${awayTeamName}. No registraste pronóstico para este partido (+0 pts). Ocupas el puesto #${rank} con ${prof.points} pts.`;
-          }
 
-          // Insert notification
-          await supabaseAdmin
-            .from('qui_notifications')
-            .insert({
-              user_id: prof.id,
-              message: notifMsg,
-              read: false
-            });
+            // Insert notification
+            await supabaseAdmin
+              .from('qui_notifications')
+              .insert({
+                user_id: prof.id,
+                message: notifMsg,
+                read: false
+              });
+          }
         }
+      } catch (notifErr: any) {
+        console.error('Failed to generate notifications:', notifErr.message);
       }
-    } catch (notifErr: any) {
-      console.error('Failed to generate notifications:', notifErr.message);
     }
 
     return NextResponse.json({ success: true, message: 'Resultados procesados y clasificaciones actualizadas exitosamente.' });

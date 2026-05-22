@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { CreditCard, CheckCircle2, Ticket, ShieldAlert, Sparkles, AlertTriangle, ArrowRight } from 'lucide-react';
 
 function PayTicketContent() {
@@ -13,6 +14,31 @@ function PayTicketContent() {
   const [payLoading, setPayLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
+
+  const [ticketCost, setTicketCost] = useState(200);
+  const [poolTotal, setPoolTotal] = useState(10000);
+
+  // Fetch settings dynamically from Database
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('qui_system_settings')
+          .select('ticket_cost, pool_accumulated')
+          .eq('id', 'points_config')
+          .single();
+        if (!error && data) {
+          setTicketCost(Number(data.ticket_cost) || 200);
+          setPoolTotal(Number(data.pool_accumulated) || 10000);
+        }
+      } catch (err) {
+        console.error('Error fetching settings in pay page:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Handle redirects and queries
   useEffect(() => {
@@ -22,17 +48,69 @@ function PayTicketContent() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    const success = searchParams.get('success');
     const cancel = searchParams.get('cancel');
-
-    if (success === 'true') {
-      setSuccessMsg('🎉 ¡Felicidades! Tu aportación voluntaria de mantenimiento ha sido registrada con éxito. ¡Tu perfil de participante ahora está ACTIVO!');
-      // Force refresh auth profile to immediately reflect the state from database
-      refreshProfile();
-    } else if (cancel === 'true') {
+    if (cancel === 'true') {
       setErrorMsg('⚠️ La aportación voluntaria de soporte técnico fue cancelada.');
     }
   }, [searchParams]);
+
+  // Poll profile when success=true is present and profile is not active yet
+  useEffect(() => {
+    const success = searchParams.get('success');
+    if (success !== 'true' || profile?.is_active) {
+      setIsVerifyingPayment(false);
+      return;
+    }
+
+    setIsVerifyingPayment(true);
+    
+    // Initial fetch to check if it's already active
+    refreshProfile();
+
+    let attempts = 0;
+    const maxAttempts = 15;
+
+    const interval = setInterval(async () => {
+      attempts++;
+      await refreshProfile();
+      
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        setIsVerifyingPayment(false);
+        setErrorMsg('El pago está tardando más de lo esperado en registrarse. Por favor contacta al Administrador o refresca la página.');
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [searchParams, user, profile?.is_active]);
+
+  // Redirect countdown when profile becomes active under success=true
+  useEffect(() => {
+    const success = searchParams.get('success');
+    if (success === 'true' && profile?.is_active) {
+      setSuccessMsg('🎉 ¡Felicidades! Tu aportación voluntaria de mantenimiento ha sido registrada con éxito. ¡Tu perfil de participante ahora está ACTIVO!');
+      
+      if (redirectCountdown === null) {
+        setRedirectCountdown(4); // 4 seconds countdown before auto redirect
+      }
+    }
+  }, [searchParams, profile?.is_active, redirectCountdown]);
+
+  // Execute countdown timer
+  useEffect(() => {
+    if (redirectCountdown === null) return;
+    
+    if (redirectCountdown === 0) {
+      router.push('/quiniela');
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setRedirectCountdown(prev => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [redirectCountdown, router]);
 
   const handleCheckout = async () => {
     if (!user) return;
@@ -95,7 +173,7 @@ function PayTicketContent() {
           gap: '12px',
           color: 'var(--accent-neon-green)'
         }}>
-          <CheckCircle2 size={24} />
+          <CheckCircle2 size={24} style={{ flexShrink: 0 }} />
           <span style={{ fontSize: '0.95rem' }}>{successMsg}</span>
         </div>
       )}
@@ -112,8 +190,59 @@ function PayTicketContent() {
           gap: '12px',
           color: '#f87171'
         }}>
-          <AlertTriangle size={24} />
+          <AlertTriangle size={24} style={{ flexShrink: 0 }} />
           <span style={{ fontSize: '0.95rem' }}>{errorMsg}</span>
+        </div>
+      )}
+
+      {isVerifyingPayment && (
+        <div className="glass-panel" style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%)',
+          borderColor: 'rgba(245, 158, 11, 0.3)',
+          borderRadius: 'var(--border-radius-md)',
+          padding: '16px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          color: 'var(--accent-gold)'
+        }}>
+          <div className="animate-spin" style={{
+            width: '24px',
+            height: '24px',
+            border: '3px solid var(--accent-gold)',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            flexShrink: 0
+          }}></div>
+          <div>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800 }}>Verificando aportación voluntaria...</h4>
+            <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Procesando tu pago de forma segura con Stripe. Por favor no cierres ni recargues esta ventana.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {redirectCountdown !== null && redirectCountdown > 0 && (
+        <div className="glass-panel" style={{
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%)',
+          borderColor: 'rgba(16, 185, 129, 0.35)',
+          borderRadius: 'var(--border-radius-md)',
+          padding: '16px',
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          color: 'var(--accent-neon-green)'
+        }}>
+          <Sparkles size={24} style={{ flexShrink: 0, color: 'var(--accent-neon-green)' }} />
+          <div>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800 }}>¡Boleto Activado con Éxito!</h4>
+            <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Redirigiéndote a <strong>Mi Quiniela</strong> para registrar tus pronósticos en <strong>{redirectCountdown}</strong> segundos...
+            </p>
+          </div>
         </div>
       )}
 
@@ -121,7 +250,7 @@ function PayTicketContent() {
         Soporte Técnico del Servidor
       </h2>
       <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '32px', fontSize: '0.9rem' }}>
-        Realiza una cooperación voluntaria para cubrir costos de hospedaje y base de datos, habilitando tu participación por la bolsa recreativa de 10,000 Frijolitos.
+        Realiza una cooperación voluntaria para cubrir costos de hospedaje y base de datos, habilitando tu participación por la bolsa recreativa de {poolTotal.toLocaleString()} Frijolitos.
       </p>
 
       {/* Ticket Design */}
@@ -199,7 +328,7 @@ function PayTicketContent() {
             <div style={{ textAlign: 'right' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Donativo Sugerido</span>
               <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--text-primary)' }}>
-                200 Frijolitos
+                {ticketCost.toLocaleString()} Frijolitos
               </h4>
             </div>
           </div>
@@ -261,6 +390,22 @@ function PayTicketContent() {
                 <span>Ir a mi Quiniela</span>
                 <ArrowRight size={16} />
               </button>
+            </div>
+          ) : isVerifyingPayment ? (
+            <div style={{ width: '100%', textAlign: 'center', padding: '12px 0' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--accent-gold)', fontWeight: 700, marginBottom: '12px' }}>
+                <div className="animate-spin" style={{
+                  width: '18px',
+                  height: '18px',
+                  border: '2px solid var(--accent-gold)',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%',
+                }}></div>
+                <span>VERIFICANDO REGISTRO...</span>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                Estamos validando tu pago con la pasarela de Stripe. Tu boleto de participación se activará en cualquier momento.
+              </p>
             </div>
           ) : (
             <div style={{ width: '100%', textAlign: 'center' }}>

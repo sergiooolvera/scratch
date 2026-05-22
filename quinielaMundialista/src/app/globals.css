@@ -886,4 +886,98 @@ a {
   .logo-section {
     font-size: 1.2rem;
   }
+  
+  .mobile-hide {
+    display: none !important;
+  }
 }
+
+/* Spinner Animation */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Animations for Notification Drawer */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Custom Glassmorphic Tooltip */
+.custom-tooltip-container {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.custom-tooltip-text {
+  visibility: hidden;
+  width: 260px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(3, 7, 18, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary);
+  text-align: left;
+  border-radius: var(--border-radius-md);
+  padding: 12px;
+  position: absolute;
+  z-index: 10000;
+  bottom: 130%; /* Position above */
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  opacity: 0;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(59, 130, 246, 0.05);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  pointer-events: none;
+  font-family: 'Outfit', sans-serif;
+  text-transform: none; /* Keep original casing */
+  font-weight: 500;
+}
+
+.custom-tooltip-text strong {
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+.custom-tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%; /* At the bottom of the tooltip */
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: rgba(3, 7, 18, 0.99) transparent transparent transparent;
+}
+
+.custom-tooltip-container:hover .custom-tooltip-text {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+
+

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Lock, Save, Calendar, ShieldAlert, Award, Search, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Lock, Save, Calendar, ShieldAlert, Award, Search, Sparkles, CheckCircle2, Check } from 'lucide-react';
 
 interface Match {
   id: string;
@@ -29,7 +29,7 @@ interface Prediction {
 
 export default function QuinielaPage() {
   const router = useRouter();
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, refreshProfile } = useAuth();
   
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<{ [matchId: string]: Prediction }>({});
@@ -40,6 +40,9 @@ export default function QuinielaPage() {
   
   // Simulator lock state for testing
   const [simMode, setSimMode] = useState<'real' | 'bypass' | 'force_all' | 'world_cup'>('real');
+
+  const [lockHours, setLockHours] = useState(24);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -81,6 +84,7 @@ export default function QuinielaPage() {
     }, 2500);
 
     try {
+      setFetchError(null);
       // 1. Fetch matches sorted by time
       const { data: matchesData, error: matchesError } = await supabase
         .from('qui_matches')
@@ -110,8 +114,20 @@ export default function QuinielaPage() {
         };
       });
       setPredictions(predsMap);
+
+      // 3. Fetch system settings for lock hours
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('qui_system_settings')
+        .select('lock_hours_before')
+        .eq('id', 'points_config')
+        .single();
+
+      if (!settingsError && settingsData) {
+        setLockHours(Number(settingsData.lock_hours_before) || 24);
+      }
     } catch (err: any) {
       console.error('Error fetching quiniela data:', err.message);
+      setFetchError(err.message || String(err));
       showToast('Error al cargar partidos.');
     } finally {
       clearTimeout(safetyTimer);
@@ -122,6 +138,9 @@ export default function QuinielaPage() {
   useEffect(() => {
     if (user) {
       fetchData();
+      if (refreshProfile) {
+        refreshProfile();
+      }
     }
   }, [user]);
 
@@ -132,7 +151,7 @@ export default function QuinielaPage() {
     }, 3000);
   };
 
-  // Check if a match is locked (less than 24 hours to start, or already live/finished, or manually locked)
+  // Check if a match is locked (less than lockHours hours to start, or already live/finished, or manually locked)
   const isMatchLocked = (match: Match) => {
     if (simMode === 'bypass') {
       return false;
@@ -154,8 +173,8 @@ export default function QuinielaPage() {
     }
 
     const matchTime = new Date(match.match_time).getTime();
-    const twentyFourHours = 24 * 60 * 60 * 1000;
-    return (matchTime - currentTime) < twentyFourHours;
+    const lockInterval = lockHours * 60 * 60 * 1000;
+    return (matchTime - currentTime) < lockInterval;
   };
 
   // Get detailed locking explanation for testing feedback
@@ -179,12 +198,12 @@ export default function QuinielaPage() {
     }
 
     const matchTime = new Date(match.match_time).getTime();
-    const twentyFourHours = 24 * 60 * 60 * 1000;
+    const lockInterval = lockHours * 60 * 60 * 1000;
     const diff = matchTime - currentTime;
 
     if (diff < 0) {
       return { text: 'Ya inició', type: 'locked' };
-    } else if (diff < twentyFourHours) {
+    } else if (diff < lockInterval) {
       const hoursRemaining = Math.floor(diff / (60 * 60 * 1000));
       const minsRemaining = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
       return { text: `Cierra en: ${hoursRemaining}h ${minsRemaining}m`, type: 'locked' };
@@ -331,6 +350,25 @@ export default function QuinielaPage() {
         </div>
       )}
 
+      {/* Fetch Error Display */}
+      {fetchError && (
+        <div className="glass-panel" style={{
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%)',
+          borderColor: 'rgba(239, 68, 68, 0.3)',
+          marginBottom: '24px',
+          padding: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <ShieldAlert size={28} style={{ color: '#ef4444' }} />
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f87171', margin: 0 }}>Error al cargar datos</h3>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>{fetchError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Aportación alert if inactive */}
       {!profile?.is_active && (
         <div className="glass-panel" style={{
@@ -365,7 +403,7 @@ export default function QuinielaPage() {
         <div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>Captura tus Pronósticos</h2>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Tienes hasta **24 horas antes** del inicio de cada partido para guardar o modificar tus resultados.
+            Tienes hasta **{lockHours} horas antes** del inicio de cada partido para guardar o modificar tus resultados.
           </p>
         </div>
 
@@ -581,17 +619,61 @@ export default function QuinielaPage() {
                       ) : (
                         <button
                           onClick={() => savePrediction(match.id)}
-                          className="btn btn-primary"
+                          className="btn"
                           style={{
-                            padding: '6px 12px',
-                            fontSize: '0.8rem',
-                            background: saveStatus === 'saved' ? 'linear-gradient(135deg, #10b981 0%, #047857 100%)' : undefined,
-                            boxShadow: saveStatus === 'saved' ? 'none' : undefined,
-                            opacity: (!profile?.is_active && simMode !== 'bypass') ? 0.5 : 1
+                            padding: '8px 16px',
+                            fontSize: '0.82rem',
+                            fontWeight: saveStatus === 'saved' ? '800' : '700',
+                            letterSpacing: '0.01em',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            opacity: (!profile?.is_active && simMode !== 'bypass') ? 0.5 : 1,
+                            
+                            // Dynamic background
+                            background: saveStatus === 'saved'
+                              ? 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)'
+                              : saveStatus === 'saving'
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            
+                            // Dynamic text color
+                            color: saveStatus === 'saved'
+                              ? '#ffffff'
+                              : saveStatus === 'saving'
+                              ? 'var(--text-muted)'
+                              : '#030712',
+                            
+                            // Dynamic borders
+                            border: saveStatus === 'saved'
+                              ? '1px solid rgba(255, 255, 255, 0.25)'
+                              : saveStatus === 'saving'
+                              ? '1px solid var(--border-glass)'
+                              : 'none',
+                            
+                            // Dynamic glows
+                            boxShadow: saveStatus === 'saved'
+                              ? '0 0 15px rgba(16, 185, 129, 0.65)'
+                              : saveStatus === 'saving'
+                              ? 'none'
+                              : '0 4px 12px rgba(16, 185, 129, 0.25)',
+                              
+                            // Dynamic transform scale
+                            transform: saveStatus === 'saved' ? 'scale(1.05)' : 'none'
                           }}
                           disabled={saveStatus === 'saving' || (!profile?.is_active && simMode !== 'bypass')}
                         >
-                          <Save size={12} />
+                          {saveStatus === 'saving' ? (
+                            <div className="animate-spin" style={{
+                              width: '12px',
+                              height: '12px',
+                              border: '2px solid var(--text-muted)',
+                              borderTopColor: 'transparent',
+                              borderRadius: '50%'
+                            }}></div>
+                          ) : saveStatus === 'saved' ? (
+                            <Check size={13} style={{ strokeWidth: 3 }} />
+                          ) : (
+                            <Save size={12} />
+                          )}
                           <span>
                             {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '¡Guardado!' : 'Guardar'}
                           </span>
@@ -616,7 +698,13 @@ export default function QuinielaPage() {
                       <div className="prediction-box-meta">
                         <span>Puntos Obtenidos:</span>
                         <span className={`points-earned-tag ${match.status === 'finished' && (predictions[match.id]?.points_earned || 0) === 0 ? 'incorrect' : ''}`}>
-                          +{predictions[match.id]?.points_earned || 0} pts
+                          {predictions[match.id]?.points_earned === 3 ? (
+                            <>😲👏👏 Marcador Exacto +3 pts</>
+                          ) : predictions[match.id]?.points_earned === 1 ? (
+                            <>👍 Acierto +1 pt</>
+                          ) : (
+                            <>😜😜 Sin pts</>
+                          )}
                         </span>
                       </div>
                     )}

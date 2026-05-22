@@ -171,6 +171,52 @@ export default function AdminPage() {
     }
   };
 
+  // Submit all modified and completed scores in bulk
+  const handleSaveAllScores = async () => {
+    const bulkMatches: { matchId: string; homeScore: number; awayScore: number }[] = [];
+    
+    matches.forEach(match => {
+      if (match.status === 'finished') return; // Cannot edit finished matches!
+
+      const input = scoresInput[match.id];
+      if (input && input.home !== '' && input.away !== '') {
+        bulkMatches.push({
+          matchId: match.id,
+          homeScore: parseInt(input.home),
+          awayScore: parseInt(input.away)
+        });
+      }
+    });
+
+    if (bulkMatches.length === 0) {
+      showToast('⚠️ No hay marcadores nuevos o completos para guardar.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matches: bulkMatches,
+          adminId: user?.id,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al guardar resultados en masa.');
+
+      await fetchAdminData(); // Refresh UI lists first
+      showToast(`✅ ¡${bulkMatches.length} marcadores guardados e inscripciones recalculadas al instante!`);
+    } catch (err: any) {
+      console.error(err);
+      showToast(`❌ Error: ${err.message}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Toggle individual match lock manually
   const handleToggleMatchLock = async (matchId: string, isLocked: boolean) => {
     setActionLoading(true);
@@ -375,6 +421,63 @@ export default function AdminPage() {
 
   return (
     <div>
+      {/* Global Loading Overlay */}
+      {actionLoading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(3, 7, 18, 0.8)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+        }}>
+          <div className="glass-panel" style={{
+            padding: '30px 40px',
+            textAlign: 'center',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            boxShadow: '0 0 40px rgba(245, 158, 11, 0.15)',
+            maxWidth: '400px',
+            width: '90%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '20px'
+          }}>
+            {/* Spinning Loader */}
+            <div style={{
+              width: '50px',
+              height: '50px',
+              border: '4px solid rgba(245, 158, 11, 0.1)',
+              borderTop: '4px solid var(--accent-gold)',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            
+            <style>{`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+            
+            <div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Procesando Resultados
+              </h4>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                Guardando marcadores oficiales, notificando a los participantes y recalculando la tabla general. Por favor, espera...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dynamic Action Toast */}
       {toastMessage && (
         <div className="toast-msg" style={{ borderColor: 'var(--accent-gold)', boxShadow: '0 0 20px rgba(245, 158, 11, 0.2)' }}>
@@ -422,9 +525,52 @@ export default function AdminPage() {
           <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>
             Ingresar Resultados Oficiales de Partidos
           </h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-            Al presionar **Guardar y Recalcular**, el sistema buscará todas las predicciones de los usuarios, otorgará los puntos según la matriz de puntuación y actualizará la clasificación general en tiempo real.
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+            Ingresa los marcadores oficiales de los partidos pendientes abajo y presiona el botón global de **Guardar Todos y Recalcular Tabla** para procesar todo en un solo clic. Una vez que se guarde el resultado de un partido, este se considerará finalizado y no se podrá volver a editar.
           </p>
+
+          {/* Bulk Action Banner */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'rgba(16, 185, 129, 0.04)',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            marginBottom: '24px',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ flex: 1, minWidth: '260px' }}>
+              <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--accent-neon-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Sparkles size={16} /> Guardado y Recálculo Masivo
+              </h4>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Captura marcadores en varias tarjetas abajo y presiona este botón para guardar todo y actualizar la tabla general en un solo paso optimizado.
+              </p>
+            </div>
+            <button
+              onClick={handleSaveAllScores}
+              className="btn btn-gold"
+              style={{
+                padding: '10px 20px',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                boxShadow: '0 0 15px rgba(245, 158, 11, 0.35)',
+                background: 'linear-gradient(135deg, var(--accent-gold) 0%, #d97706 100%)',
+                borderColor: 'rgba(245, 158, 11, 0.5)',
+                color: '#030712',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              disabled={actionLoading}
+            >
+              <Save size={14} />
+              <span>Guardar Todos y Recalcular Tabla</span>
+            </button>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '16px' }}>
             {matches.map((match) => {
@@ -441,82 +587,71 @@ export default function AdminPage() {
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifySelf: 'stretch', justifyContent: 'space-between', gap: '8px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifySelf: 'stretch', justifyContent: 'space-between', gap: '8px' }}>
                     <span className="sports-font" style={{ fontWeight: 800, flex: 1, textAlign: 'right', fontSize: '0.95rem' }}>{match.home_team}</span>
                     
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        className="score-input"
-                        maxLength={2}
-                        value={input.home}
-                        onChange={(e) => setScoresInput(prev => {
-                          const current = prev[match.id] || { home: '', away: '' };
-                          const cleanVal = e.target.value.replace(/\D/g, '').slice(0, 2);
-                          return {
-                            ...prev,
-                            [match.id]: { ...current, home: cleanVal }
-                          };
-                        })}
-                        style={{ width: '46px', height: '46px', fontSize: '1.2rem' }}
-                      />
-                      <span style={{ fontWeight: 800, color: 'var(--text-muted)' }}>-</span>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        className="score-input"
-                        maxLength={2}
-                        value={input.away}
-                        onChange={(e) => setScoresInput(prev => {
-                          const current = prev[match.id] || { home: '', away: '' };
-                          const cleanVal = e.target.value.replace(/\D/g, '').slice(0, 2);
-                          return {
-                            ...prev,
-                            [match.id]: { ...current, away: cleanVal }
-                          };
-                        })}
-                        style={{ width: '46px', height: '46px', fontSize: '1.2rem' }}
-                      />
-                    </div>
+                    {match.status === 'finished' ? (
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: '12px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                        padding: '6px 16px',
+                        borderRadius: '12px',
+                        minWidth: '98px',
+                        height: '46px'
+                      }}>
+                        <span style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--accent-neon-green)' }}>
+                          {match.home_score}
+                        </span>
+                        <span style={{ fontWeight: 800, color: 'rgba(16, 185, 129, 0.6)' }}>-</span>
+                        <span style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--accent-neon-green)' }}>
+                          {match.away_score}
+                        </span>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          className="score-input"
+                          maxLength={2}
+                          value={input.home}
+                          onChange={(e) => setScoresInput(prev => {
+                            const current = prev[match.id] || { home: '', away: '' };
+                            const cleanVal = e.target.value.replace(/\D/g, '').slice(0, 2);
+                            return {
+                              ...prev,
+                              [match.id]: { ...current, home: cleanVal }
+                            };
+                          })}
+                          style={{ width: '46px', height: '46px', fontSize: '1.2rem', textAlign: 'center' }}
+                        />
+                        <span style={{ fontWeight: 800, color: 'var(--text-muted)' }}>-</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          className="score-input"
+                          maxLength={2}
+                          value={input.away}
+                          onChange={(e) => setScoresInput(prev => {
+                            const current = prev[match.id] || { home: '', away: '' };
+                            const cleanVal = e.target.value.replace(/\D/g, '').slice(0, 2);
+                            return {
+                              ...prev,
+                              [match.id]: { ...current, away: cleanVal }
+                            };
+                          })}
+                          style={{ width: '46px', height: '46px', fontSize: '1.2rem', textAlign: 'center' }}
+                        />
+                      </div>
+                    )}
 
                     <span className="sports-font" style={{ fontWeight: 800, flex: 1, textAlign: 'left', fontSize: '0.95rem' }}>{match.away_team}</span>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                    <button
-                      onClick={() => handleSaveScore(match.id)}
-                      className="btn btn-primary"
-                      style={{ flex: 2, padding: '8px', fontSize: '0.8rem' }}
-                      disabled={actionLoading}
-                    >
-                      <Save size={12} />
-                      <span>Guardar y Recalcular</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => handleToggleMatchLock(match.id, !match.is_locked)}
-                      className={`btn ${match.is_locked ? 'btn-red' : 'btn-secondary'}`}
-                      style={{
-                        flex: 1.2,
-                        padding: '8px',
-                        fontSize: '0.8rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px',
-                        border: match.is_locked ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-glass)',
-                        background: match.is_locked ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-                        color: match.is_locked ? '#f87171' : 'var(--text-primary)'
-                      }}
-                      disabled={actionLoading}
-                      title={match.is_locked ? 'Partido bloqueado. Haz clic para desbloquear.' : 'Partido abierto. Haz clic para bloquear.'}
-                    >
-                      {match.is_locked ? <Lock size={12} /> : <Unlock size={12} />}
-                      <span>{match.is_locked ? 'Bloqueado' : 'Abierto'}</span>
-                    </button>
                   </div>
                 </div>
               );
@@ -527,7 +662,7 @@ export default function AdminPage() {
 
       {/* Tab Panel 2: Dynamic configurations and points settings */}
       {activeSubTab === 'settings' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
           
           {/* Main settings form */}
           <form onSubmit={handleSaveSettings} className="glass-panel" style={{ flex: 2 }}>
@@ -535,7 +670,7 @@ export default function AdminPage() {
               Configuración y Puntuaciones
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
               <div className="form-group">
                 <label className="form-label">Marcador Exacto</label>
                 <input

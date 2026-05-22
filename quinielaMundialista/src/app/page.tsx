@@ -285,7 +285,7 @@ export default function HomePage() {
           <div className="stat-info">
             <span className="stat-label">Bolsa de Recompensa</span>
             <span className="stat-value" style={{ color: 'var(--accent-gold)' }}>
-              10,000 Frijolitos 🫘
+              {poolTotal.toLocaleString()} Frijolitos 🫘
             </span>
           </div>
         </div>
@@ -539,7 +539,7 @@ export default function HomePage() {
                 <strong>2. Naturaleza de las Aportaciones:</strong> Los montos ingresados por los usuarios tienen el carácter estricto de <strong>Cooperaciones Voluntarias de Mantenimiento</strong>. Dichos fondos se utilizan exclusivamente para sufragar el hospedaje en servidores en la nube, ancho de banda, APIs de banderas e infraestructura técnica necesaria para habilitar la plataforma. No existe reembolso de aportaciones bajo ningún supuesto.
               </p>
               <p>
-                <strong>3. Bolsa Simbólica (Frijolitos):</strong> Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de <strong>10,000 Frijolitos</strong> (puntos recreativos de entretenimiento) a repartir de forma amistosa entre los participantes con mayor puntaje al finalizar el torneo. Estos puntos no tienen equivalencia ni valor de cambio financiero inmediato garantizado por la plataforma.
+                <strong>3. Bolsa Simbólica (Frijolitos):</strong> Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de {poolTotal.toLocaleString()} Frijolitos (puntos recreativos de entretenimiento) a repartir de forma amistosa entre los participantes con mayor puntaje al finalizar el torneo. Estos puntos no tienen equivalencia ni valor de cambio financiero inmediato garantizado por la plataforma.
               </p>
               <p>
                 <strong>4. Aceptación de Condiciones:</strong> El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.

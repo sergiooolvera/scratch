@@ -80,6 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
+    let isInitialized = false;
 
     // Safety timeout: force loading false if initialization hangs
     const safetyTimeout = setTimeout(() => {
@@ -105,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error getting initial session:', err);
       } finally {
         if (mounted) {
+          isInitialized = true;
           setLoading(false);
           clearTimeout(safetyTimeout);
         }
@@ -116,6 +118,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes natively without manual visibilitychange handlers
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
+
+      // Prevent duplicate fetches on initial mount
+      if (!isInitialized) {
+        return;
+      }
 
       try {
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
