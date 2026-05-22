@@ -331,37 +331,16 @@ export default function AdminPage() {
     
     setActionLoading(true);
     try {
-      // 1. Delete all predictions
-      const { error: deletePredsError } = await supabase
-        .from('qui_predictions')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete everything safely
+      const res = await fetch('/api/admin/reset-quiniela', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminId: user?.id,
+        }),
+      });
 
-      if (deletePredsError) throw deletePredsError;
-
-      // 2. Reset scores on matches
-      const { error: resetMatchesError } = await supabase
-        .from('qui_matches')
-        .update({
-          home_score: null,
-          away_score: null,
-          status: 'pending'
-        })
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-
-      if (resetMatchesError) throw resetMatchesError;
-
-      // 3. Reset scores on profiles
-      const { error: resetProfilesError } = await supabase
-        .from('qui_profiles')
-        .update({
-          points: 0,
-          exact_scores: 0,
-          goal_difference: 0
-        })
-        .neq('id', '00000000-0000-0000-0000-000000000000');
-
-      if (resetProfilesError) throw resetProfilesError;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al reiniciar la quiniela.');
 
       showToast('🔄 ¡Quiniela y marcadores reiniciados completamente a 0!');
       await fetchAdminData();
