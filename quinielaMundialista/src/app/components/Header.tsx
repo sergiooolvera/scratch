@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Trophy, LogIn, LogOut, LayoutDashboard, TableProperties, ShieldAlert, CreditCard, Bell, Check, X } from 'lucide-react';
+import { Trophy, LogIn, LogOut, LayoutDashboard, TableProperties, ShieldAlert, CreditCard, Bell, Check, X, Trash2 } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
@@ -87,6 +87,54 @@ export const Header: React.FC = () => {
       }
     } catch (e) {
       console.error('Error marking notification as read:', e);
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    if (!user) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return;
+
+      const response = await fetch(`/api/notifications?id=${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      } else {
+        console.error('Failed to delete notification');
+      }
+    } catch (e) {
+      console.error('Error deleting notification:', e);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (!user || notifications.length === 0) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return;
+
+      const response = await fetch('/api/notifications', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        setNotifications([]);
+      } else {
+        console.error('Failed to clear notifications');
+      }
+    } catch (e) {
+      console.error('Error clearing notifications:', e);
     }
   };
 
@@ -255,27 +303,44 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Drawer Actions */}
-            {unreadCount > 0 && (
+            {notifications.length > 0 && (
               <div style={{
                 padding: '12px 20px',
                 background: 'rgba(255,255,255,0.02)',
                 borderBottom: '1px solid var(--border-glass)',
                 display: 'flex',
-                justifyContent: 'flex-end'
+                justifyContent: 'flex-end',
+                gap: '8px'
               }}>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={markAllAsRead}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '0.75rem',
+                      gap: '4px',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      color: 'var(--accent-neon-green)'
+                    }}
+                  >
+                    <Check size={12} />
+                    <span>Marcar todo leído</span>
+                  </button>
+                )}
                 <button 
-                  onClick={markAllAsRead}
+                  onClick={clearAllNotifications}
                   className="btn btn-secondary"
                   style={{
                     padding: '4px 10px',
                     fontSize: '0.75rem',
                     gap: '4px',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    color: 'var(--accent-neon-green)'
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: 'rgb(248, 113, 113)'
                   }}
                 >
-                  <Check size={12} />
-                  <span>Marcar todo como leído</span>
+                  <Trash2 size={12} />
+                  <span>Limpiar todo</span>
                 </button>
               </div>
             )}
@@ -321,10 +386,21 @@ export const Header: React.FC = () => {
                     }}
                     title={!n.read ? 'Haga clic para marcar como leída' : undefined}
                   >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(n.id);
+                      }}
+                      className="delete-notif-btn"
+                      title="Eliminar notificación"
+                    >
+                      <X size={14} />
+                    </button>
                     <p style={{
                       fontSize: '0.85rem',
                       lineHeight: 1.45,
                       margin: '0 0 8px 0',
+                      paddingRight: '24px',
                       color: n.read ? 'var(--text-secondary)' : 'var(--text-primary)'
                     }}>
                       {n.message}
