@@ -240,7 +240,9 @@ export default function SubirCursoPage() {
         const nuevas = [...preguntasExtraidas];
         nuevas[index] = { ...nuevas[index], [field]: value };
         setPreguntasExtraidas(nuevas);
-        const handleSubmit = async (e: React.FormEvent) => {
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setMensaje('')
@@ -1374,5 +1376,4 @@ export default function SubirCursoPage() {
             )}
         </div>
     )
-}
 }
