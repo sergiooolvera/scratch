@@ -36,9 +36,9 @@ CREATE POLICY "Allow users to update their own profile"
 -- 2. SYSTEM SETTINGS TABLE & POLICIES
 CREATE TABLE IF NOT EXISTS public.qui_system_settings (
     id TEXT PRIMARY KEY DEFAULT 'points_config',
-    points_exact_score INTEGER DEFAULT 3,
-    points_correct_winner INTEGER DEFAULT 1,
-    points_correct_draw INTEGER DEFAULT 1,
+    points_exact_score INTEGER DEFAULT 5,
+    points_correct_winner INTEGER DEFAULT 3,
+    points_correct_draw INTEGER DEFAULT 3,
     points_incorrect INTEGER DEFAULT 0,
     lock_hours_before INTEGER DEFAULT 24,
     ticket_cost NUMERIC DEFAULT 200.00,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.qui_system_settings (
 
 -- Insert default system settings if not exists
 INSERT INTO public.qui_system_settings (id, points_exact_score, points_correct_winner, points_correct_draw, points_incorrect, lock_hours_before, ticket_cost, pool_accumulated, pct_first_place, pct_second_place, pct_third_place)
-VALUES ('points_config', 3, 1, 1, 0, 24, 200.00, 0.00, 50, 25, 5)
+VALUES ('points_config', 5, 3, 3, 0, 24, 200.00, 0.00, 50, 25, 5)
 ON CONFLICT (id) DO NOTHING;
 
 -- Enable RLS on Settings
@@ -337,3 +337,44 @@ CREATE POLICY "Allow admin to manage notifications"
             WHERE qui_profiles.id = auth.uid() AND qui_profiles.is_admin = TRUE
         )
     );
+
+
+-- 9. PREPAID COUPONS TABLE & POLICIES
+CREATE TABLE IF NOT EXISTS public.qui_coupons (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code TEXT UNIQUE NOT NULL,
+    seller_id UUID REFERENCES public.qui_profiles(id) ON DELETE CASCADE NOT NULL,
+    price_paid NUMERIC NOT NULL,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'used')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    used_by UUID REFERENCES public.qui_profiles(id) ON DELETE SET NULL,
+    used_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Enable RLS on Coupons
+ALTER TABLE public.qui_coupons ENABLE ROW LEVEL SECURITY;
+
+-- Allow read on own or bought coupons
+DROP POLICY IF EXISTS "Allow read on own or bought coupons" ON public.qui_coupons;
+CREATE POLICY "Allow read on own or bought coupons" 
+    ON public.qui_coupons FOR SELECT 
+    USING (
+        auth.uid() = seller_id OR 
+        auth.uid() = used_by OR
+        EXISTS (
+            SELECT 1 FROM public.qui_profiles 
+            WHERE qui_profiles.id = auth.uid() AND qui_profiles.is_admin = TRUE
+        )
+    );
+
+-- Allow admin all on coupons
+DROP POLICY IF EXISTS "Allow admin all on coupons" ON public.qui_coupons;
+CREATE POLICY "Allow admin all on coupons" 
+    ON public.qui_coupons FOR ALL 
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.qui_profiles 
+            WHERE qui_profiles.id = auth.uid() AND qui_profiles.is_admin = TRUE
+        )
+    );
+

@@ -19,6 +19,8 @@ export interface Profile {
   created_at: string;
   referral_code?: string;
   referred_by?: string | null;
+  role?: 'user' | 'vendedor' | 'admin' | null;
+  seller_request_status?: 'none' | 'pending' | 'approved' | 'rejected' | null;
 }
 
 interface AuthContextType {
@@ -60,7 +62,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               prev.goal_difference === data.goal_difference && 
               prev.username === data.username && 
               prev.full_name === data.full_name &&
-              prev.is_admin === data.is_admin) {
+              prev.is_admin === data.is_admin &&
+              prev.role === data.role &&
+              prev.seller_request_status === data.seller_request_status) {
             return prev;
           }
           return data as Profile;

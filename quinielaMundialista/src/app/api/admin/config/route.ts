@@ -14,7 +14,10 @@ export async function POST(req: Request) {
       pool_accumulated,
       pct_first_place,
       pct_second_place,
-      pct_third_place
+      pct_third_place,
+      seller_commission_1_10,
+      seller_commission_11_25,
+      seller_commission_26_up
     } = await req.json();
 
     if (!adminId) {
@@ -39,9 +42,9 @@ export async function POST(req: Request) {
       .from('qui_system_settings')
       .upsert({
         id: 'points_config',
-        points_exact_score: safeNum(points_exact_score, 3),
-        points_correct_winner: safeNum(points_correct_winner, 1),
-        points_correct_draw: safeNum(points_correct_draw, 1),
+        points_exact_score: safeNum(points_exact_score, 5),
+        points_correct_winner: safeNum(points_correct_winner, 3),
+        points_correct_draw: safeNum(points_correct_draw, 3),
         points_incorrect: safeNum(points_incorrect, 0),
         lock_hours_before: safeNum(lock_hours_before, 24),
         ticket_cost: safeNum(ticket_cost, 200.00),
@@ -49,6 +52,9 @@ export async function POST(req: Request) {
         pct_first_place: safeNum(pct_first_place, 50),
         pct_second_place: safeNum(pct_second_place, 25),
         pct_third_place: safeNum(pct_third_place, 5),
+        seller_commission_1_10: safeNum(seller_commission_1_10, 0.20),
+        seller_commission_11_25: safeNum(seller_commission_11_25, 0.25),
+        seller_commission_26_up: safeNum(seller_commission_26_up, 0.30),
       });
 
     if (updateError) throw updateError;

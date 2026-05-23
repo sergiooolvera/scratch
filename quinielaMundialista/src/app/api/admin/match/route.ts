@@ -218,10 +218,10 @@ export async function POST(req: Request) {
               } else if (realWinner === predWinner) {
                 if (realWinner === 'draw') {
                   pointsEarned = ptsDraw;
-                  matchOutcomeText = 'Empate correcto 🤝';
+                  matchOutcomeText = 'Resultado correcto (Empate) 🤝';
                 } else {
                   pointsEarned = ptsWinner;
-                  matchOutcomeText = 'Ganador correcto 🏃‍♂️';
+                  matchOutcomeText = 'Resultado correcto (Ganador) 🏃‍♂️';
                 }
               } else {
                 pointsEarned = ptsIncorrect;

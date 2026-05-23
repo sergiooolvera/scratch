@@ -17,9 +17,31 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [referralCode, setReferralCode] = useState('');
   
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [isAdult, setIsAdult] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [poolTotal, setPoolTotal] = useState(0);
+  
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Fetch accumulated pool size for terms display
+  useEffect(() => {
+    const fetchPoolTotal = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('qui_system_settings')
+          .select('pool_accumulated')
+          .eq('id', 'points_config')
+          .single();
+        if (!error && data) {
+          setPoolTotal(Number(data.pool_accumulated) || 0);
+        }
+      } catch (err) {}
+    };
+    fetchPoolTotal();
+  }, []);
 
   // If user is already authenticated, redirect to home page
   useEffect(() => {
@@ -27,6 +49,18 @@ export default function LoginPage() {
       router.push('/');
     }
   }, [user, loading, router]);
+
+  // Capture referral code from URL query parameters (e.g. ?ref=31E0F271)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref') || params.get('code');
+      if (ref) {
+        setReferralCode(ref.toUpperCase());
+        setIsSignUp(true);
+      }
+    }
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +77,12 @@ export default function LoginPage() {
     try {
       if (isSignUp) {
         // Sign Up Flow
+        if (!agreeTerms || !isAdult) {
+          setErrorMsg('Debes aceptar los términos y condiciones y confirmar que eres mayor de 18 años para registrarte.');
+          setActionLoading(false);
+          return;
+        }
+
         if (!username || !fullName) {
           setErrorMsg('Por favor ingresa un nombre y un usuario.');
           setActionLoading(false);
@@ -271,11 +311,53 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {isSignUp && (
+            <div className="form-group" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <input
+                  type="checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  style={{ width: '16px', height: '16px', marginTop: '2px', accentColor: 'var(--accent-neon-green)' }}
+                  required
+                />
+                <span>
+                  Estoy de acuerdo con los{' '}
+                  <strong
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowTerms(true);
+                    }}
+                    style={{
+                      color: 'var(--accent-neon-green)',
+                      textDecoration: 'underline',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Términos y Condiciones
+                  </strong>{' '}
+                  de juego
+                </span>
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <input
+                  type="checkbox"
+                  checked={isAdult}
+                  onChange={(e) => setIsAdult(e.target.checked)}
+                  style={{ width: '16px', height: '16px', marginTop: '2px', accentColor: 'var(--accent-neon-green)' }}
+                  required
+                />
+                <span>Confirmo que soy <strong style={{ color: 'var(--accent-neon-green)' }}>mayor de 18 años</strong></span>
+              </label>
+            </div>
+          )}
+
           <button
             type="submit"
             className="btn btn-primary"
             style={{ width: '100%', padding: '14px', marginTop: '10px' }}
-            disabled={actionLoading}
+            disabled={actionLoading || (isSignUp && (!agreeTerms || !isAdult))}
           >
             {actionLoading ? 'Procesando...' : isSignUp ? 'Registrarme' : 'Iniciar Sesión'}
           </button>
@@ -310,7 +392,7 @@ export default function LoginPage() {
           <button
             onClick={() => handleOAuth('google')}
             className="btn btn-secondary"
-            style={{ flex: 1, padding: '12px', fontSize: '0.85rem' }}
+            style={{ width: '100%', padding: '12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -318,7 +400,7 @@ export default function LoginPage() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
             </svg>
-            <span>Google</span>
+            <span>Iniciar sesión con Google</span>
           </button>
         </div>
 
@@ -331,6 +413,8 @@ export default function LoginPage() {
               setErrorMsg('');
               setSuccessMsg('');
               setReferralCode('');
+              setAgreeTerms(false);
+              setIsAdult(false);
             }}
             style={{
               background: 'none',
@@ -345,6 +429,58 @@ export default function LoginPage() {
           </button>
         </div>
       </div>
+
+      {/* Terms & Conditions Modal */}
+      {showTerms && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(3, 7, 18, 0.9)',
+          backdropFilter: 'blur(12px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }} onClick={() => setShowTerms(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.99) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            padding: '30px 24px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+            position: 'relative'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--accent-gold)', marginBottom: '18px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', textTransform: 'uppercase' }}>
+              Aviso Legal y Exención de Responsabilidad
+            </h3>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
+              <p>
+                <strong>1. Carácter de Mero Entretenimiento:</strong> QuiMundial es una plataforma recreativa y privada orientada exclusivamente al esparcimiento deportivo con motivo del Mundial 2026. Bajo ninguna circunstancia opera, promueve, ni facilita actividades de apuestas comerciales o juegos de azar regulados por la Ley Federal de Juegos y Sorteos de México.
+              </p>
+              <p>
+                <strong>2. Naturaleza de las Aportaciones:</strong> Los montos ingresados por los usuarios tienen el carácter estricto de <strong>Cooperaciones Voluntarias de Mantenimiento</strong>. Dichos fondos se utilizan exclusivamente para sufragar el hospedaje en servidores en la nube, ancho de banda, APIs de banderas e infraestructura técnica necesaria para habilitar la plataforma. No existe reembolso de aportaciones bajo ningún supuesto.
+              </p>
+              <p>
+                <strong>3. Bolsa Simbólica (Frijolitos):</strong> Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de {poolTotal.toLocaleString()} Frijolitos (puntos recreativos de entretenimiento) a repartir de forma amistosa entre los participantes con mayor puntaje al finalizar el torneo. Estos puntos no tienen equivalencia ni valor de cambio financiero inmediato garantizado por la plataforma.
+              </p>
+              <p>
+                <strong>4. Aceptación de Condiciones:</strong> El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.
+              </p>
+            </div>
+            <button className="btn btn-primary" style={{ width: '100%', marginTop: '24px', padding: '12px' }} onClick={() => setShowTerms(false)}>
+              Entendido y Acepto
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

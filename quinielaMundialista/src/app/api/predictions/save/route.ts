@@ -17,10 +17,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Sesión inválida o expirada.' }, { status: 401 });
     }
 
-    const { matchId, homePrediction, awayPrediction, simMode } = await req.json();
+    const body = await req.json();
+    const { predictions, matchId, homePrediction, awayPrediction, simMode } = body;
 
-    if (!matchId || homePrediction === undefined || awayPrediction === undefined) {
+    // Standardize input into a predictions array
+    let predictionsToSave: Array<{ matchId: string; homePrediction: number | string; awayPrediction: number | string }> = [];
+
+    if (predictions && Array.isArray(predictions)) {
+      predictionsToSave = predictions;
+    } else if (matchId && homePrediction !== undefined && awayPrediction !== undefined) {
+      predictionsToSave = [{ matchId, homePrediction, awayPrediction }];
+    } else {
       return NextResponse.json({ error: 'Parámetros obligatorios faltantes.' }, { status: 400 });
+    }
+
+    if (predictionsToSave.length === 0) {
+      return NextResponse.json({ success: true, message: 'No hay predicciones para guardar.' });
     }
 
     // 2. Fetch the user profile to verify active status
@@ -38,15 +50,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Se requiere realizar la aportación voluntaria de mantenimiento para registrar pronósticos.' }, { status: 403 });
     }
 
-    // 3. Fetch the match details
-    const { data: match, error: matchError } = await supabaseAdmin
+    // 3. Fetch all match details related to these predictions
+    const matchIds = predictionsToSave.map(p => p.matchId);
+    const { data: matches, error: matchesError } = await supabaseAdmin
       .from('qui_matches')
       .select('*')
-      .eq('id', matchId)
-      .single();
+      .in('id', matchIds);
 
-    if (matchError || !match) {
-      return NextResponse.json({ error: 'Partido no encontrado.' }, { status: 404 });
+    if (matchesError || !matches) {
+      console.error('Error fetching matches:', matchesError?.message);
+      return NextResponse.json({ error: 'Error al recuperar detalles de los partidos.' }, { status: 500 });
     }
 
     // 4. Fetch the system settings for lockout duration
@@ -58,50 +71,51 @@ export async function POST(req: Request) {
 
     const lockHours = settingsError || !settings ? 24 : settings.lock_hours_before;
 
-    // 5. Evaluate if match is locked
-    let isLocked = false;
-    let lockReason = '';
+    // 5. Evaluate which predictions are NOT locked and filter them
+    const unlockedPredictions = [];
+    const currentTime = Date.now();
+    const lockInterval = lockHours * 60 * 60 * 1000;
+    const simTime = simMode === 'world_cup' ? new Date('2026-06-11T16:00:00Z').getTime() : currentTime;
 
-    if (simMode === 'bypass') {
-      isLocked = false;
-    } else if (simMode === 'force_all') {
-      isLocked = true;
-      lockReason = 'Modo simulación de bloqueo total activo.';
-    } else if (match.status === 'live' || match.status === 'finished') {
-      isLocked = true;
-      lockReason = match.status === 'live' ? 'El partido ya está en vivo.' : 'El partido ya finalizó.';
-    } else if (match.is_locked) {
-      isLocked = true;
-      lockReason = 'El partido ha sido bloqueado individualmente por el administrador.';
-    } else {
-      let currentTime = Date.now();
-      if (simMode === 'world_cup') {
-        // Simulate June 11, 2026, at 16:00:00 UTC (during the cup)
-        currentTime = new Date('2026-06-11T16:00:00Z').getTime();
-      }
+    for (const pred of predictionsToSave) {
+      const match = matches.find(m => m.id === pred.matchId);
+      if (!match) continue;
 
-      const matchTime = new Date(match.match_time).getTime();
-      const lockInterval = lockHours * 60 * 60 * 1000;
+      let isLocked = false;
 
-      if ((matchTime - currentTime) < lockInterval) {
+      if (simMode === 'bypass') {
+        isLocked = false;
+      } else if (simMode === 'force_all') {
         isLocked = true;
-        lockReason = `El partido se bloquea ${lockHours} horas antes de su inicio.`;
+      } else if (match.status === 'live' || match.status === 'finished') {
+        isLocked = true;
+      } else if (match.is_locked) {
+        isLocked = true;
+      } else {
+        const matchTime = new Date(match.match_time).getTime();
+        if ((matchTime - simTime) < lockInterval) {
+          isLocked = true;
+        }
+      }
+
+      if (!isLocked && pred.homePrediction !== '' && pred.awayPrediction !== '') {
+        unlockedPredictions.push({
+          user_id: user.id,
+          match_id: pred.matchId,
+          home_prediction: Number(pred.homePrediction),
+          away_prediction: Number(pred.awayPrediction),
+        });
       }
     }
 
-    if (isLocked) {
-      return NextResponse.json({ error: `Partido bloqueado: ${lockReason}` }, { status: 400 });
+    if (unlockedPredictions.length === 0) {
+      return NextResponse.json({ error: 'Todos los partidos seleccionados se encuentran bloqueados o con marcadores incompletos.' }, { status: 400 });
     }
 
-    // 6. Upsert the prediction using the admin client (bypasses client-side RLS limits)
+    // 6. Bulk upsert the predictions using the admin client
     const { error: upsertError } = await supabaseAdmin
       .from('qui_predictions')
-      .upsert({
-        user_id: user.id,
-        match_id: matchId,
-        home_prediction: Number(homePrediction),
-        away_prediction: Number(awayPrediction),
-      }, {
+      .upsert(unlockedPredictions, {
         onConflict: 'user_id,match_id'
       });
 
@@ -109,7 +123,10 @@ export async function POST(req: Request) {
       throw upsertError;
     }
 
-    return NextResponse.json({ success: true, message: 'Pronóstico guardado exitosamente.' });
+    return NextResponse.json({ 
+      success: true, 
+      message: `Se han guardado ${unlockedPredictions.length} pronósticos exitosamente.` 
+    });
   } catch (err: any) {
     console.error('Error in save prediction API:', err.message);
     return NextResponse.json({ error: `Internal server error: ${err.message}` }, { status: 500 });

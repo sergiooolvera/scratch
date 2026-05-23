@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Trophy, Calendar, Ticket, ShieldQuestion, Star, Users, Flame, ChevronRight, Activity, Award, Gift, Copy, Check } from 'lucide-react';
+import { Trophy, Calendar, Ticket, ShieldQuestion, Star, Flame, ChevronRight, Activity, Award, Gift, Copy, Check, Share2 } from 'lucide-react';
 
 interface Match {
   id: string;
@@ -33,19 +33,88 @@ export default function HomePage() {
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   
   // Point system rules
-  const [ptsExact, setPtsExact] = useState(3);
-  const [ptsWinner, setPtsWinner] = useState(1);
-  const [ptsDraw, setPtsDraw] = useState(1);
+  const [ptsExact, setPtsExact] = useState(5);
+  const [ptsWinner, setPtsWinner] = useState(3);
+  const [ptsDraw, setPtsDraw] = useState(3);
   const [lockHours, setLockHours] = useState(24);
 
   const [statsLoading, setStatsLoading] = useState(true);
   const [showTerms, setShowTerms] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
+
+  // Background images randomizer
+  const [bgImage, setBgImage] = useState<string>('');
+
+  useEffect(() => {
+    // Randomly select one of 13 custom background files
+    const randomIndex = Math.floor(Math.random() * 13) + 1;
+    setBgImage(`/bg-mundial-${randomIndex}.jpg`);
+  }, []);
+
+  // Countdown target date and state
+  const [firstMatchTime, setFirstMatchTime] = useState<string>('2026-06-11T15:00:00Z');
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    isOver: false
+  });
+
+  // Countdown timer hook
+  useEffect(() => {
+    const updateTimer = () => {
+      const targetDate = new Date(firstMatchTime).getTime();
+      const now = Date.now();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isOver: true });
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft({ days, hours, minutes, seconds, isOver: false });
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [firstMatchTime]);
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async (code: string) => {
+    if (typeof window === 'undefined') return;
+    const shareUrl = `${window.location.origin}/login?ref=${code}`;
+    const shareText = `¡Únete a mi Quiniela Futbolera para el Mundial 2026! ⚽🏆 Regístrate usando mi código: ${code}\n\nEnlace de registro: ${shareUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Quiniela Mundialista 2026',
+          text: `¡Únete a mi Quiniela Futbolera para el Mundial 2026! ⚽🏆 Regístrate usando mi código de referido: ${code}`,
+          url: shareUrl
+        });
+        return;
+      } catch (err) {
+        console.log('Share API failed or was cancelled', err);
+      }
+    }
+
+    // Fallback: copy registration URL + code text
+    navigator.clipboard.writeText(shareText);
+    setShared(true);
+    setTimeout(() => setShared(false), 2000);
   };
 
   const fetchDashboardData = async () => {
@@ -83,6 +152,9 @@ export default function HomePage() {
         
         // Extract live or next upcoming matches (up to 4 matches)
         const sorted = [...matchesData].sort((a, b) => new Date(a.match_time).getTime() - new Date(b.match_time).getTime());
+        if (sorted.length > 0) {
+          setFirstMatchTime(sorted[0].match_time);
+        }
         const live = sorted.filter(m => m.status === 'live');
         const upcoming = sorted.filter(m => m.status === 'pending');
         
@@ -148,6 +220,28 @@ export default function HomePage() {
 
   return (
     <div>
+      <style>{`
+        @keyframes referral-pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.25), inset 0 0 10px rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.45);
+          }
+          50% {
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.75), inset 0 0 20px rgba(16, 185, 129, 0.25);
+            border-color: rgba(16, 185, 129, 0.95);
+          }
+        }
+        .referral-box-glow {
+          animation: referral-pulse-glow 2.5s infinite ease-in-out;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .referral-box-glow:hover {
+          box-shadow: 0 0 50px rgba(16, 185, 129, 0.95), inset 0 0 25px rgba(16, 185, 129, 0.35) !important;
+          border-color: rgba(16, 185, 129, 1) !important;
+          transform: scale(1.02);
+        }
+      `}</style>
+
       {/* Welcome Banner Card */}
       <div className="glass-panel" style={{
         background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
@@ -157,117 +251,276 @@ export default function HomePage() {
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ maxWidth: '480px', zIndex: 2, position: 'relative' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-neon-green)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Mundial 2026
-          </span>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 900, textTransform: 'uppercase', margin: '4px 0 10px 0', lineHeight: '1.1' }}>
-            Quiniela Mundialista
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '24px' }}>
-            Registra tus pronósticos de los partidos más importantes del planeta, suma puntos y compite de forma recreativa contra tus amigos por el gran pozo de Frijolitos.
-          </p>
+        {/* Responsive layout container */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '32px',
+          zIndex: 2,
+          position: 'relative'
+        }}>
+          {/* Left Side: Title and Buttons */}
+          <div style={{ maxWidth: '480px', flex: '1 1 320px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-neon-green)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              Mundial 2026
+            </span>
+            <h2 style={{ fontSize: '2.2rem', fontWeight: 900, textTransform: 'uppercase', margin: '4px 0 10px 0', lineHeight: '1.1' }}>
+              Quiniela Mundialista
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '24px' }}>
+              Registra tus pronósticos de los partidos más importantes del planeta, suma puntos y compite de forma recreativa contra tus amigos por el gran pozo de Frijolitos.
+            </p>
 
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {user ? (
-              profile?.is_active ? (
-                <Link href="/quiniela" className="btn btn-primary">
-                  <span>Capturar Pronósticos</span>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {user ? (
+                profile?.is_active ? (
+                  <Link href="/quiniela" className="btn btn-primary">
+                    <span>Capturar Pronósticos</span>
+                    <ChevronRight size={16} />
+                  </Link>
+                ) : (
+                  <Link href="/pay" className="btn btn-gold">
+                    <span>Registrar Donativo Técnico</span>
+                    <Ticket size={16} />
+                  </Link>
+                )
+              ) : (
+                <Link href="/login" className="btn btn-primary" style={{ padding: '12px 24px' }}>
+                  <span>Unirme a la Quiniela</span>
                   <ChevronRight size={16} />
                 </Link>
-              ) : (
-                <Link href="/pay" className="btn btn-gold">
-                  <span>Registrar Donativo Técnico</span>
-                  <Ticket size={16} />
-                </Link>
-              )
-            ) : (
-              <Link href="/login" className="btn btn-primary" style={{ padding: '12px 24px' }}>
-                <span>Unirme a la Quiniela</span>
-                <ChevronRight size={16} />
+              )}
+              
+              <Link href="/ranking" className="btn btn-secondary">
+                Ver Posiciones
               </Link>
+            </div>
+          </div>
+
+          {/* Right Side: Premium Glassmorphic Countdown Timer */}
+          <div style={{
+            flex: '1 1 280px',
+            maxWidth: '380px',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px',
+            padding: '24px 20px',
+            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.02)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            borderLeft: '2px solid rgba(16, 185, 129, 0.3)',
+            borderRight: '2px solid rgba(59, 130, 246, 0.3)'
+          }}>
+            {!timeLeft.isOver ? (
+              <>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
+                  ⏳ Silbatazo Inicial en:
+                </span>
+                
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', width: '100%' }}>
+                  {/* Days */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
+                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: '#ffffff', textShadow: '0 0 10px rgba(255,255,255,0.4)', lineHeight: 1 }}>
+                      {String(timeLeft.days).padStart(2, '0')}
+                    </span>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Días</span>
+                  </div>
+                  
+                  <span className="sports-font" style={{ fontSize: '1.8rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>:</span>
+                  
+                  {/* Hours */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
+                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--accent-neon-green)', textShadow: '0 0 10px rgba(16,185,129,0.4)', lineHeight: 1 }}>
+                      {String(timeLeft.hours).padStart(2, '0')}
+                    </span>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Horas</span>
+                  </div>
+                  
+                  <span className="sports-font" style={{ fontSize: '1.8rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>:</span>
+                  
+                  {/* Minutes */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
+                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--accent-blue)', textShadow: '0 0 10px rgba(59,130,246,0.4)', lineHeight: 1 }}>
+                      {String(timeLeft.minutes).padStart(2, '0')}
+                    </span>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Min</span>
+                  </div>
+                  
+                  <span className="sports-font" style={{ fontSize: '1.8rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>:</span>
+                  
+                  {/* Seconds */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
+                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--accent-red)', textShadow: '0 0 10px rgba(239,68,68,0.4)', lineHeight: 1 }}>
+                      {String(timeLeft.seconds).padStart(2, '0')}
+                    </span>
+                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Seg</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div style={{ padding: '10px' }}>
+                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>⚽🏆</span>
+                <span className="sports-font" style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--accent-neon-green)', textTransform: 'uppercase', letterSpacing: '0.03em', display: 'block' }}>
+                  ¡El Mundial ha Iniciado!
+                </span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginTop: '4px' }}>
+                  Los pronósticos del partido inaugural están bloqueados. ¡Que gane el mejor!
+                </span>
+              </div>
             )}
-            
-            <Link href="/ranking" className="btn btn-secondary">
-              Ver Posiciones
-            </Link>
           </div>
         </div>
 
-        {/* Decorative elements */}
-        <div style={{
-          position: 'absolute',
-          right: '-10px',
-          bottom: '-30px',
-          fontSize: '11rem',
-          opacity: 0.08,
-          transform: 'rotate(-15deg)',
-          pointerEvents: 'none',
-          fontFamily: 'Outfit'
-        }}>
-          ⚽
-        </div>
+        {/* Faded Background Image */}
+        {bgImage && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1,
+            pointerEvents: 'none',
+            opacity: 0.25, // Adjusted for premium visibility
+            mixBlendMode: 'normal',
+            overflow: 'hidden'
+          }}>
+            <img 
+              src={bgImage} 
+              alt="Mundial background decoration" 
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                filter: 'grayscale(25%) brightness(60%) contrast(110%)' // Slightly desaturated and darkened for high text contrast
+              }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Referral Code Banner */}
       {user && profile && profile.referral_code && (
-        <div className="glass-panel" style={{
-          background: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid var(--border-glass)',
-          borderRadius: '16px',
-          padding: '16px 20px',
-          marginBottom: '24px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div 
+          className="referral-box-glow"
+          style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(3, 7, 18, 0.65) 100%)',
+            border: '2px solid rgba(16, 185, 129, 0.4)',
+            borderRadius: '16px',
+            padding: '18px 24px',
+            marginBottom: '28px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.2)',
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
               borderRadius: '50%',
-              padding: '10px',
-              color: 'var(--accent-neon-green)'
+              padding: '12px',
+              color: 'var(--accent-neon-green)',
+              boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)'
             }}>
-              <Gift size={20} />
+              <Gift size={22} />
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>¡Invita a tus amigos a la quiniela!</h4>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Comparte tu código y haz que se registren usándolo para competir juntos.
+              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.02em', color: 'var(--text-primary)' }}>¡Invita a tus amigos a la quiniela!</h4>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                Comparte tu código y haz que se registren usándolo para competir juntos en la tabla general.
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-glass)',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              fontFamily: 'monospace',
-              fontSize: '1rem',
-              fontWeight: 800,
-              color: 'var(--accent-neon-green)',
-              letterSpacing: '1px'
-            }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <div 
+              className="sports-font"
+              style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(3, 7, 18, 0.8) 100%)',
+                border: '2px solid rgba(16, 185, 129, 0.5)',
+                borderRadius: '12px',
+                height: '46px',
+                padding: '0 20px',
+                fontSize: '1.5rem',
+                fontWeight: 950,
+                color: 'var(--accent-neon-green)',
+                textShadow: '0 0 12px rgba(16, 185, 129, 0.6)',
+                letterSpacing: '0.08em',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 15px rgba(16, 185, 129, 0.15)',
+              }}
+            >
               {profile.referral_code}
             </div>
+            
             <button 
               onClick={() => handleCopyCode(profile.referral_code || '')}
               className="btn btn-secondary"
-              style={{ padding: '8px 12px', minWidth: '95px', display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center' }}
+              style={{ 
+                height: '46px', 
+                padding: '0 16px', 
+                minWidth: '100px', 
+                display: 'flex', 
+                gap: '8px', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontWeight: 700,
+                borderRadius: '12px' 
+              }}
             >
               {copied ? (
                 <>
-                  <Check size={14} style={{ color: 'var(--accent-neon-green)' }} />
-                  <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.8rem' }}>Copiado</span>
+                  <Check size={16} style={{ color: 'var(--accent-neon-green)' }} />
+                  <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.85rem' }}>Copiado</span>
                 </>
               ) : (
                 <>
-                  <Copy size={14} />
-                  <span style={{ fontSize: '0.8rem' }}>Copiar</span>
+                  <Copy size={16} />
+                  <span style={{ fontSize: '0.85rem' }}>Copiar</span>
+                </>
+              )}
+            </button>
+
+            <button 
+              onClick={() => handleShare(profile.referral_code || '')}
+              className="btn btn-primary"
+              style={{ 
+                height: '46px', 
+                padding: '0 16px', 
+                minWidth: '110px', 
+                display: 'flex', 
+                gap: '8px', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                fontWeight: 700,
+                borderRadius: '12px' 
+              }}
+            >
+              {shared ? (
+                <>
+                  <Check size={16} />
+                  <span style={{ fontSize: '0.85rem' }}>¡Enlace Listo!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 size={16} />
+                  <span style={{ fontSize: '0.85rem' }}>Compartir</span>
                 </>
               )}
             </button>
@@ -286,19 +539,6 @@ export default function HomePage() {
             <span className="stat-label">Bolsa de Recompensa</span>
             <span className="stat-value" style={{ color: 'var(--accent-gold)' }}>
               {poolTotal.toLocaleString()} Frijolitos 🫘
-            </span>
-          </div>
-        </div>
-
-        {/* Stat 2: Active Players */}
-        <div className="glass-panel stat-box success">
-          <div className="stat-icon">
-            <Users size={24} style={{ color: 'var(--accent-neon-green)' }} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Colaboradores</span>
-            <span className="stat-value">
-              {statsLoading ? '...' : activePlayers}
             </span>
           </div>
         </div>
@@ -436,13 +676,8 @@ export default function HomePage() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>🏃‍♂️ Ganador Correcto</span>
-                <strong style={{ color: 'var(--accent-neon-green)' }}>+{ptsWinner} Punto</strong>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>🤝 Empate Correcto</span>
-                <strong style={{ color: 'var(--accent-neon-green)' }}>+{ptsDraw} Punto</strong>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>🏃‍♂️ Resultado Correcto (Ganador / Empate)</span>
+                <strong style={{ color: 'var(--accent-neon-green)' }}>+{ptsWinner} Puntos</strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
@@ -536,13 +771,22 @@ export default function HomePage() {
                 <strong>1. Carácter de Mero Entretenimiento:</strong> QuiMundial es una plataforma recreativa y privada orientada exclusivamente al esparcimiento deportivo con motivo del Mundial 2026. Bajo ninguna circunstancia opera, promueve, ni facilita actividades de apuestas comerciales o juegos de azar regulados por la Ley Federal de Juegos y Sorteos de México.
               </p>
               <p>
-                <strong>2. Naturaleza de las Aportaciones:</strong> Los montos ingresados por los usuarios tienen el carácter estricto de <strong>Cooperaciones Voluntarias de Mantenimiento</strong>. Dichos fondos se utilizan exclusivamente para sufragar el hospedaje en servidores en la nube, ancho de banda, APIs de banderas e infraestructura técnica necesaria para habilitar la plataforma. No existe reembolso de aportaciones bajo ningún supuesto.
+                <strong>2. Naturaleza de las Aportaciones:</strong> Los montos ingresados por los usuarios tienen el carácter estricto de <strong>Cooperaciones Voluntarias de Mantenimiento</strong>. Dicho fondo se utiliza exclusivamente para sufragar el hospedaje en servidores, ancho de banda e infraestructura técnica necesaria para habilitar la plataforma. No existe reembolso de aportaciones bajo ningún supuesto.
               </p>
               <p>
-                <strong>3. Bolsa Simbólica (Frijolitos):</strong> Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de {poolTotal.toLocaleString()} Frijolitos (puntos recreativos de entretenimiento) a repartir de forma amistosa entre los participantes con mayor puntaje al finalizar el torneo. Estos puntos no tienen equivalencia ni valor de cambio financiero inmediato garantizado por la plataforma.
+                <strong>3. Bolsa Simbólica (Frijolitos):</strong> Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de {poolTotal.toLocaleString()} Frijolitos a repartir de forma amistosa entre los participantes con mayor puntaje al finalizar el torneo.
               </p>
               <p>
-                <strong>4. Aceptación de Condiciones:</strong> El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.
+                <strong>4. Causa Social y Búsqueda de Oportunidades:</strong> Este proyecto ha sido desarrollado e impulsado por personas que lamentablemente perdimos nuestro empleo. Estamos sumamente preocupados por el bienestar y el sustento de nuestras familias, y decidimos crear esta plataforma con mucha dedicación en busca de nuevas oportunidades. Agradecemos infinitamente tu apoyo y confianza.
+              </p>
+              <p>
+                <strong>5. Resultados Oficiales de Juego:</strong> Los marcadores y resultados oficiales que se tomarán en cuenta para el cálculo de los puntos de la quiniela serán única y estrictamente aquellos declarados oficiales por el comité organizador de la competencia deportiva.
+              </p>
+              <p>
+                <strong>6. Nombramiento de Ganadores y Premiación:</strong> El día <strong>26 de Junio</strong> se nombrará oficialmente al ganador o ganadora del torneo. Ese mismo día nos comunicaremos directamente con él o ella para coordinarnos y definir en qué olla le ponemos sus correspondientes Frijolitos 🫘.
+              </p>
+              <p>
+                <strong>7. Aceptación de Condiciones:</strong> El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.
               </p>
             </div>
             <button className="btn btn-primary" style={{ width: '100%', marginTop: '24px', padding: '12px' }} onClick={() => setShowTerms(false)}>

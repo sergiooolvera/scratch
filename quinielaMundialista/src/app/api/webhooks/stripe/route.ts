@@ -37,31 +37,118 @@ export async function POST(req: Request) {
 
     console.log(`🔔 Webhook: Payment completed for User ${userId}. Amount: $${amountTotal} MXN.`);
 
+    const isBuyCoupons = session.metadata?.action === 'buy_coupons';
+
     try {
-      // 1. Update user profile payment state
-      const { error: profileError } = await supabaseAdmin
-        .from('qui_profiles')
-        .update({
-          is_active: true,
-          stripe_customer_id: stripeCustomerId,
-        })
-        .eq('id', userId);
+      if (isBuyCoupons) {
+        // --- SELLER PREPAID COUPON GENERATION FLOW ---
+        const quantity = Number(session.metadata.quantity) || 1;
+        const ticketCost = amountTotal / quantity;
 
-      if (profileError) throw profileError;
+        // Generate unique coupon codes (QP-XXXX-XXXX)
+        const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluyendo O, 0, I, 1
+        const generateCode = () => {
+          let part1 = '';
+          let part2 = '';
+          for (let i = 0; i < 4; i++) {
+            part1 += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+            part2 += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+          }
+          return `QP-${part1}-${part2}`;
+        };
 
-      // 2. Register receipt in qui_payments
-      const { error: paymentError } = await supabaseAdmin
-        .from('qui_payments')
-        .upsert({
-          id: sessionId,
-          user_id: userId,
-          amount: amountTotal,
-          status: 'paid',
-        });
+        const couponsToInsert = [];
+        for (let i = 0; i < quantity; i++) {
+          let uniqueCode = '';
+          let isUnique = false;
+          let checkAttempts = 0;
 
-      if (paymentError) throw paymentError;
+          while (!isUnique && checkAttempts < 10) {
+            uniqueCode = generateCode();
+            const { data: existing } = await supabaseAdmin
+              .from('qui_coupons')
+              .select('id')
+              .eq('code', uniqueCode)
+              .maybeSingle();
 
-      // 3. Dynamic pool accumulation inside qui_system_settings
+            if (!existing) {
+              isUnique = true;
+            }
+            checkAttempts++;
+          }
+
+          if (!isUnique) {
+            throw new Error('No se pudo generar un código de cupón único. Intenta nuevamente.');
+          }
+
+          couponsToInsert.push({
+            code: uniqueCode,
+            seller_id: userId,
+            price_paid: ticketCost,
+            status: 'active'
+          });
+        }
+
+        // Insert coupons safely
+        const { data: inserted, error: insertError } = await supabaseAdmin
+          .from('qui_coupons')
+          .insert(couponsToInsert)
+          .select();
+
+        if (insertError) throw insertError;
+
+        // Register receipt in qui_payments
+        const { error: paymentError } = await supabaseAdmin
+          .from('qui_payments')
+          .upsert({
+            id: sessionId,
+            user_id: userId,
+            amount: amountTotal,
+            status: 'paid',
+          });
+
+        if (paymentError) throw paymentError;
+
+        // Send a system notification to the seller
+        const notificationMsg = `🎟️ ¡Tu pago en Stripe fue confirmado! Se han generado ${quantity} ${quantity === 1 ? 'cupón prepago' : 'cupones prepagos'} en tu panel.`;
+        await supabaseAdmin
+          .from('qui_notifications')
+          .insert({
+            user_id: userId,
+            message: notificationMsg,
+            read: false
+          });
+
+        console.log(`✅ Success: Generated ${quantity} coupons and sent notification for seller ${userId}.`);
+      } else {
+        // --- STANDARD USER BOLETO ACTIVATION FLOW ---
+        // 1. Update user profile payment state
+        const { error: profileError } = await supabaseAdmin
+          .from('qui_profiles')
+          .update({
+            is_active: true,
+            stripe_customer_id: stripeCustomerId,
+          })
+          .eq('id', userId);
+
+        if (profileError) throw profileError;
+
+        // 2. Register receipt in qui_payments
+        const { error: paymentError } = await supabaseAdmin
+          .from('qui_payments')
+          .upsert({
+            id: sessionId,
+            user_id: userId,
+            amount: amountTotal,
+            status: 'paid',
+          });
+
+        if (paymentError) throw paymentError;
+
+        console.log(`✅ Success: Activated profile for user ${userId}.`);
+      }
+
+      // --- COMMON FLOW: Pool accumulation inside qui_system_settings ---
       // Get current config settings
       const { data: settings, error: configError } = await supabaseAdmin
         .from('qui_system_settings')
@@ -77,7 +164,7 @@ export async function POST(req: Request) {
           .eq('id', 'points_config');
       }
 
-      console.log(`✅ Success: Activated profile and updated pool for user ${userId}.`);
+      console.log(`✅ Success: Global pool updated. Added $${amountTotal} MXN.`);
     } catch (err: any) {
       console.error('⚠️ Database update failure inside Stripe webhook:', err.message);
       return NextResponse.json({ error: `Database update failed: ${err.message}` }, { status: 500 });

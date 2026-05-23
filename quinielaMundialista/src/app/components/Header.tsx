@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Trophy, LogIn, LogOut, LayoutDashboard, TableProperties, ShieldAlert, CreditCard, Bell, Check, X, Trash2 } from 'lucide-react';
+import { Trophy, LogIn, LogOut, LayoutDashboard, TableProperties, ShieldAlert, CreditCard, Bell, Check, X, Trash2, BadgeDollarSign } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
@@ -93,21 +93,16 @@ export const Header: React.FC = () => {
   const deleteNotification = async (id: string) => {
     if (!user) return;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) return;
-
-      const response = await fetch(`/api/notifications?id=${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const { error } = await supabase
+        .from('qui_notifications')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
       
-      if (response.ok) {
+      if (!error) {
         setNotifications(prev => prev.filter(n => n.id !== id));
       } else {
-        console.error('Failed to delete notification');
+        console.error('Failed to delete notification:', error.message);
       }
     } catch (e) {
       console.error('Error deleting notification:', e);
@@ -117,21 +112,15 @@ export const Header: React.FC = () => {
   const clearAllNotifications = async () => {
     if (!user || notifications.length === 0) return;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) return;
-
-      const response = await fetch('/api/notifications', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const { error } = await supabase
+        .from('qui_notifications')
+        .delete()
+        .eq('user_id', user.id);
       
-      if (response.ok) {
+      if (!error) {
         setNotifications([]);
       } else {
-        console.error('Failed to clear notifications');
+        console.error('Failed to clear notifications:', error.message);
       }
     } catch (e) {
       console.error('Error clearing notifications:', e);
@@ -173,6 +162,20 @@ export const Header: React.FC = () => {
           <Trophy size={18} />
           <span>Ranking</span>
         </Link>
+
+        {user && (
+          profile?.role === 'vendedor' ? (
+            <Link href="/vendedor" className={`nav-link ${isActive('/vendedor') ? 'active' : ''}`} style={{ border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' }}>
+              <BadgeDollarSign size={18} style={{ color: 'var(--accent-neon-green)' }} />
+              <span style={{ color: 'var(--accent-neon-green)' }}>Panel Vendedor</span>
+            </Link>
+          ) : (
+            <Link href="/vendedor" className={`nav-link ${isActive('/vendedor') ? 'active' : ''}`}>
+              <BadgeDollarSign size={18} />
+              <span>Ser Vendedor</span>
+            </Link>
+          )
+        )}
 
         {profile?.is_admin && (
           <Link href="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`} style={{ border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.05)' }}>

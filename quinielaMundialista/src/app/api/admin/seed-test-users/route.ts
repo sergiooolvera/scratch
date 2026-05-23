@@ -27,9 +27,9 @@ export async function POST(req: Request) {
       .eq('id', 'points_config')
       .single();
 
-    const ptsExact = settings ? Number(settings.points_exact_score) : 3;
-    const ptsWinner = settings ? Number(settings.points_correct_winner) : 1;
-    const ptsDraw = settings ? Number(settings.points_correct_draw) : 1;
+    const ptsExact = settings ? Number(settings.points_exact_score) : 5;
+    const ptsWinner = settings ? Number(settings.points_correct_winner) : 3;
+    const ptsDraw = settings ? Number(settings.points_correct_draw) : 3;
 
     // 3. Purge existing test users to keep the database clean and repeatable
     const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();

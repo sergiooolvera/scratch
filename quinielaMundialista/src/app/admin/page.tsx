@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { ShieldCheck, Save, TableProperties, Settings, Users, RotateCcw, ShieldAlert, BadgeDollarSign, Sparkles, Ban, Lock, Unlock } from 'lucide-react';
+import { ShieldCheck, Save, TableProperties, Settings, Users, RotateCcw, ShieldAlert, BadgeDollarSign, Sparkles, Ban, Lock, Unlock, Store, ChevronDown, ChevronUp, Search, BadgeCheck, BadgeX, UserCheck } from 'lucide-react';
 
 interface Match {
   id: string;
@@ -28,21 +28,42 @@ interface Player {
   created_at: string;
 }
 
+interface VendorClient {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  is_active: boolean;
+}
+
+interface VendorData {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  is_active: boolean;
+  client_count: number;
+  clients: VendorClient[];
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const { user, profile, loading } = useAuth();
   
-  const [activeSubTab, setActiveSubTab] = useState<'scores' | 'settings' | 'users'>('scores');
+  const [activeSubTab, setActiveSubTab] = useState<'scores' | 'settings' | 'users' | 'seller-requests' | 'vendors'>('scores');
   
   // Data States
   const [matches, setMatches] = useState<Match[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [scoresInput, setScoresInput] = useState<{ [matchId: string]: { home: string; away: string } }>({});
+  const [sellerRequests, setSellerRequests] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<VendorData[]>([]);
+  const [vendorSearch, setVendorSearch] = useState('');
+  const [expandedVendors, setExpandedVendors] = useState<Set<string>>(new Set());
+  const [vendorsLoading, setVendorsLoading] = useState(false);
   
   // Settings Form State
-  const [ptsExact, setPtsExact] = useState(3);
-  const [ptsWinner, setPtsWinner] = useState(1);
-  const [ptsDraw, setPtsDraw] = useState(1);
+  const [ptsExact, setPtsExact] = useState(5);
+  const [ptsWinner, setPtsWinner] = useState(3);
+  const [ptsDraw, setPtsDraw] = useState(3);
   const [ptsIncorrect, setPtsIncorrect] = useState(0);
   const [lockHours, setLockHours] = useState(24);
   const [ticketCost, setTicketCost] = useState(200.00);
@@ -52,6 +73,11 @@ export default function AdminPage() {
   const [pctFirst, setPctFirst] = useState(50);
   const [pctSecond, setPctSecond] = useState(25);
   const [pctThird, setPctThird] = useState(5);
+
+  // Customizable Seller Commissions Rates (in %)
+  const [commScale1, setCommScale1] = useState(20);
+  const [commScale2, setCommScale2] = useState(25);
+  const [commScale3, setCommScale3] = useState(30);
 
   // Status indicators
   const [actionLoading, setActionLoading] = useState(false);
@@ -108,6 +134,9 @@ export default function AdminPage() {
         setPctFirst(settingsData.pct_first_place ?? 50);
         setPctSecond(settingsData.pct_second_place ?? 25);
         setPctThird(settingsData.pct_third_place ?? 5);
+        setCommScale1(Number(settingsData.seller_commission_1_10 ?? 0.20) * 100);
+        setCommScale2(Number(settingsData.seller_commission_11_25 ?? 0.25) * 100);
+        setCommScale3(Number(settingsData.seller_commission_26_up ?? 0.30) * 100);
       }
 
       // Fetch profiles
@@ -124,9 +153,104 @@ export default function AdminPage() {
     }
   };
 
+  const fetchSellerRequests = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch(`/api/admin/seller-requests?adminId=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setSellerRequests(data.requests || []);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching seller requests:', e);
+    }
+  };
+
+  const handleSellerRequestAction = async (targetUserId: string, action: 'approve' | 'reject') => {
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/seller-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminId: user?.id,
+          targetUserId,
+          action
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`✅ Solicitud ${action === 'approve' ? 'aprobada' : 'rechazada'} con éxito.`);
+        await fetchSellerRequests();
+        await fetchAdminData();
+      } else {
+        throw new Error(data.error || 'Error al procesar la solicitud.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      showToast(`❌ Error: ${err.message}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const fetchVendors = async () => {
+    setVendorsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/vendors`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setVendors(data.vendors || []);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching vendors:', e);
+    } finally {
+      setVendorsLoading(false);
+    }
+  };
+
+  const toggleVendorExpand = (vendorId: string) => {
+    setExpandedVendors(prev => {
+      const next = new Set(prev);
+      if (next.has(vendorId)) {
+        next.delete(vendorId);
+      } else {
+        next.add(vendorId);
+      }
+      return next;
+    });
+  };
+
+  const handleSeedVendorClients = async () => {
+    if (!user) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/seed-vendor-clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminId: user.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al generar datos de prueba.');
+      showToast(`✨ ${data.message}`);
+      await fetchVendors();
+    } catch (err: any) {
+      console.error(err);
+      showToast(`❌ Error: ${err.message}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (profile?.is_admin) {
       fetchAdminData();
+      fetchSellerRequests();
+      fetchVendors();
     }
   }, [profile]);
 
@@ -265,6 +389,9 @@ export default function AdminPage() {
           pct_first_place: pctFirst,
           pct_second_place: pctSecond,
           pct_third_place: pctThird,
+          seller_commission_1_10: commScale1 / 100,
+          seller_commission_11_25: commScale2 / 100,
+          seller_commission_26_up: commScale3 / 100,
         }),
       });
 
@@ -495,6 +622,18 @@ export default function AdminPage() {
           >
             <Users size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Participantes
           </button>
+          <button
+            className={`tab-btn ${activeSubTab === 'seller-requests' ? 'active' : ''}`}
+            onClick={() => setActiveSubTab('seller-requests')}
+          >
+            <BadgeDollarSign size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Solicitudes Vendedor
+          </button>
+          <button
+            className={`tab-btn ${activeSubTab === 'vendors' ? 'active' : ''}`}
+            onClick={() => setActiveSubTab('vendors')}
+          >
+            <ShieldCheck size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Vendedores
+          </button>
         </div>
       </div>
 
@@ -662,23 +801,16 @@ export default function AdminPage() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Ganador Correcto</label>
+                <label className="form-label">Resultado Correcto</label>
                 <input
                   type="number"
                   className="form-input"
                   value={ptsWinner}
-                  onChange={(e) => setPtsWinner(parseInt(e.target.value) || 0)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Empate Correcto</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={ptsDraw}
-                  onChange={(e) => setPtsDraw(parseInt(e.target.value) || 0)}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    setPtsWinner(val);
+                    setPtsDraw(val);
+                  }}
                   required
                 />
               </div>
@@ -745,6 +877,45 @@ export default function AdminPage() {
                   className="form-input"
                   value={pctThird}
                   onChange={(e) => setPctThird(parseInt(e.target.value) || 0)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">% Comisión Vendedor (1-10 boletos)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={commScale1}
+                  onChange={(e) => setCommScale1(parseInt(e.target.value) || 0)}
+                  min={0}
+                  max={100}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">% Comisión Vendedor (11-25 boletos)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={commScale2}
+                  onChange={(e) => setCommScale2(parseInt(e.target.value) || 0)}
+                  min={0}
+                  max={100}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">% Comisión Vendedor (26+ boletos)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={commScale3}
+                  onChange={(e) => setCommScale3(parseInt(e.target.value) || 0)}
+                  min={0}
+                  max={100}
                   required
                 />
               </div>
@@ -908,6 +1079,439 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Tab Panel 4: Seller Requests review panel */}
+      {activeSubTab === 'seller-requests' && (
+        <div className="glass-panel">
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <BadgeDollarSign size={20} style={{ color: 'var(--accent-gold)' }} /> Solicitudes de Activación de Vendedor
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            Acepta o rechaza las solicitudes de los usuarios que desean convertirse en vendedores activos de la quiniela. Al aceptar, se les asignará el rol de vendedor y podrán ver su panel de referidos.
+          </p>
+
+          <div className="ranking-table-wrapper">
+            {sellerRequests.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                <Users size={40} style={{ opacity: 0.15 }} />
+                <span style={{ fontSize: '0.85rem' }}>No hay solicitudes de vendedor pendientes en este momento.</span>
+              </div>
+            ) : (
+              <table className="ranking-table">
+                <thead>
+                  <tr>
+                    <th>Usuario / Nombre</th>
+                    <th style={{ textAlign: 'center' }}>Registrado</th>
+                    <th style={{ textAlign: 'center' }}>Puntos</th>
+                    <th style={{ textAlign: 'center' }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sellerRequests.map((req) => (
+                    <tr key={req.id} className="ranking-row">
+                      <td>
+                        <div className="rank-player-cell">
+                          <div className="player-avatar">
+                            {(req.full_name || 'U')[0].toUpperCase()}
+                          </div>
+                          <div className="player-name-container">
+                            <span className="player-name">{req.full_name || 'Participante'}</span>
+                            <span className="player-badge">@{req.username || 'user'}</span>
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                        {new Date(req.created_at).toLocaleDateString('es-MX')}
+                      </td>
+                      
+                      <td style={{ textAlign: 'center', fontWeight: 800 }}>
+                        {req.points} pts
+                      </td>
+                      
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          <button
+                            onClick={() => handleSellerRequestAction(req.id, 'approve')}
+                            className="btn btn-primary"
+                            style={{ 
+                              padding: '6px 12px', 
+                              fontSize: '0.75rem',
+                              background: 'rgba(16, 185, 129, 0.2)',
+                              border: '1px solid rgba(16, 185, 129, 0.4)',
+                              color: 'var(--accent-neon-green)'
+                            }}
+                            disabled={actionLoading}
+                          >
+                            Aceptar
+                          </button>
+                          <button
+                            onClick={() => handleSellerRequestAction(req.id, 'reject')}
+                            className="btn btn-danger"
+                            style={{ 
+                              padding: '6px 12px', 
+                              fontSize: '0.75rem',
+                              background: 'rgba(239, 68, 68, 0.2)',
+                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                              color: 'rgb(248, 113, 113)'
+                            }}
+                            disabled={actionLoading}
+                          >
+                            Rechazar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab Panel 5: Vendors and their Clients */}
+      {activeSubTab === 'vendors' && (
+        <div className="glass-panel">
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '8px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Store size={20} style={{ color: '#a78bfa' }} /> Red de Vendedores y Clientes
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            Visualiza la lista completa de vendedores activos junto con los clientes que han adquirido cupones a través de ellos. Expande cada vendedor para ver el detalle.
+          </p>
+
+          {/* Test Data Seeder */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(30, 41, 59, 0.6) 100%)',
+            border: '1px solid rgba(124, 58, 237, 0.25)',
+            borderRadius: '16px',
+            padding: '20px',
+            marginBottom: '24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+            backdropFilter: 'blur(8px)',
+          }}>
+            <div style={{ flex: 1, minWidth: '280px' }}>
+              <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Sparkles size={16} /> Datos de Prueba: Vendedores y Clientes
+              </h4>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Genera 2 vendedores de prueba con 6 clientes asociados para verificar que el panel funciona correctamente.
+              </p>
+            </div>
+            <button
+              onClick={handleSeedVendorClients}
+              className="btn btn-gold"
+              style={{ padding: '10px 20px', fontSize: '0.82rem', fontWeight: 800, boxShadow: '0 0 15px rgba(124, 58, 237, 0.3)', background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)', borderColor: 'rgba(124, 58, 237, 0.5)', color: '#fff' }}
+              disabled={actionLoading}
+            >
+              <Sparkles size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+              <span>Generar Vendedores de Prueba</span>
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div style={{
+            position: 'relative',
+            marginBottom: '24px',
+          }}>
+            <Search size={16} style={{
+              position: 'absolute',
+              left: '14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#a78bfa',
+              pointerEvents: 'none',
+            }} />
+            <input
+              type="text"
+              placeholder="Buscar vendedor o cliente por nombre..."
+              value={vendorSearch}
+              onChange={(e) => setVendorSearch(e.target.value)}
+              className="form-input"
+              style={{
+                paddingLeft: '40px',
+                width: '100%',
+                background: 'rgba(124, 58, 237, 0.06)',
+                border: '1px solid rgba(124, 58, 237, 0.25)',
+                borderRadius: '12px',
+                fontSize: '0.9rem',
+                transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.6)';
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(124, 58, 237, 0.15)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.25)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            />
+          </div>
+
+          {/* Summary Stats */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '12px',
+            marginBottom: '24px',
+          }}>
+            <div className="glass-card" style={{ padding: '16px', textAlign: 'center', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#a78bfa' }}>{vendors.length}</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Vendedores Activos</div>
+            </div>
+            <div className="glass-card" style={{ padding: '16px', textAlign: 'center', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--accent-neon-green)' }}>
+                {vendors.reduce((sum, v) => sum + v.client_count, 0)}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Clientes Totales</div>
+            </div>
+            <div className="glass-card" style={{ padding: '16px', textAlign: 'center', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--accent-gold)' }}>
+                {vendors.length > 0 ? (vendors.reduce((sum, v) => sum + v.client_count, 0) / vendors.length).toFixed(1) : '0'}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Promedio por Vendedor</div>
+            </div>
+          </div>
+
+          {vendorsLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid rgba(124, 58, 237, 0.1)',
+                borderTop: '3px solid #a78bfa',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 16px',
+              }} />
+              Cargando red de vendedores...
+            </div>
+          ) : vendors.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <Store size={48} style={{ opacity: 0.15 }} />
+              <span style={{ fontSize: '0.9rem' }}>No hay vendedores registrados en el sistema aún.</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {vendors
+                .filter(v => {
+                  if (!vendorSearch.trim()) return true;
+                  const q = vendorSearch.toLowerCase();
+                  const vendorMatch = (v.full_name || '').toLowerCase().includes(q) || (v.username || '').toLowerCase().includes(q);
+                  const clientMatch = v.clients.some(c => (c.full_name || '').toLowerCase().includes(q) || (c.username || '').toLowerCase().includes(q));
+                  return vendorMatch || clientMatch;
+                })
+                .map((vendor) => {
+                  const isExpanded = expandedVendors.has(vendor.id);
+                  return (
+                    <div key={vendor.id} style={{
+                      background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(30, 41, 59, 0.5) 100%)',
+                      border: '1px solid rgba(124, 58, 237, 0.2)',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s ease',
+                      boxShadow: isExpanded ? '0 8px 32px rgba(124, 58, 237, 0.12)' : '0 4px 12px rgba(0,0,0,0.15)',
+                    }}>
+                      {/* Vendor Header */}
+                      <div
+                        onClick={() => toggleVendorExpand(vendor.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '16px 20px',
+                          cursor: 'pointer',
+                          gap: '12px',
+                          transition: 'background 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.08)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        {/* Avatar */}
+                        <div style={{
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 900,
+                          fontSize: '1.1rem',
+                          color: '#fff',
+                          flexShrink: 0,
+                          boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+                        }}>
+                          {(vendor.full_name || vendor.username || 'V')[0].toUpperCase()}
+                        </div>
+
+                        {/* Info */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                            {vendor.full_name || 'Vendedor'}
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            @{vendor.username || 'user'}
+                          </div>
+                        </div>
+
+                        {/* Client Count Badge */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: vendor.client_count > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                          border: `1px solid ${vendor.client_count > 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(100, 116, 139, 0.2)'}`,
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          color: vendor.client_count > 0 ? 'var(--accent-neon-green)' : 'var(--text-muted)',
+                        }}>
+                          <UserCheck size={14} />
+                          {vendor.client_count} {vendor.client_count === 1 ? 'cliente' : 'clientes'}
+                        </div>
+
+                        {/* Chevron */}
+                        <div style={{ color: '#a78bfa', transition: 'transform 0.3s ease', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                          <ChevronDown size={20} />
+                        </div>
+                      </div>
+
+                      {/* Expanded Client List */}
+                      {isExpanded && (
+                        <div style={{
+                          borderTop: '1px solid rgba(124, 58, 237, 0.15)',
+                          padding: '0',
+                          background: 'rgba(0, 0, 0, 0.15)',
+                        }}>
+                          {vendor.clients.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                              Este vendedor aún no tiene clientes registrados.
+                            </div>
+                          ) : (
+                            <div>
+                              {/* Client List Header */}
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 120px 100px',
+                                padding: '10px 20px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                color: 'var(--text-muted)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                borderBottom: '1px solid rgba(255,255,255,0.04)',
+                              }}>
+                                <span>Cliente</span>
+                                <span style={{ textAlign: 'center' }}>Estado</span>
+                                <span style={{ textAlign: 'center' }}>Pago</span>
+                              </div>
+
+                              {/* Client Rows */}
+                              {vendor.clients
+                                .filter(c => {
+                                  if (!vendorSearch.trim()) return true;
+                                  const q = vendorSearch.toLowerCase();
+                                  return (c.full_name || '').toLowerCase().includes(q) || (c.username || '').toLowerCase().includes(q);
+                                })
+                                .map((client, idx) => (
+                                <div key={client.id} style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '1fr 120px 100px',
+                                  alignItems: 'center',
+                                  padding: '12px 20px',
+                                  borderBottom: idx < vendor.clients.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                                  transition: 'background 0.2s ease',
+                                }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.05)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  {/* Client Info */}
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{
+                                      width: '32px',
+                                      height: '32px',
+                                      borderRadius: '8px',
+                                      background: client.is_active ? 'rgba(16, 185, 129, 0.15)' : 'rgba(100, 116, 139, 0.15)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontWeight: 700,
+                                      fontSize: '0.8rem',
+                                      color: client.is_active ? 'var(--accent-neon-green)' : 'var(--text-muted)',
+                                      flexShrink: 0,
+                                    }}>
+                                      {(client.full_name || client.username || 'C')[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                                        {client.full_name || 'Cliente'}
+                                      </div>
+                                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                        @{client.username || 'user'}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Status */}
+                                  <div style={{ textAlign: 'center' }}>
+                                    {client.is_active ? (
+                                      <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        background: 'rgba(16, 185, 129, 0.1)',
+                                        color: 'var(--accent-neon-green)',
+                                        padding: '3px 10px',
+                                        borderRadius: '12px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 600,
+                                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                                      }}>
+                                        <BadgeCheck size={12} /> Activo
+                                      </span>
+                                    ) : (
+                                      <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        color: '#f87171',
+                                        padding: '3px 10px',
+                                        borderRadius: '12px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 600,
+                                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                                      }}>
+                                        <BadgeX size={12} /> Inactivo
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Payment Badge */}
+                                  <div style={{ textAlign: 'center' }}>
+                                    <span className={`badge ${client.is_active ? 'badge-paid' : 'badge-unpaid'}`} style={{ fontSize: '0.72rem' }}>
+                                      {client.is_active ? 'Pagado' : 'Pendiente'}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
       )}
     </div>

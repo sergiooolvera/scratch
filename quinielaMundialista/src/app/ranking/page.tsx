@@ -16,6 +16,41 @@ interface Profile {
   goal_difference: number;
 }
 
+// Helpers for Easter Eggs and Mexican Pop Culture References
+const getExactScoreBadgeText = (seedString: string) => {
+  let hash = 0;
+  for (let i = 0; i < seedString.length; i++) {
+    hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const choice = Math.abs(hash) % 3;
+  if (choice === 0) return '🎯 ¡Tómala Barbón! (+5 pts) 🔥';
+  if (choice === 1) return '🎯 ¡Te la mamaste! (+5 pts) 🧠';
+  return '🎯 ¡Ahhh perreeeee!!! (+5 pts) 🐕🔥';
+};
+
+const getEpicBlunderMsg = (match: any, pred: any) => {
+  if (!pred || match.status !== 'finished') return '';
+  const homePred = Number(pred.home_prediction);
+  const awayPred = Number(pred.away_prediction);
+  const homeReal = Number(match.home_score);
+  const awayReal = Number(match.away_score);
+  
+  const predictedHomeMargin = homePred - awayPred;
+  const realHomeMargin = homeReal - awayReal;
+  
+  const isBlunder = (predictedHomeMargin >= 2 && realHomeMargin <= -1) || 
+                     (predictedHomeMargin <= -2 && realHomeMargin >= 1);
+                     
+  if (isBlunder) {
+    const choice = match.id.charCodeAt(0) % 2;
+    return choice === 0 
+      ? 'De qué te vas a disfrazaaaaaaaaaaar 🤡' 
+      : 'Mayonesa McCormick... digo, Hellmann\'s! 🤦‍♂️';
+  }
+  return '';
+};
+
+
 export default function RankingPage() {
   const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,6 +191,12 @@ export default function RankingPage() {
     );
   });
 
+  // Limit to top 50 unless there is an active search query
+  const displayedLeaderboard = searchQuery.trim() === ''
+    ? filteredLeaderboard.slice(0, 50)
+    : filteredLeaderboard;
+
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
@@ -223,7 +264,24 @@ export default function RankingPage() {
               <div style={{ background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.12) 0%, rgba(0, 0, 0, 0.2) 100%)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(205, 127, 50, 0.2)', textAlign: 'center' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#cd7f32', display: 'block' }}>🥉 3er Lugar</span>
                 <span style={{ fontSize: '1.3rem', fontWeight: 900, display: 'block', margin: '4px 0', color: '#ffffff' }}>{pctThird}%</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{Math.floor(poolTotal * pctThird / 100).toLocaleString()} 🫘</span>
+                {pctThird === 0 ? (
+                  <span 
+                    style={{ 
+                      fontSize: '0.78rem', 
+                      color: 'var(--text-secondary)', 
+                      fontWeight: 800, 
+                      fontStyle: 'italic', 
+                      display: 'block', 
+                      marginTop: '6px',
+                      textShadow: '0 0 8px rgba(255,255,255,0.1)',
+                      opacity: 0.8
+                    }}
+                  >
+                    "Tú simplemente te vas... jeje" 🤫🚪
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{Math.floor(poolTotal * pctThird / 100).toLocaleString()} 🫘</span>
+                )}
               </div>
             </div>
           </div>
@@ -243,6 +301,27 @@ export default function RankingPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ width: '100%', paddingLeft: '44px', background: 'rgba(0,0,0,0.25)' }}
           />
+        </div>
+
+        {/* Dynamic Context Label */}
+        <div style={{ 
+          fontSize: '0.8rem', 
+          color: 'var(--text-secondary)', 
+          marginBottom: '16px', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '8px'
+        }}>
+          {searchQuery.trim() === '' ? (
+            <>
+              <span>Mostrando los <strong>Top 50</strong> mejores clasificados 🏆</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Puedes buscar a cualquier participante del torneo usando el buscador</span>
+            </>
+          ) : (
+            <span>Se encontraron <strong>{displayedLeaderboard.length}</strong> resultados en la búsqueda 🔍</span>
+          )}
         </div>
 
         {/* Table representation */}
@@ -270,14 +349,15 @@ export default function RankingPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredLeaderboard.length === 0 ? (
+              {displayedLeaderboard.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
                     No se encontraron participantes.
                   </td>
                 </tr>
               ) : (
-                filteredLeaderboard.map((player, index) => {
+                displayedLeaderboard.map((player, index) => {
+                  const realRank = leaderboard.findIndex(p => p.id === player.id) + 1;
                   return (
                     <tr 
                       key={player.id} 
@@ -290,8 +370,8 @@ export default function RankingPage() {
                       title="Haz clic para ver los pronósticos de este jugador"
                     >
                       {/* Rank Position */}
-                      <td className="rank-number-cell" style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                      <td className="rank-number-cell" style={{ textAlign: 'center', verticalAlign: 'middle', fontWeight: realRank === 69 ? 900 : undefined }}>
+                        {realRank === 1 ? '🥇' : realRank === 2 ? '🥈' : realRank === 3 ? '🥉' : realRank === 69 ? '69 😈' : realRank}
                       </td>
 
                       {/* Player Info */}
@@ -625,18 +705,27 @@ export default function RankingPage() {
                         {/* Puntos Ganados */}
                         {isFinishedOrLive && pred && visible && (
                           <div style={{ display: 'flex', alignItems: 'center' }}>
-                            {pred.points_earned === 3 ? (
-                              <span className="points-earned-tag">
-                                😲👏👏 Marcador Exacto +3 pts
+                            {pred.points_earned === 5 ? (
+                              <span className="points-earned-tag" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)', border: '1px solid rgba(245, 158, 11, 0.3)', color: 'var(--accent-gold)' }}>
+                                {getExactScoreBadgeText(`${match.id}-${selectedPlayer?.id}`)}
                               </span>
-                            ) : pred.points_earned === 1 ? (
+                            ) : pred.points_earned === 3 ? (
                               <span className="points-earned-tag">
-                                👍 Acierto +1 pt
+                                🏃‍♂️ Resultado Correcto +3 pts
                               </span>
                             ) : (
-                              <span className="points-earned-tag incorrect">
-                                😜😜 Sin pts
-                              </span>
+                              (() => {
+                                const blunderMsg = getEpicBlunderMsg(match, pred);
+                                return blunderMsg ? (
+                                  <span className="points-earned-tag incorrect" style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171' }} title={blunderMsg}>
+                                    {blunderMsg}
+                                  </span>
+                                ) : (
+                                  <span className="points-earned-tag incorrect">
+                                    ❌ Sin pts
+                                  </span>
+                                );
+                              })()
                             )}
                           </div>
                         )}

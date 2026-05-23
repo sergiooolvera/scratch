@@ -27,6 +27,40 @@ interface Prediction {
   points_earned?: number;
 }
 
+// Helpers for Easter Eggs and Mexican Pop Culture References
+const getExactScoreBadgeText = (seedString: string) => {
+  let hash = 0;
+  for (let i = 0; i < seedString.length; i++) {
+    hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const choice = Math.abs(hash) % 3;
+  if (choice === 0) return '🎯 ¡Tómala Barbón! (+5 pts) 🔥';
+  if (choice === 1) return '🎯 ¡Te la mamaste! (+5 pts) 🧠';
+  return '🎯 ¡Ahhh perreeeee!!! (+5 pts) 🐕🔥';
+};
+
+const getEpicBlunderMsg = (match: any, pred: any) => {
+  if (!pred || match.status !== 'finished') return '';
+  const homePred = Number(pred.home_prediction);
+  const awayPred = Number(pred.away_prediction);
+  const homeReal = Number(match.home_score);
+  const awayReal = Number(match.away_score);
+  
+  const predictedHomeMargin = homePred - awayPred;
+  const realHomeMargin = homeReal - awayReal;
+  
+  const isBlunder = (predictedHomeMargin >= 2 && realHomeMargin <= -1) || 
+                     (predictedHomeMargin <= -2 && realHomeMargin >= 1);
+                     
+  if (isBlunder) {
+    const choice = match.id.charCodeAt(0) % 2;
+    return choice === 0 
+      ? 'De qué te vas a disfrazaaaaaaaaaaar 🤡' 
+      : 'Mayonesa McCormick... digo, Hellmann\'s! 🤦‍♂️';
+  }
+  return '';
+};
+
 export default function QuinielaPage() {
   const router = useRouter();
   const { user, profile, loading, refreshProfile } = useAuth();
@@ -37,6 +71,8 @@ export default function QuinielaPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'group' | 'date'>('date');
   const [toastMessage, setToastMessage] = useState('');
+  const [modifiedMatchIds, setModifiedMatchIds] = useState<Set<string>>(new Set());
+  const [isBulkSaving, setIsBulkSaving] = useState(false);
   
   // Simulator lock state for testing
   const [simMode, setSimMode] = useState<'real' | 'bypass' | 'force_all' | 'world_cup'>('real');
@@ -228,6 +264,13 @@ export default function QuinielaPage() {
       };
     });
 
+    // Mark as modified
+    setModifiedMatchIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(matchId);
+      return newSet;
+    });
+
     // Reset saving status to idle if user edits again
     if (savingState[matchId] === 'saved' || savingState[matchId] === 'error') {
       setSavingState(prev => ({ ...prev, [matchId]: 'idle' }));
@@ -281,11 +324,146 @@ export default function QuinielaPage() {
       }
 
       setSavingState(prev => ({ ...prev, [matchId]: 'saved' }));
+      setModifiedMatchIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(matchId);
+        return newSet;
+      });
       showToast('¡Pronóstico guardado exitosamente!');
     } catch (err: any) {
       console.error('Error saving prediction:', err.message);
       setSavingState(prev => ({ ...prev, [matchId]: 'error' }));
       showToast(err.message || 'Error al guardar pronóstico.');
+    }
+  };
+
+  // Autofill empty predictions with realistic scores ("Lapicito Mágico")
+  const handleAutoFill = () => {
+    const realisticScores = [
+      [1, 0], [2, 1], [1, 1], [0, 0], [0, 1], [1, 2], [2, 0], [0, 2], [2, 2], [3, 1], [1, 3], [3, 2], [2, 3]
+    ];
+    
+    const newPredictions = { ...predictions };
+    const newModified = new Set(modifiedMatchIds);
+    let filledCount = 0;
+
+    matches.forEach(match => {
+      const locked = isMatchLocked(match);
+      if (locked) return;
+
+      const pred = predictions[match.id] || { home_prediction: '', away_prediction: '' };
+      
+      // Auto fill only if at least one input is empty
+      if (pred.home_prediction === '' || pred.away_prediction === '') {
+        const randomIndex = Math.floor(Math.random() * realisticScores.length);
+        const [homeScore, awayScore] = realisticScores[randomIndex];
+
+        newPredictions[match.id] = {
+          match_id: match.id,
+          home_prediction: String(homeScore),
+          away_prediction: String(awayScore),
+        };
+        newModified.add(match.id);
+        filledCount++;
+      }
+    });
+
+    if (filledCount > 0) {
+      setPredictions(newPredictions);
+      setModifiedMatchIds(newModified);
+      showToast(`✨ Se han autollenado ${filledCount} marcadores. ¡No olvides guardarlos!`);
+    } else {
+      showToast('⚠️ No hay marcadores vacíos o editables para autollenar.');
+    }
+  };
+
+  // Bulk save all edited predictions
+  const saveAllPredictions = async () => {
+    if (!user) return;
+    
+    if (!profile?.is_active && simMode === 'real') {
+      showToast('⚠️ Se requiere realizar la aportación voluntaria de mantenimiento para registrar pronósticos.');
+      return;
+    }
+
+    const predictionsToSubmit: Array<{ matchId: string; homePrediction: number; awayPrediction: number }> = [];
+    const affectedMatchIds: string[] = [];
+
+    matches.forEach(match => {
+      const locked = isMatchLocked(match);
+      if (locked) return;
+
+      if (modifiedMatchIds.has(match.id)) {
+        const pred = predictions[match.id];
+        if (pred && pred.home_prediction !== '' && pred.away_prediction !== '') {
+          predictionsToSubmit.push({
+            matchId: match.id,
+            homePrediction: Number(pred.home_prediction),
+            awayPrediction: Number(pred.away_prediction)
+          });
+          affectedMatchIds.push(match.id);
+        }
+      }
+    });
+
+    if (predictionsToSubmit.length === 0) {
+      showToast('⚠️ No tienes cambios pendientes o válidos por guardar.');
+      return;
+    }
+
+    setIsBulkSaving(true);
+    
+    const newSavingState = { ...savingState };
+    affectedMatchIds.forEach(id => {
+      newSavingState[id] = 'saving';
+    });
+    setSavingState(newSavingState);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error('No se encontró una sesión activa.');
+      }
+
+      const res = await fetch('/api/predictions/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          predictions: predictionsToSubmit,
+          simMode
+        })
+      });
+
+      const resData = await res.json();
+
+      if (!res.ok) {
+        throw new Error(resData.error || 'Error al guardar los pronósticos.');
+      }
+
+      const updatedSavingState = { ...savingState };
+      affectedMatchIds.forEach(id => {
+        updatedSavingState[id] = 'saved';
+      });
+      setSavingState(updatedSavingState);
+      setModifiedMatchIds(new Set());
+      showToast(`💾 ¡Se han guardado ${predictionsToSubmit.length} pronósticos exitosamente!`);
+    } catch (err: any) {
+      console.error('Error in bulk saving predictions:', err.message);
+      
+      const errorSavingState = { ...savingState };
+      affectedMatchIds.forEach(id => {
+        errorSavingState[id] = 'error';
+      });
+      setSavingState(errorSavingState);
+      
+      showToast(err.message || 'Error al guardar los pronósticos.');
+    } finally {
+      setIsBulkSaving(false);
     }
   };
 
@@ -420,7 +598,7 @@ export default function QuinielaPage() {
             backdropFilter: 'blur(8px)'
           }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-              🔧 Simulación 24h
+              🔧 Simulación {lockHours}h
             </span>
             <select
               value={simMode}
@@ -458,6 +636,92 @@ export default function QuinielaPage() {
               Por Día
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Premium Prediction Control Actions Bar */}
+      <div className="glass-panel" style={{
+        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(30, 41, 59, 0.4) 100%)',
+        border: '1px solid rgba(16, 185, 129, 0.15)',
+        marginBottom: '24px',
+        padding: '16px 20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '16px',
+        borderRadius: '16px'
+      }}>
+        <div>
+          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>
+            Acciones Rápidas
+          </h4>
+          <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            Usa el Llenado Mágico para completar pronósticos vacíos en un solo clic y modificarlos antes de guardar.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleAutoFill}
+            disabled={pageLoading || isBulkSaving}
+            className="btn btn-secondary"
+            style={{
+              padding: '10px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 800,
+              fontSize: '0.85rem',
+              borderColor: 'rgba(16, 185, 129, 0.3)',
+              color: 'var(--accent-neon-green)',
+              boxShadow: '0 0 10px rgba(16, 185, 129, 0.05)'
+            }}
+          >
+            <Sparkles size={16} />
+            <span>Lapicito Mágico ✨</span>
+          </button>
+
+          <button
+            onClick={saveAllPredictions}
+            disabled={modifiedMatchIds.size === 0 || isBulkSaving}
+            className="btn"
+            style={{
+              padding: '10px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 850,
+              fontSize: '0.85rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+              background: modifiedMatchIds.size > 0 ? 'var(--accent-neon-green)' : 'var(--text-muted)',
+              borderColor: modifiedMatchIds.size > 0 ? 'var(--accent-neon-green)' : 'var(--text-muted)',
+              color: '#030712',
+              boxShadow: modifiedMatchIds.size > 0 ? '0 0 15px var(--accent-neon-green-glow)' : 'none',
+              opacity: modifiedMatchIds.size > 0 ? 1 : 0.5,
+              cursor: modifiedMatchIds.size > 0 ? 'pointer' : 'not-allowed',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {isBulkSaving ? (
+              <>
+                <div className="animate-spin" style={{
+                  width: '12px',
+                  height: '12px',
+                  border: '2px solid #030712',
+                  borderTopColor: 'transparent',
+                  borderRadius: '50%'
+                }}></div>
+                <span>Guardando todos...</span>
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                <span>Guardar Cambios ({modifiedMatchIds.size})</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -697,15 +961,28 @@ export default function QuinielaPage() {
                     {match.status === 'finished' && predictions[match.id] && (
                       <div className="prediction-box-meta">
                         <span>Puntos Obtenidos:</span>
-                        <span className={`points-earned-tag ${match.status === 'finished' && (predictions[match.id]?.points_earned || 0) === 0 ? 'incorrect' : ''}`}>
-                          {predictions[match.id]?.points_earned === 3 ? (
-                            <>😲👏👏 Marcador Exacto +3 pts</>
-                          ) : predictions[match.id]?.points_earned === 1 ? (
-                            <>👍 Acierto +1 pt</>
-                          ) : (
-                            <>😜😜 Sin pts</>
-                          )}
-                        </span>
+                        {predictions[match.id]?.points_earned === 5 ? (
+                          <span className="points-earned-tag" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)', border: '1px solid rgba(245, 158, 11, 0.3)', color: 'var(--accent-gold)' }}>
+                            {getExactScoreBadgeText(`${match.id}-${user?.id}`)}
+                          </span>
+                        ) : predictions[match.id]?.points_earned === 3 ? (
+                          <span className="points-earned-tag">
+                            🏃‍♂️ Resultado Correcto +3 pts
+                          </span>
+                        ) : (
+                          (() => {
+                            const blunderMsg = getEpicBlunderMsg(match, predictions[match.id]);
+                            return blunderMsg ? (
+                              <span className="points-earned-tag incorrect" style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171' }} title={blunderMsg}>
+                                {blunderMsg}
+                              </span>
+                            ) : (
+                              <span className="points-earned-tag incorrect">
+                                ❌ Sin pts
+                              </span>
+                            );
+                          })()
+                        )}
                       </div>
                     )}
                   </div>
@@ -714,6 +991,108 @@ export default function QuinielaPage() {
             </div>
           </div>
         ))
+      )}
+
+      {/* Translucent Glassmorphic Floating Save Bar */}
+      {modifiedMatchIds.size > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '90%',
+          maxWidth: '650px',
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(3, 7, 18, 0.95) 100%)',
+          border: '2px solid rgba(16, 185, 129, 0.5)',
+          borderRadius: '20px',
+          padding: '14px 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(16, 185, 129, 0.25)',
+          backdropFilter: 'blur(16px)',
+          zIndex: 1000,
+          animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}>
+          {/* Keyframe animation injected inline */}
+          <style>{`
+            @keyframes slideUp {
+              from {
+                transform: translate(-50%, 100px);
+                opacity: 0;
+              }
+              to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+              }
+            }
+          `}</style>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '1.2rem' }}>📝</span>
+            <div>
+              <span style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                Cambios sin Guardar
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--accent-neon-green)', fontWeight: 600 }}>
+                Tienes {modifiedMatchIds.size} {modifiedMatchIds.size === 1 ? 'pronóstico editado' : 'pronósticos editados'} pendientes de enviar.
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleAutoFill}
+              disabled={isBulkSaving}
+              className="btn btn-secondary"
+              style={{
+                padding: '8px 14px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                borderColor: 'rgba(255,255,255,0.1)'
+              }}
+            >
+              <span>Auto-llenar vacíos ✨</span>
+            </button>
+            
+            <button
+              onClick={saveAllPredictions}
+              disabled={isBulkSaving}
+              className="btn"
+              style={{
+                padding: '8px 16px',
+                fontSize: '0.78rem',
+                fontWeight: 900,
+                background: 'var(--accent-neon-green)',
+                borderColor: 'var(--accent-neon-green)',
+                color: '#030712',
+                boxShadow: '0 0 10px var(--accent-neon-green-glow)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              {isBulkSaving ? (
+                <>
+                  <div className="animate-spin" style={{
+                    width: '10px',
+                    height: '10px',
+                    border: '2px solid #030712',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%'
+                  }}></div>
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={12} />
+                  <span>Guardar Todo</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

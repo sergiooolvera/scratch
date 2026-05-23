@@ -20,6 +20,55 @@ function PayTicketContent() {
   const [ticketCost, setTicketCost] = useState(200);
   const [poolTotal, setPoolTotal] = useState(10000);
 
+  // States for coupon redemption
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+
+  const handleRedeemCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !couponCode.trim()) return;
+
+    setCouponLoading(true);
+    setCouponError('');
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/coupons/redeem', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          code: couponCode.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al canjear el cupón.');
+      }
+
+      setSuccessMsg(`🎉 ¡Felicidades! Tu cupón prepago ha sido canjeado con éxito. ¡Tu perfil de participante ahora está ACTIVO!`);
+      setCouponCode('');
+      
+      // Refresh the user profile in AuthContext
+      await refreshProfile();
+
+      // Trigger countdown redirect to /quiniela
+      if (redirectCountdown === null) {
+        setRedirectCountdown(4);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setCouponError(err.message || 'Ocurrió un error al procesar el cupón.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
   // Fetch settings dynamically from Database
   useEffect(() => {
     const fetchSettings = async () => {
@@ -429,6 +478,78 @@ function PayTicketContent() {
           )}
         </div>
       </div>
+
+      {/* Coupon Redemption Section */}
+      {!profile?.is_active && (
+        <div className="glass-panel" style={{
+          marginTop: '24px',
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.8) 100%)',
+          borderColor: 'rgba(16, 185, 129, 0.25)',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+            <Ticket size={20} style={{ color: 'var(--accent-neon-green)' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>
+              Activar con Cupón Prepago 🎟️
+            </h3>
+          </div>
+          
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+            ¿Le pagaste en efectivo a un vendedor autorizado? Ingresa el código de tu cupón (ej. <code>QP-ABCD-EFGH</code>) para activar tu boleto al instante.
+          </p>
+
+          <form onSubmit={handleRedeemCoupon} style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              value={couponCode}
+              onChange={(e) => {
+                setCouponCode(e.target.value);
+                setCouponError('');
+              }}
+              placeholder="QP-XXXX-XXXX"
+              style={{
+                flex: 1,
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: couponError ? '1px solid #ef4444' : '1px solid var(--border-glass)',
+                borderRadius: 'var(--border-radius-md)',
+                padding: '12px 16px',
+                color: 'var(--text-primary)',
+                fontSize: '1rem',
+                fontFamily: 'monospace',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                outline: 'none',
+                transition: 'var(--transition-smooth)'
+              }}
+              disabled={couponLoading}
+            />
+            <button
+              type="submit"
+              className="btn"
+              style={{
+                background: 'var(--accent-neon-green)',
+                borderColor: 'var(--accent-neon-green)',
+                color: '#030712',
+                fontWeight: 800,
+                padding: '0 24px',
+                borderRadius: 'var(--border-radius-md)',
+                boxShadow: '0 0 15px var(--accent-neon-green-glow)',
+                cursor: 'pointer'
+              }}
+              disabled={couponLoading || !couponCode.trim()}
+            >
+              {couponLoading ? 'Validando...' : 'Canjear'}
+            </button>
+          </form>
+
+          {couponError && (
+            <p style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: '12px 0 0 0' }}>
+              <AlertTriangle size={14} />
+              <span>{couponError}</span>
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

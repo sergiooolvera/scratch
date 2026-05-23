@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { Trophy, LayoutDashboard, TableProperties, ShieldAlert, CreditCard, LogIn } from 'lucide-react';
+import { Trophy, LayoutDashboard, TableProperties, ShieldAlert, CreditCard, LogIn, BadgeDollarSign } from 'lucide-react';
 
 export const MobileNav: React.FC = () => {
   const pathname = usePathname();
@@ -44,6 +44,13 @@ export const MobileNav: React.FC = () => {
         <Trophy size={20} />
         <span>Ranking</span>
       </Link>
+
+      {profile?.role === 'vendedor' && (
+        <Link href="/vendedor" className={`mobile-nav-item ${isActive('/vendedor') ? 'active' : ''}`} style={{ color: 'var(--accent-neon-green)' }}>
+          <BadgeDollarSign size={20} />
+          <span>Vendedor</span>
+        </Link>
+      )}
 
       {profile?.is_admin && (
         <Link href="/admin" className={`mobile-nav-item ${isActive('/admin') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
