@@ -199,6 +199,22 @@ export default function HomePage() {
     }
   }, [user, profile, loading]);
 
+  // Silent visibility dashboard refresh when tab becomes active after inactivity
+  useEffect(() => {
+    if (loading) return;
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchDashboardData();
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [loading]);
+
   const formatMatchDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('es-MX', {

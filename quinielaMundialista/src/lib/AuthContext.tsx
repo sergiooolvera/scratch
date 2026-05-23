@@ -150,10 +150,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
+    // Silent visibility auth refresh when tab becomes active after inactivity
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (mounted) {
+            if (session?.user) {
+              setUser(session.user);
+              await fetchProfile(session.user.id);
+            } else {
+              setUser(null);
+              setProfile(null);
+            }
+          }
+        } catch (e) {
+          console.warn('Silent visibility auth refresh failed:', e);
+        }
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       mounted = false;
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
