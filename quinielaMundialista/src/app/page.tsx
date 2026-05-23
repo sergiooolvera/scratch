@@ -194,8 +194,10 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [user, profile]);
+    if (!loading) {
+      fetchDashboardData();
+    }
+  }, [user, profile, loading]);
 
   const formatMatchDate = (dateStr: string) => {
     const d = new Date(dateStr);
