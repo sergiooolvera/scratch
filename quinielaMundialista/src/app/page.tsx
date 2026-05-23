@@ -243,7 +243,7 @@ export default function HomePage() {
       `}</style>
 
       {/* Welcome Banner Card */}
-      <div className="glass-panel" style={{
+      <div className="glass-panel welcome-banner-card" style={{
         background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
         border: '1px solid rgba(16, 185, 129, 0.25)',
         marginBottom: '24px',
@@ -252,7 +252,7 @@ export default function HomePage() {
         overflow: 'hidden'
       }}>
         {/* Responsive layout container */}
-        <div style={{
+        <div className="welcome-layout-container" style={{
           display: 'flex',
           flexDirection: 'row',
           justifyContent: 'space-between',
@@ -263,7 +263,7 @@ export default function HomePage() {
           position: 'relative'
         }}>
           {/* Left Side: Title and Buttons */}
-          <div style={{ maxWidth: '480px', flex: '1 1 320px' }}>
+          <div className="welcome-text-column" style={{ maxWidth: '480px', flex: '1 1 320px' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-neon-green)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               Mundial 2026
             </span>
@@ -274,7 +274,7 @@ export default function HomePage() {
               Registra tus pronósticos de los partidos más importantes del planeta, suma puntos y compite de forma recreativa contra tus amigos por el gran pozo de Frijolitos.
             </p>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div className="welcome-buttons-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {user ? (
                 profile?.is_active ? (
                   <Link href="/quiniela" className="btn btn-primary">
@@ -301,7 +301,7 @@ export default function HomePage() {
           </div>
 
           {/* Right Side: Premium Glassmorphic Countdown Timer */}
-          <div style={{
+          <div className="welcome-countdown-card" style={{
             flex: '1 1 280px',
             maxWidth: '380px',
             background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
@@ -428,7 +428,7 @@ export default function HomePage() {
             backdropFilter: 'blur(8px)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div className="referral-left-side" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
               background: 'rgba(16, 185, 129, 0.15)',
               border: '1px solid rgba(16, 185, 129, 0.35)',
@@ -446,9 +446,9 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="referral-right-side" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <div 
-              className="sports-font"
+              className="sports-font referral-code-display"
               style={{
                 background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(3, 7, 18, 0.8) 100%)',
                 border: '2px solid rgba(16, 185, 129, 0.5)',
@@ -469,61 +469,63 @@ export default function HomePage() {
               {profile.referral_code}
             </div>
             
-            <button 
-              onClick={() => handleCopyCode(profile.referral_code || '')}
-              className="btn btn-secondary"
-              style={{ 
-                height: '46px', 
-                padding: '0 16px', 
-                minWidth: '100px', 
-                display: 'flex', 
-                gap: '8px', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                fontWeight: 700,
-                borderRadius: '12px' 
-              }}
-            >
-              {copied ? (
-                <>
-                  <Check size={16} style={{ color: 'var(--accent-neon-green)' }} />
-                  <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.85rem' }}>Copiado</span>
-                </>
-              ) : (
-                <>
-                  <Copy size={16} />
-                  <span style={{ fontSize: '0.85rem' }}>Copiar</span>
-                </>
-              )}
-            </button>
+            <div className="referral-actions-row">
+              <button 
+                onClick={() => handleCopyCode(profile.referral_code || '')}
+                className="btn btn-secondary"
+                style={{ 
+                  height: '46px', 
+                  padding: '0 16px', 
+                  minWidth: '100px', 
+                  display: 'flex', 
+                  gap: '8px', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontWeight: 700,
+                  borderRadius: '12px' 
+                }}
+              >
+                {copied ? (
+                  <>
+                    <Check size={16} style={{ color: 'var(--accent-neon-green)' }} />
+                    <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.85rem' }}>Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} />
+                    <span style={{ fontSize: '0.85rem' }}>Copiar</span>
+                  </>
+                )}
+              </button>
 
-            <button 
-              onClick={() => handleShare(profile.referral_code || '')}
-              className="btn btn-primary"
-              style={{ 
-                height: '46px', 
-                padding: '0 16px', 
-                minWidth: '110px', 
-                display: 'flex', 
-                gap: '8px', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                fontWeight: 700,
-                borderRadius: '12px' 
-              }}
-            >
-              {shared ? (
-                <>
-                  <Check size={16} />
-                  <span style={{ fontSize: '0.85rem' }}>¡Enlace Listo!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 size={16} />
-                  <span style={{ fontSize: '0.85rem' }}>Compartir</span>
-                </>
-              )}
-            </button>
+              <button 
+                onClick={() => handleShare(profile.referral_code || '')}
+                className="btn btn-primary"
+                style={{ 
+                  height: '46px', 
+                  padding: '0 16px', 
+                  minWidth: '110px', 
+                  display: 'flex', 
+                  gap: '8px', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontWeight: 700,
+                  borderRadius: '12px' 
+                }}
+              >
+                {shared ? (
+                  <>
+                    <Check size={16} />
+                    <span style={{ fontSize: '0.85rem' }}>¡Enlace Listo!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 size={16} />
+                    <span style={{ fontSize: '0.85rem' }}>Compartir</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

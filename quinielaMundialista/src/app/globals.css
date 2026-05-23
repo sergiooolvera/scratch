@@ -1001,6 +1001,103 @@ a {
   background: rgba(239, 68, 68, 0.1) !important;
 }
 
+/* ==========================================================================
+   Welcome Banner & Referral Box Responsive Refinements
+   ========================================================================== */
+
+/* Welcome Banner Responsive Styling */
+@media (max-width: 768px) {
+  .welcome-banner-card {
+    padding: 24px 16px !important;
+  }
+  
+  .welcome-layout-container {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 24px !important;
+  }
+  
+  .welcome-text-column {
+    max-width: 100% !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .welcome-text-column h2 {
+    font-size: 1.8rem !important;
+  }
+  
+  .welcome-buttons-row {
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  
+  .welcome-buttons-row a, .welcome-buttons-row button {
+    flex: 1 !important;
+    min-width: 130px !important;
+    justify-content: center !important;
+  }
+  
+  .welcome-countdown-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 10px !important;
+  }
+}
+
+/* Referral Box Responsive Styling */
+@media (max-width: 768px) {
+  .referral-box-glow {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 20px 16px !important;
+    gap: 20px !important;
+    text-align: center !important;
+  }
+  
+  .referral-left-side {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+  
+  .referral-left-side p {
+    font-size: 0.8rem !important;
+  }
+  
+  .referral-right-side {
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+  
+  .referral-code-display {
+    width: 100% !important;
+    text-align: center !important;
+    justify-content: center !important;
+    height: 48px !important;
+    font-size: 1.6rem !important;
+  }
+  
+  .referral-actions-row {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  
+  .referral-actions-row button {
+    flex: 1 !important;
+    height: 46px !important;
+    font-size: 0.85rem !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+  }
+}
+
 
 
 
