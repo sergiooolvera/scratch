@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.qui_profiles (
     full_name TEXT,
     avatar_url TEXT,
     is_admin BOOLEAN DEFAULT FALSE,
-    is_active BOOLEAN DEFAULT FALSE, -- Paid user flag
+    is_active BOOLEAN DEFAULT TRUE, -- Active by default (Free & Recreative)
     stripe_customer_id TEXT,
     points INTEGER DEFAULT 0,
     exact_scores INTEGER DEFAULT 0, -- 1st Tie-breaker
@@ -250,7 +250,7 @@ BEGIN
     COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     new.raw_user_meta_data->>'avatar_url',
     FALSE,
-    FALSE,
+    TRUE,
     ref_code,
     ref_by_id
   );

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Lock, Save, Calendar, ShieldAlert, Award, Search, Sparkles, CheckCircle2, Check } from 'lucide-react';
+import { picante, getSpicyWinMsg, getSpicyBlunderMsg } from '@/lib/spicy';
 
 interface Match {
   id: string;
@@ -28,18 +29,15 @@ interface Prediction {
 }
 
 // Helpers for Easter Eggs and Mexican Pop Culture References
-const getExactScoreBadgeText = (seedString: string) => {
-  let hash = 0;
-  for (let i = 0; i < seedString.length; i++) {
-    hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
+const getExactScoreBadgeText = (seedString: string, isSpicy: boolean) => {
+  if (!isSpicy) {
+    return '🎯 Marcador Exacto (+5 pts) 🔥';
   }
-  const choice = Math.abs(hash) % 3;
-  if (choice === 0) return '🎯 ¡Tómala Barbón! (+5 pts) 🔥';
-  if (choice === 1) return '🎯 ¡Te la mamaste! (+5 pts) 🧠';
-  return '🎯 ¡Ahhh perreeeee!!! (+5 pts) 🐕🔥';
+  return getSpicyWinMsg(seedString);
 };
 
-const getEpicBlunderMsg = (match: any, pred: any) => {
+const getEpicBlunderMsg = (match: any, pred: any, isSpicy: boolean) => {
+  if (!isSpicy) return '';
   if (!pred || match.status !== 'finished') return '';
   const homePred = Number(pred.home_prediction);
   const awayPred = Number(pred.away_prediction);
@@ -53,17 +51,14 @@ const getEpicBlunderMsg = (match: any, pred: any) => {
                      (predictedHomeMargin <= -2 && realHomeMargin >= 1);
                      
   if (isBlunder) {
-    const choice = match.id.charCodeAt(0) % 2;
-    return choice === 0 
-      ? 'De qué te vas a disfrazaaaaaaaaaaar 🤡' 
-      : 'Mayonesa McCormick... digo, Hellmann\'s! 🤦‍♂️';
+    return getSpicyBlunderMsg(match.id);
   }
   return '';
 };
 
 export default function QuinielaPage() {
   const router = useRouter();
-  const { user, profile, loading, refreshProfile } = useAuth();
+  const { user, profile, loading, refreshProfile, spicyMode } = useAuth();
   
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<{ [matchId: string]: Prediction }>({});
@@ -288,7 +283,11 @@ export default function QuinielaPage() {
 
     const pred = predictions[matchId];
     if (!pred || pred.home_prediction === '' || pred.away_prediction === '') {
-      showToast('⚠️ Por favor captura ambos marcadores antes de guardar.');
+      showToast(picante(
+        "⚠️ Por favor captura ambos marcadores antes de guardar.",
+        "⚠️ ¡No andes de flojo! Ponle números a ambos marcadores antes de guardar.",
+        spicyMode
+      ));
       return;
     }
 
@@ -329,11 +328,19 @@ export default function QuinielaPage() {
         newSet.delete(matchId);
         return newSet;
       });
-      showToast('¡Pronóstico guardado exitosamente!');
+      showToast(picante(
+        "¡Pronóstico guardado exitosamente!",
+        "⚽ ¡Golazo! Guardado al primer poste y con efecto.",
+        spicyMode
+      ));
     } catch (err: any) {
       console.error('Error saving prediction:', err.message);
       setSavingState(prev => ({ ...prev, [matchId]: 'error' }));
-      showToast(err.message || 'Error al guardar pronóstico.');
+      showToast(picante(
+        err.message || 'Error al guardar pronóstico.',
+        "¡Híjole! Se nos ponchó el balón al guardar tu tiro. Inténtalo de nuevo.",
+        spicyMode
+      ));
     }
   };
 
@@ -371,9 +378,17 @@ export default function QuinielaPage() {
     if (filledCount > 0) {
       setPredictions(newPredictions);
       setModifiedMatchIds(newModified);
-      showToast(`✨ Se han autollenado ${filledCount} marcadores. ¡No olvides guardarlos!`);
+      showToast(picante(
+        `✨ Se han autollenado ${filledCount} marcadores. ¡No olvides guardarlos!`,
+        `✨ ¡Al aventón! Autollenamos ${filledCount} marcadores. ¡Guárdalos antes de que se te vaya el tren! 🚊`,
+        spicyMode
+      ));
     } else {
-      showToast('⚠️ No hay marcadores vacíos o editables para autollenar.');
+      showToast(picante(
+        '⚠️ No hay marcadores vacíos o editables para autollenar.',
+        '⚠️ ¡Ya está todo listo! No andes de ocioso buscando qué más rellenar.',
+        spicyMode
+      ));
     }
   };
 
@@ -407,7 +422,11 @@ export default function QuinielaPage() {
     });
 
     if (predictionsToSubmit.length === 0) {
-      showToast('⚠️ No tienes cambios pendientes o válidos por guardar.');
+      showToast(picante(
+        '⚠️ No tienes cambios pendientes o válidos por guardar.',
+        '⚠️ ¡No le muevas! No hay cambios nuevos por guardar.',
+        spicyMode
+      ));
       return;
     }
 
@@ -451,7 +470,11 @@ export default function QuinielaPage() {
       });
       setSavingState(updatedSavingState);
       setModifiedMatchIds(new Set());
-      showToast(`💾 ¡Se han guardado ${predictionsToSubmit.length} pronósticos exitosamente!`);
+      showToast(picante(
+        `💾 ¡Se han guardado ${predictionsToSubmit.length} pronósticos exitosamente!`,
+        `💾 ¡A la red! Guardamos tus ${predictionsToSubmit.length} pronósticos de un solo trancazo.`,
+        spicyMode
+      ));
     } catch (err: any) {
       console.error('Error in bulk saving predictions:', err.message);
       
@@ -461,7 +484,11 @@ export default function QuinielaPage() {
       });
       setSavingState(errorSavingState);
       
-      showToast(err.message || 'Error al guardar los pronósticos.');
+      showToast(picante(
+        err.message || 'Error al guardar los pronósticos.',
+        "¡Chispas! Se nos desinfló el balón al intentar el tiro masivo. Vuélvele a calar.",
+        spicyMode
+      ));
     } finally {
       setIsBulkSaving(false);
     }
@@ -963,7 +990,7 @@ export default function QuinielaPage() {
                         <span>Puntos Obtenidos:</span>
                         {predictions[match.id]?.points_earned === 5 ? (
                           <span className="points-earned-tag" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)', border: '1px solid rgba(245, 158, 11, 0.3)', color: 'var(--accent-gold)' }}>
-                            {getExactScoreBadgeText(`${match.id}-${user?.id}`)}
+                            {getExactScoreBadgeText(`${match.id}-${user?.id}`, spicyMode)}
                           </span>
                         ) : predictions[match.id]?.points_earned === 3 ? (
                           <span className="points-earned-tag">
@@ -971,7 +998,7 @@ export default function QuinielaPage() {
                           </span>
                         ) : (
                           (() => {
-                            const blunderMsg = getEpicBlunderMsg(match, predictions[match.id]);
+                            const blunderMsg = getEpicBlunderMsg(match, predictions[match.id], spicyMode);
                             return blunderMsg ? (
                               <span className="points-earned-tag incorrect" style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171' }} title={blunderMsg}>
                                 {blunderMsg}

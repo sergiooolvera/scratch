@@ -26,12 +26,10 @@ export const MobileNav: React.FC = () => {
             <span>Quiniela</span>
           </Link>
 
-          {!profile?.is_active && (
-            <Link href="/pay" className={`mobile-nav-item ${isActive('/pay') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
-              <CreditCard size={20} />
-              <span>Pagar</span>
-            </Link>
-          )}
+          <Link href="/pay" className={`mobile-nav-item ${isActive('/pay') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
+            <CreditCard size={20} />
+            <span>Demo Stripe</span>
+          </Link>
         </>
       ) : (
         <Link href="/login" className={`mobile-nav-item ${isActive('/login') ? 'active' : ''}`}>

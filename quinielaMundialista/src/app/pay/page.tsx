@@ -5,17 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { CreditCard, CheckCircle2, Ticket, ShieldAlert, Sparkles, AlertTriangle, ArrowRight } from 'lucide-react';
+import { picante } from '@/lib/spicy';
 
 function PayTicketContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, profile, loading, refreshProfile } = useAuth();
+  const { user, profile, loading, refreshProfile, spicyMode } = useAuth();
   
   const [payLoading, setPayLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
+  const [sandboxMode, setSandboxMode] = useState(false);
 
   const [ticketCost, setTicketCost] = useState(200);
   const [poolTotal, setPoolTotal] = useState(10000);
@@ -34,6 +36,22 @@ function PayTicketContent() {
     setErrorMsg('');
 
     try {
+      if (sandboxMode) {
+        // Intercept and mock success in Sandbox mode
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        if (couponCode.trim().toUpperCase() === 'QP-DEMO-PASS') {
+          setSuccessMsg(`🎉 ¡Felicidades! Cupón de prueba canjeado con éxito. (Demostración de Sandbox exitosa).`);
+          setCouponCode('');
+          if (redirectCountdown === null) {
+            setRedirectCountdown(4);
+          }
+        } else {
+          throw new Error('Código demo inválido. Usa el atajo QP-DEMO-PASS en Modo Sandbox.');
+        }
+        return;
+      }
+
       const res = await fetch('/api/coupons/redeem', {
         method: 'POST',
         headers: {
@@ -295,11 +313,66 @@ function PayTicketContent() {
         </div>
       )}
 
+      {/* Dynamic Explanation Showcase Banner */}
+      <div className="glass-panel" style={{
+        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        borderColor: 'rgba(59, 130, 246, 0.35)',
+        borderRadius: 'var(--border-radius-md)',
+        padding: '20px',
+        marginBottom: '28px',
+        textAlign: 'left'
+      }}>
+        <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '8px', textTransform: 'uppercase' }}>
+          <span>🚀 {picante("Showcase Tecnológico: Pasarela en Modo Prueba", "Showcase Técnico: ¡Para que mires cómo jala! 💻", spicyMode)}</span>
+        </h4>
+        <p style={{ margin: '8px 0 0 0', fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+          {picante(
+            "¡La Quiniela Mundialista es ahora 100% gratuita y recreativa! Tu cuenta ya está ACTIVA por defecto y puedes registrar tus pronósticos de inmediato sin pagar nada. Hemos conservado este portal interactivo en Modo de Prueba (Stripe Test Mode) y canje de cupones estrictamente para que conozcas mi trabajo y habilidades técnicas como programador web full-stack.",
+            "¡La quiniela ya es gratis y para toda la banda, compadre! Tu cuenta ya está súper ACTIVA y lista para meter goles. Dejamos este módulo de cobros en 'Modo Demo' para lucir la ingeniería de mi portafolio. ¡Diviértete calando cómo interactúa la base de datos simulando transacciones!",
+            spicyMode
+          )}
+        </p>
+      </div>
+
+      {/* Sandbox Toggle */}
+      <div className="glass-panel" style={{
+        background: 'rgba(245, 158, 11, 0.05)',
+        border: '1px dashed rgba(245, 158, 11, 0.3)',
+        borderRadius: 'var(--border-radius-md)',
+        padding: '14px 18px',
+        marginBottom: '28px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Sparkles size={16} style={{ color: 'var(--accent-gold)' }} />
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-gold)' }}>
+            🧪 {picante("Panel de Pruebas de Desarrollo", "Sandbox de Portafolio del Programador", spicyMode)}
+          </span>
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <input
+            type="checkbox"
+            checked={sandboxMode}
+            onChange={(e) => setSandboxMode(e.target.checked)}
+            style={{ width: '16px', height: '16px', accentColor: 'var(--accent-gold)' }}
+          />
+          <span>{picante("Simular boleto inactivo para probar pasarela", "Desactivar temporalmente para calar pagos", spicyMode)}</span>
+        </label>
+      </div>
+
       <h2 style={{ fontSize: '1.8rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px', textAlign: 'center' }}>
-        Soporte Técnico del Servidor
+        {picante("Taquilla Digital (Demostración)", "Taquilla Demo 🎟️ (Portafolio)", spicyMode)}
       </h2>
       <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '32px', fontSize: '0.9rem' }}>
-        Realiza una cooperación voluntaria para cubrir costos de hospedaje y base de datos, habilitando tu participación por la bolsa recreativa de {poolTotal.toLocaleString()} Frijolitos.
+        {picante(
+          "Simula una cooperación técnica o canjea un cupón de prueba para ver el flujo de activación en tiempo real.",
+          "Cálale simulando un donativo voluntario o canjea un cupón ficticio para que mires la magia del código en acción.",
+          spicyMode
+        )}
       </p>
 
       {/* Ticket Design */}
@@ -313,7 +386,7 @@ function PayTicketContent() {
       }}>
         {/* Ticket Header Banner */}
         <div style={{
-          background: profile?.is_active 
+          background: (profile?.is_active && !sandboxMode) 
             ? 'linear-gradient(135deg, #10b981 0%, #064e3b 100%)' 
             : 'linear-gradient(135deg, var(--accent-gold) 0%, #78350f 100%)',
           padding: '16px 24px',
@@ -324,14 +397,14 @@ function PayTicketContent() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#030712' }}>
             <Ticket size={24} />
             <span className="sports-font" style={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Cooperación de Mantenimiento
+              {(profile?.is_active && !sandboxMode) ? "Boleto Activo (Gratuito)" : "Cooperación de Mantenimiento"}
             </span>
           </div>
           <span className="badge" style={{
-            background: profile?.is_active ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.3)',
-            color: profile?.is_active ? '#ffffff' : 'var(--accent-gold)'
+            background: (profile?.is_active && !sandboxMode) ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.3)',
+            color: (profile?.is_active && !sandboxMode) ? '#ffffff' : 'var(--accent-gold)'
           }}>
-            {profile?.is_active ? 'ACTIVO' : 'PENDIENTE'}
+            {(profile?.is_active && !sandboxMode) ? 'ACTIVO' : 'PENDIENTE'}
           </span>
         </div>
 
@@ -404,7 +477,7 @@ function PayTicketContent() {
               height: '50px',
               background: 'linear-gradient(90deg, #fff 2px, transparent 2px, transparent 4px, #fff 4px, #fff 8px, transparent 8px, transparent 10px, #fff 10px, #fff 11px, transparent 11px, #fff 15px, transparent 15px, #fff 16px, #fff 18px, transparent 18px, #fff 22px, #fff 24px, transparent 24px)',
               backgroundSize: '32px 100%',
-              opacity: profile?.is_active ? 0.7 : 0.25
+              opacity: (profile?.is_active && !sandboxMode) ? 0.7 : 0.25
             }}></div>
             <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)', letterSpacing: '0.2em' }}>
               {profile?.id ? profile.id.substring(0, 18).toUpperCase() : 'PENDINGDONATION2026'}
@@ -422,21 +495,25 @@ function PayTicketContent() {
           alignItems: 'center',
           gap: '16px'
         }}>
-          {profile?.is_active ? (
+          {(profile?.is_active && !sandboxMode) ? (
             <div style={{ width: '100%', textAlign: 'center' }}>
               <div style={{ inlineSize: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--accent-neon-green)', fontWeight: 700, marginBottom: '16px' }}>
                 <CheckCircle2 size={20} />
-                <span>¡APORTACIÓN REGISTRADA (PERFIL ACTIVO)!</span>
+                <span>{picante("¡APORTACIÓN REGISTRADA (PERFIL ACTIVO)!", "¡BOLETO ACTIVO Y LISTO PARA JUGAR! ⚽", spicyMode)}</span>
               </div>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                Ya eres un colaborador activo. Puedes dirigirte a la quiniela para capturar y modificar tus pronósticos en cualquier momento.
+                {picante(
+                  "Tu perfil se encuentra activo de forma 100% gratuita. Ya puedes ingresar a la quiniela para capturar tus marcadores.",
+                  "¡Ya estás más activo que el mismísimo Cuauhtémoc Blanco en sus mejores tiempos! Pícale al botón de abajo y vete a rellenar tus pronósticos.",
+                  spicyMode
+                )}
               </p>
               <button
                 onClick={() => router.push('/quiniela')}
                 className="btn btn-primary"
                 style={{ width: '100%' }}
               >
-                <span>Ir a mi Quiniela</span>
+                <span>{picante("Ir a mi Quiniela", "Mete tus goles aquí ⚽", spicyMode)}</span>
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -471,7 +548,11 @@ function PayTicketContent() {
               <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', textAlign: 'left', marginTop: '20px', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--border-radius-sm)', border: '1px solid var(--border-glass)' }}>
                 <ShieldAlert size={18} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '2px' }} />
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  <strong>¿Aportación Fuera de Línea?</strong> Si realizaste tu cooperación en efectivo o transferencia bancaria directa, comunícate con el Administrador local y proporciónale tu usuario (<strong>@{profile?.username}</strong>) para activar tu perfil al instante.
+                  <strong>{picante("Tarjeta de Pruebas de Stripe:", "🔬 Tarjeta de Pruebas de Stripe:", spicyMode)}</strong> {picante(
+                    "Puedes simular un pago en Stripe ingresando el número de tarjeta 4242 4242 4242 4242, con cualquier fecha futura de expiración y CVC 123.",
+                    "Usa la tarjeta demo '4242 4242 4242 4242' con cualquier mes/año futuro y CVC '123' para completar la simulación de cobro exitosamente.",
+                    spicyMode
+                  )}
                 </p>
               </div>
             </div>
@@ -480,7 +561,7 @@ function PayTicketContent() {
       </div>
 
       {/* Coupon Redemption Section */}
-      {!profile?.is_active && (
+      {(!profile?.is_active || sandboxMode) && (
         <div className="glass-panel" style={{
           marginTop: '24px',
           background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.8) 100%)',
@@ -490,12 +571,38 @@ function PayTicketContent() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
             <Ticket size={20} style={{ color: 'var(--accent-neon-green)' }} />
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>
-              Activar con Cupón Prepago 🎟️
+              {picante("Activar con Cupón Prepago 🎟️", "Cargar Cupón Prepago de Prueba 🎟️", spicyMode)}
             </h3>
           </div>
           
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-            ¿Le pagaste en efectivo a un vendedor autorizado? Ingresa el código de tu cupón (ej. <code>QP-ABCD-EFGH</code>) para activar tu boleto al instante.
+            {picante(
+              "¿Le pagaste en efectivo a un vendedor autorizado? Ingresa el código de tu cupón prepago para activar tu boleto.",
+              "¿Le soltaste efectivo de mentiras a un vendedor imaginario? Ingresa tu código demo para activar el boleto.",
+              spicyMode
+            )}
+            {sandboxMode && (
+              <span style={{ display: 'block', marginTop: '6px' }}>
+                💡 En Modo Sandbox, haz clic aquí para auto-rellenar el código demo: 
+                <button
+                  type="button"
+                  onClick={() => setCouponCode('QP-DEMO-PASS')}
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    color: 'var(--accent-gold)',
+                    borderRadius: '4px',
+                    padding: '2px 8px',
+                    fontSize: '0.78rem',
+                    marginLeft: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700
+                  }}
+                >
+                  QP-DEMO-PASS
+                </button>
+              </span>
+            )}
           </p>
 
           <form onSubmit={handleRedeemCoupon} style={{ display: 'flex', gap: '10px' }}>

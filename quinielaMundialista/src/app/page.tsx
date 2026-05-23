@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Trophy, Calendar, Ticket, ShieldQuestion, Star, Flame, ChevronRight, Activity, Award, Gift, Copy, Check, Share2 } from 'lucide-react';
+import { picante } from '@/lib/spicy';
 
 interface Match {
   id: string;
@@ -22,7 +23,7 @@ interface Match {
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, spicyMode } = useAuth();
 
   // Statistics
   const [activePlayers, setActivePlayers] = useState(0);
@@ -289,31 +290,34 @@ export default function HomePage() {
               Quiniela Mundialista
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '24px' }}>
-              Registra tus pronósticos de los partidos más importantes del planeta, suma puntos y compite de forma recreativa contra tus amigos por el gran pozo de Frijolitos.
+              {picante(
+                "Registra tus pronósticos de los partidos más importantes del planeta, suma puntos y compite de forma recreativa contra tus amigos por el gran pozo de Frijolitos.",
+                "¡Ponte los tachones y prepárate para la madriza de pronósticos! Junta tus Frijolitos de honor y demuéstrale a estos troncos quién es el verdadero mandamás del balón. 🫘⚽",
+                spicyMode
+              )}
             </p>
 
             <div className="welcome-buttons-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {user ? (
-                profile?.is_active ? (
+                <>
                   <Link href="/quiniela" className="btn btn-primary">
-                    <span>Capturar Pronósticos</span>
+                    <span>{picante("Capturar Pronósticos", "¡Mete tus Marcadores! ⚽", spicyMode)}</span>
                     <ChevronRight size={16} />
                   </Link>
-                ) : (
-                  <Link href="/pay" className="btn btn-gold">
-                    <span>Registrar Donativo Técnico</span>
+                  <Link href="/pay" className="btn btn-secondary" style={{ color: 'var(--accent-gold)' }}>
+                    <span>{picante("Demo Pasarela 🚀", "Chismosear Stripe 🚀", spicyMode)}</span>
                     <Ticket size={16} />
                   </Link>
-                )
+                </>
               ) : (
                 <Link href="/login" className="btn btn-primary" style={{ padding: '12px 24px' }}>
-                  <span>Unirme a la Quiniela</span>
+                  <span>{picante("Unirme a la Quiniela", "¡Entrar a la Madriza! 🏆", spicyMode)}</span>
                   <ChevronRight size={16} />
                 </Link>
               )}
               
               <Link href="/ranking" className="btn btn-secondary">
-                Ver Posiciones
+                {picante("Ver Posiciones", "Tabla del Olimpo 📊", spicyMode)}
               </Link>
             </div>
           </div>
@@ -556,7 +560,7 @@ export default function HomePage() {
             <Trophy size={24} style={{ color: 'var(--accent-gold)' }} />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Bolsa de Recompensa</span>
+            <span className="stat-label">{picante("Bolsa de Recompensa", "Frijoles de Honor en Juego 🫘", spicyMode)}</span>
             <span className="stat-value" style={{ color: 'var(--accent-gold)' }}>
               {poolTotal.toLocaleString()} Frijolitos 🫘
             </span>
@@ -681,27 +685,31 @@ export default function HomePage() {
         {/* Right Column: Dynamic Scoring Rules matrix */}
         <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '20px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldQuestion size={18} style={{ color: 'var(--accent-gold)' }} /> Reglamento de Juego
+            <ShieldQuestion size={18} style={{ color: 'var(--accent-gold)' }} /> {picante("Reglamento de Juego", "Reglas para no andar de chillón 📜", spicyMode)}
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-              Consigue la mayor puntuación en base a las predicciones exactas de los partidos oficiales. La tabla de puntuación actual asigna:
+              {picante(
+                "Consigue la mayor puntuación en base a las predicciones exactas de los partidos oficiales. La tabla de puntuación actual asigna:",
+                "Demuestra tus dotes de pitoniso del fútbol. Aquí está el botín de puntos que te vas a embolsar si le atinas:",
+                spicyMode
+              )}
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', margin: '10px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>🎯 Marcador Exacto</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{picante("🎯 Marcador Exacto", "🎯 Marcador Exacto (¡De Cracks!)", spicyMode)}</span>
                 <strong style={{ color: 'var(--accent-neon-green)' }}>+{ptsExact} Puntos</strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>🏃‍♂️ Resultado Correcto (Ganador / Empate)</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{picante("🏃‍♂️ Resultado Correcto (Ganador / Empate)", "🏃‍♂️ Resultado Correcto (¡Apenas de Panza!)", spicyMode)}</span>
                 <strong style={{ color: 'var(--accent-neon-green)' }}>+{ptsWinner} Puntos</strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>❌ Pronóstico Erróneo / Vacío</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{picante("❌ Pronóstico Erróneo / Vacío", "❌ Pronóstico Erróneo (¡Puro Tronco!)", spicyMode)}</span>
                 <strong style={{ color: 'var(--text-muted)' }}>0 Puntos</strong>
               </div>
             </div>
@@ -715,7 +723,11 @@ export default function HomePage() {
               color: 'var(--accent-gold)',
               lineHeight: 1.35
             }}>
-              <strong>Restricción de Tiempo:</strong> Solo puedes registrar o modificar tus pronósticos hasta **{lockHours} horas antes** del silbatazo inicial de cada partido. Transcurrido ese límite, los marcadores quedarán completamente bloqueados.
+              <strong>{picante("Restricción de Tiempo:", "¡Ponte las Pilas! ⏱️", spicyMode)}</strong> {picante(
+                `Solo puedes registrar o modificar tus pronósticos hasta ${lockHours} horas antes del silbatazo inicial de cada partido. Transcurrido ese límite, los marcadores quedarán completamente bloqueados.`,
+                `Tienes hasta ${lockHours} horas antes de cada partido para moverle. Después de eso, ¡el que se fue a la villa perdió su silla! Ni rezándole a San Juditas se abre la taquilla.`,
+                spicyMode
+              )}
             </div>
           </div>
         </div>
@@ -784,29 +796,57 @@ export default function HomePage() {
             position: 'relative'
           }} onClick={(e) => e.stopPropagation()}>
             <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--accent-gold)', marginBottom: '18px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', textTransform: 'uppercase' }}>
-              Aviso Legal y Exención de Responsabilidad
+              {picante("Aviso Legal y Exención de Responsabilidad", "Aviso Legal y de no andar con lloraderas", spicyMode)}
             </h3>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
               <p>
-                <strong>1. Carácter de Mero Entretenimiento:</strong> QuiMundial es una plataforma recreativa y privada orientada exclusivamente al esparcimiento deportivo con motivo del Mundial 2026. Bajo ninguna circunstancia opera, promueve, ni facilita actividades de apuestas comerciales o juegos de azar regulados por la Ley Federal de Juegos y Sorteos de México.
+                <strong>1. Carácter de Mero Entretenimiento:</strong> {picante(
+                  "QuiMundial es una plataforma recreativa y privada orientada exclusivamente al esparcimiento deportivo con motivo del Mundial 2026. Bajo ninguna circunstancia opera, promueve, ni facilita actividades de apuestas comerciales o juegos de azar, siendo de libre y gratuito registro y participación.",
+                  "QuiMundial es una reta 100% lúdica y recreativa de amigos de la cuadra. Aquí nadie te va a cobrar ni un peso partido por la mitad por registrar tus corazonadas, cumpliendo al cien con la Ley Federal de Juegos y Sorteos.",
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>2. Naturaleza de las Aportaciones:</strong> Los montos ingresados por los usuarios tienen el carácter estricto de <strong>Cooperaciones Voluntarias de Mantenimiento</strong>. Dicho fondo se utiliza exclusivamente para sufragar el hospedaje en servidores, ancho de banda e infraestructura técnica necesaria para habilitar la plataforma. No existe reembolso de aportaciones bajo ningún supuesto.
+                <strong>2. Naturaleza del Acceso Gratuito y Demostración:</strong> {picante(
+                  "El registro, uso y participación es totalmente gratuito. La pasarela de cobro técnico (Stripe) y el sistema de canje de cupones se mantienen habilitados estrictamente como demostraciones en Modo de Prueba (Test Mode) para exhibir las destrezas de ingeniería y portafolio del desarrollador.",
+                  "¡El registro es gratis y para toda la banda! Dejamos el portal de pagos de Stripe encendido en 'Modo Demo' para que puedas jugarle al magnate simulando transferencias sin gastar un centavo, y de paso veas el portafolio de mi programador estrella. 😎💻",
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>3. Bolsa Simbólica (Frijolitos):</strong> Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de {poolTotal.toLocaleString()} Frijolitos a repartir de forma amistosa entre los participantes con mayor puntaje al finalizar el torneo.
+                <strong>3. Bolsa Simbólica (Frijolitos de Honor):</strong> {picante(
+                  `Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de ${poolTotal.toLocaleString()} Frijolitos de honor, los cuales representan reputación deportiva y orgullo amistoso sin valor monetario real.`,
+                  `Los Frijolitos son virtuales y representan pura carrilla sana y créditos de honor. El que gane se lleva la corona del barrio y el derecho a recordarle a todos quién manda, pero cero dinero real de por medio.`,
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>4. Causa Social y Búsqueda de Oportunidades:</strong> Este proyecto ha sido desarrollado e impulsado por personas que lamentablemente perdimos nuestro empleo. Estamos sumamente preocupados por el bienestar y el sustento de nuestras familias, y decidimos crear esta plataforma con mucha dedicación en busca de nuevas oportunidades. Agradecemos infinitamente tu apoyo y confianza.
+                <strong>4. Causa Social y Búsqueda de Oportunidades:</strong> {picante(
+                  "Este proyecto ha sido desarrollado e impulsado con dedicación por programadores buscando expandir sus oportunidades profesionales. Agradecemos enormemente tu confianza, apoyo moral y difusión.",
+                  "Este software fue diseñado con mucho cariño y esfuerzo por mentes creativas desempleadas buscando salir adelante. Al hacerlo gratis para todos garantizamos tu diversión y nos ayuda a promover nuestro trabajo técnico con el mundo. ¡Gracias de corazón por compartirlo con la banda! 🇲🇽✨",
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>5. Resultados Oficiales de Juego:</strong> Los marcadores y resultados oficiales que se tomarán en cuenta para el cálculo de los puntos de la quiniela serán única y estrictamente aquellos declarados oficiales por el comité organizador de la competencia deportiva.
+                <strong>5. Resultados Oficiales de Juego:</strong> {picante(
+                  "Los marcadores y resultados oficiales que se tomarán en cuenta para el cálculo de los puntos serán únicamente los declarados oficiales por el comité organizador de la competencia deportiva.",
+                  "Aquí lo que diga el árbitro oficial de la cancha va a misa. Nada de que 'a mí me pareció penal'. Los marcadores oficiales del torneo son la ley absoluta en esta quiniela.",
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>6. Nombramiento de Ganadores y Premiación:</strong> El día <strong>26 de Junio</strong> se nombrará oficialmente al ganador o ganadora del torneo. Ese mismo día nos comunicaremos directamente con él o ella para coordinarnos y definir en qué olla le ponemos sus correspondientes Frijolitos 🫘.
+                <strong>6. Nombramiento de Ganadores y Premiación:</strong> {picante(
+                  "El día 26 de Junio se nombrará oficialmente al ganador o ganadora del torneo en base al puntaje final acumulado.",
+                  "El 26 de Junio coronaremos oficialmente al rey del balón de esta quiniela y nos echaremos un buen mole por el campeón.",
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>7. Aceptación de Condiciones:</strong> El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.
+                <strong>7. Aceptación de Condiciones:</strong> {picante(
+                  "El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de estos términos.",
+                  "Si te metes a jugar, es porque estás de acuerdo con el reglamento de esta reta. ¡Que ruede el balón y que gane el menos tronco!",
+                  spicyMode
+                )}
               </p>
             </div>
             <button className="btn btn-primary" style={{ width: '100%', marginTop: '24px', padding: '12px' }} onClick={() => setShowTerms(false)}>

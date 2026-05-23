@@ -10,7 +10,7 @@ import { Trophy, LogIn, LogOut, LayoutDashboard, TableProperties, ShieldAlert, C
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
-  const { user, profile, loading, logout } = useAuth();
+  const { user, profile, loading, logout, spicyMode, setSpicyMode } = useAuth();
   
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifDrawer, setShowNotifDrawer] = useState(false);
@@ -149,12 +149,10 @@ export const Header: React.FC = () => {
               <span>Mi Quiniela</span>
             </Link>
             
-            {!profile?.is_active && (
-              <Link href="/pay" className={`nav-link ${isActive('/pay') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
-                <CreditCard size={18} />
-                <span>Soporte Técnico</span>
-              </Link>
-            )}
+            <Link href="/pay" className={`nav-link ${isActive('/pay') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
+              <CreditCard size={18} />
+              <span>Demo Stripe 🚀</span>
+            </Link>
           </>
         )}
 
@@ -191,7 +189,43 @@ export const Header: React.FC = () => {
         ) : user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             
-            {/* Bell Icon with glowing count badge */}
+            {/* Spicy Mode Chili Toggle */}
+            <button
+              onClick={() => setSpicyMode(!spicyMode)}
+              className="btn btn-secondary"
+              style={{
+                padding: '8px 12px',
+                borderRadius: '50px',
+                border: spicyMode ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-glass)',
+                background: spicyMode ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                boxShadow: spicyMode ? '0 0 12px rgba(239, 68, 68, 0.35)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              title={spicyMode ? "🌶️ Modo Picante Activado (Banter Mexicano en vivo)" : "🌶️ Activar Modo Picante"}
+            >
+              <span style={{ 
+                fontSize: '1rem', 
+                filter: spicyMode ? 'none' : 'grayscale(100%) brightness(0.6)',
+                transform: spicyMode ? 'scale(1.15) rotate(-10deg)' : 'scale(1)',
+                display: 'inline-block',
+                transition: 'all 0.3s ease'
+              }}>
+                🌶️
+              </span>
+              <span style={{ 
+                fontSize: '0.72rem', 
+                fontWeight: 800,
+                color: spicyMode ? 'var(--accent-red)' : 'var(--text-muted)',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase'
+              }}>
+                {spicyMode ? 'Spicy' : 'Off'}
+              </span>
+            </button>
             <div style={{ position: 'relative' }}>
               <button 
                 onClick={() => setShowNotifDrawer(true)} 
