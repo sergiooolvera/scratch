@@ -68,6 +68,8 @@ export default function QuinielaPage() {
   const [toastMessage, setToastMessage] = useState('');
   const [modifiedMatchIds, setModifiedMatchIds] = useState<Set<string>>(new Set());
   const [isBulkSaving, setIsBulkSaving] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [copiedSupportCLABE, setCopiedSupportCLABE] = useState(false);
   
   // Simulator lock state for testing
   const [simMode, setSimMode] = useState<'real' | 'bypass' | 'force_all' | 'world_cup'>('real');
@@ -1249,6 +1251,246 @@ export default function QuinielaPage() {
                   <span>Guardar Todo</span>
                 </>
               )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Support Button */}
+      <button
+        onClick={() => setShowSupportModal(true)}
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          background: 'linear-gradient(135deg, var(--accent-gold) 0%, #b45309 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          borderRadius: '50px',
+          padding: '12px 20px',
+          color: '#030712',
+          fontWeight: 800,
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 8px 24px rgba(245, 158, 11, 0.4)',
+          cursor: 'pointer',
+          zIndex: 999,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          animation: 'pulse 2.5s infinite'
+        }}
+        className="floating-support-btn"
+        title="Apoyar a la plataforma"
+      >
+        <span style={{ fontSize: '1.1rem' }}>☕</span>
+        <span className="mobile-hide">Apoyar plataforma</span>
+      </button>
+
+      {/* Support / Donation Modal */}
+      {showSupportModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(3, 7, 18, 0.85)',
+          backdropFilter: 'blur(16px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }} onClick={() => setShowSupportModal(false)}>
+          <div className="glass-panel" style={{
+            maxWidth: '500px',
+            width: '100%',
+            padding: '36px 24px',
+            textAlign: 'center',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.04) 0%, rgba(3, 7, 18, 0.96) 100%)',
+            boxShadow: '0 20px 40px rgba(245, 158, 11, 0.1)',
+            borderRadius: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '18px',
+            position: 'relative'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            <div style={{
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '2px solid var(--accent-gold)',
+              borderRadius: '50%',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent-gold)',
+              boxShadow: '0 0 20px rgba(245, 158, 11, 0.2)'
+            }}>
+              <span style={{ fontSize: '2rem' }}>🎁</span>
+            </div>
+
+            <h3 style={{
+              fontSize: '1.4rem',
+              fontWeight: 900,
+              color: '#ffffff',
+              margin: 0,
+              letterSpacing: '0.5px',
+              textTransform: 'uppercase'
+            }}>
+              Apoyar a QuiMundial ☕
+            </h3>
+
+            <p style={{
+              fontSize: '0.88rem',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.6,
+              margin: 0
+            }}>
+              QuiMundial es una plataforma recreativa 100% gratuita y sin anuncios comerciales. 
+              Sin embargo, los servidores en la nube, las bases de datos rápidas y los envíos automáticos de correos tienen costos mensuales fijos.
+              <br />
+              <strong style={{ color: 'var(--accent-gold)', display: 'block', marginTop: '6px' }}>
+                ¡Cualquier cooperación voluntaria de mantenimiento ayuda al proyecto!
+              </strong>
+            </p>
+
+            {/* SPEI CLABE Transfer option */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              borderRadius: '16px',
+              padding: '16px',
+              width: '100%',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Opción 1: Transferencia SPEI (Sin comisiones)
+              </span>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px', alignItems: 'center' }}>
+                <div style={{ lineHeight: 1.4 }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>CLABE Interbancaria (BBVA)</span>
+                  <strong style={{ fontSize: '1rem', color: '#ffffff', fontFamily: 'monospace', letterSpacing: '0.5px' }}>
+                    012 180 00470119024 6
+                  </strong>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText('012180004701190246');
+                    setCopiedSupportCLABE(true);
+                    setTimeout(() => setCopiedSupportCLABE(false), 2000);
+                  }}
+                  className="btn btn-secondary"
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    borderColor: copiedSupportCLABE ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.1)',
+                    color: copiedSupportCLABE ? 'var(--accent-neon-green)' : '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {copiedSupportCLABE ? <Check size={12} /> : null}
+                  <span>{copiedSupportCLABE ? '¡Copiado!' : 'Copiar CLABE'}</span>
+                </button>
+              </div>
+
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                <span>Beneficiario: <strong>Sergio Olvera</strong></span>
+                <span>Banco: <strong>BBVA</strong></span>
+              </div>
+            </div>
+
+            {/* Alternative Links */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              borderRadius: '16px',
+              padding: '16px',
+              width: '100%',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Opción 2: Pago rápido en línea
+              </span>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <a
+                  href="https://link.mercadopago.com.mx/sergioolvera"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    textAlign: 'center',
+                    background: '#009ee3',
+                    borderColor: '#009ee3',
+                    color: '#ffffff',
+                    textDecoration: 'none'
+                  }}
+                >
+                  💳 Mercado Pago
+                </a>
+
+                <a
+                  href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=serrgio.olver@gmail.com&item_name=Apoyo%20Quiniela%20Mundialista&currency_code=MXN"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-gold"
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    textAlign: 'center',
+                    textDecoration: 'none'
+                  }}
+                >
+                  🔵 PayPal Link
+                </a>
+              </div>
+            </div>
+
+            {/* Tip futbolero */}
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.03)',
+              border: '1px solid rgba(16, 185, 129, 0.15)',
+              borderRadius: '12px',
+              padding: '12px 14px',
+              width: '100%',
+              fontSize: '0.78rem',
+              color: 'var(--text-secondary)',
+              textAlign: 'left',
+              lineHeight: 1.4
+            }}>
+              💡 <strong>Tip futbolero de transferencia:</strong> Al realizar tu SPEI o pago, por favor pon en el concepto de pago tu <strong>nombre de usuario (@{profile?.username || 'user'})</strong> o la palabra <strong>"Apoyo"</strong> para mantener en orden las cuentas con el banco.
+            </div>
+
+            <button
+              className="btn btn-secondary"
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginTop: '6px',
+                fontWeight: 700
+              }}
+              onClick={() => setShowSupportModal(false)}
+            >
+              Cerrar Ventana
             </button>
           </div>
         </div>

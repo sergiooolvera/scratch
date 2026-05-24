@@ -26,6 +26,8 @@ interface Player {
   is_active: boolean;
   points: number;
   created_at: string;
+  role?: string | null;
+  seller_request_status?: string | null;
 }
 
 interface VendorClient {
@@ -129,7 +131,7 @@ export default function AdminPage() {
       // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('qui_profiles')
-        .select('id, username, full_name, is_active, points, created_at')
+        .select('id, username, full_name, is_active, points, created_at, role, seller_request_status')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -318,6 +320,33 @@ export default function AdminPage() {
     } catch (err: any) {
       console.error(err);
       showToast(`❌ Error al cambiar estado: ${err.message}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Toggle promoter role (admin approval / removal)
+  const handleTogglePromoterRole = async (playerId: string, makePromoter: boolean) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/toggle-promotor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminId: user?.id,
+          userId: playerId,
+          approve: makePromoter,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al cambiar estado de promotor.');
+
+      showToast(makePromoter ? '✅ ¡Usuario aprobado como Promotor con éxito!' : '🚫 ¡Rol de Promotor removido con éxito!');
+      await fetchAdminData(); // Refresh UI
+    } catch (err: any) {
+      console.error(err);
+      showToast(`❌ Error: ${err.message}`);
     } finally {
       setActionLoading(false);
     }
@@ -843,7 +872,8 @@ export default function AdminPage() {
                   <th>Usuario</th>
                   <th style={{ textAlign: 'center' }}>Registrado</th>
                   <th style={{ textAlign: 'center' }}>Puntos</th>
-                  <th style={{ textAlign: 'center' }}>Estado</th>
+                  <th style={{ textAlign: 'center' }}>Estado Cuenta</th>
+                  <th style={{ textAlign: 'center' }}>Rol / Promotor</th>
                   <th style={{ textAlign: 'center' }}>Acciones</th>
                 </tr>
               </thead>
@@ -887,45 +917,123 @@ export default function AdminPage() {
                     </td>
 
                     <td style={{ textAlign: 'center' }}>
-                      {player.is_active ? (
-                        <button
-                          onClick={() => handleToggleUserActivation(player.id, false)}
-                          className="btn btn-secondary"
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '0.72rem',
-                            fontWeight: 800,
-                            borderColor: 'rgba(239, 68, 68, 0.25)',
-                            color: '#f87171',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          <Ban size={12} />
-                          <span>Desactivar</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleToggleUserActivation(player.id, true)}
-                          className="btn"
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '0.72rem',
-                            fontWeight: 900,
-                            background: 'var(--accent-neon-green)',
-                            borderColor: 'var(--accent-neon-green)',
-                            color: '#030712',
-                            boxShadow: '0 0 8px rgba(16, 185, 129, 0.2)',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          <UserCheck size={12} />
-                          <span>Confirmar</span>
-                        </button>
-                      )}
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: player.role === 'promotor' 
+                          ? 'rgba(139, 92, 246, 0.12)' 
+                          : player.seller_request_status === 'pending'
+                            ? 'rgba(245, 158, 11, 0.12)'
+                            : 'rgba(255, 255, 255, 0.04)',
+                        border: player.role === 'promotor'
+                          ? '1px solid rgba(139, 92, 246, 0.3)'
+                          : player.seller_request_status === 'pending'
+                            ? '1px solid rgba(245, 158, 11, 0.3)'
+                            : '1px solid rgba(255, 255, 255, 0.1)',
+                        color: player.role === 'promotor'
+                          ? '#a78bfa'
+                          : player.seller_request_status === 'pending'
+                            ? 'var(--accent-gold)'
+                            : 'var(--text-muted)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.02em'
+                      }}>
+                        {player.role === 'promotor' 
+                          ? 'Promotor 🚀' 
+                          : player.seller_request_status === 'pending'
+                            ? 'Pendiente Promotor ⏳'
+                            : 'Participante'}
+                      </span>
+                    </td>
+
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {player.is_active ? (
+                          <button
+                            onClick={() => handleToggleUserActivation(player.id, false)}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              borderColor: 'rgba(239, 68, 68, 0.25)',
+                              color: '#f87171',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title="Desactivar cuenta"
+                          >
+                            <Ban size={12} />
+                            <span>Desactivar</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleUserActivation(player.id, true)}
+                            className="btn"
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '0.72rem',
+                              fontWeight: 900,
+                              background: 'var(--accent-neon-green)',
+                              borderColor: 'var(--accent-neon-green)',
+                              color: '#030712',
+                              boxShadow: '0 0 8px rgba(16, 185, 129, 0.2)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title="Confirmar cuenta"
+                          >
+                            <UserCheck size={12} />
+                            <span>Confirmar</span>
+                          </button>
+                        )}
+
+                        {player.role === 'promotor' ? (
+                          <button
+                            onClick={() => handleTogglePromoterRole(player.id, false)}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              borderColor: 'rgba(239, 68, 68, 0.25)',
+                              color: '#f87171',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title="Quitar rol de promotor"
+                          >
+                            <BadgeX size={12} />
+                            <span>Quitar Promotor</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleTogglePromoterRole(player.id, true)}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              borderColor: player.seller_request_status === 'pending' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(139, 92, 246, 0.3)',
+                              color: player.seller_request_status === 'pending' ? 'var(--accent-gold)' : '#c084fc',
+                              background: player.seller_request_status === 'pending' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(139, 92, 246, 0.03)',
+                              boxShadow: player.seller_request_status === 'pending' ? '0 0 10px rgba(245, 158, 11, 0.15)' : 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title={player.seller_request_status === 'pending' ? "Aprobar solicitud de promotor" : "Hacer promotor"}
+                          >
+                            <UserCheck size={12} />
+                            <span>{player.seller_request_status === 'pending' ? 'Aprobar Promotor' : 'Hacer Promotor'}</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

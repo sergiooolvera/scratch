@@ -154,6 +154,13 @@ export const Header: React.FC = () => {
           <span>Ranking</span>
         </Link>
 
+        {user && (
+          <Link href="/promotor" className={`nav-link ${isActive('/promotor') ? 'active' : ''}`}>
+            <BadgeDollarSign size={18} />
+            <span>{profile?.role === 'promotor' ? 'Mi Red / Promotor' : 'Ser Promotor'}</span>
+          </Link>
+        )}
+
         {profile?.is_admin && (
           <Link href="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`} style={{ border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.05)' }}>
             <ShieldAlert size={18} style={{ color: 'var(--accent-gold)' }} />

@@ -19,7 +19,7 @@ export interface Profile {
   created_at: string;
   referral_code?: string;
   referred_by?: string | null;
-  role?: 'user' | 'vendedor' | 'admin' | null;
+  role?: 'user' | 'vendedor' | 'admin' | 'promotor' | null;
   seller_request_status?: 'none' | 'pending' | 'approved' | 'rejected' | null;
 }
 

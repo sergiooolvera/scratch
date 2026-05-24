@@ -36,6 +36,13 @@ export const MobileNav: React.FC = () => {
         <span>Ranking</span>
       </Link>
 
+      {user && (
+        <Link href="/promotor" className={`mobile-nav-item ${isActive('/promotor') ? 'active' : ''}`}>
+          <BadgeDollarSign size={20} />
+          <span>Promotor</span>
+        </Link>
+      )}
+
       {profile?.is_admin && (
         <Link href="/admin" className={`mobile-nav-item ${isActive('/admin') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
           <ShieldAlert size={20} />

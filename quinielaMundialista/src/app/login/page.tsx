@@ -479,7 +479,10 @@ export default function LoginPage() {
                 <strong>3. Bolsa Simbólica (Frijolitos):</strong> Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de {poolTotal.toLocaleString()} Frijolitos (puntos recreativos de entretenimiento) a repartir de forma amistosa entre los participantes con mayor puntaje al finalizar el torneo. Estos puntos no tienen equivalencia ni valor de cambio financiero inmediato garantizado por la plataforma.
               </p>
               <p>
-                <strong>4. Aceptación de Condiciones:</strong> El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.
+                <strong>4. Red de Promotores Solidarios:</strong> Los usuarios que soliciten expresamente y obtengan aprobación administrativa como "Promotores" pueden invitar a nuevos participantes compartiendo su código exclusivo de referido. En caso de que dichos invitados realicen cooperaciones voluntarias de mantenimiento para sufragar costos del servidor: (a) El <strong>50%</strong> de dicho apoyo se destina a cubrir gastos de servidores y APIs de QuiMundial. (b) El <strong>50%</strong> restante se compartirá con el Promotor en agradecimiento por su coordinación y expansión de la comunidad.
+              </p>
+              <p>
+                <strong>5. Aceptación de Condiciones:</strong> El uso de la plataforma, el registro de perfiles, el envío de solicitudes de promotor y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.
               </p>
             </div>
             <button className="btn btn-primary" style={{ width: '100%', marginTop: '24px', padding: '12px' }} onClick={() => setShowTerms(false)}>
