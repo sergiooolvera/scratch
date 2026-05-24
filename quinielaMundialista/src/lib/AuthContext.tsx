@@ -116,8 +116,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!mounted) return;
         
         if (session?.user) {
-          setUser(session.user);
-          await fetchProfile(session.user.id);
+          if (!session.user.email_confirmed_at) {
+            console.warn('User email is not confirmed. Force signing out.');
+            await supabase.auth.signOut();
+            setUser(null);
+            setProfile(null);
+          } else {
+            setUser(session.user);
+            await fetchProfile(session.user.id);
+          }
         } else {
           setUser(null);
           setProfile(null);
@@ -147,8 +154,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
-            setUser(session.user);
-            await fetchProfile(session.user.id);
+            if (!session.user.email_confirmed_at) {
+              console.warn('User email is not confirmed. Force signing out.');
+              await supabase.auth.signOut();
+              setUser(null);
+              setProfile(null);
+            } else {
+              setUser(session.user);
+              await fetchProfile(session.user.id);
+            }
           } else {
             setUser(null);
             setProfile(null);
@@ -173,8 +187,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { data: { session } } = await supabase.auth.getSession();
           if (mounted) {
             if (session?.user) {
-              setUser(session.user);
-              await fetchProfile(session.user.id);
+              if (!session.user.email_confirmed_at) {
+                console.warn('User email is not confirmed. Force signing out.');
+                await supabase.auth.signOut();
+                setUser(null);
+                setProfile(null);
+              } else {
+                setUser(session.user);
+                await fetchProfile(session.user.id);
+              }
             } else {
               setUser(null);
               setProfile(null);

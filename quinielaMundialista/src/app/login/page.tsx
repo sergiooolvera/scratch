@@ -103,9 +103,12 @@ export default function LoginPage() {
 
         if (error) {
           setErrorMsg(error.message);
-        } else if (data.user && data.session === null) {
-          // If email verification is active
-          setSuccessMsg('¡Registro exitoso! Por favor verifica tu correo electrónico para activar tu cuenta.');
+        } else if (data.user && (data.session === null || !data.user.email_confirmed_at)) {
+          // If email verification is active or email is unconfirmed
+          setSuccessMsg('¡Registro exitoso! Le hemos enviado un correo de confirmación. Favor de confirmar su registro en su bandeja de entrada antes de ingresar.');
+          if (data.session) {
+            await supabase.auth.signOut();
+          }
         } else {
           setSuccessMsg('¡Usuario registrado e ingresado con éxito!');
           router.push('/');
