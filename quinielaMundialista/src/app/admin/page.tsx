@@ -28,6 +28,7 @@ interface Player {
   created_at: string;
   role?: string | null;
   seller_request_status?: string | null;
+  referred_by?: string | null;
 }
 
 interface VendorClient {
@@ -131,7 +132,7 @@ export default function AdminPage() {
       // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('qui_profiles')
-        .select('id, username, full_name, is_active, points, created_at, role, seller_request_status')
+        .select('id, username, full_name, is_active, points, created_at, role, seller_request_status, referred_by')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -870,6 +871,7 @@ export default function AdminPage() {
               <thead>
                 <tr>
                   <th>Usuario</th>
+                  <th style={{ textAlign: 'center' }}>Invitado Por</th>
                   <th style={{ textAlign: 'center' }}>Registrado</th>
                   <th style={{ textAlign: 'center' }}>Puntos</th>
                   <th style={{ textAlign: 'center' }}>Estado Cuenta</th>
@@ -890,6 +892,16 @@ export default function AdminPage() {
                           <span className="player-badge">@{player.username || 'user'}</span>
                         </div>
                       </div>
+                    </td>
+                    
+                    <td style={{ textAlign: 'center', fontSize: '0.82rem' }}>
+                      {player.referred_by ? (
+                        <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>
+                          @{players.find(p => p.id === player.referred_by)?.username || 'promotor'}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>Directo</span>
+                      )}
                     </td>
                     
                     <td style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
