@@ -25,6 +25,8 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   // Fetch accumulated pool size for terms display
   useEffect(() => {
@@ -106,6 +108,8 @@ export default function LoginPage() {
         } else if (data.user && (data.session === null || !data.user.email_confirmed_at)) {
           // If email verification is active or email is unconfirmed
           setSuccessMsg('¡Registro exitoso! Le hemos enviado un correo de confirmación. Favor de confirmar su registro en su bandeja de entrada antes de ingresar.');
+          setRegisteredEmail(email);
+          setShowVerificationModal(true);
           if (data.session) {
             await supabase.auth.signOut();
           }
@@ -480,6 +484,129 @@ export default function LoginPage() {
             </div>
             <button className="btn btn-primary" style={{ width: '100%', marginTop: '24px', padding: '12px' }} onClick={() => setShowTerms(false)}>
               Entendido y Acepto
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Success Modal */}
+      {showVerificationModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(3, 7, 18, 0.85)',
+          backdropFilter: 'blur(16px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div className="glass-panel" style={{
+            maxWidth: '480px',
+            width: '100%',
+            padding: '40px 30px',
+            textAlign: 'center',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(3, 7, 18, 0.95) 100%)',
+            boxShadow: '0 20px 40px rgba(16, 185, 129, 0.1)',
+            borderRadius: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '20px'
+          }}>
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '2px solid var(--accent-neon-green)',
+              borderRadius: '50%',
+              padding: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent-neon-green)',
+              boxShadow: '0 0 20px rgba(16, 185, 129, 0.2)'
+            }}>
+              <Mail size={40} />
+            </div>
+
+            <h3 style={{
+              fontSize: '1.5rem',
+              fontWeight: 900,
+              color: '#ffffff',
+              margin: 0,
+              letterSpacing: '0.5px'
+            }}>
+              ¡Verifica tu correo!
+            </h3>
+
+            <p style={{
+              fontSize: '0.95rem',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.6,
+              margin: 0
+            }}>
+              Hemos enviado un enlace de confirmación a:
+              <br />
+              <strong style={{ color: 'var(--accent-neon-green)', wordBreak: 'break-all', display: 'inline-block', marginTop: '6px', fontSize: '1.2rem' }}>
+                {registeredEmail}
+              </strong>
+            </p>
+
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              padding: '16px',
+              width: '100%',
+              textAlign: 'left',
+              fontSize: '0.85rem',
+              color: 'var(--text-muted)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ color: 'var(--accent-neon-green)', fontWeight: 'bold' }}>1.</span>
+                <span>Busca un correo de <strong>sergio.olver@gmail.com</strong> (QuiMundial).</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ color: 'var(--accent-neon-green)', fontWeight: 'bold' }}>2.</span>
+                <span>Haz clic en el botón o enlace de confirmación dentro del correo.</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ color: 'var(--accent-neon-green)', fontWeight: 'bold' }}>3.</span>
+                <span>Si no lo ves, revisa tu carpeta de <strong>Correo no deseado / Spam</strong>.</span>
+              </div>
+            </div>
+
+            <button
+              className="btn btn-primary"
+              style={{
+                width: '100%',
+                padding: '14px',
+                marginTop: '10px',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '1px'
+              }}
+              onClick={() => {
+                setShowVerificationModal(false);
+                setIsSignUp(false); // Switch to sign in view
+                // Reset signup fields for clean experience
+                setFullName('');
+                setUsername('');
+                setEmail('');
+                setPassword('');
+                setReferralCode('');
+                setAgreeTerms(false);
+                setIsAdult(false);
+              }}
+            >
+              Entendido, ir al login
             </button>
           </div>
         </div>
