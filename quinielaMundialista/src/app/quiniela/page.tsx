@@ -655,6 +655,8 @@ export default function QuinielaPage() {
     });
   }
 
+  const isInactive = !!(profile && !profile.is_active && simMode !== 'bypass');
+
   return (
     <div>
       {/* Toast Message */}
@@ -684,7 +686,31 @@ export default function QuinielaPage() {
         </div>
       )}
 
-      {/* Platform is free - no active alerts */}
+      {/* Pending Confirmation Alert */}
+      {isInactive && (
+        <div className="glass-panel" style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          borderColor: 'rgba(245, 158, 11, 0.35)',
+          marginBottom: '24px',
+          padding: '20px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+        }}>
+          <span style={{ fontSize: '2.2rem' }}>⏳</span>
+          <div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--accent-gold)', margin: 0 }}>
+              Registro Pendiente de Confirmación
+            </h3>
+            <p style={{ margin: '6px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: '1.4' }}>
+              Tu registro se ha completado con éxito, pero actualmente se encuentra **pendiente de confirmación y activación** por parte del administrador. 
+              No podrás registrar ni guardar tus pronósticos hasta que tu cuenta sea confirmada por soporte técnico. ¡Muchas gracias por tu paciencia!
+            </p>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
         <div>
@@ -773,7 +799,7 @@ export default function QuinielaPage() {
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <button
             onClick={handleAutoFill}
-            disabled={pageLoading || isBulkSaving}
+            disabled={pageLoading || isBulkSaving || isInactive}
             className="btn btn-secondary"
             style={{
               padding: '10px 18px',
@@ -782,9 +808,11 @@ export default function QuinielaPage() {
               gap: '8px',
               fontWeight: 800,
               fontSize: '0.85rem',
-              borderColor: 'rgba(16, 185, 129, 0.3)',
-              color: 'var(--accent-neon-green)',
-              boxShadow: '0 0 10px rgba(16, 185, 129, 0.05)'
+              borderColor: isInactive ? 'rgba(255, 255, 255, 0.05)' : 'rgba(16, 185, 129, 0.3)',
+              color: isInactive ? 'var(--text-muted)' : 'var(--accent-neon-green)',
+              boxShadow: isInactive ? 'none' : '0 0 10px rgba(16, 185, 129, 0.05)',
+              opacity: isInactive ? 0.4 : 1,
+              cursor: isInactive ? 'not-allowed' : 'pointer'
             }}
           >
             <Sparkles size={16} />
@@ -793,7 +821,7 @@ export default function QuinielaPage() {
 
           <button
             onClick={handleClearAll}
-            disabled={pageLoading || isBulkSaving}
+            disabled={pageLoading || isBulkSaving || isInactive}
             className="btn btn-secondary"
             style={{
               padding: '10px 18px',
@@ -802,9 +830,11 @@ export default function QuinielaPage() {
               gap: '8px',
               fontWeight: 800,
               fontSize: '0.85rem',
-              borderColor: 'rgba(239, 68, 68, 0.3)',
-              color: '#f87171',
-              boxShadow: '0 0 10px rgba(239, 68, 68, 0.05)'
+              borderColor: isInactive ? 'rgba(255, 255, 255, 0.05)' : 'rgba(239, 68, 68, 0.3)',
+              color: isInactive ? 'var(--text-muted)' : '#f87171',
+              boxShadow: isInactive ? 'none' : '0 0 10px rgba(239, 68, 68, 0.05)',
+              opacity: isInactive ? 0.4 : 1,
+              cursor: isInactive ? 'not-allowed' : 'pointer'
             }}
           >
             <Trash2 size={16} />
@@ -813,7 +843,7 @@ export default function QuinielaPage() {
 
           <button
             onClick={saveAllPredictions}
-            disabled={modifiedMatchIds.size === 0 || isBulkSaving}
+            disabled={modifiedMatchIds.size === 0 || isBulkSaving || isInactive}
             className="btn"
             style={{
               padding: '10px 18px',
@@ -824,12 +854,12 @@ export default function QuinielaPage() {
               fontSize: '0.85rem',
               textTransform: 'uppercase',
               letterSpacing: '0.02em',
-              background: modifiedMatchIds.size > 0 ? 'var(--accent-neon-green)' : 'var(--text-muted)',
-              borderColor: modifiedMatchIds.size > 0 ? 'var(--accent-neon-green)' : 'var(--text-muted)',
+              background: (modifiedMatchIds.size > 0 && !isInactive) ? 'var(--accent-neon-green)' : 'var(--text-muted)',
+              borderColor: (modifiedMatchIds.size > 0 && !isInactive) ? 'var(--accent-neon-green)' : 'var(--text-muted)',
               color: '#030712',
-              boxShadow: modifiedMatchIds.size > 0 ? '0 0 15px var(--accent-neon-green-glow)' : 'none',
-              opacity: modifiedMatchIds.size > 0 ? 1 : 0.5,
-              cursor: modifiedMatchIds.size > 0 ? 'pointer' : 'not-allowed',
+              boxShadow: (modifiedMatchIds.size > 0 && !isInactive) ? '0 0 15px var(--accent-neon-green-glow)' : 'none',
+              opacity: (modifiedMatchIds.size > 0 && !isInactive) ? 1 : 0.5,
+              cursor: (modifiedMatchIds.size > 0 && !isInactive) ? 'pointer' : 'not-allowed',
               transition: 'all 0.3s ease'
             }}
           >
@@ -906,7 +936,7 @@ export default function QuinielaPage() {
             <h3 className="group-title">{groupName}</h3>
             <div className="matches-grid">
               {groupedMatches[groupName].map((match) => {
-                const locked = isMatchLocked(match);
+                const locked = isMatchLocked(match) || isInactive;
                 const pred = predictions[match.id] || { home_prediction: '', away_prediction: '' };
                 const saveStatus = savingState[match.id] || 'idle';
 

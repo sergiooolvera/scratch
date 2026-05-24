@@ -296,44 +296,28 @@ export default function AdminPage() {
     }
   };
 
-  // Manual payment activation (useful for testing and offline players)
-  const handleManualActivate = async (playerId: string) => {
+  // Toggle user activation (admin approval/confirmation)
+  const handleToggleUserActivation = async (playerId: string, makeActive: boolean) => {
     setActionLoading(true);
     try {
-      // 1. Update user payment state
-      const { error: profileError } = await supabase
-        .from('qui_profiles')
-        .update({ is_active: true })
-        .eq('id', playerId);
+      const res = await fetch('/api/admin/toggle-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminId: user?.id,
+          userId: playerId,
+          isActive: makeActive,
+        }),
+      });
 
-      if (profileError) throw profileError;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al cambiar estado de activación.');
 
-      // 2. Insert payments receipt in qui_payments
-      const receiptId = `manual_receipt_${Date.now()}`;
-      await supabase
-        .from('qui_payments')
-        .insert({
-          id: receiptId,
-          user_id: playerId,
-          amount: ticketCost,
-          status: 'paid'
-        });
-
-      // 3. Add ticket cost to accumulated pool settings
-      const newPool = poolTotal + ticketCost;
-      const { error: configError } = await supabase
-        .from('qui_system_settings')
-        .update({ pool_accumulated: newPool })
-        .eq('id', 'points_config');
-
-      if (configError) throw configError;
-
-      showToast('🥇 ¡Usuario activado manualmente y bolsa aumentada!');
-      setPoolTotal(newPool); // Sync local state
+      showToast(makeActive ? '✅ ¡Registro confirmado y activado con éxito!' : '🚫 ¡Usuario desactivado con éxito!');
       await fetchAdminData(); // Refresh UI
     } catch (err: any) {
       console.error(err);
-      showToast(`❌ Error de activación: ${err.message}`);
+      showToast(`❌ Error al cambiar estado: ${err.message}`);
     } finally {
       setActionLoading(false);
     }
@@ -859,6 +843,8 @@ export default function AdminPage() {
                   <th>Usuario</th>
                   <th style={{ textAlign: 'center' }}>Registrado</th>
                   <th style={{ textAlign: 'center' }}>Puntos</th>
+                  <th style={{ textAlign: 'center' }}>Estado</th>
+                  <th style={{ textAlign: 'center' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -882,6 +868,64 @@ export default function AdminPage() {
                     
                     <td className="points-cell" style={{ textAlign: 'center', fontWeight: 800 }}>
                       {player.points} pts
+                    </td>
+
+                    <td style={{ textAlign: 'center' }}>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: player.is_active ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                        border: player.is_active ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
+                        color: player.is_active ? 'var(--accent-neon-green)' : 'var(--accent-gold)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.02em'
+                      }}>
+                        {player.is_active ? 'Confirmado' : 'Pendiente'}
+                      </span>
+                    </td>
+
+                    <td style={{ textAlign: 'center' }}>
+                      {player.is_active ? (
+                        <button
+                          onClick={() => handleToggleUserActivation(player.id, false)}
+                          className="btn btn-secondary"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            borderColor: 'rgba(239, 68, 68, 0.25)',
+                            color: '#f87171',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Ban size={12} />
+                          <span>Desactivar</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleUserActivation(player.id, true)}
+                          className="btn"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.72rem',
+                            fontWeight: 900,
+                            background: 'var(--accent-neon-green)',
+                            borderColor: 'var(--accent-neon-green)',
+                            color: '#030712',
+                            boxShadow: '0 0 8px rgba(16, 185, 129, 0.2)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <UserCheck size={12} />
+                          <span>Confirmar</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
