@@ -388,11 +388,12 @@ export default function QuinielaPage() {
     }
   };
 
-  // Clear all editable predictions back to empty strings
-  const handleClearAll = () => {
-    const newPredictions = { ...predictions };
-    const newModified = new Set(modifiedMatchIds);
+  // Clear all editable predictions back to empty strings and delete from DB
+  const handleClearAll = async () => {
+    if (!user) return;
+
     let clearedCount = 0;
+    const affectedMatchIds: string[] = [];
 
     matches.forEach(match => {
       const locked = isMatchLocked(match);
@@ -400,31 +401,84 @@ export default function QuinielaPage() {
 
       const pred = predictions[match.id];
       if (pred && (pred.home_prediction !== '' || pred.away_prediction !== '')) {
-        newPredictions[match.id] = {
-          ...pred,
-          home_prediction: '',
-          away_prediction: ''
-        };
-        // Remove from modified since blank predictions cannot be saved
-        newModified.delete(match.id);
+        affectedMatchIds.push(match.id);
         clearedCount++;
       }
     });
 
-    if (clearedCount > 0) {
-      setPredictions(newPredictions);
-      setModifiedMatchIds(newModified);
-      showToast(picante(
-        `✨ Se han limpiado ${clearedCount} marcadores editables.`,
-        `🗑️ ¡Borrón y cuenta nueva! Limpiamos ${clearedCount} marcadores editables.`,
-        spicyMode
-      ));
-    } else {
+    if (clearedCount === 0) {
       showToast(picante(
         '⚠️ No hay marcadores editables con datos para limpiar.',
         '⚠️ ¡Ya está limpio! No hay nada más que barrer aquí.',
         spicyMode
       ));
+      return;
+    }
+
+    setIsBulkSaving(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error('No se encontró una sesión activa.');
+      }
+
+      // Call API to delete predictions from database
+      const res = await fetch('/api/predictions/clear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          simMode
+        })
+      });
+
+      const resData = await res.json();
+
+      if (!res.ok) {
+        throw new Error(resData.error || 'Error al eliminar los marcadores guardados.');
+      }
+
+      // Reset predictions locally, reset their saving state to idle, and remove from modified
+      const newPredictions = { ...predictions };
+      const newModified = new Set(modifiedMatchIds);
+      const newSavingState = { ...savingState };
+
+      affectedMatchIds.forEach(id => {
+        const pred = predictions[id];
+        if (pred) {
+          newPredictions[id] = {
+            ...pred,
+            home_prediction: '',
+            away_prediction: ''
+          };
+        }
+        newModified.delete(id);
+        newSavingState[id] = 'idle'; // Reset to idle so the Save button shows "Guardar" again
+      });
+
+      setPredictions(newPredictions);
+      setModifiedMatchIds(newModified);
+      setSavingState(newSavingState);
+
+      showToast(picante(
+        `✨ Se han eliminado ${clearedCount} marcadores guardados y editables.`,
+        `🗑️ ¡Borrón y cuenta nueva! Eliminamos tus ${clearedCount} marcadores. ¡Listos para capturar de nuevo!`,
+        spicyMode
+      ));
+    } catch (err: any) {
+      console.error('Error in handleClearAll:', err.message);
+      showToast(picante(
+        err.message || 'Error al limpiar los marcadores.',
+        '¡Ups! Se ponchó el balón al intentar limpiar los marcadores en la base de datos.',
+        spicyMode
+      ));
+    } finally {
+      setIsBulkSaving(false);
     }
   };
 
