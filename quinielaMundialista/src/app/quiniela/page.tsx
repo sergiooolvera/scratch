@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Lock, Save, Calendar, ShieldAlert, Award, Search, Sparkles, CheckCircle2, Check } from 'lucide-react';
+import { Lock, Save, Calendar, ShieldAlert, Award, Search, Sparkles, CheckCircle2, Check, Trash2 } from 'lucide-react';
 import { picante, getSpicyWinMsg, getSpicyBlunderMsg } from '@/lib/spicy';
 
 interface Match {
@@ -388,6 +388,46 @@ export default function QuinielaPage() {
     }
   };
 
+  // Clear all editable predictions back to empty strings
+  const handleClearAll = () => {
+    const newPredictions = { ...predictions };
+    const newModified = new Set(modifiedMatchIds);
+    let clearedCount = 0;
+
+    matches.forEach(match => {
+      const locked = isMatchLocked(match);
+      if (locked) return;
+
+      const pred = predictions[match.id];
+      if (pred && (pred.home_prediction !== '' || pred.away_prediction !== '')) {
+        newPredictions[match.id] = {
+          ...pred,
+          home_prediction: '',
+          away_prediction: ''
+        };
+        // Remove from modified since blank predictions cannot be saved
+        newModified.delete(match.id);
+        clearedCount++;
+      }
+    });
+
+    if (clearedCount > 0) {
+      setPredictions(newPredictions);
+      setModifiedMatchIds(newModified);
+      showToast(picante(
+        `✨ Se han limpiado ${clearedCount} marcadores editables.`,
+        `🗑️ ¡Borrón y cuenta nueva! Limpiamos ${clearedCount} marcadores editables.`,
+        spicyMode
+      ));
+    } else {
+      showToast(picante(
+        '⚠️ No hay marcadores editables con datos para limpiar.',
+        '⚠️ ¡Ya está limpio! No hay nada más que barrer aquí.',
+        spicyMode
+      ));
+    }
+  };
+
   // Bulk save all edited predictions
   const saveAllPredictions = async () => {
     if (!user) return;
@@ -672,6 +712,26 @@ export default function QuinielaPage() {
           >
             <Sparkles size={16} />
             <span>Lapicito Mágico ✨</span>
+          </button>
+
+          <button
+            onClick={handleClearAll}
+            disabled={pageLoading || isBulkSaving}
+            className="btn btn-secondary"
+            style={{
+              padding: '10px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 800,
+              fontSize: '0.85rem',
+              borderColor: 'rgba(239, 68, 68, 0.3)',
+              color: '#f87171',
+              boxShadow: '0 0 10px rgba(239, 68, 68, 0.05)'
+            }}
+          >
+            <Trash2 size={16} />
+            <span>Limpiar todo 🗑️</span>
           </button>
 
           <button
