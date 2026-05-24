@@ -444,26 +444,36 @@ export default function QuinielaPage() {
       }
 
       // Reset predictions locally, reset their saving state to idle, and remove from modified
-      const newPredictions = { ...predictions };
-      const newModified = new Set(modifiedMatchIds);
-      const newSavingState = { ...savingState };
-
-      affectedMatchIds.forEach(id => {
-        const pred = predictions[id];
-        if (pred) {
-          newPredictions[id] = {
-            ...pred,
-            home_prediction: '',
-            away_prediction: ''
-          };
-        }
-        newModified.delete(id);
-        newSavingState[id] = 'idle'; // Reset to idle so the Save button shows "Guardar" again
+      setPredictions(prev => {
+        const next = { ...prev };
+        affectedMatchIds.forEach(id => {
+          const pred = prev[id];
+          if (pred) {
+            next[id] = {
+              ...pred,
+              home_prediction: '',
+              away_prediction: ''
+            };
+          }
+        });
+        return next;
       });
 
-      setPredictions(newPredictions);
-      setModifiedMatchIds(newModified);
-      setSavingState(newSavingState);
+      setModifiedMatchIds(prev => {
+        const next = new Set(prev);
+        affectedMatchIds.forEach(id => {
+          next.delete(id);
+        });
+        return next;
+      });
+
+      setSavingState(prev => {
+        const next = { ...prev };
+        affectedMatchIds.forEach(id => {
+          next[id] = 'idle'; // Reset to idle so the Save button shows "Guardar" again
+        });
+        return next;
+      });
 
       showToast(picante(
         `✨ Se han eliminado ${clearedCount} marcadores guardados y editables.`,
@@ -519,11 +529,16 @@ export default function QuinielaPage() {
 
     setIsBulkSaving(true);
     
-    const newSavingState = { ...savingState };
-    affectedMatchIds.forEach(id => {
-      newSavingState[id] = 'saving';
+    setSavingState(prev => {
+      const next = { ...prev };
+      affectedMatchIds.forEach(id => {
+        next[id] = 'saving';
+      });
+      return next;
     });
-    setSavingState(newSavingState);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s safety timeout
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -542,20 +557,24 @@ export default function QuinielaPage() {
         body: JSON.stringify({
           predictions: predictionsToSubmit,
           simMode
-        })
+        }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
       const resData = await res.json();
 
       if (!res.ok) {
         throw new Error(resData.error || 'Error al guardar los pronósticos.');
       }
 
-      const updatedSavingState = { ...savingState };
-      affectedMatchIds.forEach(id => {
-        updatedSavingState[id] = 'saved';
+      setSavingState(prev => {
+        const next = { ...prev };
+        affectedMatchIds.forEach(id => {
+          next[id] = 'saved';
+        });
+        return next;
       });
-      setSavingState(updatedSavingState);
       setModifiedMatchIds(new Set());
       showToast(picante(
         `💾 ¡Se han guardado ${predictionsToSubmit.length} pronósticos exitosamente!`,
@@ -563,17 +582,21 @@ export default function QuinielaPage() {
         spicyMode
       ));
     } catch (err: any) {
-      console.error('Error in bulk saving predictions:', err.message);
+      clearTimeout(timeoutId);
+      console.error('Error in bulk saving predictions:', err);
       
-      const errorSavingState = { ...savingState };
-      affectedMatchIds.forEach(id => {
-        errorSavingState[id] = 'error';
+      setSavingState(prev => {
+        const next = { ...prev };
+        affectedMatchIds.forEach(id => {
+          next[id] = 'error';
+        });
+        return next;
       });
-      setSavingState(errorSavingState);
       
+      const isTimeout = err.name === 'AbortError';
       showToast(picante(
-        err.message || 'Error al guardar los pronósticos.',
-        "¡Chispas! Se nos desinfló el balón al intentar el tiro masivo. Vuélvele a calar.",
+        isTimeout ? '⚠️ La conexión tardó demasiado. Intenta guardar de nuevo.' : (err.message || 'Error al guardar los pronósticos.'),
+        isTimeout ? '⏰ ¡Tiempo fuera! El tiro tardó demasiado en llegar a la portería. Inténtalo de nuevo.' : "¡Chispas! Se nos desinfló el balón al intentar el tiro masivo. Vuélvele a calar.",
         spicyMode
       ));
     } finally {
