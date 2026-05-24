@@ -20,17 +20,10 @@ export const MobileNav: React.FC = () => {
       </Link>
 
       {user ? (
-        <>
-          <Link href="/quiniela" className={`mobile-nav-item ${isActive('/quiniela') ? 'active' : ''}`}>
-            <TableProperties size={20} />
-            <span>Quiniela</span>
-          </Link>
-
-          <Link href="/pay" className={`mobile-nav-item ${isActive('/pay') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
-            <CreditCard size={20} />
-            <span>Demo Stripe</span>
-          </Link>
-        </>
+        <Link href="/quiniela" className={`mobile-nav-item ${isActive('/quiniela') ? 'active' : ''}`}>
+          <TableProperties size={20} />
+          <span>Quiniela</span>
+        </Link>
       ) : (
         <Link href="/login" className={`mobile-nav-item ${isActive('/login') ? 'active' : ''}`}>
           <LogIn size={20} />
@@ -42,13 +35,6 @@ export const MobileNav: React.FC = () => {
         <Trophy size={20} />
         <span>Ranking</span>
       </Link>
-
-      {profile?.role === 'vendedor' && (
-        <Link href="/vendedor" className={`mobile-nav-item ${isActive('/vendedor') ? 'active' : ''}`} style={{ color: 'var(--accent-neon-green)' }}>
-          <BadgeDollarSign size={20} />
-          <span>Vendedor</span>
-        </Link>
-      )}
 
       {profile?.is_admin && (
         <Link href="/admin" className={`mobile-nav-item ${isActive('/admin') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>

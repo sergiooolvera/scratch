@@ -275,11 +275,7 @@ export default function QuinielaPage() {
   const savePrediction = async (matchId: string) => {
     if (!user) return;
     
-    // Check if user has paid (allow in simulation modes for testing)
-    if (!profile?.is_active && simMode === 'real') {
-      showToast('⚠️ Se requiere realizar la aportación voluntaria de mantenimiento para registrar pronósticos.');
-      return;
-    }
+    // Platform is 100% free - no active check needed
 
     const pred = predictions[matchId];
     if (!pred || pred.home_prediction === '' || pred.away_prediction === '') {
@@ -396,10 +392,7 @@ export default function QuinielaPage() {
   const saveAllPredictions = async () => {
     if (!user) return;
     
-    if (!profile?.is_active && simMode === 'real') {
-      showToast('⚠️ Se requiere realizar la aportación voluntaria de mantenimiento para registrar pronósticos.');
-      return;
-    }
+    // Platform is 100% free - no active check needed
 
     const predictionsToSubmit: Array<{ matchId: string; homePrediction: number; awayPrediction: number }> = [];
     const affectedMatchIds: string[] = [];
@@ -574,35 +567,7 @@ export default function QuinielaPage() {
         </div>
       )}
 
-      {/* Aportación alert if inactive */}
-      {!profile?.is_active && (
-        <div className="glass-panel" style={{
-          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%)',
-          borderColor: 'rgba(239, 68, 68, 0.3)',
-          marginBottom: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          padding: '20px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <ShieldAlert size={28} style={{ color: '#ef4444' }} />
-            <div>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f87171' }}>Aportación Técnica Pendiente</h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                Tu cooperación voluntaria de mantenimiento aún no está registrada. Puedes explorar los partidos de la quiniela, pero **los pronósticos no se registrarán** en el sistema hasta que realices la aportación voluntaria de soporte.
-              </p>
-            </div>
-          </div>
-          <button 
-            onClick={() => router.push('/pay')} 
-            className="btn btn-gold" 
-            style={{ alignSelf: 'flex-start', padding: '8px 16px', fontSize: '0.85rem' }}
-          >
-            Hacer Aportación Voluntaria
-          </button>
-        </div>
-      )}
+      {/* Platform is free - no active alerts */}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
         <div>
@@ -869,7 +834,7 @@ export default function QuinielaPage() {
                           maxLength={2}
                           value={pred.home_prediction}
                           onChange={(e) => handlePredictionChange(match.id, 'home', e.target.value)}
-                          disabled={locked || (!profile?.is_active && simMode !== 'bypass')}
+                          disabled={locked}
                         />
                         <span className="score-separator">:</span>
                         <input
@@ -880,7 +845,7 @@ export default function QuinielaPage() {
                           maxLength={2}
                           value={pred.away_prediction}
                           onChange={(e) => handlePredictionChange(match.id, 'away', e.target.value)}
-                          disabled={locked || (!profile?.is_active && simMode !== 'bypass')}
+                          disabled={locked}
                         />
                       </div>
 
@@ -917,7 +882,7 @@ export default function QuinielaPage() {
                             fontWeight: saveStatus === 'saved' ? '800' : '700',
                             letterSpacing: '0.01em',
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                            opacity: (!profile?.is_active && simMode !== 'bypass') ? 0.5 : 1,
+                            opacity: 1,
                             
                             // Dynamic background
                             background: saveStatus === 'saved'
@@ -950,7 +915,7 @@ export default function QuinielaPage() {
                             // Dynamic transform scale
                             transform: saveStatus === 'saved' ? 'scale(1.05)' : 'none'
                           }}
-                          disabled={saveStatus === 'saving' || (!profile?.is_active && simMode !== 'bypass')}
+                          disabled={saveStatus === 'saving'}
                         >
                           {saveStatus === 'saving' ? (
                             <div className="animate-spin" style={{

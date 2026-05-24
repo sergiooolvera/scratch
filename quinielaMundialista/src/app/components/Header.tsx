@@ -143,37 +143,16 @@ export const Header: React.FC = () => {
         </Link>
         
         {user && (
-          <>
-            <Link href="/quiniela" className={`nav-link ${isActive('/quiniela') ? 'active' : ''}`}>
-              <TableProperties size={18} />
-              <span>Mi Quiniela</span>
-            </Link>
-            
-            <Link href="/pay" className={`nav-link ${isActive('/pay') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
-              <CreditCard size={18} />
-              <span>Demo Stripe 🚀</span>
-            </Link>
-          </>
+          <Link href="/quiniela" className={`nav-link ${isActive('/quiniela') ? 'active' : ''}`}>
+            <TableProperties size={18} />
+            <span>Mi Quiniela</span>
+          </Link>
         )}
 
         <Link href="/ranking" className={`nav-link ${isActive('/ranking') ? 'active' : ''}`}>
           <Trophy size={18} />
           <span>Ranking</span>
         </Link>
-
-        {user && (
-          profile?.role === 'vendedor' ? (
-            <Link href="/vendedor" className={`nav-link ${isActive('/vendedor') ? 'active' : ''}`} style={{ border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' }}>
-              <BadgeDollarSign size={18} style={{ color: 'var(--accent-neon-green)' }} />
-              <span style={{ color: 'var(--accent-neon-green)' }}>Panel Vendedor</span>
-            </Link>
-          ) : (
-            <Link href="/vendedor" className={`nav-link ${isActive('/vendedor') ? 'active' : ''}`}>
-              <BadgeDollarSign size={18} />
-              <span>Ser Vendedor</span>
-            </Link>
-          )
-        )}
 
         {profile?.is_admin && (
           <Link href="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`} style={{ border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.05)' }}>

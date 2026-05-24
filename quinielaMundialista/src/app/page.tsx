@@ -48,8 +48,8 @@ export default function HomePage() {
   const [bgImage, setBgImage] = useState<string>('');
 
   useEffect(() => {
-    // Randomly select one of 13 custom background files
-    const randomIndex = Math.floor(Math.random() * 13) + 1;
+    // Randomly select one of 15 custom background files
+    const randomIndex = Math.floor(Math.random() * 15) + 1;
     setBgImage(`/bg-mundial-${randomIndex}.jpg`);
   }, []);
 
@@ -299,16 +299,10 @@ export default function HomePage() {
 
             <div className="welcome-buttons-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {user ? (
-                <>
-                  <Link href="/quiniela" className="btn btn-primary">
-                    <span>{picante("Capturar Pronósticos", "¡Mete tus Marcadores! ⚽", spicyMode)}</span>
-                    <ChevronRight size={16} />
-                  </Link>
-                  <Link href="/pay" className="btn btn-secondary" style={{ color: 'var(--accent-gold)' }}>
-                    <span>{picante("Demo Pasarela 🚀", "Chismosear Stripe 🚀", spicyMode)}</span>
-                    <Ticket size={16} />
-                  </Link>
-                </>
+                <Link href="/quiniela" className="btn btn-primary">
+                  <span>{picante("Capturar Pronósticos", "¡Mete tus Marcadores! ⚽", spicyMode)}</span>
+                  <ChevronRight size={16} />
+                </Link>
               ) : (
                 <Link href="/login" className="btn btn-primary" style={{ padding: '12px 24px' }}>
                   <span>{picante("Unirme a la Quiniela", "¡Entrar a la Madriza! 🏆", spicyMode)}</span>
@@ -807,9 +801,9 @@ export default function HomePage() {
                 )}
               </p>
               <p>
-                <strong>2. Naturaleza del Acceso Gratuito y Demostración:</strong> {picante(
-                  "El registro, uso y participación es totalmente gratuito. La pasarela de cobro técnico (Stripe) y el sistema de canje de cupones se mantienen habilitados estrictamente como demostraciones en Modo de Prueba (Test Mode) para exhibir las destrezas de ingeniería y portafolio del desarrollador.",
-                  "¡El registro es gratis y para toda la banda! Dejamos el portal de pagos de Stripe encendido en 'Modo Demo' para que puedas jugarle al magnate simulando transferencias sin gastar un centavo, y de paso veas el portafolio de mi programador estrella. 😎💻",
+                <strong>2. Naturaleza del Acceso Gratuito:</strong> {picante(
+                  "El registro, uso y participación es totalmente gratuito. El sistema de pagos (Stripe) y de cupones prepago ha sido completamente removido, permitiendo un acceso libre e inmediato a la captura de pronósticos para todos los participantes sin costo alguno.",
+                  "¡El registro es gratis y para toda la banda! Quitamos por completo la pasarela de pagos de Stripe y el canje de cupones para que puedas registrar tus marcadores libremente sin gastar un centavo. 😎💻",
                   spicyMode
                 )}
               </p>

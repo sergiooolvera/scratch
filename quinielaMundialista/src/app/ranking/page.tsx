@@ -345,13 +345,12 @@ export default function RankingPage() {
                     </div>
                   </div>
                 </th>
-                <th style={{ width: '110px', textAlign: 'center' }}>Boleto</th>
               </tr>
             </thead>
             <tbody>
               {displayedLeaderboard.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
                     No se encontraron participantes.
                   </td>
                 </tr>
@@ -364,8 +363,7 @@ export default function RankingPage() {
                       className="ranking-row" 
                       onClick={() => setSelectedPlayer(player)}
                       style={{
-                        cursor: 'pointer',
-                        background: player.is_active ? undefined : 'rgba(239, 68, 68, 0.02)'
+                        cursor: 'pointer'
                       }}
                       title="Haz clic para ver los pronósticos de este jugador"
                     >
@@ -404,15 +402,6 @@ export default function RankingPage() {
                       {/* Tie-breaker 2: Goals absolute diff error */}
                       <td style={{ textAlign: 'center', color: 'var(--text-secondary)', verticalAlign: 'middle' }}>
                         ⚽ {player.goal_difference}
-                      </td>
-
-                      {/* Active Payment ticket status */}
-                      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                        {player.is_active ? (
-                          <span className="badge badge-paid" title="Boleto Activo">Activo</span>
-                        ) : (
-                          <span className="badge badge-unpaid" title="Pago Pendiente">Pendiente</span>
-                        )}
                       </td>
                     </tr>
                   );
