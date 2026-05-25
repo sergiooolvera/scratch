@@ -102,81 +102,88 @@ export default function QuinielaPage() {
     showToast(msgs[mode]);
   };
 
-  // Fetch Matches and Predictions
-  const fetchData = async () => {
-    if (matches.length === 0) {
-      setPageLoading(true);
-    }
-    
-    // Safety fallback timer to prevent permanent loading screens (e.g. tab sleep)
-    const safetyTimer = setTimeout(() => {
-      setPageLoading(false);
-    }, 2500);
-
-    console.log('[DEBUG] NEXT_PUBLIC_SUPABASE_URL used in browser:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-
-    try {
-      setFetchError(null);
-      // 1. Fetch matches sorted by time
-      const { data: matchesData, error: matchesError } = await supabase
-        .from('qui_matches')
-        .select('*')
-        .order('match_time', { ascending: true });
-
-      if (matchesError) throw matchesError;
-      setMatches(matchesData || []);
-
-      // 2. Fetch user predictions ONLY if user is logged in
-      if (user) {
-        const { data: predsData, error: predsError } = await supabase
-          .from('qui_predictions')
-          .select('match_id, home_prediction, away_prediction, points_earned, is_exact')
-          .eq('user_id', user.id);
-
-        if (predsError) throw predsError;
-
-        // Index predictions by match_id
-        const predsMap: { [matchId: string]: Prediction } = {};
-        predsData?.forEach((p) => {
-          predsMap[p.match_id] = {
-            match_id: p.match_id,
-            home_prediction: p.home_prediction !== null && p.home_prediction !== undefined ? p.home_prediction : '',
-            away_prediction: p.away_prediction !== null && p.away_prediction !== undefined ? p.away_prediction : '',
-            points_earned: p.points_earned,
-            is_exact: p.is_exact,
-          };
-        });
-        setPredictions(predsMap);
-      } else {
-        setPredictions({});
-      }
-
-      // 3. Fetch system settings for lock hours
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('qui_system_settings')
-        .select('lock_hours_before')
-        .eq('id', 'points_config')
-        .single();
-
-      if (!settingsError && settingsData) {
-        setLockHours(Number(settingsData.lock_hours_before) || 24);
-      }
-    } catch (err: any) {
-      console.error('Error fetching quiniela data:', err.message);
-      setFetchError(err.message || String(err));
-      showToast('Error al cargar partidos.');
-    } finally {
-      clearTimeout(safetyTimer);
-      setPageLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
+    let ignore = false;
+
+    const loadData = async () => {
+      if (matches.length === 0 && !ignore) {
+        setPageLoading(true);
+      }
+      
+      try {
+        setFetchError(null);
+        
+        // 1. Fetch matches sorted by time
+        const { data: matchesData, error: matchesError } = await supabase
+          .from('qui_matches')
+          .select('*')
+          .order('match_time', { ascending: true });
+
+        if (matchesError) throw matchesError;
+        
+        if (!ignore) {
+          setMatches(matchesData || []);
+        }
+
+        // 2. Fetch user predictions ONLY if user is logged in
+        if (user) {
+          const { data: predsData, error: predsError } = await supabase
+            .from('qui_predictions')
+            .select('match_id, home_prediction, away_prediction, points_earned, is_exact')
+            .eq('user_id', user.id);
+
+          if (predsError) throw predsError;
+
+          if (!ignore) {
+            const predsMap: { [matchId: string]: Prediction } = {};
+            predsData?.forEach((p) => {
+              predsMap[p.match_id] = {
+                match_id: p.match_id,
+                home_prediction: p.home_prediction !== null && p.home_prediction !== undefined ? p.home_prediction : '',
+                away_prediction: p.away_prediction !== null && p.away_prediction !== undefined ? p.away_prediction : '',
+                points_earned: p.points_earned,
+                is_exact: p.is_exact,
+              };
+            });
+            setPredictions(predsMap);
+          }
+        } else if (!ignore) {
+          setPredictions({});
+        }
+
+        // 3. Fetch system settings for lock hours
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('qui_system_settings')
+          .select('lock_hours_before')
+          .eq('id', 'points_config')
+          .single();
+
+        if (!settingsError && settingsData && !ignore) {
+          setLockHours(Number(settingsData.lock_hours_before) || 24);
+        }
+      } catch (err: any) {
+        if (!ignore) {
+          console.error('Error fetching quiniela data:', err.message);
+          setFetchError(err.message || String(err));
+          showToast('Error al cargar partidos.');
+        }
+      } finally {
+        if (!ignore) {
+          setPageLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
     if (user && refreshProfile) {
       refreshProfile();
     }
-  }, [user]);
+
+    return () => {
+      ignore = true;
+    };
+  }, [user]); // fetchData removed, logic placed inside useEffect to avoid stale closures
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
