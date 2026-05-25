@@ -37,9 +37,9 @@ CREATE POLICY "Allow users to update their own profile"
 CREATE TABLE IF NOT EXISTS public.qui_system_settings (
     id TEXT PRIMARY KEY DEFAULT 'points_config',
     points_exact_score INTEGER DEFAULT 5,
-    points_correct_winner INTEGER DEFAULT 3,
-    points_correct_draw INTEGER DEFAULT 3,
-    points_incorrect INTEGER DEFAULT 0,
+    points_correct_winner INTEGER DEFAULT 1,
+    points_correct_draw INTEGER DEFAULT 1,
+    points_incorrect INTEGER DEFAULT 1,
     lock_hours_before INTEGER DEFAULT 24,
     ticket_cost NUMERIC DEFAULT 200.00,
     pool_accumulated NUMERIC DEFAULT 0.00,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.qui_system_settings (
 
 -- Insert default system settings if not exists
 INSERT INTO public.qui_system_settings (id, points_exact_score, points_correct_winner, points_correct_draw, points_incorrect, lock_hours_before, ticket_cost, pool_accumulated, pct_first_place, pct_second_place, pct_third_place)
-VALUES ('points_config', 5, 3, 3, 0, 24, 200.00, 0.00, 50, 25, 5)
+VALUES ('points_config', 5, 1, 1, 1, 24, 200.00, 0.00, 50, 25, 5)
 ON CONFLICT (id) DO NOTHING;
 
 -- Enable RLS on Settings

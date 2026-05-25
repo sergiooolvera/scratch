@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/AuthContext';
 import { Lock, Mail, User, ShieldCheck, AlertTriangle, Gift } from 'lucide-react';
+import { picante } from '@/lib/spicy';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, spicyMode } = useAuth();
   
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -453,36 +454,60 @@ export default function LoginPage() {
           zIndex: 9999,
           padding: '20px'
         }} onClick={() => setShowTerms(false)}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.99) 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '20px',
+          <div className="glass-panel" style={{
             maxWidth: '600px',
             width: '100%',
             maxHeight: '80vh',
             overflowY: 'auto',
             padding: '30px 24px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
             position: 'relative'
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--accent-gold)', marginBottom: '18px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', textTransform: 'uppercase' }}>
-              Aviso Legal y Exención de Responsabilidad
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--accent-gold)', marginBottom: '18px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '12px', textTransform: 'uppercase' }}>
+              {picante("Aviso Legal y Exención de Responsabilidad", "Aviso Legal y de no andar con lloraderas", spicyMode)}
             </h3>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
               <p>
-                <strong>1. Carácter de Mero Entretenimiento:</strong> QuiMundial es una plataforma recreativa y privada orientada exclusivamente al esparcimiento deportivo con motivo del Mundial 2026. Bajo ninguna circunstancia opera, promueve, ni facilita actividades de apuestas comerciales o juegos de azar regulados por la Ley Federal de Juegos y Sorteos de México.
+                <strong>1. Carácter de Mero Entretenimiento:</strong> {picante(
+                  "QuiMundial es una plataforma 100% gratuita, recreativa y privada orientada exclusivamente al esparcimiento deportivo con motivo del Mundial 2026. Bajo ninguna circunstancia opera, promueve, ni facilita actividades de apuestas comerciales o juegos de azar, siendo de libre registro y participación.",
+                  "QuiMundial es una reta 100% lúdica y recreativa de amigos de la cuadra. Aquí nadie te va a cobrar ni un peso partido por la mitad por registrar tus corazonadas, cumpliendo al cien con la Ley Federal de Juegos y Sorteos.",
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>2. Naturaleza de las Aportaciones:</strong> Los montos ingresados por los usuarios tienen el carácter estricto de <strong>Cooperaciones Voluntarias de Mantenimiento</strong>. Dichos fondos se utilizan exclusivamente para sufragar el hospedaje en servidores en la nube, ancho de banda, APIs de banderas e infraestructura técnica necesaria para habilitar la plataforma. No existe reembolso de aportaciones bajo ningún supuesto.
+                <strong>2. Naturaleza del Acceso Gratuito:</strong> {picante(
+                  "El registro, uso y participación es totalmente gratuito, permitiendo un acceso libre e inmediato a la captura de pronósticos para todos los participantes sin costo alguno.",
+                  "¡El registro es gratis y para toda la banda! Puedes registrar tus marcadores libremente sin gastar un centavo. 😎💻",
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>3. Bolsa Simbólica (Frijolitos):</strong> Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de {poolTotal.toLocaleString()} Frijolitos (puntos recreativos de entretenimiento) a repartir de forma amistosa entre los participantes con mayor puntaje al finalizar el torneo. Estos puntos no tienen equivalencia ni valor de cambio financiero inmediato garantizado por la plataforma.
+                <strong>3. Bolsa Simbólica (Frijolitos de Honor):</strong> {picante(
+                  `Para enfatizar el carácter lúdico del torneo, la bolsa acumulada se representa y distribuye en una métrica virtual de ${poolTotal.toLocaleString()} Frijolitos de honor, los cuales representan reputación deportiva y orgullo amistoso sin valor monetario real.`,
+                  `Los Frijolitos son virtuales y representan pura carrilla sana y créditos de honor. El que gane se lleva la corona del barrio y el derecho a recordarle a todos quién manda, pero cero dinero real de por medio.`,
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>4. Red de Promotores Solidarios:</strong> Los usuarios que soliciten expresamente y obtengan aprobación administrativa como "Promotores" pueden invitar a nuevos participantes compartiendo su código exclusivo de referido. En caso de que dichos invitados realicen cooperaciones voluntarias de mantenimiento para sufragar costos del servidor: (a) El <strong>50%</strong> de dicho apoyo se destina a cubrir gastos de servidores y APIs de QuiMundial. (b) El <strong>50%</strong> restante se compartirá con el Promotor en agradecimiento por su coordinación y expansión de la comunidad.
+                <strong>4. Causa Social y Búsqueda de Oportunidades:</strong> {picante(
+                  "Este proyecto ha sido desarrollado e impulsado con dedicación por personas que nos quedamos sin empleo recientemente y que estamos preocupados por el bienestar de nuestras familias, queremos que nos veas y si te agrada el trabajo pues que juntos nos apoyemos para crear oportunidades laborales.",
+                  "Este proyecto nació del esfuerzo de personas talentosas que perdieron su empleo pero no las ganas de crear. Si te gusta lo que ves, compártelo y ayúdanos a mostrar nuestro trabajo para generar nuevas oportunidades. ¡Gratis para ti, esperanza para nosotros!",
+                  spicyMode
+                )}
               </p>
               <p>
-                <strong>5. Aceptación de Condiciones:</strong> El uso de la plataforma, el registro de perfiles, el envío de solicitudes de promotor y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.
+                <strong>5. Comunicaciones y Autorización de Contacto:</strong> {picante(
+                  "Al registrarse, el usuario autoriza expresamente a QuiMundial para enviar comunicaciones vía correo electrónico y/o mensajes con fines informativos, promocionales y de publicidad. El usuario podrá darse de baja en cualquier momento mediante el enlace de cancelación incluido en cada comunicación.",
+                  "Al registrarte aceptas que te mandemos uno que otro correo o mensaje para avisarte de novedades, resultados y cosas interesantes de la quiniela. Si te llega a molestar la publicidad, siempre puedes cancelar la suscripción con un solo clic al final del mensaje. Sin presiones, prometido.",
+                  spicyMode
+                )}
+              </p>
+              <p>
+                <strong>6. Aceptación de Condiciones:</strong> {picante(
+                  "El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de todos los presentes términos y condiciones generales por parte de los usuarios.",
+                  "Si te metes a jugar, es porque estás de acuerdo con el reglamento de esta reta. ¡Que ruede el balón y que gane el menos tronco!",
+                  spicyMode
+                )}
               </p>
             </div>
             <button className="btn btn-primary" style={{ width: '100%', marginTop: '24px', padding: '12px' }} onClick={() => setShowTerms(false)}>

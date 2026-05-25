@@ -43,9 +43,9 @@ export async function POST(req: Request) {
       .upsert({
         id: 'points_config',
         points_exact_score: safeNum(points_exact_score, 5),
-        points_correct_winner: safeNum(points_correct_winner, 3),
-        points_correct_draw: safeNum(points_correct_draw, 3),
-        points_incorrect: safeNum(points_incorrect, 0),
+        points_correct_winner: safeNum(points_correct_winner, 1),
+        points_correct_draw: safeNum(points_correct_draw, 1),
+        points_incorrect: safeNum(points_incorrect, 1),
         lock_hours_before: safeNum(lock_hours_before, 24),
         ticket_cost: safeNum(ticket_cost, 200.00),
         pool_accumulated: safeNum(pool_accumulated, 0.00),

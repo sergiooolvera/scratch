@@ -8,9 +8,13 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 // Admin client for server-side calculations and operations (bypasses RLS)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
+// Avoid throwing module-level errors if credentials are not loaded yet in the dev server process.
+export const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    })
+  : null as any;
+

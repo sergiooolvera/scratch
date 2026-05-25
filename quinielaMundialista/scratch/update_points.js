@@ -57,9 +57,9 @@ async function run() {
     .upsert({
       id: 'points_config',
       points_exact_score: 5,
-      points_correct_winner: 3,
-      points_correct_draw: 3,
-      points_incorrect: 0
+      points_correct_winner: 1,
+      points_correct_draw: 1,
+      points_incorrect: 1
     });
 
   if (error) {

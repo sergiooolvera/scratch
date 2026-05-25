@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Lock, Save, Calendar, ShieldAlert, Award, Search, Sparkles, CheckCircle2, Check, Trash2 } from 'lucide-react';
+import { Lock, Save, Calendar, ShieldAlert, Award, Search, Sparkles, CheckCircle2, Check, Trash2, X } from 'lucide-react';
 import { picante, getSpicyWinMsg, getSpicyBlunderMsg } from '@/lib/spicy';
+import { playSound } from '@/lib/sounds';
 
 interface Match {
   id: string;
@@ -26,12 +27,13 @@ interface Prediction {
   home_prediction: number | string;
   away_prediction: number | string;
   points_earned?: number;
+  is_exact?: boolean;
 }
 
 // Helpers for Easter Eggs and Mexican Pop Culture References
-const getExactScoreBadgeText = (seedString: string, isSpicy: boolean) => {
+const getExactScoreBadgeText = (seedString: string, isSpicy: boolean, points: number = 5) => {
   if (!isSpicy) {
-    return '🎯 Marcador Exacto (+5 pts) 🔥';
+    return `🎯 Marcador Exacto (+${points} pts) 🔥`;
   }
   return getSpicyWinMsg(seedString);
 };
@@ -68,8 +70,6 @@ export default function QuinielaPage() {
   const [toastMessage, setToastMessage] = useState('');
   const [modifiedMatchIds, setModifiedMatchIds] = useState<Set<string>>(new Set());
   const [isBulkSaving, setIsBulkSaving] = useState(false);
-  const [showSupportModal, setShowSupportModal] = useState(false);
-  const [copiedSupportCLABE, setCopiedSupportCLABE] = useState(false);
   
   // Simulator lock state for testing
   const [simMode, setSimMode] = useState<'real' | 'bypass' | 'force_all' | 'world_cup'>('real');
@@ -79,9 +79,14 @@ export default function QuinielaPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setSimMode((localStorage.getItem('sim_mode_24h') as any) || 'real');
+      const savedMode = localStorage.getItem('sim_mode_24h') || 'real';
+      if (profile?.is_admin) {
+        setSimMode(savedMode as any);
+      } else {
+        setSimMode('real');
+      }
     }
-  }, []);
+  }, [profile]);
 
   const changeSimMode = (mode: 'real' | 'bypass' | 'force_all' | 'world_cup') => {
     setSimMode(mode);
@@ -97,16 +102,8 @@ export default function QuinielaPage() {
     showToast(msgs[mode]);
   };
 
-  // Reroute if not logged in
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
   // Fetch Matches and Predictions
   const fetchData = async () => {
-    if (!user) return;
     if (matches.length === 0) {
       setPageLoading(true);
     }
@@ -115,6 +112,8 @@ export default function QuinielaPage() {
     const safetyTimer = setTimeout(() => {
       setPageLoading(false);
     }, 2500);
+
+    console.log('[DEBUG] NEXT_PUBLIC_SUPABASE_URL used in browser:', process.env.NEXT_PUBLIC_SUPABASE_URL);
 
     try {
       setFetchError(null);
@@ -125,28 +124,32 @@ export default function QuinielaPage() {
         .order('match_time', { ascending: true });
 
       if (matchesError) throw matchesError;
-
-      // 2. Fetch user predictions
-      const { data: predsData, error: predsError } = await supabase
-        .from('qui_predictions')
-        .select('match_id, home_prediction, away_prediction, points_earned')
-        .eq('user_id', user.id);
-
-      if (predsError) throw predsError;
-
       setMatches(matchesData || []);
 
-      // Index predictions by match_id
-      const predsMap: { [matchId: string]: Prediction } = {};
-      predsData?.forEach((p) => {
-        predsMap[p.match_id] = {
-          match_id: p.match_id,
-          home_prediction: p.home_prediction !== null && p.home_prediction !== undefined ? p.home_prediction : '',
-          away_prediction: p.away_prediction !== null && p.away_prediction !== undefined ? p.away_prediction : '',
-          points_earned: p.points_earned,
-        };
-      });
-      setPredictions(predsMap);
+      // 2. Fetch user predictions ONLY if user is logged in
+      if (user) {
+        const { data: predsData, error: predsError } = await supabase
+          .from('qui_predictions')
+          .select('match_id, home_prediction, away_prediction, points_earned, is_exact')
+          .eq('user_id', user.id);
+
+        if (predsError) throw predsError;
+
+        // Index predictions by match_id
+        const predsMap: { [matchId: string]: Prediction } = {};
+        predsData?.forEach((p) => {
+          predsMap[p.match_id] = {
+            match_id: p.match_id,
+            home_prediction: p.home_prediction !== null && p.home_prediction !== undefined ? p.home_prediction : '',
+            away_prediction: p.away_prediction !== null && p.away_prediction !== undefined ? p.away_prediction : '',
+            points_earned: p.points_earned,
+            is_exact: p.is_exact,
+          };
+        });
+        setPredictions(predsMap);
+      } else {
+        setPredictions({});
+      }
 
       // 3. Fetch system settings for lock hours
       const { data: settingsData, error: settingsError } = await supabase
@@ -169,11 +172,9 @@ export default function QuinielaPage() {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-      if (refreshProfile) {
-        refreshProfile();
-      }
+    fetchData();
+    if (user && refreshProfile) {
+      refreshProfile();
     }
   }, [user]);
 
@@ -275,14 +276,24 @@ export default function QuinielaPage() {
   };
 
   const savePrediction = async (matchId: string) => {
-    if (!user) return;
+    if (!user) {
+      showToast(picante(
+        "Debe iniciar sesión o registrarse para guardar su pronóstico.",
+        "⚠️ ¡Epa, compadre! Regístrate o inicia sesión para que tus goles queden guardados.",
+        spicyMode
+      ));
+      setTimeout(() => {
+        router.push('/login?redirect=/quiniela');
+      }, 2000);
+      return;
+    }
     
     // Platform is 100% free - no active check needed
 
     const pred = predictions[matchId];
     if (!pred || pred.home_prediction === '' || pred.away_prediction === '') {
       showToast(picante(
-        "⚠️ Por favor captura ambos marcadores antes de guardar.",
+        "Capture ambos marcadores antes de guardar.",
         "⚠️ ¡No andes de flojo! Ponle números a ambos marcadores antes de guardar.",
         spicyMode
       ));
@@ -327,7 +338,7 @@ export default function QuinielaPage() {
         return newSet;
       });
       showToast(picante(
-        "¡Pronóstico guardado exitosamente!",
+        "Pronóstico guardado exitosamente.",
         "⚽ ¡Golazo! Guardado al primer poste y con efecto.",
         spicyMode
       ));
@@ -374,16 +385,17 @@ export default function QuinielaPage() {
     });
 
     if (filledCount > 0) {
+      playSound('magic');
       setPredictions(newPredictions);
       setModifiedMatchIds(newModified);
       showToast(picante(
-        `✨ Se han autollenado ${filledCount} marcadores. ¡No olvides guardarlos!`,
+        `Se han autocompletado ${filledCount} marcadores. No olvide guardarlos.`,
         `✨ ¡Al aventón! Autollenamos ${filledCount} marcadores. ¡Guárdalos antes de que se te vaya el tren! 🚊`,
         spicyMode
       ));
     } else {
       showToast(picante(
-        '⚠️ No hay marcadores vacíos o editables para autollenar.',
+        'No hay marcadores vacíos o editables para autocompletar.',
         '⚠️ ¡Ya está todo listo! No andes de ocioso buscando qué más rellenar.',
         spicyMode
       ));
@@ -392,7 +404,14 @@ export default function QuinielaPage() {
 
   // Clear all editable predictions back to empty strings and delete from DB
   const handleClearAll = async () => {
-    if (!user) return;
+    if (!user) {
+      showToast(picante(
+        "Debe iniciar sesión o registrarse para limpiar sus pronósticos.",
+        "⚠️ ¡Epa! Inicia sesión primero para poder limpiar marcadores.",
+        spicyMode
+      ));
+      return;
+    }
 
     let clearedCount = 0;
     const affectedMatchIds: string[] = [];
@@ -410,7 +429,7 @@ export default function QuinielaPage() {
 
     if (clearedCount === 0) {
       showToast(picante(
-        '⚠️ No hay marcadores editables con datos para limpiar.',
+        'No hay marcadores editables con datos para limpiar.',
         '⚠️ ¡Ya está limpio! No hay nada más que barrer aquí.',
         spicyMode
       ));
@@ -478,7 +497,7 @@ export default function QuinielaPage() {
       });
 
       showToast(picante(
-        `✨ Se han eliminado ${clearedCount} marcadores guardados y editables.`,
+        `Se han eliminado ${clearedCount} marcadores guardados y editables.`,
         `🗑️ ¡Borrón y cuenta nueva! Eliminamos tus ${clearedCount} marcadores. ¡Listos para capturar de nuevo!`,
         spicyMode
       ));
@@ -496,7 +515,17 @@ export default function QuinielaPage() {
 
   // Bulk save all edited predictions
   const saveAllPredictions = async () => {
-    if (!user) return;
+    if (!user) {
+      showToast(picante(
+        "Debe iniciar sesión o registrarse para guardar sus pronósticos.",
+        "⚠️ ¡Epa, compadre! Regístrate o inicia sesión para guardar tus pronósticos de un jalón.",
+        spicyMode
+      ));
+      setTimeout(() => {
+        router.push('/login?redirect=/quiniela');
+      }, 2000);
+      return;
+    }
     
     // Platform is 100% free - no active check needed
 
@@ -522,7 +551,7 @@ export default function QuinielaPage() {
 
     if (predictionsToSubmit.length === 0) {
       showToast(picante(
-        '⚠️ No tienes cambios pendientes o válidos por guardar.',
+        'No hay cambios pendientes o válidos por guardar.',
         '⚠️ ¡No le muevas! No hay cambios nuevos por guardar.',
         spicyMode
       ));
@@ -577,9 +606,10 @@ export default function QuinielaPage() {
         });
         return next;
       });
+      playSound('airhorn');
       setModifiedMatchIds(new Set());
       showToast(picante(
-        `💾 ¡Se han guardado ${predictionsToSubmit.length} pronósticos exitosamente!`,
+        `Se han guardado ${predictionsToSubmit.length} pronósticos exitosamente.`,
         `💾 ¡A la red! Guardamos tus ${predictionsToSubmit.length} pronósticos de un solo trancazo.`,
         spicyMode
       ));
@@ -597,7 +627,7 @@ export default function QuinielaPage() {
       
       const isTimeout = err.name === 'AbortError';
       showToast(picante(
-        isTimeout ? '⚠️ La conexión tardó demasiado. Intenta guardar de nuevo.' : (err.message || 'Error al guardar los pronósticos.'),
+        isTimeout ? 'La conexión tardó demasiado. Intente guardar de nuevo.' : (err.message || 'Error al guardar los pronósticos.'),
         isTimeout ? '⏰ ¡Tiempo fuera! El tiro tardó demasiado en llegar a la portería. Inténtalo de nuevo.' : "¡Chispas! Se nos desinfló el balón al intentar el tiro masivo. Vuélvele a calar.",
         spicyMode
       ));
@@ -657,7 +687,8 @@ export default function QuinielaPage() {
     });
   }
 
-  const isInactive = !!(profile && !profile.is_active && simMode !== 'bypass');
+  // Active status checks removed per user request: registered and confirmed users can save predictions immediately.
+  const isInactive = false;
 
   return (
     <div>
@@ -672,7 +703,7 @@ export default function QuinielaPage() {
       {/* Fetch Error Display */}
       {fetchError && (
         <div className="glass-panel" style={{
-          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%)',
+          background: 'var(--panel-error-bg)',
           borderColor: 'rgba(239, 68, 68, 0.3)',
           marginBottom: '24px',
           padding: '20px',
@@ -691,7 +722,7 @@ export default function QuinielaPage() {
       {/* Pending Confirmation Alert */}
       {isInactive && (
         <div className="glass-panel" style={{
-          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          background: 'var(--panel-inactive-bg)',
           borderColor: 'rgba(245, 158, 11, 0.35)',
           marginBottom: '24px',
           padding: '20px 24px',
@@ -724,40 +755,42 @@ export default function QuinielaPage() {
 
         {/* Test Simulator Controls & Tab switcher */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{
-            background: 'rgba(245, 158, 11, 0.06)',
-            border: '1px solid rgba(245, 158, 11, 0.2)',
-            borderRadius: '12px',
-            padding: '6px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            backdropFilter: 'blur(8px)'
-          }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-              🔧 Simulación {lockHours}h
-            </span>
-            <select
-              value={simMode}
-              onChange={(e) => changeSimMode(e.target.value as any)}
-              style={{
-                background: '#030712',
-                border: '1px solid var(--border-glass)',
-                color: 'var(--text-primary)',
-                borderRadius: '8px',
-                padding: '4px 8px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                outline: 'none'
-              }}
-            >
-              <option value="real">⏱️ Tiempo Real (Normal)</option>
-              <option value="bypass">🔓 Bypass (Desbloquear Todo)</option>
-              <option value="force_all">🔒 Forzar Bloqueo Total</option>
-              <option value="world_cup">📅 Simular Mundial (11-Jun-2026)</option>
-            </select>
-          </div>
+          {profile?.is_admin && (
+            <div style={{
+              background: 'var(--panel-sim-bg)',
+              border: '1px solid rgba(245, 158, 11, 0.2)',
+              borderRadius: '12px',
+              padding: '6px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              backdropFilter: 'blur(8px)'
+            }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                🔧 Simulación {lockHours}h
+              </span>
+              <select
+                value={simMode}
+                onChange={(e) => changeSimMode(e.target.value as any)}
+                style={{
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border-glass)',
+                  color: 'var(--text-primary)',
+                  borderRadius: '8px',
+                  padding: '4px 8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                <option value="real">⏱️ Tiempo Real (Normal)</option>
+                <option value="bypass">🔓 Bypass (Desbloquear Todo)</option>
+                <option value="force_all">🔒 Forzar Bloqueo Total</option>
+                <option value="world_cup">📅 Simular Mundial (11-Jun-2026)</option>
+              </select>
+            </div>
+          )}
 
           <div className="tab-container" style={{ margin: 0 }}>
             <button 
@@ -778,7 +811,7 @@ export default function QuinielaPage() {
 
       {/* Premium Prediction Control Actions Bar */}
       <div className="glass-panel" style={{
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(30, 41, 59, 0.4) 100%)',
+        background: 'var(--panel-actions-bg)',
         border: '1px solid rgba(16, 185, 129, 0.15)',
         marginBottom: '24px',
         padding: '16px 20px',
@@ -1122,13 +1155,13 @@ export default function QuinielaPage() {
                     {match.status === 'finished' && predictions[match.id] && (
                       <div className="prediction-box-meta">
                         <span>Puntos Obtenidos:</span>
-                        {predictions[match.id]?.points_earned === 5 ? (
+                        {predictions[match.id]?.is_exact ? (
                           <span className="points-earned-tag" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)', border: '1px solid rgba(245, 158, 11, 0.3)', color: 'var(--accent-gold)' }}>
-                            {getExactScoreBadgeText(`${match.id}-${user?.id}`, spicyMode)}
+                            {getExactScoreBadgeText(`${match.id}-${user?.id}`, spicyMode, predictions[match.id]?.points_earned || 0)}
                           </span>
-                        ) : predictions[match.id]?.points_earned === 3 ? (
+                        ) : (predictions[match.id]?.points_earned || 0) > 0 ? (
                           <span className="points-earned-tag">
-                            🏃‍♂️ Resultado Correcto +3 pts
+                            ✅ Acertó Ganador/Empate +{predictions[match.id]?.points_earned} {predictions[match.id]?.points_earned === 1 ? 'pt' : 'pts'}
                           </span>
                         ) : (
                           (() => {
@@ -1163,7 +1196,7 @@ export default function QuinielaPage() {
           transform: 'translateX(-50%)',
           width: '90%',
           maxWidth: '650px',
-          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(3, 7, 18, 0.95) 100%)',
+          background: 'var(--bg-toast)',
           border: '2px solid rgba(16, 185, 129, 0.5)',
           borderRadius: '20px',
           padding: '14px 24px',
@@ -1211,7 +1244,7 @@ export default function QuinielaPage() {
                 padding: '8px 14px',
                 fontSize: '0.78rem',
                 fontWeight: 700,
-                borderColor: 'rgba(255,255,255,0.1)'
+                borderColor: 'var(--border-glass)'
               }}
             >
               <span>Auto-llenar vacíos ✨</span>
@@ -1251,246 +1284,6 @@ export default function QuinielaPage() {
                   <span>Guardar Todo</span>
                 </>
               )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Floating Support Button */}
-      <button
-        onClick={() => setShowSupportModal(true)}
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          background: 'linear-gradient(135deg, var(--accent-gold) 0%, #b45309 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          borderRadius: '50px',
-          padding: '12px 20px',
-          color: '#030712',
-          fontWeight: 800,
-          fontSize: '0.85rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          boxShadow: '0 8px 24px rgba(245, 158, 11, 0.4)',
-          cursor: 'pointer',
-          zIndex: 999,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          animation: 'pulse 2.5s infinite'
-        }}
-        className="floating-support-btn"
-        title="Apoyar a la plataforma"
-      >
-        <span style={{ fontSize: '1.1rem' }}>☕</span>
-        <span className="mobile-hide">Apoyar plataforma</span>
-      </button>
-
-      {/* Support / Donation Modal */}
-      {showSupportModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(3, 7, 18, 0.85)',
-          backdropFilter: 'blur(16px)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 10000,
-          padding: '20px'
-        }} onClick={() => setShowSupportModal(false)}>
-          <div className="glass-panel" style={{
-            maxWidth: '500px',
-            width: '100%',
-            padding: '36px 24px',
-            textAlign: 'center',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.04) 0%, rgba(3, 7, 18, 0.96) 100%)',
-            boxShadow: '0 20px 40px rgba(245, 158, 11, 0.1)',
-            borderRadius: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '18px',
-            position: 'relative'
-          }} onClick={(e) => e.stopPropagation()}>
-            
-            <div style={{
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '2px solid var(--accent-gold)',
-              borderRadius: '50%',
-              padding: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--accent-gold)',
-              boxShadow: '0 0 20px rgba(245, 158, 11, 0.2)'
-            }}>
-              <span style={{ fontSize: '2rem' }}>🎁</span>
-            </div>
-
-            <h3 style={{
-              fontSize: '1.4rem',
-              fontWeight: 900,
-              color: '#ffffff',
-              margin: 0,
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase'
-            }}>
-              Apoyar a QuiMundial ☕
-            </h3>
-
-            <p style={{
-              fontSize: '0.88rem',
-              color: 'var(--text-secondary)',
-              lineHeight: 1.6,
-              margin: 0
-            }}>
-              QuiMundial es una plataforma recreativa 100% gratuita y sin anuncios comerciales. 
-              Sin embargo, los servidores en la nube, las bases de datos rápidas y los envíos automáticos de correos tienen costos mensuales fijos.
-              <br />
-              <strong style={{ color: 'var(--accent-gold)', display: 'block', marginTop: '6px' }}>
-                ¡Cualquier cooperación voluntaria de mantenimiento ayuda al proyecto!
-              </strong>
-            </p>
-
-            {/* SPEI CLABE Transfer option */}
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-              borderRadius: '16px',
-              padding: '16px',
-              width: '100%',
-              textAlign: 'left',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px'
-            }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Opción 1: Transferencia SPEI (Sin comisiones)
-              </span>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px', alignItems: 'center' }}>
-                <div style={{ lineHeight: 1.4 }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>CLABE Interbancaria (BBVA)</span>
-                  <strong style={{ fontSize: '1rem', color: '#ffffff', fontFamily: 'monospace', letterSpacing: '0.5px' }}>
-                    012 180 00470119024 6
-                  </strong>
-                </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText('012180004701190246');
-                    setCopiedSupportCLABE(true);
-                    setTimeout(() => setCopiedSupportCLABE(false), 2000);
-                  }}
-                  className="btn btn-secondary"
-                  style={{
-                    padding: '8px 12px',
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    borderColor: copiedSupportCLABE ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255,255,255,0.1)',
-                    color: copiedSupportCLABE ? 'var(--accent-neon-green)' : '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  {copiedSupportCLABE ? <Check size={12} /> : null}
-                  <span>{copiedSupportCLABE ? '¡Copiado!' : 'Copiar CLABE'}</span>
-                </button>
-              </div>
-
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                <span>Beneficiario: <strong>Sergio Olvera</strong></span>
-                <span>Banco: <strong>BBVA</strong></span>
-              </div>
-            </div>
-
-            {/* Alternative Links */}
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-              borderRadius: '16px',
-              padding: '16px',
-              width: '100%',
-              textAlign: 'left',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px'
-            }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Opción 2: Pago rápido en línea
-              </span>
-
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <a
-                  href="https://link.mercadopago.com.mx/sergioolvera"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-primary"
-                  style={{
-                    flex: 1,
-                    padding: '10px 14px',
-                    fontSize: '0.78rem',
-                    fontWeight: 800,
-                    textAlign: 'center',
-                    background: '#009ee3',
-                    borderColor: '#009ee3',
-                    color: '#ffffff',
-                    textDecoration: 'none'
-                  }}
-                >
-                  💳 Mercado Pago
-                </a>
-
-                <a
-                  href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=serrgio.olver@gmail.com&item_name=Apoyo%20Quiniela%20Mundialista&currency_code=MXN"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-gold"
-                  style={{
-                    flex: 1,
-                    padding: '10px 14px',
-                    fontSize: '0.78rem',
-                    fontWeight: 800,
-                    textAlign: 'center',
-                    textDecoration: 'none'
-                  }}
-                >
-                  🔵 PayPal Link
-                </a>
-              </div>
-            </div>
-
-            {/* Tip futbolero */}
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.03)',
-              border: '1px solid rgba(16, 185, 129, 0.15)',
-              borderRadius: '12px',
-              padding: '12px 14px',
-              width: '100%',
-              fontSize: '0.78rem',
-              color: 'var(--text-secondary)',
-              textAlign: 'left',
-              lineHeight: 1.4
-            }}>
-              💡 <strong>Tip futbolero de transferencia:</strong> Al realizar tu SPEI o pago, por favor pon en el concepto de pago tu <strong>nombre de usuario (@{profile?.username || 'user'})</strong> o la palabra <strong>"Apoyo"</strong> para mantener en orden las cuentas con el banco.
-            </div>
-
-            <button
-              className="btn btn-secondary"
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginTop: '6px',
-                fontWeight: 700
-              }}
-              onClick={() => setShowSupportModal(false)}
-            >
-              Cerrar Ventana
             </button>
           </div>
         </div>

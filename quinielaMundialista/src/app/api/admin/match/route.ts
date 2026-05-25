@@ -183,7 +183,7 @@ export async function POST(req: Request) {
           .eq('match_id', mId);
         
         const predictionMap = new Map();
-        matchPredictions?.forEach(p => {
+        matchPredictions?.forEach((p: any) => {
           predictionMap.set(p.user_id, p);
         });
 
@@ -214,23 +214,23 @@ export async function POST(req: Request) {
               
               if (pHome === hScore && pAway === aScore) {
                 pointsEarned = ptsExact;
-                matchOutcomeText = '¡Exacto! 🎯';
+                matchOutcomeText = 'Exacto';
               } else if (realWinner === predWinner) {
                 if (realWinner === 'draw') {
                   pointsEarned = ptsDraw;
-                  matchOutcomeText = 'Resultado correcto (Empate) 🤝';
+                  matchOutcomeText = 'Resultado correcto (Empate)';
                 } else {
                   pointsEarned = ptsWinner;
-                  matchOutcomeText = 'Resultado correcto (Ganador) 🏃‍♂️';
+                  matchOutcomeText = 'Resultado correcto (Ganador)';
                 }
               } else {
                 pointsEarned = ptsIncorrect;
-                matchOutcomeText = 'Errado ❌';
+                matchOutcomeText = 'Errado';
               }
               
-              notifMsg = `⚽ Marcador oficial: ${homeTeamName} ${hScore} - ${aScore} ${awayTeamName}. Tu pronóstico: ${pHome} - ${pAway} (${matchOutcomeText}). Sumaste +${pointsEarned} pts. Ocupas el puesto #${rank} con ${prof.points} pts.`;
+              notifMsg = `Marcador oficial: ${homeTeamName} ${hScore} - ${aScore} ${awayTeamName}. Tu pronóstico: ${pHome} - ${pAway} (${matchOutcomeText}). Sumaste +${pointsEarned} pts. Ocupas el puesto #${rank} con ${prof.points} pts.`;
             } else {
-              notifMsg = `⚽ Marcador oficial: ${homeTeamName} ${hScore} - ${aScore} ${awayTeamName}. No registraste pronóstico para este partido (+0 pts). Ocupas el puesto #${rank} con ${prof.points} pts.`;
+              notifMsg = `Marcador oficial: ${homeTeamName} ${hScore} - ${aScore} ${awayTeamName}. No registraste pronóstico para este partido (+0 pts). Ocupas el puesto #${rank} con ${prof.points} pts.`;
             }
 
             // Insert notification

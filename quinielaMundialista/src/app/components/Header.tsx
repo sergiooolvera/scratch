@@ -6,14 +6,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { Trophy, LogIn, LogOut, LayoutDashboard, TableProperties, ShieldAlert, CreditCard, Bell, Check, X, Trash2, BadgeDollarSign } from 'lucide-react';
+import { Trophy, LogIn, LogOut, LayoutDashboard, TableProperties, ShieldAlert, CreditCard, Bell, Check, X, Trash2, BadgeDollarSign, Volume2, VolumeX, Sun, Moon } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const pathname = usePathname();
-  const { user, profile, loading, logout, spicyMode, setSpicyMode } = useAuth();
+  const { user, profile, loading, logout, spicyMode, setSpicyMode, soundMuted, setSoundMuted, theme, setTheme } = useAuth();
   
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifDrawer, setShowNotifDrawer] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -142,12 +143,10 @@ export const Header: React.FC = () => {
           <span>Inicio</span>
         </Link>
         
-        {user && (
-          <Link href="/quiniela" className={`nav-link ${isActive('/quiniela') ? 'active' : ''}`}>
-            <TableProperties size={18} />
-            <span>Mi Quiniela</span>
-          </Link>
-        )}
+        <Link href="/quiniela" className={`nav-link ${isActive('/quiniela') ? 'active' : ''}`}>
+          <TableProperties size={18} />
+          <span>Mi Quiniela</span>
+        </Link>
 
         <Link href="/ranking" className={`nav-link ${isActive('/ranking') ? 'active' : ''}`}>
           <Trophy size={18} />
@@ -157,7 +156,7 @@ export const Header: React.FC = () => {
         {user && (
           <Link href="/promotor" className={`nav-link ${isActive('/promotor') ? 'active' : ''}`}>
             <BadgeDollarSign size={18} />
-            <span>{profile?.role === 'promotor' ? 'Mi Red / Promotor' : 'Ser Promotor'}</span>
+            <span>{profile?.seller_request_status === 'approved' ? 'Mi Red / Promotor' : 'Ser Promotor'}</span>
           </Link>
         )}
 
@@ -175,43 +174,6 @@ export const Header: React.FC = () => {
         ) : user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             
-            {/* Spicy Mode Chili Toggle */}
-            <button
-              onClick={() => setSpicyMode(!spicyMode)}
-              className="btn btn-secondary"
-              style={{
-                padding: '8px 12px',
-                borderRadius: '50px',
-                border: spicyMode ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-glass)',
-                background: spicyMode ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                boxShadow: spicyMode ? '0 0 12px rgba(239, 68, 68, 0.35)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-              title={spicyMode ? "🌶️ Modo Picante Activado (Banter Mexicano en vivo)" : "🌶️ Activar Modo Picante"}
-            >
-              <span style={{ 
-                fontSize: '1rem', 
-                filter: spicyMode ? 'none' : 'grayscale(100%) brightness(0.6)',
-                transform: spicyMode ? 'scale(1.15) rotate(-10deg)' : 'scale(1)',
-                display: 'inline-block',
-                transition: 'all 0.3s ease'
-              }}>
-                🌶️
-              </span>
-              <span style={{ 
-                fontSize: '0.72rem', 
-                fontWeight: 800,
-                color: spicyMode ? 'var(--accent-red)' : 'var(--text-muted)',
-                letterSpacing: '0.05em',
-                textTransform: 'uppercase'
-              }}>
-                {spicyMode ? 'Spicy' : 'Off'}
-              </span>
-            </button>
             <div style={{ position: 'relative' }}>
               <button 
                 onClick={() => setShowNotifDrawer(true)} 
@@ -244,23 +206,200 @@ export const Header: React.FC = () => {
               </button>
             </div>
 
-            <div className="mobile-hide" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
-              <span className="sports-font" style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                {profile?.full_name || user.email?.split('@')[0]}
-              </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--accent-neon-green)', fontWeight: 700 }}>
-                {profile?.points || 0} pts
-              </span>
-            </div>
-            
-            <div className="player-avatar">
-              {(profile?.full_name || user.email || 'U')[0].toUpperCase()}
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px', 
+                  cursor: 'pointer', 
+                  padding: '4px 10px', 
+                  borderRadius: '12px', 
+                  background: showUserMenu ? 'rgba(255, 255, 255, 0.05)' : 'transparent', 
+                  border: showUserMenu ? '1px solid var(--border-glass)' : '1px solid transparent',
+                  transition: 'all 0.2s ease' 
+                }}
+                className="user-profile-trigger"
+              >
+                <div className="mobile-hide" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
+                  <span className="sports-font" style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                    {profile?.full_name || user.email?.split('@')[0]}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-neon-green)', fontWeight: 700 }}>
+                    {profile?.points || 0} pts
+                  </span>
+                </div>
+                
+                <div className="player-avatar" style={{ margin: 0 }}>
+                  {(profile?.full_name || user.email || 'U')[0].toUpperCase()}
+                </div>
+              </div>
+
+              {showUserMenu && (
+                <>
+                  {/* Click outside overlay */}
+                  <div 
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }} 
+                    onClick={() => setShowUserMenu(false)}
+                  />
+                  {/* Dropdown Menu */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    width: '280px',
+                    background: 'var(--bg-toast)',
+                    backdropFilter: 'blur(16px)',
+                    border: '1px solid var(--border-glass)',
+                    borderRadius: '16px',
+                    padding: '16px',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.1)',
+                    zIndex: 999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px',
+                    animation: 'slideDownFade 0.2s ease-out'
+                  }}>
+                    <style>{`
+                      @keyframes slideDownFade {
+                        from { opacity: 0; transform: translateY(-10px); }
+                        to { opacity: 1; transform: translateY(0); }
+                      }
+                    `}</style>
+
+                    {/* User Profile Header (useful for mobile where it's hidden) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '12px' }}>
+                      <div className="player-avatar" style={{ width: '40px', height: '40px', fontSize: '1.2rem', margin: 0 }}>
+                        {(profile?.full_name || user.email || 'U')[0].toUpperCase()}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span className="sports-font" style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {profile?.full_name || user.email?.split('@')[0]}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--accent-neon-green)', fontWeight: 700 }}>
+                          {profile?.points || 0} pts
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Settings Section */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Configuración
+                      </span>
+
+                      {/* Spicy Mode */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1rem' }}>🌶️</span>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>Modo Picante</span>
+                        </div>
+                        <button
+                          onClick={() => setSpicyMode(!spicyMode)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            border: spicyMode ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-glass)',
+                            background: spicyMode ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                            color: spicyMode ? 'var(--accent-red)' : 'var(--text-muted)',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          {spicyMode ? 'ON' : 'OFF'}
+                        </button>
+                      </div>
+
+                      {/* Sound Effects */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {!soundMuted ? (
+                            <Volume2 size={16} style={{ color: 'var(--accent-neon-green)' }} />
+                          ) : (
+                            <VolumeX size={16} style={{ color: 'var(--text-muted)' }} />
+                          )}
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>Efectos de Sonido</span>
+                        </div>
+                        <button
+                          onClick={() => setSoundMuted(!soundMuted)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            border: !soundMuted ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-glass)',
+                            background: !soundMuted ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                            color: !soundMuted ? 'var(--accent-neon-green)' : 'var(--text-muted)',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          {!soundMuted ? 'ON' : 'OFF'}
+                        </button>
+                      </div>
+
+                      {/* Dark/Light Mode Theme */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {theme === 'dark' ? (
+                            <Moon size={16} style={{ color: 'var(--accent-blue)' }} />
+                          ) : (
+                            <Sun size={16} style={{ color: 'var(--accent-gold)' }} />
+                          )}
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>Modo Oscuro</span>
+                        </div>
+                        <button
+                          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            border: theme === 'dark' ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-glass)',
+                            background: theme === 'dark' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                            color: theme === 'dark' ? '#60a5fa' : 'var(--text-muted)',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          {theme === 'dark' ? 'ON' : 'OFF'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Logout Button */}
+                    <button 
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        logout();
+                      }} 
+                      className="btn btn-secondary" 
+                      style={{ 
+                        width: '100%', 
+                        padding: '10px', 
+                        fontSize: '0.8rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '8px', 
+                        marginTop: '6px',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        color: '#f87171',
+                        background: 'rgba(239, 68, 68, 0.05)'
+                      }} 
+                      title="Cerrar sesión"
+                    >
+                      <LogOut size={14} />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
-            <button onClick={logout} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} title="Cerrar sesión">
-              <LogOut size={14} />
-              <span style={{ display: 'none' }} className="tablet-show">Salir</span>
-            </button>
           </div>
         ) : (
           <Link href="/login" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
@@ -278,7 +417,7 @@ export const Header: React.FC = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(3, 7, 18, 0.4)',
+          background: 'var(--notif-drawer-overlay)',
           backdropFilter: 'blur(4px)',
           zIndex: 99999,
           display: 'flex',
@@ -289,9 +428,9 @@ export const Header: React.FC = () => {
             width: '100%',
             maxWidth: '420px',
             height: '100%',
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.99) 100%)',
-            borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.5)',
+            background: 'var(--notif-drawer-bg)',
+            borderLeft: '1px solid var(--notif-drawer-border)',
+            boxShadow: '-10px 0 30px var(--notif-drawer-shadow)',
             display: 'flex',
             flexDirection: 'column',
             animation: 'slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -329,7 +468,7 @@ export const Header: React.FC = () => {
             {notifications.length > 0 && (
               <div style={{
                 padding: '12px 20px',
-                background: 'rgba(255,255,255,0.02)',
+                background: 'var(--notif-drawer-actions-bg)',
                 borderBottom: '1px solid var(--border-glass)',
                 display: 'flex',
                 justifyContent: 'flex-end',
@@ -424,13 +563,13 @@ export const Header: React.FC = () => {
                       lineHeight: 1.45,
                       margin: '0 0 8px 0',
                       paddingRight: '24px',
-                      color: n.read ? 'var(--text-secondary)' : 'var(--text-primary)'
+                      color: n.read ? 'var(--notif-text-secondary)' : 'var(--text-primary)'
                     }}>
                       {n.message}
                     </p>
                     <span style={{
                       fontSize: '0.7rem',
-                      color: 'var(--text-muted)',
+                      color: 'var(--notif-text-muted)',
                       fontWeight: 600
                     }}>
                       {new Date(n.created_at).toLocaleString('es-MX', {

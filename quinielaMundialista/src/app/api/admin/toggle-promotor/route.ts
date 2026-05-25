@@ -21,10 +21,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Acceso no autorizado.' }, { status: 403 });
     }
 
-    // 2. Perform promoter status toggle
+    // 2. Perform promoter status toggle (keep role as 'user' to avoid DB check constraint)
     const updates = approve 
-      ? { role: 'promotor', seller_request_status: 'approved' }
-      : { role: 'user', seller_request_status: 'none' };
+      ? { seller_request_status: 'approved' }
+      : { seller_request_status: 'none' };
 
     const { error: updateError } = await supabaseAdmin
       .from('qui_profiles')

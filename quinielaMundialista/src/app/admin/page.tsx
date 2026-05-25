@@ -60,9 +60,9 @@ export default function AdminPage() {
   
   // Settings Form State
   const [ptsExact, setPtsExact] = useState(5);
-  const [ptsWinner, setPtsWinner] = useState(3);
-  const [ptsDraw, setPtsDraw] = useState(3);
-  const [ptsIncorrect, setPtsIncorrect] = useState(0);
+const [ptsWinner, setPtsWinner] = useState(1);
+const [ptsDraw, setPtsDraw] = useState(1);
+  const [ptsIncorrect, setPtsIncorrect] = useState(1);
   const [lockHours, setLockHours] = useState(24);
   const [ticketCost, setTicketCost] = useState(200.00);
   const [poolTotal, setPoolTotal] = useState(0);
@@ -71,6 +71,9 @@ export default function AdminPage() {
   const [pctFirst, setPctFirst] = useState(50);
   const [pctSecond, setPctSecond] = useState(25);
   const [pctThird, setPctThird] = useState(5);
+
+  // Editing state for finished matches
+  const [editingFinished, setEditingFinished] = useState<Set<string>>(new Set());
 
   // Status indicators
   const [actionLoading, setActionLoading] = useState(false);
@@ -181,6 +184,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error(data.error || 'Error al guardar resultado.');
 
       showToast('✅ ¡Marcador guardado e inscripciones recalculadas al instante!');
+      setEditingFinished(prev => { const next = new Set(prev); next.delete(matchId); return next; });
       await fetchAdminData(); // Refresh UI lists
     } catch (err: any) {
       console.error(err);
@@ -195,7 +199,7 @@ export default function AdminPage() {
     const bulkMatches: { matchId: string; homeScore: number; awayScore: number }[] = [];
     
     matches.forEach(match => {
-      if (match.status === 'finished') return; // Cannot edit finished matches!
+      if (match.status === 'finished' && !editingFinished.has(match.id)) return;
 
       const input = scoresInput[match.id];
       if (input && input.home !== '' && input.away !== '') {
@@ -226,6 +230,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error al guardar resultados en masa.');
 
+      setEditingFinished(new Set());
       await fetchAdminData(); // Refresh UI lists first
       showToast(`✅ ¡${bulkMatches.length} marcadores guardados e inscripciones recalculadas al instante!`);
     } catch (err: any) {
@@ -599,27 +604,53 @@ export default function AdminPage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifySelf: 'stretch', justifyContent: 'space-between', gap: '8px' }}>
                     <span className="sports-font" style={{ fontWeight: 800, flex: 1, textAlign: 'right', fontSize: '0.95rem' }}>{match.home_team}</span>
                     
-                    {match.status === 'finished' ? (
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        gap: '12px',
-                        background: 'rgba(16, 185, 129, 0.08)',
-                        border: '1px solid rgba(16, 185, 129, 0.2)',
-                        padding: '6px 16px',
-                        borderRadius: '12px',
-                        minWidth: '98px',
-                        height: '46px'
-                      }}>
-                        <span style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--accent-neon-green)' }}>
-                          {match.home_score}
-                        </span>
-                        <span style={{ fontWeight: 800, color: 'rgba(16, 185, 129, 0.6)' }}>-</span>
-                        <span style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--accent-neon-green)' }}>
-                          {match.away_score}
-                        </span>
-                      </div>
+                    {match.status === 'finished' && !editingFinished.has(match.id) ? (
+                      <>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          gap: '12px',
+                          background: 'rgba(16, 185, 129, 0.08)',
+                          border: '1px solid rgba(16, 185, 129, 0.2)',
+                          padding: '6px 16px',
+                          borderRadius: '12px',
+                          minWidth: '98px',
+                          height: '46px'
+                        }}>
+                          <span style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--accent-neon-green)' }}>
+                            {match.home_score}
+                          </span>
+                          <span style={{ fontWeight: 800, color: 'rgba(16, 185, 129, 0.6)' }}>-</span>
+                          <span style={{ fontSize: '1.4rem', fontWeight: 950, color: 'var(--accent-neon-green)' }}>
+                            {match.away_score}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setScoresInput(prev => ({
+                              ...prev,
+                              [match.id]: { home: String(match.home_score ?? ''), away: String(match.away_score ?? '') }
+                            }));
+                            setEditingFinished(prev => new Set(prev).add(match.id));
+                          }}
+                          className="btn"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            background: 'rgba(245, 158, 11, 0.12)',
+                            border: '1px solid rgba(245, 158, 11, 0.3)',
+                            color: 'var(--accent-gold)',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title="Corregir resultado"
+                        >
+                          Corregir
+                        </button>
+                      </>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <input
@@ -662,6 +693,24 @@ export default function AdminPage() {
 
                     <span className="sports-font" style={{ fontWeight: 800, flex: 1, textAlign: 'left', fontSize: '0.95rem' }}>{match.away_team}</span>
                   </div>
+
+                  {editingFinished.has(match.id) && (
+                    <button
+                      onClick={() => handleSaveScore(match.id)}
+                      className="btn btn-primary"
+                      style={{
+                        marginTop: '12px',
+                        padding: '6px 14px',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        width: '100%'
+                      }}
+                      disabled={actionLoading}
+                    >
+                      <Save size={14} />
+                      <span>Guardar Corrección</span>
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -934,17 +983,17 @@ export default function AdminPage() {
                         fontWeight: 800,
                         padding: '4px 10px',
                         borderRadius: '6px',
-                        background: player.role === 'promotor' 
+                        background: player.seller_request_status === 'approved' 
                           ? 'rgba(139, 92, 246, 0.12)' 
                           : player.seller_request_status === 'pending'
                             ? 'rgba(245, 158, 11, 0.12)'
                             : 'rgba(255, 255, 255, 0.04)',
-                        border: player.role === 'promotor'
+                        border: player.seller_request_status === 'approved'
                           ? '1px solid rgba(139, 92, 246, 0.3)'
                           : player.seller_request_status === 'pending'
                             ? '1px solid rgba(245, 158, 11, 0.3)'
                             : '1px solid rgba(255, 255, 255, 0.1)',
-                        color: player.role === 'promotor'
+                        color: player.seller_request_status === 'approved'
                           ? '#a78bfa'
                           : player.seller_request_status === 'pending'
                             ? 'var(--accent-gold)'
@@ -952,7 +1001,7 @@ export default function AdminPage() {
                         textTransform: 'uppercase',
                         letterSpacing: '0.02em'
                       }}>
-                        {player.role === 'promotor' 
+                        {player.seller_request_status === 'approved' 
                           ? 'Promotor 🚀' 
                           : player.seller_request_status === 'pending'
                             ? 'Pendiente Promotor ⏳'
@@ -1004,7 +1053,7 @@ export default function AdminPage() {
                           </button>
                         )}
 
-                        {player.role === 'promotor' ? (
+                        {player.seller_request_status === 'approved' ? (
                           <button
                             onClick={() => handleTogglePromoterRole(player.id, false)}
                             className="btn btn-secondary"

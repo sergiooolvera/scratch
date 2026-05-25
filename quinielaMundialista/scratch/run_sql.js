@@ -19,13 +19,32 @@ async function runSQL() {
     await client.connect();
     console.log("✅ Connected successfully!");
 
-    // Run a query to test connection
-    const res = await client.query('SELECT current_user, current_database();');
-    console.log('Result:', res.rows);
+    // Check the constraint definition
+    const res = await client.query(`
+      SELECT conname, pg_get_constraintdef(oid) as constraint_def
+      FROM pg_constraint
+      WHERE conname = 'qui_profiles_role_check';
+    `);
+    console.log('\n--- Current constraint ---');
+    console.log(res.rows[0] || 'Not found');
+
+    // Drop and recreate the constraint to include 'promotor'
+    await client.query(`
+      ALTER TABLE public.qui_profiles 
+      DROP CONSTRAINT IF EXISTS qui_profiles_role_check;
+    `);
+    console.log('\n✅ Constraint dropped');
+
+    await client.query(`
+      ALTER TABLE public.qui_profiles 
+      ADD CONSTRAINT qui_profiles_role_check 
+      CHECK (role IN ('user', 'vendedor', 'admin', 'promotor'));
+    `);
+    console.log('✅ Constraint recreated with promotor');
 
     await client.end();
   } catch (error) {
-    console.error("❌ Connection failed:", error.message);
+    console.error("❌ Error:", error.message);
   }
 }
 

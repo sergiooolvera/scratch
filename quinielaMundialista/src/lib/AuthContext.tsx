@@ -31,6 +31,10 @@ interface AuthContextType {
   logout: () => Promise<void>;
   spicyMode: boolean;
   setSpicyMode: (value: boolean) => void;
+  soundMuted: boolean;
+  setSoundMuted: (value: boolean) => void;
+  theme: 'light' | 'dark';
+  setTheme: (value: 'light' | 'dark') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,17 +44,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [spicyMode, setSpicyModeState] = useState(false);
+  const [soundMuted, setSoundMutedState] = useState(true);
+  const [theme, setThemeState] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setSpicyModeState(localStorage.getItem('spicyMode') === 'true');
+      
+      const savedSound = localStorage.getItem('soundMuted');
+      setSoundMutedState(savedSound === null ? true : savedSound === 'true');
+      
+      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+      if (savedTheme) {
+        setThemeState(savedTheme);
+      } else {
+        setThemeState('dark');
+      }
     }
   }, []);
+
+  // Update theme html attribute
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  }, [theme]);
 
   const setSpicyMode = (val: boolean) => {
     setSpicyModeState(val);
     if (typeof window !== 'undefined') {
       localStorage.setItem('spicyMode', val ? 'true' : 'false');
+    }
+  };
+
+  const setSoundMuted = (val: boolean) => {
+    setSoundMutedState(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('soundMuted', val ? 'true' : 'false');
+    }
+  };
+
+  const setTheme = (val: 'light' | 'dark') => {
+    setThemeState(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', val);
     }
   };
 
@@ -113,24 +150,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('[DEBUG] initializeAuth - session user:', session?.user?.email || 'none');
         if (!mounted) return;
         
         if (session?.user) {
-          if (!session.user.email_confirmed_at) {
-            console.warn('User email is not confirmed. Force signing out.');
-            await supabase.auth.signOut();
-            setUser(null);
-            setProfile(null);
-          } else {
-            setUser(session.user);
-            await fetchProfile(session.user.id);
-          }
+          setUser(session.user);
+          await fetchProfile(session.user.id);
         } else {
           setUser(null);
           setProfile(null);
         }
       } catch (err) {
-        console.error('Error getting initial session:', err);
+        console.error('[DEBUG] Error getting initial session:', err);
       } finally {
         if (mounted) {
           isInitialized = true;
@@ -144,25 +175,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes natively without manual visibilitychange handlers
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[DEBUG] onAuthStateChange - event:', event, 'user:', session?.user?.email || 'none');
       if (!mounted) return;
-
-      // Prevent duplicate fetches on initial mount
-      if (!isInitialized) {
-        return;
-      }
 
       try {
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
-            if (!session.user.email_confirmed_at) {
-              console.warn('User email is not confirmed. Force signing out.');
-              await supabase.auth.signOut();
-              setUser(null);
-              setProfile(null);
-            } else {
-              setUser(session.user);
-              await fetchProfile(session.user.id);
-            }
+            setUser(session.user);
+            await fetchProfile(session.user.id);
           } else {
             setUser(null);
             setProfile(null);
@@ -172,7 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
         }
       } catch (err) {
-        console.error('Error in onAuthStateChange handler:', err);
+        console.error('[DEBUG] Error in onAuthStateChange handler:', err);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -187,15 +207,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { data: { session } } = await supabase.auth.getSession();
           if (mounted) {
             if (session?.user) {
-              if (!session.user.email_confirmed_at) {
-                console.warn('User email is not confirmed. Force signing out.');
-                await supabase.auth.signOut();
-                setUser(null);
-                setProfile(null);
-              } else {
-                setUser(session.user);
-                await fetchProfile(session.user.id);
-              }
+              setUser(session.user);
+              await fetchProfile(session.user.id);
             } else {
               setUser(null);
               setProfile(null);
@@ -218,20 +231,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = async () => {
-    setLoading(true);
     try {
-      await supabase.auth.signOut();
+      // Trigger signOut in background so local UI state clears instantly without waiting for network response
+      supabase.auth.signOut().catch(err => console.error('Silent signout failed:', err));
+      
+      // Manually wipe all Supabase session keys from localStorage and cookies to guarantee 100% absolute logout
+      if (typeof window !== 'undefined') {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth-token'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+
+        // Wipe session cookies
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+      }
+
       setUser(null);
       setProfile(null);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     } catch (err) {
       console.error('Error signing out:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, refreshProfile, logout, spicyMode, setSpicyMode }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      refreshProfile, 
+      logout, 
+      spicyMode, 
+      setSpicyMode,
+      soundMuted,
+      setSoundMuted,
+      theme,
+      setTheme
+    }}>
       {children}
     </AuthContext.Provider>
   );

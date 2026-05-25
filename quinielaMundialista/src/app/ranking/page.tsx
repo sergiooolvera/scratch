@@ -17,15 +17,15 @@ interface Profile {
 }
 
 // Helpers for Easter Eggs and Mexican Pop Culture References
-const getExactScoreBadgeText = (seedString: string) => {
+const getExactScoreBadgeText = (seedString: string, points: number = 5) => {
   let hash = 0;
   for (let i = 0; i < seedString.length; i++) {
     hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
   }
   const choice = Math.abs(hash) % 3;
-  if (choice === 0) return '🎯 ¡Tómala Barbón! (+5 pts) 🔥';
-  if (choice === 1) return '🎯 ¡Te la mamaste! (+5 pts) 🧠';
-  return '🎯 ¡Ahhh perreeeee!!! (+5 pts) 🐕🔥';
+  if (choice === 0) return `🎯 ¡Tómala Barbón! (+${points} pts) 🔥`;
+  if (choice === 1) return `🎯 ¡Te la mamaste! (+${points} pts) 🧠`;
+  return `🎯 ¡Ahhh perreeeee!!! (+${points} pts) 🐕🔥`;
 };
 
 const getEpicBlunderMsg = (match: any, pred: any) => {
@@ -70,6 +70,255 @@ export default function RankingPage() {
   const [lockHours, setLockHours] = useState(24);
   const { user: authUser, profile: authProfile } = useAuth();
 
+  // Grupos privados states
+  const [userGroups, setUserGroups] = useState<any[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('global');
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+
+  // Group modal form states
+  const [groupModalTab, setGroupModalTab] = useState<'join' | 'create'>('join');
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+  const [createNameInput, setCreateNameInput] = useState('');
+  const [groupActionError, setGroupActionError] = useState('');
+  const [groupActionSuccess, setGroupActionSuccess] = useState('');
+
+  // Group editing states
+  const [editingGroupName, setEditingGroupName] = useState(false);
+  const [editGroupNameInput, setEditGroupNameInput] = useState('');
+  const [groupEditError, setGroupEditError] = useState('');
+
+  // Fetch groups user is in
+  const fetchUserGroups = async () => {
+    if (!authUser) return;
+    setLoadingGroups(true);
+    try {
+      const { data, error } = await supabase
+        .from('qui_group_members')
+        .select('group_id, qui_groups(id, name, join_code, created_by)')
+        .eq('user_id', authUser.id);
+      
+      if (error) throw error;
+      
+      const groups = data?.map((item: any) => item.qui_groups).filter(Boolean) || [];
+      setUserGroups(groups);
+    } catch (err: any) {
+      console.error('Error fetching user groups:', err.message);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  const generateJoinCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
+  const handleCreateGroup = async () => {
+    if (!authUser || !createNameInput.trim()) return;
+    setGroupActionError('');
+    setGroupActionSuccess('');
+    const trimmedName = createNameInput.trim();
+
+    if (trimmedName.length > 30) {
+      setGroupActionError('El nombre del grupo no puede tener más de 30 caracteres.');
+      return;
+    }
+
+    try {
+      // 1. Limit to max 2 created groups per user
+      const { count, error: countError } = await supabase
+        .from('qui_groups')
+        .select('*', { count: 'exact', head: true })
+        .eq('created_by', authUser.id);
+
+      if (countError) throw countError;
+      if (count !== null && count >= 2) {
+        setGroupActionError('Límite alcanzado: Solo puedes crear un máximo de 2 grupos.');
+        return;
+      }
+
+      // 2. Validate group name uniqueness (case-insensitive)
+      const { data: existingGroup, error: existError } = await supabase
+        .from('qui_groups')
+        .select('id')
+        .ilike('name', trimmedName)
+        .maybeSingle();
+
+      if (existError) throw existError;
+      if (existingGroup) {
+        setGroupActionError('Ya existe un grupo con ese nombre. Por favor elige otro.');
+        return;
+      }
+
+      const code = generateJoinCode();
+      const { data: groupData, error: groupError } = await supabase
+        .from('qui_groups')
+        .insert({
+          name: trimmedName,
+          join_code: code,
+          created_by: authUser.id
+        })
+        .select()
+        .single();
+      
+      if (groupError) throw groupError;
+      
+      const { error: memberError } = await supabase
+        .from('qui_group_members')
+        .insert({
+          group_id: groupData.id,
+          user_id: authUser.id
+        });
+        
+      if (memberError) throw memberError;
+      
+      setGroupActionSuccess(`¡Grupo "${trimmedName}" creado con éxito! Código: ${code}`);
+      setCreateNameInput('');
+      await fetchUserGroups();
+      setSelectedGroupId(groupData.id);
+    } catch (err: any) {
+      setGroupActionError(err.message || 'Error al crear el grupo.');
+    }
+  };
+
+  const handleJoinGroup = async () => {
+    if (!authUser || !joinCodeInput.trim()) return;
+    setGroupActionError('');
+    setGroupActionSuccess('');
+    const uppercaseCode = joinCodeInput.trim().toUpperCase();
+    try {
+      const { data: groupData, error: groupError } = await supabase
+        .from('qui_groups')
+        .select('*')
+        .eq('join_code', uppercaseCode)
+        .maybeSingle();
+        
+      if (groupError) throw groupError;
+      if (!groupData) {
+        setGroupActionError('Código de grupo no encontrado. Verifica que esté bien escrito.');
+        return;
+      }
+      
+      const { data: existingMember, error: checkError } = await supabase
+        .from('qui_group_members')
+        .select('*')
+        .eq('group_id', groupData.id)
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+        
+      if (checkError) throw checkError;
+      if (existingMember) {
+        setGroupActionError('Ya eres miembro de este grupo.');
+        return;
+      }
+      
+      const { error: memberError } = await supabase
+        .from('qui_group_members')
+        .insert({
+          group_id: groupData.id,
+          user_id: authUser.id
+        });
+        
+      if (memberError) throw memberError;
+      
+      setGroupActionSuccess(`¡Te has unido con éxito al grupo "${groupData.name}"!`);
+      setJoinCodeInput('');
+      await fetchUserGroups();
+      setSelectedGroupId(groupData.id);
+    } catch (err: any) {
+      setGroupActionError(err.message || 'Error al unirse al grupo.');
+    }
+  };
+
+  const handleLeaveGroup = async (groupId: string) => {
+    if (!authUser) return;
+    try {
+      const { error } = await supabase
+        .from('qui_group_members')
+        .delete()
+        .eq('group_id', groupId)
+        .eq('user_id', authUser.id);
+        
+      if (error) throw error;
+      
+      await fetchUserGroups();
+      setSelectedGroupId('global');
+    } catch (err: any) {
+      console.error('Error leaving group:', err.message);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
+    try {
+      const { data: members, error: countError } = await supabase
+        .from('qui_group_members')
+        .select('user_id')
+        .eq('group_id', groupId);
+
+      if (countError) throw countError;
+
+      if (members && members.length > 1) {
+        alert('No puedes eliminar el grupo porque ya tiene otros miembros/invitados.');
+        return;
+      }
+
+      const { error: deleteError } = await supabase
+        .from('qui_groups')
+        .delete()
+        .eq('id', groupId);
+
+      if (deleteError) throw deleteError;
+
+      alert('Grupo eliminado exitosamente.');
+      setSelectedGroupId('global');
+      await fetchUserGroups();
+    } catch (err: any) {
+      console.error('Error deleting group:', err.message);
+      alert('Error al eliminar el grupo: ' + err.message);
+    }
+  };
+
+  const handleUpdateGroupName = async (groupId: string) => {
+    const trimmedName = editGroupNameInput.trim();
+    if (!trimmedName) return;
+    if (trimmedName.length > 30) {
+      setGroupEditError('El nombre no puede exceder los 30 caracteres.');
+      return;
+    }
+    setGroupEditError('');
+    try {
+      const { data: existingGroup, error: existError } = await supabase
+        .from('qui_groups')
+        .select('id')
+        .ilike('name', trimmedName)
+        .neq('id', groupId)
+        .maybeSingle();
+
+      if (existError) throw existError;
+      if (existingGroup) {
+        setGroupEditError('Ya existe un grupo con ese nombre.');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('qui_groups')
+        .update({ name: trimmedName })
+        .eq('id', groupId);
+
+      if (error) throw error;
+
+      setEditingGroupName(false);
+      await fetchUserGroups();
+    } catch (err: any) {
+      setGroupEditError(err.message || 'Error al actualizar el nombre.');
+    }
+  };
+
   // Fetch leaderboard standings and system settings
   const fetchRankingData = async () => {
     setLoading(true);
@@ -80,12 +329,31 @@ export default function RankingPage() {
 
     try {
       // 1. Fetch profiles ordered by points DESC, exact_scores DESC, goal_difference ASC
-      const { data: profilesData, error: profilesError } = await supabase
+      let query = supabase
         .from('qui_profiles')
         .select('id, username, full_name, avatar_url, is_active, points, exact_scores, goal_difference')
         .order('points', { ascending: false })
         .order('exact_scores', { ascending: false })
         .order('goal_difference', { ascending: true });
+
+      if (selectedGroupId !== 'global') {
+        const { data: memberData, error: memberError } = await supabase
+          .from('qui_group_members')
+          .select('user_id')
+          .eq('group_id', selectedGroupId);
+        
+        if (memberError) throw memberError;
+        const memberIds = memberData?.map((m: any) => m.user_id) || [];
+        
+        if (memberIds.length === 0) {
+          setLeaderboard([]);
+          return;
+        }
+        
+        query = query.in('id', memberIds);
+      }
+
+      const { data: profilesData, error: profilesError } = await query;
 
       if (profilesError) throw profilesError;
       setLeaderboard(profilesData || []);
@@ -180,7 +448,16 @@ export default function RankingPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [selectedGroupId]);
+
+  useEffect(() => {
+    if (authUser) {
+      fetchUserGroups();
+    } else {
+      setUserGroups([]);
+      setSelectedGroupId('global');
+    }
+  }, [authUser]);
 
   // Filter leaderboard based on search query
   const filteredLeaderboard = leaderboard.filter(player => {
@@ -195,7 +472,6 @@ export default function RankingPage() {
   const displayedLeaderboard = searchQuery.trim() === ''
     ? filteredLeaderboard.slice(0, 50)
     : filteredLeaderboard;
-
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -224,7 +500,7 @@ export default function RankingPage() {
       </div>
 
       {/* Premium Recreative Rewards Panel */}
-      <div className="glass-panel prize-banner" style={{ marginBottom: '32px', padding: '24px', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(30, 41, 59, 0.4) 100%)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+      <div className="glass-panel prize-banner" style={{ marginBottom: '32px', padding: '24px', background: 'var(--prize-banner-bg)', border: '1px solid var(--prize-banner-border)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -245,48 +521,294 @@ export default function RankingPage() {
               Distribución Automática de Frijolitos 🫘
             </span>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
               {/* 1st Place Card */}
-              <div style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(0, 0, 0, 0.2) 100%)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.25)', textAlign: 'center' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-gold)', display: 'block' }}>🥇 1er Lugar</span>
-                <span style={{ fontSize: '1.3rem', fontWeight: 900, display: 'block', margin: '4px 0', color: '#ffffff' }}>{pctFirst}%</span>
+              <div style={{ background: 'var(--prize-card-1-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--prize-card-1-border)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-gold)', display: 'block' }}>🥇 1er Lugar</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, display: 'block', margin: '8px 0', color: 'var(--prize-card-1-text)', lineHeight: 1.35 }}>
+                    "El derecho vitalicio a recordarles a estos troncos que tú eres su padre y señor del balón ⚽🕺"
+                  </span>
+                </div>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{Math.floor(poolTotal * pctFirst / 100).toLocaleString()} 🫘</span>
               </div>
               
               {/* 2nd Place Card */}
-              <div style={{ background: 'linear-gradient(135deg, rgba(226, 232, 240, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(226, 232, 240, 0.15)', textAlign: 'center' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#e2e8f0', display: 'block' }}>🥈 2do Lugar</span>
-                <span style={{ fontSize: '1.3rem', fontWeight: 900, display: 'block', margin: '4px 0', color: '#ffffff' }}>{pctSecond}%</span>
+              <div style={{ background: 'var(--prize-card-2-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--prize-card-2-border)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--prize-card-2-title)', display: 'block' }}>🥈 2do Lugar</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, display: 'block', margin: '8px 0', color: 'var(--prize-card-2-text)', lineHeight: 1.35 }}>
+                    "El primer perdedor, pero con dignidad y una palmadita en la espalda 🥈👏"
+                  </span>
+                </div>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{Math.floor(poolTotal * pctSecond / 100).toLocaleString()} 🫘</span>
               </div>
               
               {/* 3rd Place Card */}
-              <div style={{ background: 'linear-gradient(135deg, rgba(205, 127, 50, 0.12) 0%, rgba(0, 0, 0, 0.2) 100%)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(205, 127, 50, 0.2)', textAlign: 'center' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#cd7f32', display: 'block' }}>🥉 3er Lugar</span>
-                <span style={{ fontSize: '1.3rem', fontWeight: 900, display: 'block', margin: '4px 0', color: '#ffffff' }}>{pctThird}%</span>
-                {pctThird === 0 ? (
-                  <span 
-                    style={{ 
-                      fontSize: '0.78rem', 
-                      color: 'var(--text-secondary)', 
-                      fontWeight: 800, 
-                      fontStyle: 'italic', 
-                      display: 'block', 
-                      marginTop: '6px',
-                      textShadow: '0 0 8px rgba(255,255,255,0.1)',
-                      opacity: 0.8
-                    }}
-                  >
-                    "Tú simplemente te vas... jeje" 🤫🚪
+              <div style={{ background: 'var(--prize-card-3-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--prize-card-3-border)', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--prize-card-3-title)', display: 'block' }}>🥉 3er Lugar</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, display: 'block', margin: '8px 0', color: 'var(--prize-card-3-text)', lineHeight: 1.35 }}>
+                    "Tú simplemente te vas... jaja"
                   </span>
-                ) : (
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{Math.floor(poolTotal * pctThird / 100).toLocaleString()} 🫘</span>
-                )}
+                </div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{Math.floor(poolTotal * pctThird / 100).toLocaleString()} 🫘</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Selector de Grupos Premium */}
+      {authUser && (
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '20px',
+          overflowX: 'auto',
+          paddingBottom: '8px',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }} className="hide-scrollbar">
+          <button
+            onClick={() => setSelectedGroupId('global')}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              border: '1px solid ' + (selectedGroupId === 'global' ? 'var(--accent-neon-green)' : 'var(--border-glass)'),
+              background: selectedGroupId === 'global' ? 'rgba(16, 185, 129, 0.15)' : 'var(--modal-card-bg)',
+              color: selectedGroupId === 'global' ? 'var(--accent-neon-green)' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'var(--transition-smooth)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            🌎 Ranking Universal
+          </button>
+
+          {userGroups.map((group) => (
+            <button
+              key={group.id}
+              onClick={() => setSelectedGroupId(group.id)}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                border: '1px solid ' + (selectedGroupId === group.id ? 'var(--accent-neon-green)' : 'var(--border-glass)'),
+                background: selectedGroupId === group.id ? 'rgba(16, 185, 129, 0.15)' : 'var(--modal-card-bg)',
+                color: selectedGroupId === group.id ? 'var(--accent-neon-green)' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'var(--transition-smooth)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              👥 {group.name}
+            </button>
+          ))}
+
+          <button
+            onClick={() => {
+              setGroupActionError('');
+              setGroupActionSuccess('');
+              setShowGroupModal(true);
+            }}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              border: '1px dashed var(--accent-neon-green)',
+              background: 'transparent',
+              color: 'var(--accent-neon-green)',
+              cursor: 'pointer',
+              transition: 'var(--transition-smooth)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            ➕ Crear o Unirse
+          </button>
+        </div>
+      )}
+
+      {/* Info del Grupo Seleccionado */}
+      {selectedGroupId !== 'global' && (() => {
+        const activeGroup = userGroups.find(g => g.id === selectedGroupId);
+        if (!activeGroup) return null;
+        const isCreator = activeGroup.created_by === authUser?.id;
+        return (
+          <div className="glass-panel" style={{
+            padding: '16px 20px',
+            marginBottom: '20px',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%)',
+            border: '1px solid var(--border-glass)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px'
+          }}>
+            <div style={{ flex: 1, minWidth: '280px' }}>
+              {editingGroupName ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '350px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editGroupNameInput}
+                      onChange={(e) => setEditGroupNameInput(e.target.value)}
+                      maxLength={30}
+                      style={{ padding: '6px 12px', fontSize: '0.95rem' }}
+                    />
+                    <button
+                      onClick={() => handleUpdateGroupName(activeGroup.id)}
+                      style={{
+                        background: 'var(--accent-neon-green)',
+                        color: '#030712',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '6px 12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingGroupName(false);
+                        setGroupEditError('');
+                      }}
+                      style={{
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid var(--border-glass)',
+                        borderRadius: '8px',
+                        padding: '6px 12px',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                  {groupEditError && (
+                    <span style={{ fontSize: '0.75rem', color: '#f87171' }}>{groupEditError}</span>
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    {activeGroup.name}
+                  </h4>
+                  {isCreator && (
+                    <button
+                      onClick={() => {
+                        setEditGroupNameInput(activeGroup.name);
+                        setGroupEditError('');
+                        setEditingGroupName(true);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--accent-neon-green)',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        padding: '2px 6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px'
+                      }}
+                      title="Editar nombre"
+                    >
+                      ✏️ Editar
+                    </button>
+                  )}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <span>Código para compartir: <strong style={{ color: 'var(--accent-gold)', fontSize: '0.9rem', letterSpacing: '0.05em' }}>{activeGroup.join_code}</strong></span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(activeGroup.join_code);
+                    alert('¡Código copiado al portapapeles!');
+                  }}
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid var(--border-glass)',
+                    borderRadius: '4px',
+                    padding: '2px 8px',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📋 Copiar
+                </button>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              {isCreator && leaderboard.length <= 1 && (
+                <button
+                  onClick={() => {
+                    if (confirm(`¿Estás seguro de que deseas eliminar el grupo "${activeGroup.name}" definitivamente? Esta acción no se puede deshacer.`)) {
+                      handleDeleteGroup(activeGroup.id);
+                    }
+                  }}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#f87171',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'var(--transition-smooth)'
+                  }}
+                >
+                  🗑️ Eliminar Grupo
+                </button>
+              )}
+
+              <button
+                onClick={async () => {
+                  if (confirm(`¿Estás seguro de que deseas salir del grupo "${activeGroup.name}"?`)) {
+                    await handleLeaveGroup(activeGroup.id);
+                  }
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-glass)',
+                  color: 'var(--text-secondary)',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-smooth)'
+                }}
+              >
+                🚪 Salir del Grupo
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Standings Filter & Table */}
       <div className="glass-panel" style={{ padding: '20px' }}>
@@ -299,7 +821,7 @@ export default function RankingPage() {
             placeholder="Buscar participante por nombre o @usuario..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ width: '100%', paddingLeft: '44px', background: 'rgba(0,0,0,0.25)' }}
+            style={{ width: '100%', paddingLeft: '44px' }}
           />
         </div>
 
@@ -329,13 +851,13 @@ export default function RankingPage() {
           <table className="ranking-table">
             <thead>
               <tr>
-                <th style={{ width: '70px', textAlign: 'center' }}>Pos</th>
+                <th style={{ width: '60px', textAlign: 'center' }}>Pos</th>
                 <th>Jugador</th>
-                <th style={{ width: '100px', textAlign: 'center' }}>Puntos</th>
-                <th style={{ width: '180px', textAlign: 'center', whiteSpace: 'nowrap' }}>Marcadores Exactos</th>
-                <th style={{ width: '140px', textAlign: 'center' }}>
+                <th style={{ width: '90px', textAlign: 'center' }}>Puntos</th>
+                <th style={{ width: '130px', textAlign: 'center', whiteSpace: 'nowrap' }}>Marcadores Exactos</th>
+                <th style={{ width: '110px', textAlign: 'center' }}>
                   <div className="custom-tooltip-container" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'center', width: '100%' }}>
-                    <span style={{ borderBottom: '1px dashed rgba(255,255,255,0.3)', cursor: 'help', whiteSpace: 'nowrap' }}>Dif. Goles</span>
+                    <span style={{ borderBottom: '1px dashed var(--text-muted)', cursor: 'help', whiteSpace: 'nowrap' }}>Dif. Goles</span>
                     <div className="custom-tooltip-text">
                       <strong>Diferencia de Goles:</strong> Diferencia absoluta (siempre positiva o cero) entre la suma de goles de tus pronósticos y la suma de goles reales (solo de los partidos ya finalizados).<br/><br/>
                       <em>Ejemplo (solo partidos finalizados):</em><br/>
@@ -420,6 +942,166 @@ export default function RankingPage() {
         </div>
       </div>
 
+      {/* Modal Crear o Unirse a Grupo */}
+      {showGroupModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'var(--modal-overlay)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1100,
+          padding: '16px',
+          animation: 'slide-up-fade 0.3s ease-out'
+        }}
+        onClick={() => setShowGroupModal(false)}
+        >
+          <div 
+            className="glass-panel"
+            style={{
+              width: '100%',
+              maxWidth: '450px',
+              padding: '24px',
+              background: 'var(--modal-bg)',
+              border: '1px solid var(--modal-border)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setShowGroupModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'var(--modal-card-bg)',
+                border: '1px solid var(--modal-border)',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '20px' }}>
+              Grupos Privados / Ligas
+            </h3>
+
+            {/* Modal Tabs */}
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border-glass)', marginBottom: '20px' }}>
+              <button
+                onClick={() => {
+                  setGroupActionError('');
+                  setGroupActionSuccess('');
+                  setGroupModalTab('join');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: groupModalTab === 'join' ? '2px solid var(--accent-neon-green)' : 'none',
+                  color: groupModalTab === 'join' ? 'var(--accent-neon-green)' : 'var(--text-secondary)',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Unirme a un Grupo
+              </button>
+              <button
+                onClick={() => {
+                  setGroupActionError('');
+                  setGroupActionSuccess('');
+                  setGroupModalTab('create');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: groupModalTab === 'create' ? '2px solid var(--accent-neon-green)' : 'none',
+                  color: groupModalTab === 'create' ? 'var(--accent-neon-green)' : 'var(--text-secondary)',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Crear nuevo Grupo
+              </button>
+            </div>
+
+            {/* Success and Error messages */}
+            {groupActionError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.85rem' }}>
+                ⚠️ {groupActionError}
+              </div>
+            )}
+
+            {groupActionSuccess && (
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', color: 'var(--accent-neon-green)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.85rem' }}>
+                🎉 {groupActionSuccess}
+              </div>
+            )}
+
+            {/* Tab content */}
+            {groupModalTab === 'join' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Ingresa el código único del grupo (6 caracteres) provisto por el creador para unirte al instante.
+                </p>
+                <input
+                  type="text"
+                  placeholder="Ej. OLV3RA"
+                  value={joinCodeInput}
+                  onChange={(e) => setJoinCodeInput(e.target.value)}
+                  className="form-input"
+                  style={{ textTransform: 'uppercase', fontSize: '1.1rem', letterSpacing: '0.1em', textAlign: 'center' }}
+                />
+                <button
+                  onClick={handleJoinGroup}
+                  className="btn btn-primary"
+                  style={{ width: '100%', padding: '12px' }}
+                >
+                  ¡Unirme al Grupo!
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Crea una liga para competir con tu familia, oficina o amigos. Generaremos un código único para que los invites.
+                </p>
+                <input
+                  type="text"
+                  placeholder="Ej. Familia Tuñón, Los Pro, Oficina"
+                  value={createNameInput}
+                  onChange={(e) => setCreateNameInput(e.target.value)}
+                  className="form-input"
+                  style={{ fontSize: '1rem' }}
+                />
+                <button
+                  onClick={handleCreateGroup}
+                  className="btn btn-primary"
+                  style={{ width: '100%', padding: '12px' }}
+                >
+                  Crear e Invitar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Modal Visor de Pronósticos */}
       {selectedPlayer && (
         <div style={{
@@ -428,7 +1110,7 @@ export default function RankingPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(3, 7, 18, 0.75)',
+          backgroundColor: 'var(--modal-overlay)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           display: 'flex',
@@ -449,9 +1131,9 @@ export default function RankingPage() {
               display: 'flex',
               flexDirection: 'column',
               padding: '24px',
-              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(16, 185, 129, 0.05)',
+              background: 'var(--modal-bg)',
+              border: '1px solid var(--modal-border)',
+              boxShadow: '0 25px 50px -12px var(--modal-shadow, rgba(0, 0, 0, 0.8)), 0 0 40px var(--accent-neon-green-glow)',
               position: 'relative'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -463,8 +1145,8 @@ export default function RankingPage() {
                 position: 'absolute',
                 top: '20px',
                 right: '20px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'var(--modal-card-bg)',
+                border: '1px solid var(--modal-border)',
                 borderRadius: '50%',
                 width: '36px',
                 height: '36px',
@@ -510,18 +1192,18 @@ export default function RankingPage() {
 
             {/* Mini Tarjetas de Estadísticas */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-glass)', textAlign: 'center' }}>
+              <div style={{ background: 'var(--modal-card-bg)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-glass)', textAlign: 'center' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>Puntos Totales</span>
                 <span style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--accent-neon-green)' }}>{selectedPlayer.points} pts</span>
               </div>
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-glass)', textAlign: 'center' }}>
+              <div style={{ background: 'var(--modal-card-bg)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-glass)', textAlign: 'center' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>Marcadores Exactos</span>
                 <span style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--accent-gold)' }}>🎯 {selectedPlayer.exact_scores}</span>
               </div>
               <div 
                 className="custom-tooltip-container" 
                 style={{ 
-                  background: 'rgba(255, 255, 255, 0.03)', 
+                  background: 'var(--modal-card-bg)', 
                   padding: '10px', 
                   borderRadius: '8px', 
                   border: '1px solid var(--border-glass)', 
@@ -573,7 +1255,7 @@ export default function RankingPage() {
                     <div 
                       key={match.id}
                       style={{
-                        background: 'rgba(255, 255, 255, 0.02)',
+                        background: 'var(--modal-card-bg)',
                         border: '1px solid var(--border-glass)',
                         borderRadius: '12px',
                         padding: '12px 16px',
@@ -613,7 +1295,7 @@ export default function RankingPage() {
                         </div>
 
                         {/* Marcador Real */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.2)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--modal-score-bg)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--border-glass)' }}>
                           {isFinishedOrLive ? (
                             <>
                               <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>{match.home_score}</span>
@@ -694,13 +1376,13 @@ export default function RankingPage() {
                         {/* Puntos Ganados */}
                         {isFinishedOrLive && pred && visible && (
                           <div style={{ display: 'flex', alignItems: 'center' }}>
-                            {pred.points_earned === 5 ? (
+                            {pred.is_exact ? (
                               <span className="points-earned-tag" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)', border: '1px solid rgba(245, 158, 11, 0.3)', color: 'var(--accent-gold)' }}>
-                                {getExactScoreBadgeText(`${match.id}-${selectedPlayer?.id}`)}
+                                {getExactScoreBadgeText(`${match.id}-${selectedPlayer?.id}`, pred.points_earned || 0)}
                               </span>
-                            ) : pred.points_earned === 3 ? (
+                            ) : (pred.points_earned || 0) > 0 ? (
                               <span className="points-earned-tag">
-                                🏃‍♂️ Resultado Correcto +3 pts
+                                ✅ Acertó Ganador/Empate +{pred.points_earned} {pred.points_earned === 1 ? 'pt' : 'pts'}
                               </span>
                             ) : (
                               (() => {

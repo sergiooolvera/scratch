@@ -46,9 +46,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Perfil de usuario no encontrado.' }, { status: 404 });
     }
 
-    if (!profile.is_active && simMode !== 'bypass') {
-      return NextResponse.json({ error: 'Se requiere realizar la aportación voluntaria de mantenimiento para registrar pronósticos.' }, { status: 403 });
-    }
+    // Active profile check removed per user request: once registered and confirmed, they can save predictions.
+
 
     // 3. Fetch all match details related to these predictions
     const matchIds = predictionsToSave.map(p => p.matchId);
@@ -75,17 +74,20 @@ export async function POST(req: Request) {
     const unlockedPredictions = [];
     const currentTime = Date.now();
     const lockInterval = lockHours * 60 * 60 * 1000;
-    const simTime = simMode === 'world_cup' ? new Date('2026-06-11T16:00:00Z').getTime() : currentTime;
+    
+    // Security check: Only admins can use simulated modes
+    const effectiveSimMode = profile.is_admin ? simMode : 'real';
+    const simTime = effectiveSimMode === 'world_cup' ? new Date('2026-06-11T16:00:00Z').getTime() : currentTime;
 
     for (const pred of predictionsToSave) {
-      const match = matches.find(m => m.id === pred.matchId);
+      const match = matches.find((m: any) => m.id === pred.matchId);
       if (!match) continue;
 
       let isLocked = false;
 
-      if (simMode === 'bypass') {
+      if (effectiveSimMode === 'bypass') {
         isLocked = false;
-      } else if (simMode === 'force_all') {
+      } else if (effectiveSimMode === 'force_all') {
         isLocked = true;
       } else if (match.status === 'live' || match.status === 'finished') {
         isLocked = true;

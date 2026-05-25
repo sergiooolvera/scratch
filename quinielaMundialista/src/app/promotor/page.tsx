@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { BadgeDollarSign, Gift, User, Copy, Check, Sparkles, Heart, Share2, Users, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
+import { BadgeDollarSign, Gift, User, Copy, Check, Sparkles, Heart, Share2, Users, ArrowRight, ShieldCheck, Mail, Smartphone, Landmark, Loader, AlertCircle } from 'lucide-react';
 
 interface ReferredUser {
   id: string;
@@ -25,6 +25,15 @@ export default function PromotorPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [promoterInfo, setPromoterInfo] = useState<any>(null);
+  const [formFullName, setFormFullName] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formClabe, setFormClabe] = useState('');
+  const [formBank, setFormBank] = useState('');
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoMsg, setInfoMsg] = useState('');
+  const [activeTab, setActiveTab] = useState<'red' | 'pago'>('red');
+  const [loadingInfo, setLoadingInfo] = useState(true);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -60,11 +69,53 @@ export default function PromotorPage() {
     }
   }, [user, profile]);
 
+  const isApprovedPromoter = profile?.role === 'promotor' || profile?.seller_request_status === 'approved';
+  const isPendingPromoter = profile?.seller_request_status === 'pending';
+  const showApplyScreen = !isApprovedPromoter && !isPendingPromoter;
+
+  // Fetch promoter info
+  useEffect(() => {
+    const fetchInfo = async () => {
+      if (!user) return;
+      setLoadingInfo(true);
+      try {
+        const { data, error } = await supabase
+          .from('qui_promoter_info')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error && !error.message?.includes('does not exist')) {
+          console.error('Error fetching promoter info:', error.message);
+        }
+        if (data) {
+          setPromoterInfo(data);
+          setFormFullName(data.full_name || profile?.full_name || '');
+          setFormPhone(data.phone || '');
+          setFormClabe(data.clabe || '');
+          setFormBank(data.bank_name || '');
+        } else {
+          setFormFullName(profile?.full_name || '');
+        }
+      } catch (err: any) {
+        console.error('Error fetching promoter info:', err.message);
+      } finally {
+        setLoadingInfo(false);
+      }
+    };
+    if (isApprovedPromoter && user) {
+      fetchInfo();
+    }
+  }, [user, isApprovedPromoter, profile]);
+
   const handleRequestPromoter = async () => {
     if (!user) return;
     setRequestLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -75,7 +126,8 @@ export default function PromotorPage() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        signal: controller.signal
       });
 
       const data = await res.json();
@@ -84,9 +136,39 @@ export default function PromotorPage() {
       setSuccessMsg('¡Solicitud enviada con éxito! El administrador validará tu perfil muy pronto.');
       await refreshProfile();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error de conexión.');
+      if (err.name === 'AbortError') {
+        setErrorMsg('La solicitud tardó demasiado. Intenta de nuevo.');
+      } else {
+        setErrorMsg(err.message || 'Error de conexión.');
+      }
     } finally {
+      clearTimeout(timeout);
       setRequestLoading(false);
+    }
+  };
+
+  const handleSaveInfo = async () => {
+    if (!user || !formFullName || formFullName.trim().length < 3) {
+      setInfoMsg('El nombre completo es obligatorio.');
+      return;
+    }
+    setSavingInfo(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+      const res = await fetch('/api/promoter/save-info', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ full_name: formFullName.trim(), phone: formPhone.trim(), clabe: formClabe.trim(), bank_name: formBank.trim() })
+      });
+      const response = await res.json();
+      if (!res.ok) throw new Error(response.error);
+      setInfoMsg('¡Datos guardados correctamente!');
+      setTimeout(() => setInfoMsg(''), 3000);
+    } catch (err: any) {
+      setInfoMsg(`Error: ${err.message}`);
+    } finally {
+      setSavingInfo(false);
     }
   };
 
@@ -110,10 +192,6 @@ export default function PromotorPage() {
       </div>
     );
   }
-
-  const isApprovedPromoter = profile?.role === 'promotor' || profile?.seller_request_status === 'approved';
-  const isPendingPromoter = profile?.seller_request_status === 'pending';
-  const showApplyScreen = !isApprovedPromoter && !isPendingPromoter;
 
   // Direct signup link
   const signupLink = typeof window !== 'undefined' 
@@ -304,155 +382,214 @@ export default function PromotorPage() {
             </div>
           </div>
 
-          {/* Quick links & Stats Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-            
-            {/* Share Tools */}
-            <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, borderBottom: '1px solid var(--border-glass)', paddingBottom: '8px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Share2 size={18} style={{ color: 'var(--accent-neon-green)' }} /> Herramientas de Compartición
-              </h3>
-
-              <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Tu Código de Referido</span>
-                  {copiedCode && <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.75rem', fontWeight: 'bold' }}>¡Copiado!</span>}
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={profile?.referral_code || ''}
-                    readOnly
-                    style={{ flex: 1, fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1.1rem', letterSpacing: '1px', textAlign: 'center', textTransform: 'uppercase', background: 'rgba(0,0,0,0.2)' }}
-                  />
-                  <button
-                    onClick={() => copyToClipboard(profile?.referral_code || '', 'code')}
-                    className="btn btn-secondary"
-                    style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    {copiedCode ? <Check size={18} style={{ color: 'var(--accent-neon-green)' }} /> : <Copy size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Enlace Directo de Registro</span>
-                  {copiedLink && <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.75rem', fontWeight: 'bold' }}>¡Enlace copiado!</span>}
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={signupLink}
-                    readOnly
-                    style={{ flex: 1, fontSize: '0.8rem', background: 'rgba(0,0,0,0.2)' }}
-                  />
-                  <button
-                    onClick={() => copyToClipboard(signupLink, 'link')}
-                    className="btn btn-secondary"
-                    style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    {copiedLink ? <Check size={18} style={{ color: 'var(--accent-neon-green)' }} /> : <Copy size={18} />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Explanation & Rules */}
-            <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, borderBottom: '1px solid var(--border-glass)', paddingBottom: '8px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Heart size={18} style={{ color: 'var(--accent-neon-green)' }} /> Red de Apoyo Solidaria
-              </h3>
-              
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <p style={{ margin: 0 }}>
-                  ¡Gracias por promover el juego limpio y ayudarnos a costear la Quiniela!
-                </p>
-                <div style={{ background: 'rgba(16, 185, 129, 0.04)', border: '1px solid rgba(16, 185, 129, 0.15)', borderRadius: '10px', padding: '12px', fontSize: '0.8rem', color: 'var(--text-primary)' }}>
-                  <strong>Regla de Aportaciones (50/50):</strong>
-                  <br />
-                  Si tus referidos deciden realizar un donativo voluntario para costear servidores, **el 50% de dicho donativo es transferido a tu favor**. El otro 50% se utiliza en el mantenimiento técnico de QuiMundial.
-                </div>
-                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  *Nota: Los registros de donaciones voluntarias y las transferencias de recompensa se coordinan de forma offline directamente con el administrador de soporte.*
-                </p>
-              </div>
-            </div>
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '12px', marginBottom: '20px' }}>
+            <button
+              onClick={() => setActiveTab('red')}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '10px',
+                border: activeTab === 'red' ? '2px solid var(--accent-neon-green)' : '2px solid transparent',
+                background: activeTab === 'red' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)',
+                color: activeTab === 'red' ? 'var(--accent-neon-green)' : 'var(--text-secondary)',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Users size={18} /> Mi Red
+            </button>
+            <button
+              onClick={() => setActiveTab('pago')}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '10px',
+                border: activeTab === 'pago' ? '2px solid var(--accent-gold)' : '2px solid transparent',
+                background: activeTab === 'pago' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255,255,255,0.03)',
+                color: activeTab === 'pago' ? 'var(--accent-gold)' : 'var(--text-secondary)',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Landmark size={18} /> Datos de Pago
+            </button>
           </div>
 
-          {/* Referred users list */}
-          <div className="glass-panel">
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-              <Users size={20} style={{ color: 'var(--accent-neon-green)' }} /> Tus Participantes Invitados ({referredUsers.length})
-            </h3>
+          {/* Tab: Mi Red */}
+          {activeTab === 'red' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, borderBottom: '1px solid var(--border-glass)', paddingBottom: '8px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Share2 size={18} style={{ color: 'var(--accent-neon-green)' }} /> Herramientas de Compartición
+                  </h3>
+                  <div className="form-group">
+                    <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Tu Código de Referido</span>
+                      {copiedCode && <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.75rem', fontWeight: 'bold' }}>¡Copiado!</span>}
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input type="text" className="form-input" value={profile?.referral_code || ''} readOnly
+                        style={{ flex: 1, fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1.1rem', letterSpacing: '1px', textAlign: 'center', textTransform: 'uppercase', background: 'rgba(0,0,0,0.2)' }} />
+                      <button onClick={() => copyToClipboard(profile?.referral_code || '', 'code')} className="btn btn-secondary"
+                        style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {copiedCode ? <Check size={18} style={{ color: 'var(--accent-neon-green)' }} /> : <Copy size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Enlace Directo de Registro</span>
+                      {copiedLink && <span style={{ color: 'var(--accent-neon-green)', fontSize: '0.75rem', fontWeight: 'bold' }}>¡Enlace copiado!</span>}
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input type="text" className="form-input" value={signupLink} readOnly
+                        style={{ flex: 1, fontSize: '0.8rem', background: 'rgba(0,0,0,0.2)' }} />
+                      <button onClick={() => copyToClipboard(signupLink, 'link')} className="btn btn-secondary"
+                        style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {copiedLink ? <Check size={18} style={{ color: 'var(--accent-neon-green)' }} /> : <Copy size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, borderBottom: '1px solid var(--border-glass)', paddingBottom: '8px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Heart size={18} style={{ color: 'var(--accent-neon-green)' }} /> Red de Apoyo Solidaria
+                  </h3>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <p style={{ margin: 0 }}>¡Gracias por promover el juego limpio y ayudarnos a costear la Quiniela!</p>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.04)', border: '1px solid rgba(16, 185, 129, 0.15)', borderRadius: '10px', padding: '12px', fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+                      <strong>Regla de Aportaciones (50/50):</strong><br />
+                      Si tus referidos deciden realizar un donativo voluntario para costear servidores, **el 50% de dicho donativo es transferido a tu favor**. El otro 50% se utiliza en el mantenimiento técnico de QuiMundial.
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      *Nota: Los registros de donaciones voluntarias y las transferencias de recompensa se coordinan de forma offline directamente con el administrador de soporte.*
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            {loadingReferred ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Cargando registros de tus invitados...
+              <div className="glass-panel">
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  <Users size={20} style={{ color: 'var(--accent-neon-green)' }} /> Tus Participantes Invitados ({referredUsers.length})
+                </h3>
+                {loadingReferred ? (
+                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Cargando registros de tus invitados...</div>
+                ) : referredUsers.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                    <Users size={36} style={{ opacity: 0.2 }} />
+                    <span>No has registrado ningún invitado todavía.</span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>¡Comparte tu código de referido para empezar a sumar amigos a la Quiniela!</span>
+                  </div>
+                ) : (
+                  <div className="ranking-table-wrapper">
+                    <table className="ranking-table">
+                      <thead>
+                        <tr>
+                          <th>Participante</th>
+                          <th style={{ textAlign: 'center' }}>Registrado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {referredUsers.map((refUser) => (
+                          <tr key={refUser.id} className="ranking-row">
+                            <td>
+                              <div className="rank-player-cell">
+                                <div className="player-avatar" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
+                                  {(refUser.full_name || 'U')[0].toUpperCase()}
+                                </div>
+                                <div className="player-name-container">
+                                  <span className="player-name">{refUser.full_name || 'Participante'}</span>
+                                  <span className="player-badge">@{refUser.username || 'user'}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                              {new Date(refUser.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-            ) : referredUsers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                <Users size={36} style={{ opacity: 0.2 }} />
-                <span>No has registrado ningún invitado todavía.</span>
-                <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>¡Comparte tu código de referido para empezar a sumar amigos a la Quiniela!</span>
-              </div>
-            ) : (
-              <div className="ranking-table-wrapper">
-                <table className="ranking-table">
-                  <thead>
-                    <tr>
-                      <th>Participante</th>
-                      <th style={{ textAlign: 'center' }}>Registrado</th>
-                      <th style={{ textAlign: 'center' }}>¿Apoyó con Donación?</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {referredUsers.map((refUser) => (
-                      <tr key={refUser.id} className="ranking-row">
-                        <td>
-                          <div className="rank-player-cell">
-                            <div className="player-avatar" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
-                              {(refUser.full_name || 'U')[0].toUpperCase()}
-                            </div>
-                            <div className="player-name-container">
-                              <span className="player-name">{refUser.full_name || 'Participante'}</span>
-                              <span className="player-badge">@{refUser.username || 'user'}</span>
-                            </div>
-                          </div>
-                        </td>
-                        
-                        <td style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                          {new Date(refUser.created_at).toLocaleDateString('es-MX', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                        </td>
+            </>
+          )}
 
-                        <td style={{ textAlign: 'center' }}>
-                          <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 800,
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            background: refUser.is_active ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-                            border: refUser.is_active ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-                            color: refUser.is_active ? 'var(--accent-neon-green)' : 'var(--text-muted)',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.02em'
-                          }}>
-                            {refUser.is_active ? 'Sí (Aporte Activo)' : 'No registrado'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          {/* Tab: Datos de Pago */}
+          {activeTab === 'pago' && (
+            <div className="glass-panel">
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Landmark size={20} style={{ color: 'var(--accent-gold)' }} /> Datos para Pago
+              </h3>
+              {loadingInfo ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                  <Loader size={20} style={{ animation: 'spin 1s linear infinite', marginRight: '8px' }} />
+                  Cargando datos...
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Nombre Completo</label>
+                    <input type="text" className="form-input" value={formFullName}
+                      onChange={(e) => setFormFullName(e.target.value)}
+                      placeholder="Tu nombre completo (como aparece en tu cuenta bancaria)" style={{ width: '100%' }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Smartphone size={16} /> Teléfono (WhatsApp)
+                    </label>
+                    <input type="tel" className="form-input" value={formPhone}
+                      onChange={(e) => setFormPhone(e.target.value)}
+                      placeholder="Ej: 521234567890" style={{ width: '100%' }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="form-group">
+                      <label className="form-label">CLABE (18 dígitos)</label>
+                      <input type="text" className="form-input" value={formClabe}
+                        onChange={(e) => setFormClabe(e.target.value)}
+                        placeholder="000000000000000000" maxLength={18} style={{ width: '100%', fontFamily: 'monospace' }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Banco</label>
+                      <input type="text" className="form-input" value={formBank}
+                        onChange={(e) => setFormBank(e.target.value)}
+                        placeholder="Ej: BBVA, Banorte, Santander..." style={{ width: '100%' }} />
+                    </div>
+                  </div>
+                  {infoMsg && (
+                    <div style={{
+                      padding: '10px 14px',
+                      background: infoMsg.startsWith('Error') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                      border: `1px solid ${infoMsg.startsWith('Error') ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+                      borderRadius: '10px',
+                      color: infoMsg.startsWith('Error') ? '#f87171' : 'var(--accent-neon-green)',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center', gap: '8px'
+                    }}>
+                      {infoMsg.startsWith('Error') ? <AlertCircle size={16} /> : <Check size={16} />} {infoMsg}
+                    </div>
+                  )}
+                  <button onClick={handleSaveInfo} className="btn btn-primary" disabled={savingInfo}
+                    style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 28px', fontWeight: 800 }}>
+                    {savingInfo ? <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={18} />}
+                    {savingInfo ? 'Guardando...' : 'Guardar Datos'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

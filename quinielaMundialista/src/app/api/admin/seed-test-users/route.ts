@@ -28,13 +28,13 @@ export async function POST(req: Request) {
       .single();
 
     const ptsExact = settings ? Number(settings.points_exact_score) : 5;
-    const ptsWinner = settings ? Number(settings.points_correct_winner) : 3;
-    const ptsDraw = settings ? Number(settings.points_correct_draw) : 3;
+    const ptsWinner = settings ? Number(settings.points_correct_winner) : 1;
+    const ptsDraw = settings ? Number(settings.points_correct_draw) : 1;
 
     // 3. Purge existing test users to keep the database clean and repeatable
     const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
     if (!listError && listData?.users) {
-      const testUsers = listData.users.filter(u => u.email?.endsWith('@quimundial.test'));
+      const testUsers = listData.users.filter((u: any) => u.email?.endsWith('@quimundial.test'));
       for (const tu of testUsers) {
         await supabaseAdmin.auth.admin.deleteUser(tu.id);
       }
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
         .eq('id', userId);
 
       // Generate randomized predictions
-      const predictionsToInsert = matches.map(match => {
+      const predictionsToInsert = matches.map((match: any) => {
         // Semi-realistic predictions: higher probability of 0, 1, 2, 3 goals
         const homePred = Math.floor(Math.random() * 4);
         const awayPred = Math.floor(Math.random() * 4);

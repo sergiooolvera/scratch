@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/lib/AuthContext';
 import { Header } from './components/Header';
 import { MobileNav } from './components/MobileNav';
+import { GlobalFloatingActions } from './components/GlobalFloatingActions';
 
 export const metadata: Metadata = {
   title: 'Quiniela Mundialista 2026 - Dashboard Deportivo',
@@ -24,6 +25,7 @@ export default function RootLayout({
             {children}
           </main>
           <MobileNav />
+          <GlobalFloatingActions />
         </AuthProvider>
       </body>
     </html>

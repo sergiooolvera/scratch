@@ -263,8 +263,8 @@ export default function HomePage() {
 
       {/* Welcome Banner Card */}
       <div className="glass-panel welcome-banner-card" style={{
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%)',
-        border: '1px solid rgba(16, 185, 129, 0.25)',
+        background: 'var(--welcome-banner-bg)',
+        border: '1px solid var(--welcome-banner-border)',
         marginBottom: '24px',
         padding: '32px 24px',
         position: 'relative',
@@ -320,10 +320,10 @@ export default function HomePage() {
           <div className="welcome-countdown-card" style={{
             flex: '1 1 280px',
             maxWidth: '380px',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
+            background: 'var(--countdown-bg)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: '1px solid var(--countdown-border)',
             borderRadius: '20px',
             padding: '24px 20px',
             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.02)',
@@ -344,7 +344,7 @@ export default function HomePage() {
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', width: '100%' }}>
                   {/* Days */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
-                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: '#ffffff', textShadow: '0 0 10px rgba(255,255,255,0.4)', lineHeight: 1 }}>
+                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--countdown-number-color)', textShadow: 'var(--countdown-shadow)', lineHeight: 1 }}>
                       {String(timeLeft.days).padStart(2, '0')}
                     </span>
                     <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Días</span>
@@ -431,8 +431,8 @@ export default function HomePage() {
         <div 
           className="referral-box-glow"
           style={{
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(3, 7, 18, 0.65) 100%)',
-            border: '2px solid rgba(16, 185, 129, 0.4)',
+            background: 'var(--referral-bg)',
+            border: '2px solid var(--referral-border)',
             borderRadius: '16px',
             padding: '18px 24px',
             marginBottom: '28px',
@@ -466,8 +466,8 @@ export default function HomePage() {
             <div 
               className="sports-font referral-code-display"
               style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(3, 7, 18, 0.8) 100%)',
-                border: '2px solid rgba(16, 185, 129, 0.5)',
+                background: 'var(--referral-code-bg)',
+                border: '2px solid var(--referral-code-border)',
                 borderRadius: '12px',
                 height: '46px',
                 padding: '0 20px',
@@ -485,7 +485,7 @@ export default function HomePage() {
               {profile.referral_code}
             </div>
             
-            <div className="referral-actions-row">
+            <div className="referral-actions-row" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <button 
                 onClick={() => handleCopyCode(profile.referral_code || '')}
                 className="btn btn-secondary"
@@ -728,9 +728,56 @@ export default function HomePage() {
 
       </div>
 
+      {/* Sponsor Banners Section */}
+      <div className="glass-panel" style={{
+        marginTop: '40px',
+        padding: '28px 24px',
+        borderRadius: '20px',
+        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(30, 41, 59, 0.4) 100%)',
+        border: '1px solid rgba(245, 158, 11, 0.2)',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+            Patrocinadores
+          </span>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 900, margin: '4px 0 0 0', color: 'var(--text-primary)' }}>
+            ¿Tu marca quiere llegar a miles de aficionados?
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '6px 0 0 0', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
+            Asóciate con QuiMundial y lleva tu marca al corazón de la afición futbolera. <strong>¡Escríbenos a <a href="mailto:quinielafutbolera2026@gmail.com" style={{ color: 'var(--accent-gold)' }}>quinielafutbolera2026@gmail.com</a>!</strong>
+          </p>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '16px',
+          maxWidth: '350px',
+          margin: '0 auto'
+        }}>
+          <div
+            style={{
+              display: 'block',
+              borderRadius: '14px',
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.08)',
+              transition: 'all 0.3s ease',
+              position: 'relative',
+            }}
+            className="sponsor-banner-link"
+          >
+            <img
+              src="/publicidad2.jpg"
+              alt="Patrocinador 2"
+              style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Footer and Terms & Conditions trigger */}
       <footer style={{
-        marginTop: '60px',
+        marginTop: '40px',
         padding: '24px 0',
         borderTop: '1px solid var(--border-glass)',
         textAlign: 'center',
@@ -777,33 +824,30 @@ export default function HomePage() {
           zIndex: 9999,
           padding: '20px'
         }} onClick={() => setShowTerms(false)}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.99) 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '20px',
+          <div className="glass-panel" style={{
             maxWidth: '600px',
             width: '100%',
             maxHeight: '80vh',
             overflowY: 'auto',
             padding: '30px 24px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
             position: 'relative'
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--accent-gold)', marginBottom: '18px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', textTransform: 'uppercase' }}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--accent-gold)', marginBottom: '18px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '12px', textTransform: 'uppercase' }}>
               {picante("Aviso Legal y Exención de Responsabilidad", "Aviso Legal y de no andar con lloraderas", spicyMode)}
             </h3>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'left' }}>
               <p>
                 <strong>1. Carácter de Mero Entretenimiento:</strong> {picante(
-                  "QuiMundial es una plataforma recreativa y privada orientada exclusivamente al esparcimiento deportivo con motivo del Mundial 2026. Bajo ninguna circunstancia opera, promueve, ni facilita actividades de apuestas comerciales o juegos de azar, siendo de libre y gratuito registro y participación.",
+                  "QuiMundial es una plataforma 100% gratuita, recreativa y privada orientada exclusivamente al esparcimiento deportivo con motivo del Mundial 2026. Bajo ninguna circunstancia opera, promueve, ni facilita actividades de apuestas comerciales o juegos de azar, siendo de libre registro y participación.",
                   "QuiMundial es una reta 100% lúdica y recreativa de amigos de la cuadra. Aquí nadie te va a cobrar ni un peso partido por la mitad por registrar tus corazonadas, cumpliendo al cien con la Ley Federal de Juegos y Sorteos.",
                   spicyMode
                 )}
               </p>
               <p>
                 <strong>2. Naturaleza del Acceso Gratuito:</strong> {picante(
-                  "El registro, uso y participación es totalmente gratuito. El sistema de pagos (Stripe) y de cupones prepago ha sido completamente removido, permitiendo un acceso libre e inmediato a la captura de pronósticos para todos los participantes sin costo alguno.",
-                  "¡El registro es gratis y para toda la banda! Quitamos por completo la pasarela de pagos de Stripe y el canje de cupones para que puedas registrar tus marcadores libremente sin gastar un centavo. 😎💻",
+                  "El registro, uso y participación es totalmente gratuito, permitiendo un acceso libre e inmediato a la captura de pronósticos para todos los participantes sin costo alguno.",
+                  "¡El registro es gratis y para toda la banda! Puedes registrar tus marcadores libremente sin gastar un centavo. 😎💻",
                   spicyMode
                 )}
               </p>
@@ -816,27 +860,34 @@ export default function HomePage() {
               </p>
               <p>
                 <strong>4. Causa Social y Búsqueda de Oportunidades:</strong> {picante(
-                  "Este proyecto ha sido desarrollado e impulsado con dedicación por programadores buscando expandir sus oportunidades profesionales. Agradecemos enormemente tu confianza, apoyo moral y difusión.",
-                  "Este software fue diseñado con mucho cariño y esfuerzo por mentes creativas desempleadas buscando salir adelante. Al hacerlo gratis para todos garantizamos tu diversión y nos ayuda a promover nuestro trabajo técnico con el mundo. ¡Gracias de corazón por compartirlo con la banda! 🇲🇽✨",
+                  "Este proyecto ha sido desarrollado e impulsado con dedicación por personas que nos quedamos sin empleo recientemente y que estamos preocupados por el bienestar de nuestras familias, queremos que nos veas y si te agrada el trabajo pues que juntos nos apoyemos para crear oportunidades laborales.",
+                  "Este proyecto nació del esfuerzo de personas talentosas que perdieron su empleo pero no las ganas de crear. Si te gusta lo que ves, compártelo y ayúdanos a mostrar nuestro trabajo para generar nuevas oportunidades. ¡Gratis para ti, esperanza para nosotros!",
                   spicyMode
                 )}
               </p>
               <p>
-                <strong>5. Resultados Oficiales de Juego:</strong> {picante(
+                <strong>5. Comunicaciones y Autorización de Contacto:</strong> {picante(
+                  "Al registrarse, el usuario autoriza expresamente a QuiMundial para enviar comunicaciones vía correo electrónico y/o mensajes con fines informativos, promocionales y de publicidad. El usuario podrá darse de baja en cualquier momento mediante el enlace de cancelación incluido en cada comunicación.",
+                  "Al registrarte aceptas que te mandemos uno que otro correo o mensaje para avisarte de novedades, resultados y cosas interesantes de la quiniela. Si te llega a molestar la publicidad, siempre puedes cancelar la suscripción con un solo clic al final del mensaje. Sin presiones, prometido.",
+                  spicyMode
+                )}
+              </p>
+              <p>
+                <strong>6. Resultados Oficiales de Juego:</strong> {picante(
                   "Los marcadores y resultados oficiales que se tomarán en cuenta para el cálculo de los puntos serán únicamente los declarados oficiales por el comité organizador de la competencia deportiva.",
                   "Aquí lo que diga el árbitro oficial de la cancha va a misa. Nada de que 'a mí me pareció penal'. Los marcadores oficiales del torneo son la ley absoluta en esta quiniela.",
                   spicyMode
                 )}
               </p>
               <p>
-                <strong>6. Nombramiento de Ganadores y Premiación:</strong> {picante(
+                <strong>7. Nombramiento de Ganadores y Premiación:</strong> {picante(
                   "El día 26 de Junio se nombrará oficialmente al ganador o ganadora del torneo en base al puntaje final acumulado.",
                   "El 26 de Junio coronaremos oficialmente al rey del balón de esta quiniela y nos echaremos un buen mole por el campeón.",
                   spicyMode
                 )}
               </p>
               <p>
-                <strong>7. Aceptación de Condiciones:</strong> {picante(
+                <strong>8. Aceptación de Condiciones:</strong> {picante(
                   "El uso de la plataforma, el registro de perfiles y la captura de marcadores implica la manifestación libre, voluntaria y expresa de la aceptación absoluta de estos términos.",
                   "Si te metes a jugar, es porque estás de acuerdo con el reglamento de esta reta. ¡Que ruede el balón y que gane el menos tronco!",
                   spicyMode
