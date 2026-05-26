@@ -319,13 +319,8 @@ export default function RankingPage() {
     }
   };
 
-  // Fetch leaderboard standings and system settings
   const fetchRankingData = async () => {
     setLoading(true);
-    // Safety fallback timer to prevent permanent loading screens (e.g. tab sleep)
-    const safetyTimer = setTimeout(() => {
-      setLoading(false);
-    }, 2500);
 
     try {
       // 1. Fetch profiles ordered by points DESC, exact_scores DESC, goal_difference ASC
@@ -374,7 +369,6 @@ export default function RankingPage() {
     } catch (err: any) {
       console.error('Error fetching ranking data:', err.message);
     } finally {
-      clearTimeout(safetyTimer);
       setLoading(false);
     }
   };
