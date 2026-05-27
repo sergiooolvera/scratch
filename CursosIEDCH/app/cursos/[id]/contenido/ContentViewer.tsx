@@ -104,13 +104,35 @@ export default function ContentViewer({ url }: { url: string }) {
 
     if (isPpt) {
         return (
-            <div className="w-full h-[80vh] min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg relative transition-all duration-300">
+            <div className="w-full h-[60vh] md:h-[80vh] min-h-[400px] md:min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg relative transition-all duration-300 flex flex-col">
                 <iframe
                     src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
-                    className="w-full h-full border-0"
+                    className="w-full flex-1 border-0"
                     title="Visualizador de Presentación PPT"
                     allowFullScreen
                 />
+                <div className="bg-slate-50 border-t border-gray-150 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <p className="text-gray-500 font-sans text-center sm:text-left">
+                        Puedes visualizar esta presentación PPT en pantalla completa o descargarla para verla localmente.
+                    </p>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <a
+                            href={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition"
+                        >
+                            Pantalla Completa
+                        </a>
+                        <a
+                            href={url}
+                            download
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 font-bold rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition"
+                        >
+                            Descargar
+                        </a>
+                    </div>
+                </div>
             </div>
         )
     }
@@ -126,31 +148,41 @@ export default function ContentViewer({ url }: { url: string }) {
 
     if (isPdf && !isOfficeOrArchive) {
         return (
-            <div className="w-full h-[80vh] min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-inner">
-                <object
-                    data={url}
-                    type="application/pdf"
-                    className="w-full h-full"
-                >
-                    <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
-                        <p className="text-gray-600">No se pudo incrustar el PDF. Algunos móviles no lo soportan nativamente.</p>
+            <div className="w-full h-[60vh] md:h-[80vh] min-h-[400px] md:min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg flex flex-col">
+                <iframe
+                    src={url}
+                    className="w-full flex-1 border-0"
+                    title="Visualizador de PDF"
+                />
+                <div className="bg-slate-50 border-t border-gray-150 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <p className="text-gray-500 font-sans text-center sm:text-left">
+                        ¿Tienes problemas para ver el documento? Puedes abrirlo en pantalla completa o descargarlo directamente.
+                    </p>
+                    <div className="flex gap-2 w-full sm:w-auto">
                         <a
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition"
                         >
-                            Descargar o Ver PDF
+                            Ver Pantalla Completa
+                        </a>
+                        <a
+                            href={url}
+                            download
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 font-bold rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition"
+                        >
+                            Descargar
                         </a>
                     </div>
-                </object>
+                </div>
             </div>
         )
     }
 
     if (isHtml) {
         return (
-            <div className="relative w-full h-[80vh] min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-inner">
+            <div className="relative w-full h-[60vh] md:h-[80vh] min-h-[400px] md:min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-inner">
                 <a
                     href={htmlViewerHref}
                     target="_blank"
