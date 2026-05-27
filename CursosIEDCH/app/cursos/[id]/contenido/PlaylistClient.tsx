@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type Recurso = {
@@ -40,19 +40,55 @@ export default function PlaylistClient({
     requiereExamen,
     urlExamen,
     cursoId,
-    userId
+    userId,
+    bloquearAvance = false,
+    requiereTareasAvance = false,
+    requiereExamenAvance = false
 }: {
     playlist: Modulo[],
     requiereExamen?: boolean,
     urlExamen?: string | null,
     cursoId: string,
-    userId: string
+    userId: string,
+    bloquearAvance?: boolean,
+    requiereTareasAvance?: boolean,
+    requiereExamenAvance?: boolean
 }) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [activeRecursoIndex, setActiveRecursoIndex] = useState(0)
     const [modalMensaje, setModalMensaje] = useState<string | null>(null)
     const [modulosVistos, setModulosVistos] = useState<string[]>([])
     const [savingProgress, setSavingProgress] = useState(false)
+
+    const isModuleLocked = (index: number): boolean => {
+        if (!bloquearAvance || index === 0) return false;
+
+        // Check if all previous modules are completed
+        for (let i = 0; i < index; i++) {
+            const prevMod = playlist[i];
+            const prevModId = prevMod.id || `modulo-${i}`;
+
+            // Rule 1: Previous module must be marked as seen/completed (visto)
+            const wasVisto = modulosVistos.includes(prevModId);
+            if (!wasVisto) return true;
+
+            // Rule 2: If requiereTareasAvance is active, previous module must have a task submission (entrega)
+            const hasTaskDef = !!tareasDef[prevModId];
+            if (requiereTareasAvance && hasTaskDef) {
+                const hasSubmission = !!entregas[prevModId];
+                if (!hasSubmission) return true;
+            }
+
+            // Rule 3: If requiereExamenAvance is active, previous module must have an exam that is passed (aprobado)
+            const hasExamDef = !!examenes[prevModId];
+            if (requiereExamenAvance && hasExamDef) {
+                const isPassed = examenes[prevModId].aprobado;
+                if (!isPassed) return true;
+            }
+        }
+
+        return false;
+    }
     const supabase = createClient()
 
     // Modular exams state
@@ -70,18 +106,157 @@ export default function PlaylistClient({
         error?: string;
     } | null>(null)
 
+    // Tasks and submissions state
+    const [tareasDef, setTareasDef] = useState<Record<string, { instrucciones: string, puntos: string }>>({})
+    const [entregas, setEntregas] = useState<Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }>>({})
+    const [cargandoTareas, setCargandoTareas] = useState(true)
+
     useEffect(() => {
         fetchProgreso()
         fetchExamenesModulares()
+        fetchTareasYEntregas()
     }, [cursoId, userId])
 
+    const fetchTareasYEntregas = async () => {
+        setCargandoTareas(true)
+        try {
+            const defRes = await fetch(`/api/cursos/tareas-definicion?cursoId=${cursoId}`);
+            const tasksData = defRes.ok ? await defRes.json() : [];
+
+            const defMap: Record<string, { instrucciones: string, puntos: string }> = {}
+            tasksData?.forEach((t: any) => {
+                const parts = t.pregunta.split('::')
+                const header = parts[0]
+                const modId = header.replace('TAREA_DEFINICION:', '').replace('[', '').replace(']', '')
+                try {
+                    const payload = JSON.parse(parts.slice(1).join('::'))
+                    defMap[modId] = payload
+                } catch (e) {
+                    console.error('Error parsing task payload', e)
+                }
+            })
+            setTareasDef(defMap)
+
+            const { data: submissionsData } = await supabase
+                .from('ie_preguntas_respuestas')
+                .select('*')
+                .eq('curso_id', cursoId)
+                .eq('user_id', userId)
+                .like('pregunta', 'TAREA_ENTREGA:%');
+
+            const subMap: Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }> = {}
+            submissionsData?.forEach(s => {
+                const parts = s.pregunta.split('::')
+                const header = parts[0]
+                const modId = header.replace('TAREA_ENTREGA:', '').replace('[', '').replace(']', '')
+                try {
+                    const payload = JSON.parse(parts.slice(1).join('::'))
+                    subMap[modId] = {
+                        id: s.id,
+                        explicacion: payload.explicacion,
+                        archivos: payload.archivos || [],
+                        calificacion: payload.calificacion,
+                        retroalimentacion: payload.retroalimentacion
+                    }
+                } catch (e) {
+                    console.error('Error parsing submission payload', e)
+                }
+            })
+            setEntregas(subMap)
+        } catch (e) {
+            console.error('Error cargando tareas modulares:', e)
+        } finally {
+            setCargandoTareas(false)
+        }
+    }
+
+    const handleRemoveFile = (indexToRemove: number) => {
+        setArchivosSeleccionados(prev => prev.filter((_, i) => i !== indexToRemove))
+    }
+
+    const handleEnviarTarea = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!explicacionTarea.trim()) {
+            setModalMensaje('Por favor escribe una explicación para tu tarea.')
+            return
+        }
+
+        setEnviandoTarea(true)
+        try {
+            const urlsArchivos: string[] = []
+            
+            if (archivosSeleccionados.length > 0) {
+                setSubiendoArchivos(true)
+                for (const file of archivosSeleccionados) {
+                    const ext = file.name.split('.').pop()
+                    const uniqueName = `tareas_entregas/${userId}_${currentItem.id}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${ext}`
+                    
+                    const { error: uploadError } = await supabase.storage
+                        .from('cursos_contenido')
+                        .upload(uniqueName, file)
+
+                    if (uploadError) {
+                        throw new Error(`Error al subir archivo "${file.name}": ${uploadError.message}`)
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('cursos_contenido')
+                        .getPublicUrl(uniqueName)
+
+                    urlsArchivos.push(publicUrl)
+                }
+                setSubiendoArchivos(false)
+            }
+
+            const submissionPayload = JSON.stringify({
+                explicacion: explicacionTarea,
+                archivos: urlsArchivos,
+                calificacion: null,
+                retroalimentacion: null
+            })
+
+            const definitionKey = `TAREA_ENTREGA:${currentItem.id}`;
+
+            const { error: insertError } = await supabase
+                .from('ie_preguntas_respuestas')
+                .insert({
+                    curso_id: cursoId,
+                    user_id: userId,
+                    pregunta: `${definitionKey}::${submissionPayload}`,
+                    respuesta: 'TAREA_ENTREGA'
+                })
+
+            if (insertError) {
+                throw new Error(insertError.message)
+            }
+
+            setModalMensaje('¡Tu tarea ha sido entregada con éxito!')
+            await fetchTareasYEntregas()
+        } catch (err: any) {
+            console.error('Error al entregar tarea:', err)
+            setModalMensaje(err.message || 'Ocurrió un error al entregar la tarea.')
+        } finally {
+            setEnviandoTarea(false)
+            setSubiendoArchivos(false)
+        }
+    }
+
     // Reset modular exam UI states and active resource when active module changes
+    const [explicacionTarea, setExplicacionTarea] = useState('')
+    const [archivosSeleccionados, setArchivosSeleccionados] = useState<File[]>([])
+    const [enviandoTarea, setEnviandoTarea] = useState(false)
+    const [subiendoArchivos, setSubiendoArchivos] = useState(false)
+
     useEffect(() => {
         setMostrarExamenActivo(false)
         setRespuestasExamen({})
         setExplicacionesExamen({})
         setResultadoExamen(null)
         setActiveRecursoIndex(0)
+        setExplicacionTarea('')
+        setArchivosSeleccionados([])
+        setEnviandoTarea(false)
+        setSubiendoArchivos(false)
     }, [currentIndex])
 
     const fetchProgreso = async () => {
@@ -176,12 +351,36 @@ export default function PlaylistClient({
             }, { onConflict: 'user_id, curso_id, modulo_id' })
 
         if (!error) {
-            if (!modulosVistos.includes(currentId)) {
-                setModulosVistos([...modulosVistos, currentId])
-            }
+            const updatedVistos = modulosVistos.includes(currentId) 
+                ? modulosVistos 
+                : [...modulosVistos, currentId];
+            
+            setModulosVistos(updatedVistos);
+
             // Advance to next if not last
             if (currentIndex < playlist.length - 1) {
-                setCurrentIndex(currentIndex + 1)
+                const nextIndex = currentIndex + 1;
+                
+                // Manual check for the current module's requirements
+                const hasTaskDef = !!tareasDef[currentId];
+                const requiresTask = requiereTareasAvance && hasTaskDef && !entregas[currentId];
+                
+                const hasExamDef = !!examenes[currentId];
+                const requiresExam = requiereExamenAvance && hasExamDef && (!examenes[currentId] || !examenes[currentId].aprobado);
+
+                if (bloquearAvance && (requiresTask || requiresExam)) {
+                    let reqMessage = "¡Tema completado! Sin embargo, para acceder al siguiente módulo debes ";
+                    if (requiresTask && requiresExam) {
+                        reqMessage += "entregar la tarea y aprobar el examen modular de este tema.";
+                    } else if (requiresTask) {
+                        reqMessage += "entregar la tarea de este módulo.";
+                    } else {
+                        reqMessage += "aprobar el examen de este módulo.";
+                    }
+                    setModalMensaje(reqMessage);
+                } else {
+                    setCurrentIndex(nextIndex);
+                }
             }
         }
         setSavingProgress(false)
@@ -468,9 +667,15 @@ export default function PlaylistClient({
                                 )}
 
                                 {currentItem.recursos && currentItem.recursos.length > 0 ? (
-                                    <ContentViewer url={currentItem.recursos[activeRecursoIndex].url_contenido} />
+                                    <ContentViewer 
+                                        url={currentItem.recursos[activeRecursoIndex].url_contenido} 
+                                        titulo={currentItem.recursos[activeRecursoIndex].titulo}
+                                    />
                                 ) : currentItem.url_contenido ? (
-                                    <ContentViewer url={currentItem.url_contenido} />
+                                    <ContentViewer 
+                                        url={currentItem.url_contenido} 
+                                        titulo={currentItem.titulo}
+                                    />
                                 ) : (
                                     <div className="w-full flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-dashed border-gray-300 shadow-sm">
                                         <AlertCircle className="h-12 w-12 text-gray-300 mb-3 animate-pulse" />
@@ -513,6 +718,171 @@ export default function PlaylistClient({
                                                 : (savingProgress ? 'Marcando...' : 'Marcar como Visto y Continuar')}
                                     </button>
                                 </div>
+
+                                {/* Tarea / Entregable Modular */}
+                                {currentItem.id && tareasDef[currentItem.id] && (
+                                    <div className="mt-12 bg-zinc-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6">
+                                        <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
+                                            <div className="p-2.5 bg-amber-500 text-white rounded-xl">
+                                                <FileText className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900">Proyecto o Tarea Práctica</h3>
+                                                <p className="text-xs text-gray-500">Completa y envía esta práctica modular para la revisión del tutor.</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="bg-white rounded-xl border border-gray-150 p-5 shadow-sm">
+                                                <h4 className="text-sm font-bold text-gray-800 mb-2">Instrucciones del Tutor:</h4>
+                                                <p className="text-sm text-gray-650 whitespace-pre-wrap leading-relaxed">
+                                                    {tareasDef[currentItem.id].instrucciones}
+                                                </p>
+                                                
+                                                {tareasDef[currentItem.id].puntos && (
+                                                    <div className="mt-4 pt-4 border-t border-gray-100">
+                                                        <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Criterios de Evaluación / Puntos a Revisar:</h5>
+                                                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                            {tareasDef[currentItem.id].puntos.split(',').map((p, idx) => (
+                                                                <li key={idx} className="flex items-center gap-2 text-xs font-semibold text-gray-700">
+                                                                    <div className="h-1.5 w-1.5 bg-amber-500 rounded-full" />
+                                                                    <span>{p.trim()}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {entregas[currentItem.id] ? (
+                                                /* Ya entregada */
+                                                <div className="bg-emerald-50/50 border border-emerald-250 rounded-xl p-5 sm:p-6 space-y-4">
+                                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <CheckCircle className="h-5 w-5 text-emerald-600" />
+                                                            <span className="font-bold text-emerald-900 text-sm">Tarea Entregada con Éxito</span>
+                                                        </div>
+                                                        <div>
+                                                            {entregas[currentItem.id].calificacion !== null ? (
+                                                                <span className="px-4 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-full shadow-sm">
+                                                                    Calificación: {entregas[currentItem.id].calificacion}/100
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-4 py-1.5 bg-amber-500 text-white text-xs font-bold rounded-full shadow-sm">
+                                                                    Pendiente de Revisión
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-white rounded-lg border border-emerald-100 p-4 space-y-3">
+                                                        <div>
+                                                            <h5 className="text-xs font-bold text-gray-400">Tu explicación:</h5>
+                                                            <p className="text-sm text-gray-700 mt-1">{entregas[currentItem.id].explicacion}</p>
+                                                        </div>
+
+                                                        {entregas[currentItem.id].archivos && entregas[currentItem.id].archivos.length > 0 && (
+                                                            <div className="pt-2 border-t border-gray-100">
+                                                                <h5 className="text-xs font-bold text-gray-400 mb-2">Archivos adjuntos:</h5>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {entregas[currentItem.id].archivos.map((url, fIdx) => (
+                                                                        <a
+                                                                            key={fIdx}
+                                                                            href={url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg text-xs font-bold text-zinc-700 transition"
+                                                                        >
+                                                                            <FileText className="h-3.5 w-3.5" />
+                                                                            <span>Ver archivo #{fIdx + 1}</span>
+                                                                        </a>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {entregas[currentItem.id].calificacion !== null && (
+                                                        <div className="bg-emerald-100/50 border border-emerald-200/80 rounded-lg p-4 space-y-1">
+                                                            <h5 className="text-xs font-bold text-emerald-900">Retroalimentación del Profesor:</h5>
+                                                            <p className="text-sm text-emerald-800 italic">
+                                                                {entregas[currentItem.id].retroalimentacion || 'Sin comentarios adicionales.'}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                /* Formulario de Entrega */
+                                                <form onSubmit={handleEnviarTarea} className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 space-y-4">
+                                                    <h4 className="text-sm font-bold text-gray-800">Enviar tu Entrega:</h4>
+                                                    
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-gray-500 mb-1">Explicación del trabajo realizado:</label>
+                                                        <textarea
+                                                            rows={4}
+                                                            required
+                                                            placeholder="Describe brevemente el desarrollo de tu tarea, aclaraciones o respuestas a las preguntas planteadas..."
+                                                            value={explicacionTarea}
+                                                            onChange={(e) => setExplicacionTarea(e.target.value)}
+                                                            className="w-full text-sm rounded-xl border-gray-300 p-3 border bg-white text-black font-semibold"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-gray-500 mb-1">Adjuntar Archivos (Pruebas, Códigos o Capturas):</label>
+                                                        <div className="flex flex-col gap-3">
+                                                            <div className="relative border-2 border-dashed border-gray-300 hover:border-amber-500 transition rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer bg-zinc-50/50">
+                                                                <input
+                                                                    type="file"
+                                                                    multiple
+                                                                    onChange={(e) => {
+                                                                        if (e.target.files) {
+                                                                            setArchivosSeleccionados(prev => [...prev, ...Array.from(e.target.files!)])
+                                                                        }
+                                                                    }}
+                                                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                                />
+                                                                <FileText className="h-8 w-8 text-gray-400 mb-2" />
+                                                                <p className="text-xs font-bold text-gray-600 text-center">Seleccionar Archivo(s)</p>
+                                                                <p className="text-[10px] text-gray-400 text-center mt-1">Arrastra o haz clic para subir</p>
+                                                            </div>
+
+                                                            {archivosSeleccionados.length > 0 && (
+                                                                <div className="space-y-1.5">
+                                                                    <p className="text-xs font-bold text-gray-500">Archivos seleccionados:</p>
+                                                                    <div className="flex flex-col gap-1">
+                                                                        {archivosSeleccionados.map((file, fIdx) => (
+                                                                            <div key={fIdx} className="flex items-center justify-between px-3 py-2 bg-zinc-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700">
+                                                                                <span className="truncate max-w-[250px]">{file.name}</span>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleRemoveFile(fIdx)}
+                                                                                    className="text-red-500 hover:text-red-700 font-bold transition ml-2"
+                                                                                >
+                                                                                    Eliminar
+                                                                                </button>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="pt-2 border-t border-gray-100 flex justify-end">
+                                                        <button
+                                                            type="submit"
+                                                            disabled={enviandoTarea}
+                                                            className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 text-xs sm:text-sm"
+                                                        >
+                                                            {enviandoTarea ? (subiendoArchivos ? 'Subiendo archivos...' : 'Enviando...') : 'Enviar Tarea'}
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -536,17 +906,28 @@ export default function PlaylistClient({
                                 const isExamPassed = hasExam ? examenes[item.id].aprobado : false
                                 const isVisto = modulosVistos.includes(item.id || `modulo-${index}`)
                                 const recursos = item.recursos || []
+                                const locked = isModuleLocked(index)
 
                                 return (
                                     <li key={item.id || index}>
                                         <button
                                             onClick={() => {
+                                                if (locked) {
+                                                    setModalMensaje('Este módulo se encuentra bloqueado. Para acceder, debes completar el material de estudio anterior, enviar tus tareas y/o aprobar el examen modular según corresponda.')
+                                                    return
+                                                }
                                                 setCurrentIndex(index)
                                                 setActiveRecursoIndex(0)
                                             }}
-                                            className={`w-full text-left px-4 py-4 flex items-start transition-colors hover:bg-gray-50 ${isActive ? 'bg-blue-50/75 border-l-4 border-blue-600' : 'border-l-4 border-transparent'}`}
+                                            className={`w-full text-left px-4 py-4 flex items-start transition-colors ${
+                                                locked 
+                                                ? 'opacity-40 cursor-not-allowed bg-zinc-50/50 hover:bg-zinc-50/50' 
+                                                : `hover:bg-gray-50 ${isActive ? 'bg-blue-50/75 border-l-4 border-blue-600' : 'border-l-4 border-transparent'}`
+                                            }`}
                                         >
-                                            {isVisto ? (
+                                            {locked ? (
+                                                <Lock className="h-5 w-5 mt-0.5 mr-3 flex-shrink-0 text-gray-400" />
+                                            ) : isVisto ? (
                                                 <CheckCircle className="h-5 w-5 mt-0.5 mr-3 flex-shrink-0 text-green-500" />
                                             ) : (
                                                 <PlayCircle className={`h-5 w-5 mt-0.5 mr-3 flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
@@ -572,7 +953,7 @@ export default function PlaylistClient({
                                                 )}
                                             </div>
                                         </button>
-                                        {recursos.length > 0 && (
+                                        {recursos.length > 0 && !locked && (
                                             <div className={`px-4 pb-3 pl-12 space-y-1 ${isActive ? 'bg-blue-50/75' : 'bg-white'}`}>
                                                 {recursos.map((recurso, recursoIndex) => {
                                                     const isResourceActive = isActive && activeRecursoIndex === recursoIndex

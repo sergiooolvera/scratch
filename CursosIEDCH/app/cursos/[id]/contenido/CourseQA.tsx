@@ -32,12 +32,22 @@ export default function CourseQA({ cursoId, userId, userName }: { cursoId: strin
             .select('*')
             .eq('curso_id', cursoId)
             .eq('user_id', userId)
+            .not('pregunta', 'like', 'TAREA_DEFINICION:%')
+            .not('pregunta', 'like', 'TAREA_ENTREGA:%')
             .order('created_at', { ascending: false })
 
         if (error) {
             console.error('Error fetching questions:', JSON.stringify(error, null, 2), error.message)
         } else {
-            setPreguntas(data || [])
+            // Filtrar de forma infalible del lado del cliente para evitar que se muestren 
+            // tareas entregadas/definidas (incluso si están calificadas)
+            const filtered = (data || []).filter((p: Pregunta) => 
+                !p.pregunta.startsWith('TAREA_DEFINICION') && 
+                !p.pregunta.startsWith('TAREA_ENTREGA') &&
+                !p.pregunta.toLowerCase().startsWith('tarea_definicion') && 
+                !p.pregunta.toLowerCase().startsWith('tarea_entrega')
+            )
+            setPreguntas(filtered)
         }
         setLoading(false)
     }
