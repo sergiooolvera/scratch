@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { X, UploadCloud, Ticket, CreditCard, Banknote, AlertCircle, Lock, Store, Tag } from 'lucide-react'
+import { X, UploadCloud, Ticket, CreditCard, Banknote, AlertCircle, Lock, Store, Tag, ArrowLeftRight } from 'lucide-react'
 
-export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso, montoPagado, esCreadoPorInstructor = false }: {
+export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso, montoPagado, esCreadoPorInstructor = false, mostrarExamenFinal = true, mostrarConstancia = true }: {
     cursoId: string,
     isPagado: boolean,
     pagoCompleto: boolean,
@@ -16,7 +16,9 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     userId: string,
     precioCurso?: number,
     montoPagado?: number,
-    esCreadoPorInstructor?: boolean
+    esCreadoPorInstructor?: boolean,
+    mostrarExamenFinal?: boolean,
+    mostrarConstancia?: boolean
 }) {
     const [loading, setLoading] = useState(false)
     const [showCupon, setShowCupon] = useState(false)
@@ -182,6 +184,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                     cursoId,
                     userId,
                     publicURL,
+                    filePath,
                     metodo,
                     notas: metodo === 'oxxo' ? 'Pago reportado por OXXO' : '',
                     esConstancia: false,
@@ -190,7 +193,8 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
             })
 
             if (!res.ok) {
-                throw new Error('Error al procesar el pago automático')
+                const errData = await res.json().catch(() => ({ error: 'Error al procesar el pago automático' }))
+                throw new Error(errData.error || errData.details || 'Error al procesar el pago automático')
             }
 
             setPagoMensaje('¡Comprobante enviado con éxito y curso habilitado!')
@@ -246,6 +250,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                     cursoId,
                     userId,
                     publicURL,
+                    filePath,
                     metodo,
                     notas: `Pago complementario para constancia - ${metodo}`,
                     esConstancia: true
@@ -353,8 +358,8 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                         disabled={loading}
                         className="flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-green-600 hover:bg-green-700 transition"
                     >
-                        <Banknote className="w-5 h-5 mr-2" />
-                        Pagar en Efectivo
+                        <ArrowLeftRight className="w-5 h-5 mr-2" />
+                        Pagar con Transferencia
                     </button>
 
                     <button
@@ -415,7 +420,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                 {showEfectivo && (
                     <div className="mt-4 p-6 bg-white border border-gray-200 shadow-xl rounded-xl flex flex-col relative transition-all animate-in fade-in slide-in-from-top-4">
                         <button onClick={() => setShowEfectivo(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center"><Banknote className="mr-2 text-green-600" /> Pago por Transferencia o Depósito</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center"><ArrowLeftRight className="mr-2 text-green-600" /> Pago por Transferencia o Depósito</h3>
                         <div className="bg-gray-50 p-4 rounded-md mb-4 border border-gray-100 text-sm text-gray-700">
                             <p className="mb-2 font-bold">Instrucciones de Pago:</p>
                             <p>Realiza un depósito bancario o transferencia interbancaria a la siguiente cuenta:</p>
@@ -519,44 +524,54 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
 
                 {!requiereExamen ? (
                     puedeVerConstancia ? (
-                        <Link
-                            href={constanciaHref}
-                            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600"
-                        >
-                            Obtener Constancia
-                        </Link>
+                        mostrarConstancia && (
+                            <Link
+                                href={constanciaHref}
+                                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600"
+                            >
+                                Obtener Constancia
+                            </Link>
+                        )
                     ) : (
-                        <button
-                            onClick={() => setShowPagoConstancia(!showPagoConstancia)}
-                            className="flex-1 flex justify-center items-center gap-2 py-2 px-4 border border-amber-300 rounded-md shadow-sm text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 transition"
-                        >
-                            <Lock className="w-4 h-4" />
-                            Obtener Constancia
-                        </button>
+                        mostrarConstancia && (
+                            <button
+                                onClick={() => setShowPagoConstancia(!showPagoConstancia)}
+                                className="flex-1 flex justify-center items-center gap-2 py-2 px-4 border border-amber-300 rounded-md shadow-sm text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 transition"
+                            >
+                                <Lock className="w-4 h-4" />
+                                Obtener Constancia
+                            </button>
+                        )
                     )
                 ) : !isAprobado ? (
-                    <Link
-                        href={`/cursos/${cursoId}/examen`}
-                        className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-                    >
-                        Hacer Examen
-                    </Link>
+                    mostrarExamenFinal && (
+                        <Link
+                            href={`/cursos/${cursoId}/examen`}
+                            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                            Hacer Examen
+                        </Link>
+                    )
                 ) : (
                     puedeVerConstancia ? (
-                        <Link
-                            href={constanciaHref}
-                            className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600"
-                        >
-                            Obtener Constancia
-                        </Link>
+                        mostrarConstancia && (
+                            <Link
+                                href={constanciaHref}
+                                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600"
+                            >
+                                Obtener Constancia
+                            </Link>
+                        )
                     ) : (
-                        <button
-                            onClick={() => setShowPagoConstancia(!showPagoConstancia)}
-                            className="flex-1 flex justify-center items-center gap-2 py-2 px-4 border border-amber-300 rounded-md shadow-sm text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 transition"
-                        >
-                            <Lock className="w-4 h-4" />
-                            Obtener Constancia
-                        </button>
+                        mostrarConstancia && (
+                            <button
+                                onClick={() => setShowPagoConstancia(!showPagoConstancia)}
+                                className="flex-1 flex justify-center items-center gap-2 py-2 px-4 border border-amber-300 rounded-md shadow-sm text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 transition"
+                            >
+                                <Lock className="w-4 h-4" />
+                                Obtener Constancia
+                            </button>
+                        )
                     )
                 )}
             </div>
@@ -596,7 +611,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                             onClick={() => { setShowTransferFormForConstancia(!showTransferFormForConstancia); setShowOxxoForConstancia(false); setShowCuponForConstancia(false); }}
                             className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-green-600 hover:bg-green-700 transition shadow-sm"
                         >
-                            <Banknote className="w-5 h-5 mr-2" />
+                            <ArrowLeftRight className="w-5 h-5 mr-2" />
                             Transferencia
                         </button>
                         <button
