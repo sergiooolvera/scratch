@@ -54,6 +54,15 @@ export async function POST(req: Request) {
         }
 
         // 1. Actualizar el curso base y limpiar el borrador
+        const { data: cursoExistente, error: getErr } = await supabaseAdmin
+            .from('ie_cursos')
+            .select('creado_por')
+            .eq('id', cursoId)
+            .single()
+
+        if (getErr) throw getErr
+        const profesorId = cursoExistente?.creado_por;
+
         const { error: updateErr } = await supabaseAdmin.from('ie_cursos').update({
             ...cursoData,
             cambios_pendientes: null
@@ -114,7 +123,8 @@ export async function POST(req: Request) {
                                 modulo_id: moduloId,
                                 titulo: r.titulo || 'Material del Módulo',
                                 url_contenido: r.url_contenido || '',
-                                orden: rIdx + 1
+                                orden: rIdx + 1,
+                                descargable: !!r.descargable
                             });
                         });
                     } else if (m.url_contenido) {
@@ -203,6 +213,46 @@ export async function POST(req: Request) {
                         }
                     } else if (exmExistente && !examenesConResultados.has(exmExistente.id)) {
                         await supabaseAdmin.from('ie_examenes').delete().eq('id', exmExistente.id)
+                    }
+
+                    // Sincronizar Definiciones de Tareas
+                    if (m.requiereTarea) {
+                        const definitionKey = `TAREA_DEFINICION:${moduloId}`;
+                        const definitionPayload = JSON.stringify({
+                            instrucciones: m.tareaInstrucciones || '',
+                            puntos: m.tareaPuntos || ''
+                        });
+
+                        const { data: existingDef } = await supabaseAdmin
+                            .from('ie_preguntas_respuestas')
+                            .select('id')
+                            .eq('curso_id', cursoId)
+                            .eq('respuesta', 'TAREA_DEFINICION')
+                            .like('pregunta', `TAREA_DEFINICION:${moduloId}%`)
+                            .maybeSingle();
+                        
+                        if (existingDef) {
+                            await supabaseAdmin
+                                .from('ie_preguntas_respuestas')
+                                .update({ pregunta: `${definitionKey}::${definitionPayload}` })
+                                .eq('id', existingDef.id);
+                        } else if (profesorId) {
+                            await supabaseAdmin
+                                .from('ie_preguntas_respuestas')
+                                .insert({
+                                    curso_id: cursoId,
+                                    user_id: profesorId,
+                                    pregunta: `${definitionKey}::${definitionPayload}`,
+                                    respuesta: 'TAREA_DEFINICION'
+                                });
+                        }
+                    } else {
+                        await supabaseAdmin
+                            .from('ie_preguntas_respuestas')
+                            .delete()
+                            .eq('curso_id', cursoId)
+                            .eq('respuesta', 'TAREA_DEFINICION')
+                            .like('pregunta', `TAREA_DEFINICION:${moduloId}%`);
                     }
                 }
             }

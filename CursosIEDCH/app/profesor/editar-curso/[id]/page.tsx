@@ -119,7 +119,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         id: r.id,
                         titulo: r.titulo,
                         tipo: r.tipo,
-                        url_contenido: r.url_contenido
+                        url_contenido: r.url_contenido,
+                        descargable: r.descargable
                     })),
                     orden: idx + 1,
                     requiereTarea: m.requiereTarea,
@@ -290,7 +291,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                     titulo: r.titulo || 'Material del Módulo',
                                     tipo: r.tipo || 'video',
                                     url_contenido: r.url_contenido || '',
-                                    archivoPdf: null
+                                    archivoPdf: null,
+                                    descargable: r.descargable !== undefined ? !!r.descargable : false
                                 });
                             });
                         } else if (m.url_contenido) {
