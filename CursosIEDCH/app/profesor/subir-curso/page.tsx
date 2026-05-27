@@ -82,7 +82,7 @@ export default function SubirCursoPage() {
 
     const [loading, setLoading] = useState(true)
     const [mensaje, setMensaje] = useState('')
-    const [perfilIncompleto, setPerfilIncompleto] = useState(false)
+
     const [profile, setProfile] = useState<any>(null)
     const router = useRouter()
     const supabase = createClient()
@@ -921,26 +921,10 @@ export default function SubirCursoPage() {
                 </div>
             )}
             
-            {perfilIncompleto && (
-                <div className="mb-8 bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex flex-col items-center text-center">
-                    <div className="h-12 w-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
-                        <Activity className="h-6 w-6" />
-                    </div>
-                    <h2 className="text-xl font-bold text-red-900 mb-2">¡Atención! Falta agregar/actualizar información</h2>
-                    <p className="text-red-700 mb-6 max-w-md">
-                        Para poder operar, es obligatorio que completes tu perfil con tu información completa y que el administrador <strong>valide tu identidad</strong>.
-                    </p>
-                    <button 
-                        onClick={() => router.push('/perfil')}
-                        className="bg-red-600 text-white px-8 py-3 rounded-full font-bold hover:bg-red-700 transition-all shadow-lg"
-                    >
-                        Ir a mi Perfil ahora
-                    </button>
-                </div>
-            )}
+
 
             {/* Navigation Tabs */}
-            <div className={`flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            <div className="flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px">
                 <button
                     onClick={() => handleTabChange('info')}
                     type="button"
@@ -994,7 +978,7 @@ export default function SubirCursoPage() {
                 </button>
             </div>
 
-            <div className={`bg-white shadow-xl rounded-2xl border border-zinc-100 p-6 lg:p-8 ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            <div className="bg-white shadow-xl rounded-2xl border border-zinc-100 p-6 lg:p-8">
                 {mensaje && (
                     <div className={`mb-6 p-4 rounded-xl border ${mensaje.includes('Error') ? 'bg-red-50 border-red-200 text-red-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
                         <p className="font-semibold text-sm">{mensaje}</p>

@@ -3,13 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Maximize2 } from 'lucide-react'
 
-export default function ContentViewer({ url, titulo = 'Documento de Estudio' }: { url: string, titulo?: string }) {
+export default function ContentViewer({ url, titulo = 'Documento de Estudio', descargable = false }: { url: string, titulo?: string, descargable?: boolean }) {
     const lowerUrl = url.toLowerCase()
-
-    // Heurística de descarga: Si el título contiene "[Descargable]" (case-insensitive), permitimos la descarga.
-    // De lo contrario (por defecto), bloqueamos la descarga del material.
-    const descargable = titulo.toLowerCase().includes('[descargable]')
-    const tituloLimpio = titulo.replace(/\[descargable\]/i, '').trim()
+    const tituloLimpio = titulo.trim()
 
     // Categorías
     const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(lowerUrl)
