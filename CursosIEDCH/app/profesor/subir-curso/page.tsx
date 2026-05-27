@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight } from 'lucide-react'
 
 type Recurso = {
     id?: string;
@@ -11,6 +11,7 @@ type Recurso = {
     tipo: 'video' | 'pdf' | 'html' | 'ppt';
     url_contenido: string;
     archivoPdf: File | null;
+    descargable?: boolean;
 }
 
 type Modulo = {
@@ -20,6 +21,9 @@ type Modulo = {
     requiereExamen: boolean;
     examenMinAprobacion: number;
     examenPreguntas: PreguntaParsed[];
+    requiereTarea?: boolean;
+    tareaInstrucciones?: string;
+    tareaPuntos?: string;
 }
 
 type PreguntaParsed = {
@@ -53,12 +57,18 @@ export default function SubirCursoPage() {
         recursos: [],
         requiereExamen: false,
         examenMinAprobacion: 80,
-        examenPreguntas: []
+        examenPreguntas: [],
+        requiereTarea: false,
+        tareaInstrucciones: '',
+        tareaPuntos: ''
     }])
 
     // Exam state (Final exam)
     const [requiereExamen, setRequiereExamen] = useState(false)
     const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
+    const [bloquearAvance, setBloquearAvance] = useState(false)
+    const [requiereTareasAvance, setRequiereTareasAvance] = useState(false)
+    const [requiereExamenAvance, setRequiereExamenAvance] = useState(false)
     const [minAprobacion, setMinAprobacion] = useState<number | ''>(80)
     const [conTiempo, setConTiempo] = useState(false)
     const [tiempoExamen, setTiempoExamen] = useState<number | ''>(60)
@@ -76,6 +86,188 @@ export default function SubirCursoPage() {
     const [profile, setProfile] = useState<any>(null)
     const router = useRouter()
     const supabase = createClient()
+
+    const [tieneBorradorLocal, setTieneBorradorLocal] = useState(false)
+    const [mostrarExamenFinal, setMostrarExamenFinal] = useState(true)
+    const [mostrarConstancia, setMostrarConstancia] = useState(true)
+    const [borradorInicializado, setBorradorInicializado] = useState(false)
+
+    // Check for draft on mount
+    useEffect(() => {
+        const raw = localStorage.getItem('curso_nuevo_borrador');
+        if (raw) {
+            setTieneBorradorLocal(true);
+        } else {
+            setBorradorInicializado(true);
+        }
+    }, []);
+
+    // Auto-save changes to localStorage once the draft state is initialized
+    useEffect(() => {
+        if (!borradorInicializado) return;
+
+        const borrador = {
+            formData,
+            vigenciaAnos,
+            requiereExamen,
+            requierePagoCompleto,
+            bloquearAvance,
+            requiereTareasAvance,
+            requiereExamenAvance,
+            minAprobacion,
+            conTiempo,
+            tiempoExamen,
+            seguridadAumentada,
+            maxCambios,
+            intentosPermitidos,
+            preguntasExtraidas,
+            mostrarExamenFinal,
+            mostrarConstancia,
+            modulos: modulos.map(m => ({
+                titulo: m.titulo,
+                requiereExamen: m.requiereExamen,
+                examenMinAprobacion: m.examenMinAprobacion,
+                examenPreguntas: m.examenPreguntas,
+                requiereTarea: m.requiereTarea,
+                tareaInstrucciones: m.tareaInstrucciones,
+                tareaPuntos: m.tareaPuntos,
+                recursos: m.recursos.map(r => ({
+                    titulo: r.titulo,
+                    tipo: r.tipo,
+                    url_contenido: r.url_contenido,
+                    descargable: r.descargable
+                }))
+            }))
+        };
+        try {
+            localStorage.setItem('curso_nuevo_borrador', JSON.stringify(borrador));
+        } catch (e) {
+            console.error('Error auto-saving draft to localStorage:', e);
+        }
+    }, [
+        borradorInicializado,
+        formData,
+        vigenciaAnos,
+        requiereExamen,
+        requierePagoCompleto,
+        bloquearAvance,
+        requiereTareasAvance,
+        requiereExamenAvance,
+        minAprobacion,
+        conTiempo,
+        tiempoExamen,
+        seguridadAumentada,
+        maxCambios,
+        intentosPermitidos,
+        preguntasExtraidas,
+        mostrarExamenFinal,
+        mostrarConstancia,
+        modulos
+    ]);
+
+    const guardarBorradorLocal = () => {
+        try {
+            const borrador = {
+                formData,
+                vigenciaAnos,
+                requiereExamen,
+                requierePagoCompleto,
+                bloquearAvance,
+                requiereTareasAvance,
+                requiereExamenAvance,
+                minAprobacion,
+                conTiempo,
+                tiempoExamen,
+                seguridadAumentada,
+                maxCambios,
+                intentosPermitidos,
+                preguntasExtraidas,
+                mostrarExamenFinal,
+                mostrarConstancia,
+                modulos: modulos.map(m => ({
+                    titulo: m.titulo,
+                    requiereExamen: m.requiereExamen,
+                    examenMinAprobacion: m.examenMinAprobacion,
+                    examenPreguntas: m.examenPreguntas,
+                    requiereTarea: m.requiereTarea,
+                    tareaInstrucciones: m.tareaInstrucciones,
+                    tareaPuntos: m.tareaPuntos,
+                    recursos: m.recursos.map(r => ({
+                        titulo: r.titulo,
+                        tipo: r.tipo,
+                        url_contenido: r.url_contenido,
+                        descargable: r.descargable
+                    }))
+                }))
+            };
+            localStorage.setItem('curso_nuevo_borrador', JSON.stringify(borrador));
+            setMensaje('Progreso guardado automáticamente en el borrador local.');
+            setTimeout(() => {
+                setMensaje(prev => prev === 'Progreso guardado automáticamente en el borrador local.' ? '' : prev);
+            }, 3000);
+        } catch (e) {
+            console.error('Error saving local draft:', e);
+        }
+    }
+
+    const handleTabChange = (tab: 'info' | 'modulos' | 'examen' | 'avisos') => {
+        guardarBorradorLocal();
+        setActiveTab(tab);
+    }
+
+    const restaurarBorradorLocal = () => {
+        try {
+            const raw = localStorage.getItem('curso_nuevo_borrador');
+            if (!raw) return;
+            const borrador = JSON.parse(raw);
+            if (borrador.formData) setFormData(borrador.formData);
+            if (borrador.vigenciaAnos !== undefined) setVigenciaAnos(borrador.vigenciaAnos);
+            if (borrador.requiereExamen !== undefined) setRequiereExamen(borrador.requiereExamen);
+            if (borrador.requierePagoCompleto !== undefined) setRequierePagoCompleto(borrador.requierePagoCompleto);
+            if (borrador.bloquearAvance !== undefined) setBloquearAvance(borrador.bloquearAvance);
+            if (borrador.requiereTareasAvance !== undefined) setRequiereTareasAvance(borrador.requiereTareasAvance);
+            if (borrador.requiereExamenAvance !== undefined) setRequiereExamenAvance(borrador.requiereExamenAvance);
+            if (borrador.minAprobacion !== undefined) setMinAprobacion(borrador.minAprobacion);
+            if (borrador.conTiempo !== undefined) setConTiempo(borrador.conTiempo);
+            if (borrador.tiempoExamen !== undefined) setTiempoExamen(borrador.tiempoExamen);
+            if (borrador.seguridadAumentada !== undefined) setSeguridadAumentada(borrador.seguridadAumentada);
+            if (borrador.maxCambios !== undefined) setMaxCambios(borrador.maxCambios);
+            if (borrador.intentosPermitidos !== undefined) setIntentosPermitidos(borrador.intentosPermitidos);
+            if (borrador.preguntasExtraidas !== undefined) setPreguntasExtraidas(borrador.preguntasExtraidas);
+            if (borrador.mostrarExamenFinal !== undefined) setMostrarExamenFinal(borrador.mostrarExamenFinal);
+            if (borrador.mostrarConstancia !== undefined) setMostrarConstancia(borrador.mostrarConstancia);
+            if (borrador.modulos !== undefined) {
+                setModulos(borrador.modulos.map((m: any) => ({
+                    titulo: m.titulo || '',
+                    requiereExamen: !!m.requiereExamen,
+                    examenMinAprobacion: m.examenMinAprobacion || 80,
+                    examenPreguntas: m.examenPreguntas || [],
+                    requiereTarea: !!m.requiereTarea,
+                    tareaInstrucciones: m.tareaInstrucciones || '',
+                    tareaPuntos: m.tareaPuntos || '',
+                    recursos: (m.recursos || []).map((r: any) => ({
+                        titulo: r.titulo || '',
+                        tipo: r.tipo || 'video',
+                        url_contenido: r.url_contenido || '',
+                        archivoPdf: null,
+                        descargable: r.descargable !== undefined ? !!r.descargable : false
+                    }))
+                })));
+            }
+            setTieneBorradorLocal(false);
+            setBorradorInicializado(true);
+            setMensaje('Borrador restaurado con éxito. Puedes seguir editando.');
+        } catch (e) {
+            console.error('Error restoring local draft:', e);
+            setMensaje('Error al intentar restaurar el borrador.');
+        }
+    }
+
+    const descartarBorradorLocal = () => {
+        localStorage.removeItem('curso_nuevo_borrador');
+        setTieneBorradorLocal(false);
+        setBorradorInicializado(true);
+    }
 
     useEffect(() => {
         async function checkProfile() {
@@ -95,11 +287,8 @@ export default function SubirCursoPage() {
                     setFormData(prev => ({ ...prev, precio: 0 }))
                 }
                 
-                if (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'instructor' || prof.rol === 'institucion') {
-                    if (!prof.telefono || !prof.banco || !prof.clabe || !prof.identidad_validada) {
-                        setPerfilIncompleto(true)
-                    }
-                }
+                // Profile completeness check removed per user request
+                // so they can upload/edit courses without waiting for identity validation.
             }
             setLoading(false)
         }
@@ -112,7 +301,10 @@ export default function SubirCursoPage() {
             recursos: [],
             requiereExamen: false,
             examenMinAprobacion: 80,
-            examenPreguntas: []
+            examenPreguntas: [],
+            requiereTarea: false,
+            tareaInstrucciones: '',
+            tareaPuntos: ''
         }])
     }
 
@@ -133,7 +325,8 @@ export default function SubirCursoPage() {
             titulo: '',
             tipo: 'video',
             url_contenido: '',
-            archivoPdf: null
+            archivoPdf: null,
+            descargable: false
         })
         setModulos(nuevosModulos)
     }
@@ -185,6 +378,42 @@ export default function SubirCursoPage() {
             [field]: value
         }
         setModulos(nuevosModulos)
+    }
+
+    const handleUploadExamenModuloHelper = async (e: React.ChangeEvent<HTMLInputElement>, moduloIdx: number) => {
+        const file = e.target.files?.[0] || null;
+        setMensaje('');
+
+        if (file) {
+            setIsParsing(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/parse-exam', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.questions) {
+                    const nuevosModulos = [...modulos]
+                    nuevosModulos[moduloIdx].examenPreguntas = [
+                        ...nuevosModulos[moduloIdx].examenPreguntas,
+                        ...data.questions
+                    ]
+                    setModulos(nuevosModulos)
+                    setMensaje(`¡Examen analizado! Se detectaron ${data.questions.length} preguntas adicionales para este módulo.`);
+                } else {
+                    setMensaje('Error leyendo el PDF del examen: ' + (data.error || 'Formato no válido.'));
+                }
+            } catch (err) {
+                setMensaje('Error de conexión al leer el PDF.');
+            } finally {
+                setIsParsing(false);
+            }
+        }
     }
 
     // Final exam helpers
@@ -319,6 +548,16 @@ export default function SubirCursoPage() {
                     setLoading(false)
                     return
                 }
+                const tieneOpcionMultiple = m.examenPreguntas.some(p => p.tipo_pregunta !== 'respuesta_libre');
+                if (!tieneOpcionMultiple) {
+                    setModalMessage({
+                        title: 'Falta Pregunta de Opción Múltiple',
+                        content: `Error: El examen del módulo "${m.titulo}" debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.`,
+                        type: 'error'
+                    });
+                    setLoading(false)
+                    return
+                }
                 for (let pIdx = 0; pIdx < m.examenPreguntas.length; pIdx++) {
                     const p = m.examenPreguntas[pIdx];
                     if (!p.pregunta) {
@@ -356,6 +595,16 @@ export default function SubirCursoPage() {
                 setLoading(false)
                 return
             }
+            const tieneOpcionMultipleFinal = preguntasExtraidas.some(p => p.tipo_pregunta !== 'respuesta_libre');
+            if (!tieneOpcionMultipleFinal) {
+                setModalMessage({
+                    title: 'Falta Pregunta de Opción Múltiple',
+                    content: 'Error: El examen final debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.',
+                    type: 'error'
+                });
+                setLoading(false)
+                return
+            }
             for (let pIdx = 0; pIdx < preguntasExtraidas.length; pIdx++) {
                 const p = preguntasExtraidas[pIdx];
                 if (!p.pregunta) {
@@ -387,7 +636,9 @@ export default function SubirCursoPage() {
         setMensaje('Guardando información del curso...')
         
         const { data: profileRow } = await supabase.from('ie_profiles').select('*').eq('id', user.id).single()
-        const instructorNombre = `${profileRow?.nombre || ''} ${profileRow?.apellido_paterno || ''} ${profileRow?.apellido_materno || ''}`.trim() || user.email;
+        const instructorNombre = (profileRow?.rol === 'institucion' 
+            ? `${profileRow?.nombre || ''}`.trim() 
+            : `${profileRow?.nombre || ''} ${profileRow?.apellido_paterno || ''} ${profileRow?.apellido_materno || ''}`.trim()) || user.email;
 
         const cursoDraftObj: any = {
             ...formData,
@@ -398,10 +649,15 @@ export default function SubirCursoPage() {
             creado_por: user.id,
             requiere_examen: requiereExamen,
             requiere_pago_completo: requierePagoCompleto,
+            bloquear_avance: bloquearAvance,
+            requiere_tareas_avance: requiereTareasAvance,
+            requiere_examen_avance: requiereExamenAvance,
             url_examen: null,
             vigencia_anos: vigenciaAnos,
             reunion_url: formData.reunion_url?.trim() || null,
-            nota_profesor: formData.nota_profesor?.trim() || null
+            nota_profesor: formData.nota_profesor?.trim() || null,
+            mostrar_examen_final: mostrarExamenFinal,
+            mostrar_constancia: mostrarConstancia
         }
 
         const { data: cursoGuardado, error: errorCurso } = await supabase.from('ie_cursos').insert(cursoDraftObj).select().single()
@@ -420,6 +676,7 @@ export default function SubirCursoPage() {
         setMensaje('Subiendo contenidos y módulos...')
         for (let i = 0; i < modulos.length; i++) {
             const currentMod = modulos[i];
+            setMensaje(`Configurando Módulo ${i + 1} de ${modulos.length}: "${currentMod.titulo || 'Sin título'}"... Subiendo lecturas e infografías...`)
 
             // Upload files for each resource of this module
             for (let rIdx = 0; rIdx < currentMod.recursos.length; rIdx++) {
@@ -491,7 +748,8 @@ export default function SubirCursoPage() {
                         modulo_id: moduloInsertado.id,
                         titulo: rec.titulo,
                         url_contenido: rec.url_contenido,
-                        orden: rIdx + 1
+                        orden: rIdx + 1,
+                        descargable: rec.descargable || false
                     });
                 if (errorRecurso) {
                     console.error('Error insertando recurso en DB:', errorRecurso);
@@ -530,6 +788,21 @@ export default function SubirCursoPage() {
                     }))
                     await supabase.from('ie_preguntas').insert(preguntasModulo)
                 }
+            }
+
+            // Insert Modular Homework/Task if checked
+            if (currentMod.requiereTarea) {
+                const definitionKey = `TAREA_DEFINICION:${moduloInsertado.id}`;
+                const definitionPayload = JSON.stringify({
+                    instrucciones: currentMod.tareaInstrucciones || '',
+                    puntos: currentMod.tareaPuntos || ''
+                });
+                await supabase.from('ie_preguntas_respuestas').insert({
+                    curso_id: cursoGuardado.id,
+                    user_id: user.id,
+                    pregunta: `${definitionKey}::${definitionPayload}`,
+                    respuesta: 'TAREA_DEFINICION'
+                });
             }
         }
 
@@ -579,6 +852,12 @@ export default function SubirCursoPage() {
             }
         }
 
+        try {
+            localStorage.removeItem('curso_nuevo_borrador');
+        } catch (e) {
+            console.error('Error clearing local draft:', e);
+        }
+
         setModalMessage({
             title: '¡Curso Creado!',
             content: 'El curso se ha creado correctamente y ha sido enviado a revisión por el administrador.',
@@ -594,7 +873,7 @@ export default function SubirCursoPage() {
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2">
                         <Sparkles className="text-blue-600 h-8 w-8" />
@@ -602,7 +881,45 @@ export default function SubirCursoPage() {
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">Estructura un curso premium por pestañas e integra evaluaciones modulares.</p>
                 </div>
+                <div className="flex items-center gap-2">
+                    {borradorInicializado && (
+                        <span className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 shadow-sm">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                            ✓ Guardado en Navegador
+                        </span>
+                    )}
+                </div>
             </div>
+            
+            {tieneBorradorLocal && (
+                <div className="mb-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-md animate-fade-in">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 animate-pulse">
+                            <Sparkles className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                            <h4 className="text-sm font-bold text-slate-900 font-sans">¿Deseas recuperar tu progreso anterior?</h4>
+                            <p className="text-xs text-slate-500 mt-0.5 font-sans">Detectamos un borrador de curso guardado automáticamente en tu navegador.</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                        <button
+                            type="button"
+                            onClick={restaurarBorradorLocal}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-md hover:shadow-lg active:scale-95"
+                        >
+                            Restaurar Borrador
+                        </button>
+                        <button
+                            type="button"
+                            onClick={descartarBorradorLocal}
+                            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold px-4 py-2.5 rounded-xl text-xs transition active:scale-95"
+                        >
+                            Descartar
+                        </button>
+                    </div>
+                </div>
+            )}
             
             {perfilIncompleto && (
                 <div className="mb-8 bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex flex-col items-center text-center">
@@ -623,9 +940,10 @@ export default function SubirCursoPage() {
             )}
 
             {/* Navigation Tabs */}
-            <div className={`flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-px ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            <div className={`flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 <button
-                    onClick={() => setActiveTab('info')}
+                    onClick={() => handleTabChange('info')}
+                    type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
                         activeTab === 'info'
                             ? 'border-blue-600 text-blue-600 bg-blue-50/50'
@@ -633,10 +951,12 @@ export default function SubirCursoPage() {
                     }`}
                 >
                     <Layout className="h-4 w-4" />
-                    📝 Información General
+                    <span>1. Información General</span>
                 </button>
+                <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
-                    onClick={() => setActiveTab('modulos')}
+                    onClick={() => handleTabChange('modulos')}
+                    type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
                         activeTab === 'modulos'
                             ? 'border-blue-600 text-blue-600 bg-blue-50/50'
@@ -644,10 +964,12 @@ export default function SubirCursoPage() {
                     }`}
                 >
                     <BookOpen className="h-4 w-4" />
-                    📚 Temario y Clases
+                    <span>2. Temario y Clases</span>
                 </button>
+                <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
-                    onClick={() => setActiveTab('examen')}
+                    onClick={() => handleTabChange('examen')}
+                    type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
                         activeTab === 'examen'
                             ? 'border-blue-600 text-blue-600 bg-blue-50/50'
@@ -655,10 +977,12 @@ export default function SubirCursoPage() {
                     }`}
                 >
                     <BrainCircuit className="h-4 w-4" />
-                    🧠 Evaluación Final (Examen)
+                    <span>3. Evaluación Final (Examen)</span>
                 </button>
+                <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
-                    onClick={() => setActiveTab('avisos')}
+                    onClick={() => handleTabChange('avisos')}
+                    type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
                         activeTab === 'avisos'
                             ? 'border-blue-600 text-blue-600 bg-blue-50/50'
@@ -666,7 +990,7 @@ export default function SubirCursoPage() {
                     }`}
                 >
                     <MessageSquare className="h-4 w-4" />
-                    🚀 Avisos y Enlaces
+                    <span>4. Avisos y Notas</span>
                 </button>
             </div>
 
@@ -769,10 +1093,106 @@ export default function SubirCursoPage() {
                                             </label>
                                         </div>
                                     )}
+
+                                    <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
+                                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Reglas de Avance del Curso</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="bloquearAvance"
+                                                    checked={bloquearAvance}
+                                                    onChange={(e) => {
+                                                        setBloquearAvance(e.target.checked);
+                                                        if (!e.target.checked) {
+                                                            setRequiereTareasAvance(false);
+                                                            setRequiereExamenAvance(false);
+                                                        }
+                                                    }}
+                                                    className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="bloquearAvance" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-blue-950">Bloquear Avance de Módulos</span>
+                                                    <span className="block text-xs text-blue-700 mt-1">El alumno debe ver los temas en orden secuencial obligatorio.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className={`border rounded-xl p-5 flex items-start gap-3 shadow-sm transition-all ${
+                                                bloquearAvance 
+                                                ? 'bg-amber-50/50 border-amber-100 opacity-100' 
+                                                : 'bg-zinc-50 border-zinc-150 opacity-40 pointer-events-none'
+                                            }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    id="requiereTareasAvance"
+                                                    disabled={!bloquearAvance}
+                                                    checked={requiereTareasAvance}
+                                                    onChange={(e) => setRequiereTareasAvance(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-amber-600 focus:ring-amber-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="requiereTareasAvance" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-amber-950">Obligar Tareas</span>
+                                                    <span className="block text-xs text-amber-700 mt-1">Requiere entregar todas las tareas del módulo para desbloquear el siguiente.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className={`border rounded-xl p-5 flex items-start gap-3 shadow-sm transition-all ${
+                                                bloquearAvance 
+                                                ? 'bg-purple-50/50 border-purple-100 opacity-100' 
+                                                : 'bg-zinc-50 border-zinc-150 opacity-40 pointer-events-none'
+                                            }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    id="requiereExamenAvance"
+                                                    disabled={!bloquearAvance}
+                                                    checked={requiereExamenAvance}
+                                                    onChange={(e) => setRequiereExamenAvance(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="requiereExamenAvance" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-purple-950">Obligar Examen Modular</span>
+                                                    <span className="block text-xs text-purple-700 mt-1">Requiere aprobar el examen modular con el puntaje mínimo para desbloquear el siguiente.</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
+                                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Visibilidad en el Aula de Alumnos</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="mostrarExamenFinal"
+                                                    checked={mostrarExamenFinal}
+                                                    onChange={(e) => setMostrarExamenFinal(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="mostrarExamenFinal" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-emerald-950">Mostrar Examen Final</span>
+                                                    <span className="block text-xs text-emerald-700 mt-1">El alumno podrá ver y realizar el examen final en su aula.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="mostrarConstancia"
+                                                    checked={mostrarConstancia}
+                                                    onChange={(e) => setMostrarConstancia(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="mostrarConstancia" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-indigo-950">Habilitar Obtención de Constancia</span>
+                                                    <span className="block text-xs text-indigo-700 mt-1">El alumno podrá visualizar y descargar el botón de su constancia digital.</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex justify-end pt-4">
-                                <button type="button" onClick={() => setActiveTab('modulos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+                                <button type="button" onClick={() => handleTabChange('modulos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
                                     Siguiente: Clases y Temas
                                 </button>
                             </div>
@@ -899,6 +1319,21 @@ export default function SubirCursoPage() {
                                                                                 />
                                                                             </div>
                                                                         )}
+
+                                                                        {recurso.tipo !== 'video' && (
+                                                                            <div className="mt-3 flex items-center gap-2">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    id={`descargable-${index}-${rIdx}`}
+                                                                                    checked={recurso.descargable || false}
+                                                                                    onChange={(e) => handleRecursoChange(index, rIdx, 'descargable', e.target.checked)}
+                                                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                                                />
+                                                                                <label htmlFor={`descargable-${index}-${rIdx}`} className="text-xs font-semibold text-gray-700 cursor-pointer select-none">
+                                                                                    Permitir descarga del archivo por los alumnos
+                                                                                </label>
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -926,6 +1361,15 @@ export default function SubirCursoPage() {
 
                                                 {modulo.requiereExamen && (
                                                     <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-indigo-200 space-y-4">
+                                                        <div className="bg-amber-50 border border-amber-250 rounded-xl p-4 flex gap-2.5 items-start text-left shadow-sm">
+                                                            <span className="text-amber-600 text-sm flex-shrink-0 mt-0.5">⚠️</span>
+                                                            <div>
+                                                                <h4 className="text-xs font-bold text-amber-950">Requisito Obligatorio del Examen</h4>
+                                                                <p className="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                                                                    Para poder registrar este curso, cada examen activado (modular o final) debe contener <strong>al menos una pregunta de opción múltiple</strong>. La calificación del alumno se obtendrá <strong>únicamente</strong> de las preguntas de opción múltiple. Las preguntas de respuesta libre se registrarán para tu revisión, pero no sumarán puntos a la calificación automática.
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                         <div className="flex flex-wrap justify-between items-center gap-4 border-b border-indigo-100/50 pb-3">
                                                             <div className="flex items-center gap-2">
                                                                 <label className="block text-xs font-semibold text-gray-700">Calificación Mínima Aprobatoria (0-100):</label>
@@ -938,13 +1382,36 @@ export default function SubirCursoPage() {
                                                                     className="w-20 text-xs rounded border-gray-300 p-1.5 border bg-white text-black"
                                                                 />
                                                             </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleAgregarPreguntaModulo(index)}
-                                                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition flex items-center gap-1"
-                                                            >
-                                                                <Plus className="h-3.5 w-3.5" /> Agregar Pregunta al Examen
-                                                            </button>
+                                                            <div className="flex flex-wrap items-center gap-3">
+                                                                <div className="flex flex-col items-start">
+                                                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Cargar desde PDF:</label>
+                                                                    <input
+                                                                        type="file"
+                                                                        accept=".pdf,application/pdf"
+                                                                        onChange={(e) => handleUploadExamenModuloHelper(e, index)}
+                                                                        disabled={isParsing}
+                                                                        className="block w-48 text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-white file:text-indigo-700 hover:file:bg-indigo-100 border border-indigo-300 rounded bg-white p-1 cursor-pointer"
+                                                                    />
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleAgregarPreguntaModulo(index)}
+                                                                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition flex items-center gap-1 mt-3.5"
+                                                                >
+                                                                    <Plus className="h-3.5 w-3.5" /> Agregar Pregunta
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center">
+                                                            <a href="/ejemplo-examen.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-850 underline underline-offset-2 transition-colors">
+                                                                📄 Ver ejemplo del formato de examen PDF
+                                                            </a>
+                                                            {isParsing && (
+                                                                <p className="text-[10px] font-bold text-indigo-600 animate-pulse italic">
+                                                                    Nuestra IA está extrayendo las preguntas del PDF para este módulo...
+                                                                </p>
+                                                            )}
                                                         </div>
 
                                                         {modulo.examenPreguntas.length === 0 ? (
@@ -1038,6 +1505,51 @@ export default function SubirCursoPage() {
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Modular Homework/Task Box */}
+                                        <div className="mt-4 pt-4 border-t border-zinc-100">
+                                            <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-100">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!modulo.requiereTarea}
+                                                        onChange={(e) => handleModuloChange(index, 'requiereTarea', e.target.checked)}
+                                                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                                                    />
+                                                    <span className="text-sm font-bold text-amber-900 flex items-center gap-1.5">
+                                                        <FileText className="h-4 w-4 text-amber-700" />
+                                                        ¿Este módulo requiere que el alumno entregue una tarea o práctica?
+                                                    </span>
+                                                </label>
+
+                                                {modulo.requiereTarea && (
+                                                    <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-amber-250 space-y-4">
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Instrucciones de la Tarea:</label>
+                                                            <textarea
+                                                                rows={3}
+                                                                placeholder="Escribe detalladamente las instrucciones de lo que el alumno debe realizar y entregar..."
+                                                                value={modulo.tareaInstrucciones || ''}
+                                                                onChange={(e) => handleModuloChange(index, 'tareaInstrucciones', e.target.value)}
+                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold"
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Puntos a evaluar (separados por coma o lista):</label>
+                                                            <textarea
+                                                                rows={2}
+                                                                placeholder="Ej. Claridad en la explicación, Capturas de pantalla adjuntas, Código fuente funcional"
+                                                                value={modulo.tareaPuntos || ''}
+                                                                onChange={(e) => handleModuloChange(index, 'tareaPuntos', e.target.value)}
+                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold resize-y"
+                                                                required
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
 
@@ -1047,10 +1559,10 @@ export default function SubirCursoPage() {
                             </div>
 
                             <div className="flex justify-between pt-4 border-t border-gray-100">
-                                <button type="button" onClick={() => setActiveTab('info')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
+                                <button type="button" onClick={() => handleTabChange('info')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
                                     Atrás
                                 </button>
-                                <button type="button" onClick={() => setActiveTab('examen')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+                                <button type="button" onClick={() => handleTabChange('examen')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
                                     Siguiente: Examen Final
                                 </button>
                             </div>
@@ -1075,6 +1587,15 @@ export default function SubirCursoPage() {
 
                                 {requiereExamen && (
                                     <div className="mt-6 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-emerald-200 space-y-6">
+                                        <div className="bg-amber-50 border border-amber-250 rounded-xl p-4 flex gap-2.5 items-start text-left shadow-sm">
+                                            <span className="text-amber-600 text-sm flex-shrink-0 mt-0.5">⚠️</span>
+                                            <div>
+                                                <h4 className="text-xs font-bold text-amber-950">Requisito Obligatorio del Examen</h4>
+                                                <p className="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                                                    Para poder registrar este curso, cada examen activado (modular o final) debe contener <strong>al menos una pregunta de opción múltiple</strong>. La calificación del alumno se obtendrá <strong>únicamente</strong> de las preguntas de opción múltiple. Las preguntas de respuesta libre se registrarán para tu revisión, pero no sumarán puntos a la calificación automática.
+                                                </p>
+                                            </div>
+                                        </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
                                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
@@ -1262,10 +1783,10 @@ export default function SubirCursoPage() {
                             </div>
 
                             <div className="flex justify-between pt-4 border-t border-gray-100">
-                                <button type="button" onClick={() => setActiveTab('modulos')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
+                                <button type="button" onClick={() => handleTabChange('modulos')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
                                     Atrás
                                 </button>
-                                <button type="button" onClick={() => setActiveTab('avisos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+                                <button type="button" onClick={() => handleTabChange('avisos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
                                     Siguiente: Avisos y Enlaces
                                 </button>
                             </div>
@@ -1327,7 +1848,7 @@ export default function SubirCursoPage() {
                             </div>
 
                             <div className="flex justify-between pt-4 border-t border-gray-100">
-                                <button type="button" onClick={() => setActiveTab('examen')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
+                                <button type="button" onClick={() => handleTabChange('examen')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
                                     Atrás
                                 </button>
                                 <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 flex items-center gap-2">

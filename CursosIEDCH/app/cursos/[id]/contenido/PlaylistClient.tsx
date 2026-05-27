@@ -11,6 +11,7 @@ type Recurso = {
     titulo: string;
     url_contenido: string;
     orden: number;
+    descargable?: boolean;
 }
 
 type Modulo = {
@@ -18,6 +19,7 @@ type Modulo = {
     titulo: string;
     url_contenido?: string;
     recursos?: Recurso[];
+    descargable?: boolean;
 }
 
 type ExamenModular = {
@@ -670,11 +672,13 @@ export default function PlaylistClient({
                                     <ContentViewer 
                                         url={currentItem.recursos[activeRecursoIndex].url_contenido} 
                                         titulo={currentItem.recursos[activeRecursoIndex].titulo}
+                                        descargable={currentItem.recursos[activeRecursoIndex].descargable || false}
                                     />
                                 ) : currentItem.url_contenido ? (
                                     <ContentViewer 
                                         url={currentItem.url_contenido} 
                                         titulo={currentItem.titulo}
+                                        descargable={currentItem.descargable || false}
                                     />
                                 ) : (
                                     <div className="w-full flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-dashed border-gray-300 shadow-sm">

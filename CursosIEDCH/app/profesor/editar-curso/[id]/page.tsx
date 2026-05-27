@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { moduloTieneExamenContestado } from './actions'
 
@@ -13,6 +13,7 @@ type Recurso = {
     tipo: 'video' | 'pdf' | 'html' | 'ppt';
     url_contenido: string;
     archivoPdf: File | null;
+    descargable?: boolean;
 }
 
 type Modulo = {
@@ -22,6 +23,9 @@ type Modulo = {
     requiereExamen: boolean;
     examenMinAprobacion: number;
     examenPreguntas: PreguntaParsed[];
+    requiereTarea?: boolean;
+    tareaInstrucciones?: string;
+    tareaPuntos?: string;
 }
 
 type PreguntaParsed = {
@@ -54,6 +58,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [estadoActual, setEstadoActual] = useState('')
     const [tieneBorrador, setTieneBorrador] = useState(false)
     const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
+    const [bloquearAvance, setBloquearAvance] = useState(false)
+    const [requiereTareasAvance, setRequiereTareasAvance] = useState(false)
+    const [requiereExamenAvance, setRequiereExamenAvance] = useState(false)
+    const [mostrarExamenFinal, setMostrarExamenFinal] = useState(true)
+    const [mostrarConstancia, setMostrarConstancia] = useState(true)
     
     // Modules state
     const [modulos, setModulos] = useState<Modulo[]>([])
@@ -79,6 +88,100 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [historialMensaje, setHistorialMensaje] = useState('Se actualizaron datos generales del curso.')
     
     const router = useRouter()
+
+    const [isSavingDraft, setIsSavingDraft] = useState(false)
+
+    const guardarBorradorSilencioso = async () => {
+        setIsSavingDraft(true);
+        try {
+            const borrador = {
+                titulo: formData.titulo,
+                descripcion: formData.descripcion,
+                beneficios: formData.beneficios,
+                duracion: formData.duracion,
+                precio: profile?.rol === 'instructor' ? 0 : Number(formData.precio),
+                instructor: formData.instructor,
+                vigencia_anos: vigenciaAnos,
+                requiere_pago_completo: requierePagoCompleto,
+                reunion_url: formData.reunion_url?.trim() || null,
+                nota_profesor: formData.nota_profesor?.trim() || null,
+                categoria: formData.categoria,
+                bloquear_avance: bloquearAvance,
+                requiere_tareas_avance: requiereTareasAvance,
+                requiere_examen_avance: requiereExamenAvance,
+                mostrar_examen_final: mostrarExamenFinal,
+                mostrar_constancia: mostrarConstancia,
+                modulos: modulos.map((m, idx) => ({
+                    id: m.id,
+                    titulo: m.titulo,
+                    url_contenido: m.recursos.length > 0 ? m.recursos[0].url_contenido : '',
+                    recursos: m.recursos.map((r: any) => ({
+                        id: r.id,
+                        titulo: r.titulo,
+                        tipo: r.tipo,
+                        url_contenido: r.url_contenido
+                    })),
+                    orden: idx + 1,
+                    requiereTarea: m.requiereTarea,
+                    tareaInstrucciones: m.tareaInstrucciones,
+                    tareaPuntos: m.tareaPuntos,
+                    examen: m.requiereExamen ? {
+                        min_aprobacion: m.examenMinAprobacion,
+                        preguntas: m.examenPreguntas.map((p, pIdx) => ({
+                            id: p.id,
+                            pregunta: p.pregunta,
+                            opcion_a: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_a,
+                            opcion_b: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_b,
+                            opcion_c: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_c,
+                            opcion_d: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_d,
+                            respuesta_correcta: p.tipo_pregunta === 'respuesta_libre' ? 'A' : p.respuesta_correcta,
+                            tipo_pregunta: p.tipo_pregunta || 'opcion_multiple',
+                            orden: pIdx + 1
+                        }))
+                    } : null
+                })),
+                requiere_examen: requiereExamen,
+                examen: requiereExamen ? {
+                    min_aprobacion: minAprobacion === '' ? 80 : minAprobacion,
+                    tiempo_limite: conTiempo ? (tiempoExamen === '' ? 60 : tiempoExamen) : null,
+                    seguridad_aumentada: seguridadAumentada,
+                    max_cambios_pantalla: seguridadAumentada ? (maxCambios === '' ? 3 : maxCambios) : 3,
+                    intentos_permitidos: intentosPermitidos === '' ? 3 : intentosPermitidos,
+                    preguntas: preguntasExtraidas.map((p, pIdx) => ({
+                        id: p.id,
+                        pregunta: p.pregunta,
+                        opcion_a: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_a,
+                        opcion_b: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_b,
+                        opcion_c: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_c,
+                        opcion_d: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_d,
+                        respuesta_correcta: p.tipo_pregunta === 'respuesta_libre' ? 'A' : p.respuesta_correcta,
+                        tipo_pregunta: p.tipo_pregunta || 'opcion_multiple',
+                        orden: pIdx + 1
+                    }))
+                } : null
+            };
+
+            const { error: errorDraft } = await supabase
+                .from('ie_cursos')
+                .update({ cambios_pendientes: borrador })
+                .eq('id', id);
+
+            if (!errorDraft) {
+                setTieneBorrador(true);
+            } else {
+                console.error('Error auto-guardando borrador silencioso:', errorDraft.message);
+            }
+        } catch (e) {
+            console.error('Error in guardarBorradorSilencioso:', e);
+        } finally {
+            setIsSavingDraft(false);
+        }
+    }
+
+    const handleTabChange = async (tab: 'info' | 'modulos' | 'examen' | 'avisos') => {
+        await guardarBorradorSilencioso();
+        setActiveTab(tab);
+    }
     const supabase = createClient()
 
     useEffect(() => {
@@ -95,13 +198,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             const prof = resultP.data
             if (prof) {
                 setProfile(prof)
-                if (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'instructor' || prof.rol === 'institucion') {
-                    if (!prof.telefono || !prof.banco || !prof.clabe || !prof.identidad_validada) {
-                        setPerfilIncompleto(true)
-                        setLoading(false)
-                        return
-                    }
-                }
+                // Profile completeness check removed per user request
+                // so they can upload/edit courses without waiting for identity validation.
             }
 
             const { data: curso, error } = await supabase
@@ -118,6 +216,9 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
             setEstadoActual(curso.estado)
             setRequierePagoCompleto(curso.requiere_pago_completo || false)
+            setBloquearAvance(curso.bloquear_avance || false)
+            setRequiereTareasAvance(curso.requiere_tareas_avance || false)
+            setRequiereExamenAvance(curso.requiere_examen_avance || false)
 
             // Cargar todos los exámenes de la DB por si acaso
             const { data: todosExm } = await supabase
@@ -136,8 +237,28 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 if (pregs) todasPregs = pregs;
             }
 
-            // Si tiene cambios pendientes y está aprobado, cargamos del borrador
-            if (curso.cambios_pendientes && curso.estado === 'aprobado') {
+            // Cargar definiciones de tareas
+            const { data: todosTsk } = await supabase
+                .from('ie_preguntas_respuestas')
+                .select('*')
+                .eq('curso_id', id)
+                .like('pregunta', 'TAREA_DEFINICION:%');
+
+            const tasksMap: Record<string, { instrucciones: string, puntos: string }> = {}
+            todosTsk?.forEach(t => {
+                const parts = t.pregunta.split('::')
+                const header = parts[0]
+                const modId = header.replace('TAREA_DEFINICION:', '').replace('[', '').replace(']', '')
+                try {
+                    const payload = JSON.parse(parts.slice(1).join('::'))
+                    tasksMap[modId] = payload
+                } catch (e) {
+                    console.error('Error parsing task payload', e)
+                }
+            })
+
+            // Si tiene cambios pendientes (sea aprobado o no), cargamos del borrador
+            if (curso.cambios_pendientes) {
                 const borrador = curso.cambios_pendientes;
                 setTieneBorrador(true)
                 setFormData({
@@ -153,6 +274,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 })
                 setVigenciaAnos(borrador.vigencia_anos || curso.vigencia_anos || 3)
                 setRequiereExamen(borrador.requiere_examen !== undefined ? borrador.requiere_examen : (curso.requiere_examen || false))
+                setBloquearAvance(borrador.bloquear_avance !== undefined ? borrador.bloquear_avance : (curso.bloquear_avance || false))
+                setRequiereTareasAvance(borrador.requiere_tareas_avance !== undefined ? borrador.requiere_tareas_avance : (curso.requiere_tareas_avance || false))
+                setRequiereExamenAvance(borrador.requiere_examen_avance !== undefined ? borrador.requiere_examen_avance : (curso.requiere_examen_avance || false))
+                setMostrarExamenFinal(borrador.mostrar_examen_final !== undefined ? borrador.mostrar_examen_final : (curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true))
+                setMostrarConstancia(borrador.mostrar_constancia !== undefined ? borrador.mostrar_constancia : (curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true))
                 
                 if (borrador.modulos) {
                     setModulos(borrador.modulos.map((m: any) => {
@@ -180,6 +306,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             });
                         }
 
+                        const taskDef = tasksMap[m.id] || m; // If it's already in draft
                         return {
                             id: m.id,
                             titulo: m.titulo,
@@ -195,7 +322,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 opcion_d: p.opcion_d,
                                 respuesta_correcta: p.respuesta_correcta,
                                 tipo_pregunta: p.tipo_pregunta || 'opcion_multiple'
-                            }))
+                            })),
+                            requiereTarea: m.requiereTarea !== undefined ? m.requiereTarea : !!taskDef?.instrucciones,
+                            tareaInstrucciones: m.tareaInstrucciones || taskDef?.instrucciones || '',
+                            tareaPuntos: m.tareaPuntos || taskDef?.puntos || ''
                         }
                     }))
                 }
@@ -263,6 +393,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             })
             setVigenciaAnos(curso.vigencia_anos || 3)
             setRequiereExamen(curso.requiere_examen || false)
+            setBloquearAvance(curso.bloquear_avance || false)
+            setRequiereTareasAvance(curso.requiere_tareas_avance || false)
+            setRequiereExamenAvance(curso.requiere_examen_avance || false)
+            setMostrarExamenFinal(curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true)
+            setMostrarConstancia(curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true)
 
             // Módulos
             const { data: mods } = await supabase
@@ -299,7 +434,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             titulo: r.titulo,
                             tipo,
                             url_contenido: r.url_contenido,
-                            archivoPdf: null
+                            archivoPdf: null,
+                            descargable: !!r.descargable
                         };
                     });
 
@@ -313,10 +449,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             titulo: 'Material del Módulo',
                             tipo,
                             url_contenido: m.url_contenido,
-                            archivoPdf: null
+                            archivoPdf: null,
+                            descargable: false
                         });
                     }
 
+                    const taskDef = tasksMap[m.id];
                     return {
                         id: m.id,
                         titulo: m.titulo,
@@ -332,7 +470,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             opcion_d: p.opcion_d,
                             respuesta_correcta: p.respuesta_correcta,
                             tipo_pregunta: p.tipo_pregunta || 'opcion_multiple'
-                        }))
+                        })),
+                        requiereTarea: !!taskDef,
+                        tareaInstrucciones: taskDef?.instrucciones || '',
+                        tareaPuntos: taskDef?.puntos || ''
                     }
                 }))
             }
@@ -421,7 +562,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             titulo: '',
             tipo: 'video',
             url_contenido: '',
-            archivoPdf: null
+            archivoPdf: null,
+            descargable: false
         })
         setModulos(nuevosModulos)
     }
@@ -473,6 +615,42 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             [field]: value
         }
         setModulos(nuevosModulos)
+    }
+
+    const handleUploadExamenModuloHelper = async (e: React.ChangeEvent<HTMLInputElement>, moduloIdx: number) => {
+        const file = e.target.files?.[0] || null;
+        setMensaje('');
+
+        if (file) {
+            setIsParsing(true);
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/parse-exam', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.questions) {
+                    const nuevosModulos = [...modulos]
+                    nuevosModulos[moduloIdx].examenPreguntas = [
+                        ...nuevosModulos[moduloIdx].examenPreguntas,
+                        ...data.questions
+                    ]
+                    setModulos(nuevosModulos)
+                    setMensaje(`¡Examen analizado! Se detectaron ${data.questions.length} preguntas adicionales para este módulo.`);
+                } else {
+                    setMensaje('Error leyendo el PDF del examen: ' + (data.error || 'Formato no válido.'));
+                }
+            } catch (err) {
+                setMensaje('Error de conexión al leer el PDF.');
+            } finally {
+                setIsParsing(false);
+            }
+        }
     }
 
     // Final exam helpers
@@ -611,6 +789,16 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     setSaving(false)
                     return
                 }
+                const tieneOpcionMultiple = m.examenPreguntas.some(p => p.tipo_pregunta !== 'respuesta_libre');
+                if (!tieneOpcionMultiple) {
+                    setModalMessage({
+                        title: 'Falta Pregunta de Opción Múltiple',
+                        content: `Error: El examen del módulo "${m.titulo}" debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.`,
+                        type: 'error'
+                    });
+                    setSaving(false)
+                    return
+                }
                 for (let pIdx = 0; pIdx < m.examenPreguntas.length; pIdx++) {
                     const p = m.examenPreguntas[pIdx];
                     if (!p.pregunta) {
@@ -642,6 +830,16 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setModalMessage({
                     title: 'Cuestionario Vacío',
                     content: 'Error: Has marcado que el curso requiere examen final, por favor añade al menos una pregunta.',
+                    type: 'error'
+                });
+                setSaving(false)
+                return
+            }
+            const tieneOpcionMultipleFinal = preguntasExtraidas.some(p => p.tipo_pregunta !== 'respuesta_libre');
+            if (!tieneOpcionMultipleFinal) {
+                setModalMessage({
+                    title: 'Falta Pregunta de Opción Múltiple',
+                    content: 'Error: El examen final debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.',
                     type: 'error'
                 });
                 setSaving(false)
@@ -679,6 +877,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         const modulosFinales = []
         for (let i = 0; i < modulos.length; i++) {
             const currentMod = modulos[i];
+            setMensaje(`Guardando Módulo ${i + 1} de ${modulos.length}: "${currentMod.titulo || 'Sin título'}"... Subiendo lecturas e infografías...`)
             const recursosFinales = [];
 
             for (let rIdx = 0; rIdx < currentMod.recursos.length; rIdx++) {
@@ -717,7 +916,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     id: rec.id,
                     titulo: rec.titulo,
                     tipo: rec.tipo,
-                    url_contenido: finalUrl
+                    url_contenido: finalUrl,
+                    descargable: rec.descargable
                 });
             }
 
@@ -732,7 +932,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 orden: i + 1,
                 requiereExamen: currentMod.requiereExamen,
                 examenMinAprobacion: currentMod.examenMinAprobacion,
-                examenPreguntas: currentMod.examenPreguntas
+                examenPreguntas: currentMod.examenPreguntas,
+                requiereTarea: currentMod.requiereTarea,
+                tareaInstrucciones: currentMod.tareaInstrucciones,
+                tareaPuntos: currentMod.tareaPuntos
             });
         }
 
@@ -751,6 +954,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 reunion_url: formData.reunion_url?.trim() || null,
                 nota_profesor: formData.nota_profesor?.trim() || null,
                 categoria: formData.categoria,
+                bloquear_avance: bloquearAvance,
+                requiere_tareas_avance: requiereTareasAvance,
+                requiere_examen_avance: requiereExamenAvance,
+                mostrar_examen_final: mostrarExamenFinal,
+                mostrar_constancia: mostrarConstancia,
                 modulos: modulosFinales.map(m => ({
                     id: m.id,
                     titulo: m.titulo,
@@ -759,9 +967,13 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         id: r.id,
                         titulo: r.titulo,
                         tipo: r.tipo,
-                        url_contenido: r.url_contenido
+                        url_contenido: r.url_contenido,
+                        descargable: r.descargable
                     })),
                     orden: m.orden,
+                    requiereTarea: m.requiereTarea,
+                    tareaInstrucciones: m.tareaInstrucciones,
+                    tareaPuntos: m.tareaPuntos,
                     examen: m.requiereExamen ? {
                         min_aprobacion: m.examenMinAprobacion,
                         preguntas: m.examenPreguntas.map((p, idx) => ({
@@ -824,7 +1036,13 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     nota_profesor: formData.nota_profesor?.trim() || null,
                     categoria: formData.categoria,
                     requiere_examen: requiereExamen,
+                    bloquear_avance: bloquearAvance,
+                    requiere_tareas_avance: requiereTareasAvance,
+                    requiere_examen_avance: requiereExamenAvance,
+                    mostrar_examen_final: mostrarExamenFinal,
+                    mostrar_constancia: mostrarConstancia,
                     url_contenido: firstUrlContenido,
+                    cambios_pendientes: null, // Clear draft upon official publication
                     estado: 'pendiente'
                 })
                 .eq('id', id)
@@ -866,7 +1084,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             modulo_id: moduloId,
                             titulo: rec.titulo,
                             url_contenido: rec.url_contenido,
-                            orden: rIdx + 1
+                            orden: rIdx + 1,
+                            descargable: rec.descargable || false
                         });
                     }
 
@@ -927,6 +1146,46 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             return
                         }
                         await supabase.from('ie_examenes').delete().eq('modulo_id', moduloId)
+                    }
+
+                    // Save or update task definition inside ie_preguntas_respuestas
+                    if (mod.requiereTarea) {
+                        const definitionKey = `TAREA_DEFINICION:${moduloId}`;
+                        const definitionPayload = JSON.stringify({
+                            instrucciones: mod.tareaInstrucciones || '',
+                            puntos: mod.tareaPuntos || ''
+                        });
+
+                        const { data: existingDef } = await supabase
+                            .from('ie_preguntas_respuestas')
+                            .select('id')
+                            .eq('curso_id', id)
+                            .eq('respuesta', 'TAREA_DEFINICION')
+                            .like('pregunta', `TAREA_DEFINICION:${moduloId}%`)
+                            .single();
+                        
+                        if (existingDef) {
+                            await supabase
+                                .from('ie_preguntas_respuestas')
+                                .update({ pregunta: `${definitionKey}::${definitionPayload}` })
+                                .eq('id', existingDef.id);
+                        } else {
+                            await supabase
+                                .from('ie_preguntas_respuestas')
+                                .insert({
+                                    curso_id: id,
+                                    user_id: user.id,
+                                    pregunta: `${definitionKey}::${definitionPayload}`,
+                                    respuesta: 'TAREA_DEFINICION'
+                                });
+                        }
+                    } else {
+                        await supabase
+                            .from('ie_preguntas_respuestas')
+                            .delete()
+                            .eq('curso_id', id)
+                            .eq('respuesta', 'TAREA_DEFINICION')
+                            .like('pregunta', `TAREA_DEFINICION:${moduloId}%`);
                     }
                 }
             }
@@ -1013,9 +1272,15 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     }`}>
                         Estado: {estadoActual}
                     </span>
-                    {tieneBorrador && (
-                        <span className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-blue-100 text-blue-800 border border-blue-200 animate-pulse">
-                            Borrador Activo
+                    {isSavingDraft && (
+                        <span className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-indigo-50 text-indigo-750 border border-indigo-200 flex items-center gap-1.5 shadow-sm animate-pulse">
+                            <span className="h-2 w-2 rounded-full bg-indigo-600 animate-ping"></span>
+                            Auto-guardando...
+                        </span>
+                    )}
+                    {!isSavingDraft && tieneBorrador && (
+                        <span className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                            Borrador Guardado
                         </span>
                     )}
                 </div>
@@ -1040,9 +1305,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             )}
 
             {/* Navigation Tabs */}
-            <div className={`flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-px ${perfilIncompleto ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            <div className={`flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px ${perfilIncompleto || isSavingDraft ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 <button
-                    onClick={() => setActiveTab('info')}
+                    onClick={() => handleTabChange('info')}
+                    type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
                         activeTab === 'info'
                             ? 'border-blue-600 text-blue-600 bg-blue-50/50'
@@ -1050,10 +1316,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     }`}
                 >
                     <Layout className="h-4 w-4" />
-                    📝 Información General
+                    <span>1. Información General</span>
                 </button>
+                <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
-                    onClick={() => setActiveTab('modulos')}
+                    onClick={() => handleTabChange('modulos')}
+                    type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
                         activeTab === 'modulos'
                             ? 'border-blue-600 text-blue-600 bg-blue-50/50'
@@ -1061,10 +1329,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     }`}
                 >
                     <BookOpen className="h-4 w-4" />
-                    📚 Temario y Clases
+                    <span>2. Temario y Clases</span>
                 </button>
+                <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
-                    onClick={() => setActiveTab('examen')}
+                    onClick={() => handleTabChange('examen')}
+                    type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
                         activeTab === 'examen'
                             ? 'border-blue-600 text-blue-600 bg-blue-50/50'
@@ -1072,10 +1342,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     }`}
                 >
                     <BrainCircuit className="h-4 w-4" />
-                    🧠 Evaluación Final (Examen)
+                    <span>3. Evaluación Final (Examen)</span>
                 </button>
+                <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
-                    onClick={() => setActiveTab('avisos')}
+                    onClick={() => handleTabChange('avisos')}
+                    type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
                         activeTab === 'avisos'
                             ? 'border-blue-600 text-blue-600 bg-blue-50/50'
@@ -1083,7 +1355,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     }`}
                 >
                     <MessageSquare className="h-4 w-4" />
-                    🚀 Avisos y Notas
+                    <span>4. Avisos y Notas</span>
                 </button>
             </div>
 
@@ -1186,11 +1458,120 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                             </label>
                                         </div>
                                     )}
+
+                                    <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
+                                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Reglas de Avance del Curso</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="bloquearAvance"
+                                                    checked={bloquearAvance}
+                                                    onChange={(e) => {
+                                                        setBloquearAvance(e.target.checked);
+                                                        if (!e.target.checked) {
+                                                            setRequiereTareasAvance(false);
+                                                            setRequiereExamenAvance(false);
+                                                        }
+                                                    }}
+                                                    className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="bloquearAvance" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-blue-950">Bloquear Avance de Módulos</span>
+                                                    <span className="block text-xs text-blue-700 mt-1">El alumno debe ver los temas en orden secuencial obligatorio.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className={`border rounded-xl p-5 flex items-start gap-3 shadow-sm transition-all ${
+                                                bloquearAvance 
+                                                ? 'bg-amber-50/50 border-amber-100 opacity-100' 
+                                                : 'bg-zinc-50 border-zinc-150 opacity-40 pointer-events-none'
+                                            }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    id="requiereTareasAvance"
+                                                    disabled={!bloquearAvance}
+                                                    checked={requiereTareasAvance}
+                                                    onChange={(e) => setRequiereTareasAvance(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-amber-600 focus:ring-amber-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="requiereTareasAvance" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-amber-950">Obligar Tareas</span>
+                                                    <span className="block text-xs text-amber-700 mt-1">Requiere entregar todas las tareas del módulo para desbloquear el siguiente.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className={`border rounded-xl p-5 flex items-start gap-3 shadow-sm transition-all ${
+                                                bloquearAvance 
+                                                ? 'bg-purple-50/50 border-purple-100 opacity-100' 
+                                                : 'bg-zinc-50 border-zinc-150 opacity-40 pointer-events-none'
+                                            }`}>
+                                                <input
+                                                    type="checkbox"
+                                                    id="requiereExamenAvance"
+                                                    disabled={!bloquearAvance}
+                                                    checked={requiereExamenAvance}
+                                                    onChange={(e) => setRequiereExamenAvance(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="requiereExamenAvance" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-purple-950">Obligar Examen Modular</span>
+                                                    <span className="block text-xs text-purple-700 mt-1">Requiere aprobar el examen modular con el puntaje mínimo para desbloquear el siguiente.</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Visibilidad en el Aula de Alumnos */}
+                                    <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
+                                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Visibilidad en el Aula de Alumnos</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="mostrarExamenFinal"
+                                                    checked={mostrarExamenFinal}
+                                                    onChange={(e) => setMostrarExamenFinal(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="mostrarExamenFinal" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-emerald-950">Mostrar Examen Final</span>
+                                                    <span className="block text-xs text-emerald-700 mt-1">El alumno podrá ver y realizar el examen final en su aula.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="mostrarConstancia"
+                                                    checked={mostrarConstancia}
+                                                    onChange={(e) => setMostrarConstancia(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="mostrarConstancia" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-indigo-950">Habilitar Obtención de Constancia</span>
+                                                    <span className="block text-xs text-indigo-700 mt-1">El alumno podrá visualizar y descargar el botón de su constancia digital.</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex justify-end pt-4">
-                                <button type="button" onClick={() => setActiveTab('modulos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md">
-                                    Siguiente: Clases y Temas
+                                <button 
+                                    type="button" 
+                                    disabled={isSavingDraft}
+                                    onClick={() => handleTabChange('modulos')} 
+                                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-70 flex items-center gap-2"
+                                >
+                                    {isSavingDraft ? (
+                                        <>
+                                            <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                            Guardando...
+                                        </>
+                                    ) : (
+                                        'Siguiente: Clases y Temas'
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -1318,6 +1699,21 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                                 />
                                                                             </div>
                                                                         )}
+
+                                                                        {recurso.tipo !== 'video' && (
+                                                                            <div className="mt-3 flex items-center gap-2">
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    id={`descargable-${index}-${rIdx}`}
+                                                                                    checked={recurso.descargable || false}
+                                                                                    onChange={(e) => handleRecursoChange(index, rIdx, 'descargable', e.target.checked)}
+                                                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                                                />
+                                                                                <label htmlFor={`descargable-${index}-${rIdx}`} className="text-xs font-semibold text-gray-700 cursor-pointer select-none">
+                                                                                    Permitir descarga del archivo por los alumnos
+                                                                                </label>
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1345,6 +1741,15 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
                                                 {modulo.requiereExamen && (
                                                     <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-indigo-200 space-y-4">
+                                                        <div className="bg-amber-50 border border-amber-250 rounded-xl p-4 flex gap-2.5 items-start text-left shadow-sm">
+                                                            <span className="text-amber-600 text-sm flex-shrink-0 mt-0.5">⚠️</span>
+                                                            <div>
+                                                                <h4 className="text-xs font-bold text-amber-950">Requisito Obligatorio del Examen</h4>
+                                                                <p className="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                                                                    Para poder registrar este curso, cada examen activado (modular o final) debe contener <strong>al menos una pregunta de opción múltiple</strong>. La calificación del alumno se obtendrá <strong>únicamente</strong> de las preguntas de opción múltiple. Las preguntas de respuesta libre se registrarán para tu revisión, pero no sumarán puntos a la calificación automática.
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                         <div className="flex flex-wrap justify-between items-center gap-4 border-b border-indigo-100/50 pb-3">
                                                             <div className="flex items-center gap-2">
                                                                 <label className="block text-xs font-semibold text-gray-700">Calificación Mínima Aprobatoria (0-100):</label>
@@ -1357,13 +1762,36 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                     className="w-20 text-xs rounded border-gray-300 p-1.5 border bg-white text-black"
                                                                 />
                                                             </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleAgregarPreguntaModulo(index)}
-                                                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition flex items-center gap-1 shadow-sm"
-                                                            >
-                                                                <Plus className="h-3.5 w-3.5" /> Agregar Pregunta al Examen
-                                                            </button>
+                                                            <div className="flex flex-wrap items-center gap-3">
+                                                                <div className="flex flex-col items-start">
+                                                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Cargar desde PDF:</label>
+                                                                    <input
+                                                                        type="file"
+                                                                        accept=".pdf,application/pdf"
+                                                                        onChange={(e) => handleUploadExamenModuloHelper(e, index)}
+                                                                        disabled={isParsing}
+                                                                        className="block w-48 text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-white file:text-indigo-700 hover:file:bg-indigo-100 border border-indigo-300 rounded bg-white p-1 cursor-pointer"
+                                                                    />
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleAgregarPreguntaModulo(index)}
+                                                                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition flex items-center gap-1 shadow-sm mt-3.5"
+                                                                >
+                                                                    <Plus className="h-3.5 w-3.5" /> Agregar Pregunta
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center">
+                                                            <a href="/ejemplo-examen.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-850 underline underline-offset-2 transition-colors">
+                                                                📄 Ver ejemplo del formato de examen PDF
+                                                            </a>
+                                                            {isParsing && (
+                                                                <p className="text-[10px] font-bold text-indigo-600 animate-pulse italic">
+                                                                    Nuestra IA está extrayendo las preguntas del PDF para este módulo...
+                                                                </p>
+                                                            )}
                                                         </div>
 
                                                         {modulo.examenPreguntas.length === 0 ? (
@@ -1457,6 +1885,51 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Modular Homework/Task Box */}
+                                        <div className="mt-4 pt-4 border-t border-zinc-100">
+                                            <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-100">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!modulo.requiereTarea}
+                                                        onChange={(e) => handleModuloChange(index, 'requiereTarea', e.target.checked)}
+                                                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                                                    />
+                                                    <span className="text-sm font-bold text-amber-900 flex items-center gap-1.5">
+                                                        <FileText className="h-4 w-4 text-amber-700" />
+                                                        ¿Este módulo requiere que el alumno entregue una tarea o práctica?
+                                                    </span>
+                                                </label>
+
+                                                {modulo.requiereTarea && (
+                                                    <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-amber-250 space-y-4">
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Instrucciones de la Tarea:</label>
+                                                            <textarea
+                                                                rows={3}
+                                                                placeholder="Escribe detalladamente las instrucciones de lo que el alumno debe realizar y entregar..."
+                                                                value={modulo.tareaInstrucciones || ''}
+                                                                onChange={(e) => handleModuloChange(index, 'tareaInstrucciones', e.target.value)}
+                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold"
+                                                                required
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Puntos a evaluar (separados por coma o lista):</label>
+                                                            <textarea
+                                                                rows={2}
+                                                                placeholder="Ej. Claridad en la explicación, Capturas de pantalla adjuntas, Código fuente funcional"
+                                                                value={modulo.tareaPuntos || ''}
+                                                                onChange={(e) => handleModuloChange(index, 'tareaPuntos', e.target.value)}
+                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold resize-y"
+                                                                required
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -1470,11 +1943,28 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             </button>
 
                             <div className="flex justify-between pt-4">
-                                <button type="button" onClick={() => setActiveTab('info')} className="px-6 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl transition hover:bg-zinc-50">
+                                <button 
+                                    type="button" 
+                                    disabled={isSavingDraft}
+                                    onClick={() => handleTabChange('info')} 
+                                    className="px-6 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl transition hover:bg-zinc-50 disabled:opacity-75"
+                                >
                                     Atrás
                                 </button>
-                                <button type="button" onClick={() => setActiveTab('examen')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md">
-                                    Siguiente: Examen Final
+                                <button 
+                                    type="button" 
+                                    disabled={isSavingDraft}
+                                    onClick={() => handleTabChange('examen')} 
+                                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-70 flex items-center gap-2"
+                                >
+                                    {isSavingDraft ? (
+                                        <>
+                                            <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                            Guardando...
+                                        </>
+                                    ) : (
+                                        'Siguiente: Examen Final'
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -1503,6 +1993,15 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
                                 {requiereExamen && (
                                     <div className="mt-6 sm:pl-6 border-l-0 sm:border-l-2 border-green-300 space-y-6">
+                                        <div className="bg-amber-50 border border-amber-250 rounded-xl p-4 flex gap-2.5 items-start text-left shadow-sm">
+                                            <span className="text-amber-600 text-sm flex-shrink-0 mt-0.5">⚠️</span>
+                                            <div>
+                                                <h4 className="text-xs font-bold text-amber-950">Requisito Obligatorio del Examen</h4>
+                                                <p className="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                                                    Para poder registrar este curso, cada examen activado (modular o final) debe contener <strong>al menos una pregunta de opción múltiple</strong>. La calificación del alumno se obtendrá <strong>únicamente</strong> de las preguntas de opción múltiple. Las preguntas de respuesta libre se registrarán para tu revisión, pero no sumarán puntos a la calificación automática.
+                                                </p>
+                                            </div>
+                                        </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
                                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Calificación Mínima Aprobatoria (0 - 100)</label>
@@ -1712,11 +2211,28 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             </div>
 
                             <div className="flex justify-between pt-4">
-                                <button type="button" onClick={() => setActiveTab('modulos')} className="px-6 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl transition hover:bg-zinc-50">
+                                <button 
+                                    type="button" 
+                                    disabled={isSavingDraft}
+                                    onClick={() => handleTabChange('modulos')} 
+                                    className="px-6 py-2.5 border border-gray-300 text-gray-700 font-bold rounded-xl transition hover:bg-zinc-50 disabled:opacity-75"
+                                >
                                     Atrás
                                 </button>
-                                <button type="button" onClick={() => setActiveTab('avisos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md">
-                                    Siguiente: Avisos y Notas
+                                <button 
+                                    type="button" 
+                                    disabled={isSavingDraft}
+                                    onClick={() => handleTabChange('avisos')} 
+                                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-md disabled:opacity-70 flex items-center gap-2"
+                                >
+                                    {isSavingDraft ? (
+                                        <>
+                                            <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                            Guardando...
+                                        </>
+                                    ) : (
+                                        'Siguiente: Avisos y Notas'
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -1796,7 +2312,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 )}
                                 
                                 <div className="flex gap-4">
-                                    <button type="button" onClick={() => setActiveTab('examen')} className="px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl transition hover:bg-zinc-50">
+                                    <button 
+                                        type="button" 
+                                        disabled={isSavingDraft || saving}
+                                        onClick={() => handleTabChange('examen')} 
+                                        className="px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl transition hover:bg-zinc-50 disabled:opacity-75"
+                                    >
                                         Atrás
                                     </button>
                                     <button
