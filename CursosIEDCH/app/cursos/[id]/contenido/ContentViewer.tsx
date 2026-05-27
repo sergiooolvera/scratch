@@ -15,6 +15,16 @@ export default function ContentViewer({ url }: { url: string }) {
 
     const [htmlDoc, setHtmlDoc] = useState<string | null>(null)
     const [htmlError, setHtmlError] = useState<string | null>(null)
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768)
+        }
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     const htmlViewerHref = useMemo(() => {
         const encoded = encodeURIComponent(url)
@@ -113,7 +123,7 @@ export default function ContentViewer({ url }: { url: string }) {
                 />
                 <div className="bg-slate-50 border-t border-gray-150 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                     <p className="text-gray-500 font-sans text-center sm:text-left">
-                        Puedes visualizar esta presentación PPT en pantalla completa o descargarla para verla localmente.
+                        Puedes visualizar esta presentación PPT en pantalla completa.
                     </p>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <a
@@ -123,13 +133,6 @@ export default function ContentViewer({ url }: { url: string }) {
                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition"
                         >
                             Pantalla Completa
-                        </a>
-                        <a
-                            href={url}
-                            download
-                            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 font-bold rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition"
-                        >
-                            Descargar
                         </a>
                     </div>
                 </div>
@@ -147,8 +150,32 @@ export default function ContentViewer({ url }: { url: string }) {
     }
 
     if (isPdf && !isOfficeOrArchive) {
+        if (isMobile) {
+            return (
+                <div className="w-full p-8 border border-gray-200 rounded-xl bg-white shadow-lg flex flex-col items-center justify-center text-center min-h-[300px]">
+                    <div className="bg-red-50 p-4 rounded-full mb-4">
+                        <svg className="w-16 h-16 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Documento de Estudio PDF</h3>
+                    <p className="text-sm text-gray-500 mb-6 max-w-xs leading-relaxed">
+                        Este tema contiene una guía interactiva en formato PDF. Haz clic abajo para visualizarla en pantalla completa de forma fluida.
+                    </p>
+                    <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full max-w-xs inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition shadow-md hover:shadow-lg animate-bounce"
+                    >
+                        Ver Pantalla Completa
+                    </a>
+                </div>
+            )
+        }
+
         return (
-            <div className="w-full h-[60vh] md:h-[80vh] min-h-[400px] md:min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg flex flex-col">
+            <div className="w-full h-[80vh] min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg flex flex-col">
                 <iframe
                     src={url}
                     className="w-full flex-1 border-0"
@@ -156,7 +183,7 @@ export default function ContentViewer({ url }: { url: string }) {
                 />
                 <div className="bg-slate-50 border-t border-gray-150 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                     <p className="text-gray-500 font-sans text-center sm:text-left">
-                        ¿Tienes problemas para ver el documento? Puedes abrirlo en pantalla completa o descargarlo directamente.
+                        ¿Tienes problemas para ver el documento? Puedes visualizarlo en pantalla completa de forma directa.
                     </p>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <a
@@ -166,13 +193,6 @@ export default function ContentViewer({ url }: { url: string }) {
                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition"
                         >
                             Ver Pantalla Completa
-                        </a>
-                        <a
-                            href={url}
-                            download
-                            className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-gray-300 font-bold rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition"
-                        >
-                            Descargar
                         </a>
                     </div>
                 </div>
