@@ -109,3 +109,66 @@ export async function getResultadosExamen(cursoId: string) {
 
     return { success: true, data: [], preguntas: preguntas || [], examenes: examenesOrdenados };
 }
+
+export async function guardarRevisionExamenProfesor(
+    resultadoId: string, 
+    retroalimentacionGeneral: string, 
+    calificacionesPreguntas: Record<string, string>
+) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'No autorizado' }
+    }
+
+    // Bypass RLS using admin client to update the result
+    const supabaseAdmin = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    // 1. Fetch current result
+    const { data: resRow, error: fetchError } = await supabaseAdmin
+        .from('ie_resultados_examenes')
+        .select('respuestas_detalle')
+        .eq('id', resultadoId)
+        .single()
+
+    if (fetchError || !resRow) {
+        return { error: 'No se encontró el resultado del examen' }
+    }
+
+    const respuestasDetalle = (resRow.respuestas_detalle as Record<string, any>) || {}
+
+    // 2. Set retroalimentacion general
+    respuestasDetalle.retroalimentacion_profesor = retroalimentacionGeneral;
+
+    // 3. Set calificacion of free questions
+    Object.entries(calificacionesPreguntas).forEach(([pregId, calif]) => {
+        if (respuestasDetalle[pregId]) {
+            respuestasDetalle[pregId].calificacion_abierta = calif;
+        } else {
+            respuestasDetalle[pregId] = {
+                respuesta: '',
+                respuesta_texto: '',
+                explicacion: '',
+                correcta: true,
+                calificacion_abierta: calif
+            }
+        }
+    })
+
+    // 4. Update the DB row
+    const { error: updateError } = await supabaseAdmin
+        .from('ie_resultados_examenes')
+        .update({ respuestas_detalle: respuestasDetalle })
+        .eq('id', resultadoId)
+
+    if (updateError) {
+        return { error: 'Error al guardar la revisión: ' + updateError.message }
+    }
+
+    return { success: true }
+}
+

@@ -12,10 +12,22 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
         return <div className="p-8">Por favor inicia sesión.</div>
     }
 
-    const { data: cursos } = await supabase
+    const { data: rawCursos } = await supabase
         .from('ie_cursos')
         .select('*')
         .eq('estado', 'aprobado')
+
+    const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+    const allowedEmails = ['sergio.olver@gmail.com', 'sergio.olvera@bracer.biz'];
+    const userEmail = user?.email?.toLowerCase();
+
+    // Filter courses created by maestro to only be visible to allowed emails
+    const cursos = rawCursos?.filter(c => {
+        if (c.creado_por === maestroId) {
+            return userEmail && allowedEmails.includes(userEmail);
+        }
+        return true;
+    }) || [];
 
     const { data: compras } = await supabase
         .from('ie_compras')
@@ -48,11 +60,20 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
         <div className="bg-zinc-50 min-h-[calc(100vh-64px)] font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="bg-blue-600 p-2 rounded-lg">
-                            <GraduationCap className="h-6 w-6 text-white" />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="bg-blue-600 p-2 rounded-lg">
+                                <GraduationCap className="h-6 w-6 text-white" />
+                            </div>
+                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Mis Cursos Comprados</h1>
                         </div>
-                        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Mis Cursos Comprados</h1>
+                        <Link 
+                            href="/mis-cursos/revision-examenes"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 border border-zinc-200 rounded-full bg-white text-zinc-700 text-xs font-bold shadow-sm hover:bg-zinc-50 transition-all cursor-pointer self-start sm:self-auto"
+                        >
+                            <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+                            Ver mis calificaciones
+                        </Link>
                     </div>
                     <form action="/mis-cursos" method="GET" className="relative w-full md:w-96">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

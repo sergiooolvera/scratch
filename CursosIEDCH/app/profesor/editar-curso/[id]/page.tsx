@@ -63,6 +63,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [requiereExamenAvance, setRequiereExamenAvance] = useState(false)
     const [mostrarExamenFinal, setMostrarExamenFinal] = useState(true)
     const [mostrarConstancia, setMostrarConstancia] = useState(true)
+    const [mostrarRevisionExamen, setMostrarRevisionExamen] = useState(false)
     
     // Modules state
     const [modulos, setModulos] = useState<Modulo[]>([])
@@ -111,6 +112,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 requiere_examen_avance: requiereExamenAvance,
                 mostrar_examen_final: mostrarExamenFinal,
                 mostrar_constancia: mostrarConstancia,
+                mostrar_revision_examen: mostrarRevisionExamen,
                 modulos: modulos.map((m, idx) => ({
                     id: m.id,
                     titulo: m.titulo,
@@ -280,6 +282,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setRequiereExamenAvance(borrador.requiere_examen_avance !== undefined ? borrador.requiere_examen_avance : (curso.requiere_examen_avance || false))
                 setMostrarExamenFinal(borrador.mostrar_examen_final !== undefined ? borrador.mostrar_examen_final : (curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true))
                 setMostrarConstancia(borrador.mostrar_constancia !== undefined ? borrador.mostrar_constancia : (curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true))
+                setMostrarRevisionExamen(borrador.mostrar_revision_examen !== undefined ? borrador.mostrar_revision_examen : (curso.mostrar_revision_examen !== undefined ? curso.mostrar_revision_examen : false))
                 
                 if (borrador.modulos) {
                     setModulos(borrador.modulos.map((m: any) => {
@@ -400,6 +403,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             setRequiereExamenAvance(curso.requiere_examen_avance || false)
             setMostrarExamenFinal(curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true)
             setMostrarConstancia(curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true)
+            setMostrarRevisionExamen(curso.mostrar_revision_examen !== undefined ? curso.mostrar_revision_examen : false)
 
             // Módulos
             const { data: mods } = await supabase
@@ -961,6 +965,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 requiere_examen_avance: requiereExamenAvance,
                 mostrar_examen_final: mostrarExamenFinal,
                 mostrar_constancia: mostrarConstancia,
+                mostrar_revision_examen: mostrarRevisionExamen,
                 modulos: modulosFinales.map(m => ({
                     id: m.id,
                     titulo: m.titulo,
@@ -1043,6 +1048,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     requiere_examen_avance: requiereExamenAvance,
                     mostrar_examen_final: mostrarExamenFinal,
                     mostrar_constancia: mostrarConstancia,
+                    mostrar_revision_examen: mostrarRevisionExamen,
                     url_contenido: firstUrlContenido,
                     cambios_pendientes: null, // Clear draft upon official publication
                     estado: 'pendiente'
@@ -1511,7 +1517,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                     {/* Visibilidad en el Aula de Alumnos */}
                                     <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
                                         <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Visibilidad en el Aula de Alumnos</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
                                                 <input
                                                     type="checkbox"
@@ -1537,6 +1543,20 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                 <label htmlFor="mostrarConstancia" className="cursor-pointer">
                                                     <span className="block text-sm font-bold text-indigo-950">Habilitar Obtención de Constancia</span>
                                                     <span className="block text-xs text-indigo-700 mt-1">El alumno podrá visualizar y descargar el botón de su constancia digital.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="mostrarRevisionExamen"
+                                                    checked={mostrarRevisionExamen}
+                                                    onChange={(e) => setMostrarRevisionExamen(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-amber-600 focus:ring-amber-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="mostrarRevisionExamen" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-amber-950">Mostrar Revisión de Examen</span>
+                                                    <span className="block text-xs text-amber-700 mt-1">El alumno podrá consultar las respuestas correctas/incorrectas y notas de sus exámenes.</span>
                                                 </label>
                                             </div>
                                         </div>

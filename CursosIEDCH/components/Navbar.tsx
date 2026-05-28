@@ -76,13 +76,8 @@ export default function Navbar() {
                     <div className="flex">
                         <div className="flex-shrink-0 flex items-center">
                              <a href="https://iedch-2.vercel.app" className="flex items-center space-x-2">
-                                <div className="flex flex-col space-y-[-4px] transform scale-75 origin-left">
-                                    <div className="w-8 h-1.5 bg-[#D4AF37] skew-x-[-20deg]"></div>
-                                    <div className="w-8 h-1.5 bg-[#002060] skew-x-[-20deg] ml-1"></div>
-                                    <div className="w-8 h-1.5 bg-[#D4AF37] skew-x-[-20deg] ml-2"></div>
-                                </div>
-                                <span className="text-2xl font-black text-[#002060] tracking-tighter">SECNA</span>
-                                <span className="hidden sm:inline-block h-6 w-[1px] bg-gray-200 mx-2"></span>
+                                <img src="/logo.jpg" alt="Logo" className="h-14 w-auto object-contain invert hue-rotate-180 brightness-95" />
+                                <span className="hidden sm:inline-block h-8 w-[1px] bg-gray-200 mx-2"></span>
                                 <span className="hidden lg:inline text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Portal</span>
                             </a>
                         </div>
@@ -96,6 +91,11 @@ export default function Navbar() {
                                 {profile?.rol !== 'admin' && (
                                     <Link href="/mis-cursos" className={navItemClass('/mis-cursos')}>
                                         <GraduationCap className="h-4 w-4" /> <span>Mis Cursos</span>
+                                    </Link>
+                                )}
+                                {profile?.rol !== 'admin' && (
+                                    <Link href="/mis-cursos/revision-examenes" className={navItemClass('/mis-cursos/revision-examenes')}>
+                                        <BadgeCheck className="h-4 w-4" /> <span>Mis Exámenes</span>
                                     </Link>
                                 )}
                                 {profile?.rol === 'financiero' && (
@@ -148,6 +148,7 @@ export default function Navbar() {
                                                 <Link href="/profesor/subir-curso" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Subir Curso</Link>
                                                 <Link href="/profesor/preguntas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Dudas de Alumnos</Link>
                                                 <Link href="/profesor/revision-examen" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Revisión de Exámenes</Link>
+                                                <Link href="/profesor/revision-tareas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Revisión de Tareas</Link>
                                                 {profile?.rol !== 'instructor' && (
                                                     <Link href="/profesor/ventas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Ventas</Link>
                                                 )}
@@ -262,6 +263,9 @@ export default function Navbar() {
                                         <Link href="/mis-cursos" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
                                             <GraduationCap className="h-5 w-5" /> <span>Mis Cursos</span>
                                         </Link>
+                                        <Link href="/mis-cursos/revision-examenes" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+                                            <BadgeCheck className="h-5 w-5" /> <span>Mis Exámenes</span>
+                                        </Link>
                                     </>
                                 )}
                                 {profile?.rol === 'financiero' && (
@@ -285,6 +289,7 @@ export default function Navbar() {
                                         <Link href="/profesor/subir-curso" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Subir Curso</Link>
                                         <Link href="/profesor/preguntas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Dudas de Alumnos</Link>
                                         <Link href="/profesor/revision-examen" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Revisión de Exámenes</Link>
+                                        <Link href="/profesor/revision-tareas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Revisión de Tareas</Link>
                                         {profile?.rol !== 'instructor' && (
                                             <Link href="/profesor/ventas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Ventas</Link>
                                         )}

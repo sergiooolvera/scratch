@@ -90,6 +90,7 @@ export default function SubirCursoPage() {
     const [tieneBorradorLocal, setTieneBorradorLocal] = useState(false)
     const [mostrarExamenFinal, setMostrarExamenFinal] = useState(true)
     const [mostrarConstancia, setMostrarConstancia] = useState(true)
+    const [mostrarRevisionExamen, setMostrarRevisionExamen] = useState(false)
     const [borradorInicializado, setBorradorInicializado] = useState(false)
 
     // Check for draft on mount
@@ -123,6 +124,7 @@ export default function SubirCursoPage() {
             preguntasExtraidas,
             mostrarExamenFinal,
             mostrarConstancia,
+            mostrarRevisionExamen,
             modulos: modulos.map(m => ({
                 titulo: m.titulo,
                 requiereExamen: m.requiereExamen,
@@ -184,6 +186,7 @@ export default function SubirCursoPage() {
                 preguntasExtraidas,
                 mostrarExamenFinal,
                 mostrarConstancia,
+                mostrarRevisionExamen,
                 modulos: modulos.map(m => ({
                     titulo: m.titulo,
                     requiereExamen: m.requiereExamen,
@@ -236,6 +239,7 @@ export default function SubirCursoPage() {
             if (borrador.preguntasExtraidas !== undefined) setPreguntasExtraidas(borrador.preguntasExtraidas);
             if (borrador.mostrarExamenFinal !== undefined) setMostrarExamenFinal(borrador.mostrarExamenFinal);
             if (borrador.mostrarConstancia !== undefined) setMostrarConstancia(borrador.mostrarConstancia);
+            if (borrador.mostrarRevisionExamen !== undefined) setMostrarRevisionExamen(borrador.mostrarRevisionExamen);
             if (borrador.modulos !== undefined) {
                 setModulos(borrador.modulos.map((m: any) => ({
                     titulo: m.titulo || '',
@@ -657,7 +661,8 @@ export default function SubirCursoPage() {
             reunion_url: formData.reunion_url?.trim() || null,
             nota_profesor: formData.nota_profesor?.trim() || null,
             mostrar_examen_final: mostrarExamenFinal,
-            mostrar_constancia: mostrarConstancia
+            mostrar_constancia: mostrarConstancia,
+            mostrar_revision_examen: mostrarRevisionExamen
         }
 
         const { data: cursoGuardado, error: errorCurso } = await supabase.from('ie_cursos').insert(cursoDraftObj).select().single()
@@ -1143,7 +1148,7 @@ export default function SubirCursoPage() {
 
                                     <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
                                         <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Visibilidad en el Aula de Alumnos</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
                                                 <input
                                                     type="checkbox"
@@ -1169,6 +1174,20 @@ export default function SubirCursoPage() {
                                                 <label htmlFor="mostrarConstancia" className="cursor-pointer">
                                                     <span className="block text-sm font-bold text-indigo-950">Habilitar Obtención de Constancia</span>
                                                     <span className="block text-xs text-indigo-700 mt-1">El alumno podrá visualizar y descargar el botón de su constancia digital.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="mostrarRevisionExamen"
+                                                    checked={mostrarRevisionExamen}
+                                                    onChange={(e) => setMostrarRevisionExamen(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-amber-600 focus:ring-amber-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="mostrarRevisionExamen" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-amber-950">Mostrar Revisión de Examen</span>
+                                                    <span className="block text-xs text-amber-700 mt-1">El alumno podrá consultar las respuestas correctas/incorrectas y notas de sus exámenes.</span>
                                                 </label>
                                             </div>
                                         </div>
