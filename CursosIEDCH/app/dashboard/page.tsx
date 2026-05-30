@@ -26,10 +26,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         redirect('/institucion/registrar-actividad')
     }
 
-    const { data: cursos } = await supabase
+    const { data: rawCursos } = await supabase
         .from('ie_cursos')
         .select('*')
         .eq('estado', 'aprobado')
+
+    const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+    const allowedEmails = ['sergio.olver@gmail.com', 'sergio.olvera@bracer.biz'];
+    const userEmail = user?.email?.toLowerCase();
+
+    // Filter courses created by maestro to only be visible to allowed emails
+    const cursos = rawCursos?.filter(c => {
+        if (c.creado_por === maestroId) {
+            return userEmail && allowedEmails.includes(userEmail);
+        }
+        return true;
+    }) || [];
 
     const { data: compras } = await supabase
         .from('ie_compras')
@@ -53,6 +65,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // 3. Filtrar por Categoría seleccionada
     if (activeCategory !== 'todas') {
         cursosDisponibles = cursosDisponibles.filter(c => (c.categoria || 'desarrollo') === activeCategory)
+    } else if (!query) {
+        // Al entrar (cuando la categoría es 'todas' y no hay búsqueda activa), solo se muestran los supercursos
+        cursosDisponibles = cursosDisponibles.filter(c => c.es_super_curso === true)
     }
 
     // Super Cursos primero
@@ -66,7 +81,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     })
 
     const categorias = [
-        { id: 'todas', label: 'Todas las Áreas', icon: '🌐', color: 'indigo' },
         { id: 'desarrollo', label: 'Desarrollo Humano', icon: '🧠', color: 'purple' },
         { id: 'salud', label: 'Salud y Medicina', icon: '🩺', color: 'emerald' },
         { id: 'arte', label: 'Arte y Cultura', icon: '🎨', color: 'pink' },

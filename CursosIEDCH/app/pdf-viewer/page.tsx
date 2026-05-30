@@ -33,11 +33,25 @@ function PDFViewerContent() {
         }
     }, [descargable])
 
+    const handleBack = () => {
+        if (typeof window !== 'undefined') {
+            if (window.history.length > 1) {
+                router.back()
+            } else {
+                window.close()
+                // Fallback in case close is blocked (e.g. direct URL entry)
+                setTimeout(() => {
+                    window.location.href = '/dashboard'
+                }, 100)
+            }
+        }
+    }
+
     if (!url) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white p-6">
                 <p className="text-gray-400">No se especificó ningún enlace de PDF válido.</p>
-                <button onClick={() => router.back()} className="mt-4 bg-gray-800 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-700 transition">Volver</button>
+                <button onClick={handleBack} className="mt-4 bg-gray-800 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-700 transition">Volver</button>
             </div>
         )
     }
@@ -47,7 +61,7 @@ function PDFViewerContent() {
             {/* Header bar */}
             <div className="flex items-center justify-between px-6 py-4 bg-gray-900 border-b border-gray-800">
                 <button 
-                    onClick={() => router.back()}
+                    onClick={handleBack}
                     className="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition"
                 >
                     <ArrowLeft className="w-5 h-5" />

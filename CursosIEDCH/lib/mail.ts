@@ -12,6 +12,7 @@ export async function sendReunionNotification({ emails, cursoTitulo, reunionUrl,
   const port = parseInt(process.env.SMTP_PORT || '465');
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS?.replace(/\s/g, ''); // Limpiar espacios
+  const fromEmail = process.env.SMTP_FROM || user;
 
   if (!host || !user || !pass) {
     throw new Error('Configuración SMTP incompleta en variables de entorno.');
@@ -30,7 +31,7 @@ export async function sendReunionNotification({ emails, cursoTitulo, reunionUrl,
   for (const email of emails) {
     try {
       await transporter.sendMail({
-        from: `"SECNA Portal" <${user}>`,
+        from: `"SECNA Portal" <${fromEmail}>`,
         to: email,
         subject: `AVISO: Clase en Vivo / Información de ${cursoTitulo}`,
         html: `
@@ -67,6 +68,7 @@ export async function sendCertificateNotification({ email, cursoTitulo, publicUr
   const port = parseInt(process.env.SMTP_PORT || '465');
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS?.replace(/\s/g, '');
+  const fromEmail = process.env.SMTP_FROM || user;
 
   if (!host || !user || !pass) {
     throw new Error('Configuración SMTP incompleta.');
@@ -82,7 +84,7 @@ export async function sendCertificateNotification({ email, cursoTitulo, publicUr
   await transporter.verify();
 
   const info = await transporter.sendMail({
-    from: `"SECNA Portal" <${user}>`,
+    from: `"SECNA Portal" <${fromEmail}>`,
     to: email,
     subject: `Tu Constancia Oficial: ${cursoTitulo}`,
     html: `
@@ -108,3 +110,4 @@ export async function sendCertificateNotification({ email, cursoTitulo, publicUr
 
   return { success: true, messageId: info.messageId };
 }
+
