@@ -81,11 +81,43 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [archivoExamen, setArchivoExamen] = useState<File | null>(null)
     const [modalMessage, setModalMessage] = useState<{ title: string; content: string; type: 'success' | 'error' | 'info'; redirectUrl?: string } | null>(null)
 
+    // Gamma API integration states
+    const [gammaGenerations, setGammaGenerations] = useState<any[]>([])
+    const [activeGammaModuloIdx, setActiveGammaModuloIdx] = useState<number | null>(null)
+    const [gammaPrompt, setGammaPrompt] = useState('')
+    const [gammaNumSlides, setGammaNumSlides] = useState(10)
+    const [gammaFormato, setGammaFormato] = useState<'pdf' | 'pptx'>('pptx')
+    const [isGeneratingGamma, setIsGeneratingGamma] = useState(false)
+    const [isRequestingGamma, setIsRequestingGamma] = useState(false)
+    const [gammaError, setGammaError] = useState('')
+    const [gammaSuccessResult, setGammaSuccessResult] = useState<{ id: string; gammaUrl: string; exportUrl: string; creditsUsed?: number } | null>(null)
+    const [gammaTitleInput, setGammaTitleInput] = useState('')
+    const [gammaIdioma, setGammaIdioma] = useState<'es-419' | 'en'>('es-419')
+    const [gammaTema, setGammaTema] = useState<string>('')
+    const [profile, setProfile] = useState<any>(null)
+    const maxGammaAttempts = profile?.limite_generaciones_gamma ?? 3;
+
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [mensaje, setMensaje] = useState('')
 
-    const [profile, setProfile] = useState<any>(null)
+    const handleSolicitarMasIntentosGamma = async () => {
+        setIsRequestingGamma(true)
+        try {
+            const res = await fetch('/api/profesor/gamma/solicitar-intentos', { method: 'POST' })
+            if (res.ok) {
+                setProfile((prev: any) => ({ ...prev, solicitud_mas_intentos_gamma: true }))
+            } else {
+                const data = await res.json()
+                alert(data.error || 'Error al solicitar más intentos')
+            }
+        } catch (error) {
+            console.error(error)
+            alert('Error de conexión')
+        } finally {
+            setIsRequestingGamma(false)
+        }
+    }
     const [historialMensaje, setHistorialMensaje] = useState('Se actualizaron datos generales del curso.')
     
     const router = useRouter()
@@ -203,6 +235,15 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setProfile(prof)
                 // Profile completeness check removed per user request
                 // so they can upload/edit courses without waiting for identity validation.
+            }
+
+            // Cargar registro de generaciones de Gamma de este profesor
+            const { data: gammaGens } = await supabase
+                .from('ie_gamma_generations')
+                .select('*')
+                .eq('profile_id', user.id);
+            if (gammaGens) {
+                setGammaGenerations(gammaGens);
             }
 
             const { data: curso, error } = await supabase
@@ -559,6 +600,137 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         const nuevosModulos = [...modulos]
         nuevosModulos[index] = { ...nuevosModulos[index], [field]: value }
         setModulos(nuevosModulos)
+    }
+
+    // Gamma Helper functions
+    const getUnusedGenerationsForModule = (moduloIdx: number) => {
+        const modulo = modulos[moduloIdx];
+        return gammaGenerations.filter(gen => {
+            const isUsedInModule = modulo.recursos.some(r => r.url_contenido === gen.export_url);
+            const belongsToThisCourse = gen.curso_id === id;
+            return gen.descargado && !isUsedInModule && !gen.utilizado && belongsToThisCourse;
+        });
+    }
+
+    const handleMarcarGammaUtilizado = async (genId: string) => {
+        setGammaGenerations(prev => prev.map(g => g.id === genId ? { ...g, utilizado: true } : g));
+        await supabase.from('ie_gamma_generations').update({ utilizado: true }).eq('id', genId);
+    }
+
+    const handleRegistrarGammaDescarga = async (genId: string) => {
+        setGammaGenerations(prev => prev.map(g => g.id === genId ? { ...g, descargado: true } : g));
+        await fetch('/api/profesor/gamma/descarga', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ generationId: genId })
+        });
+    }
+
+    const handleGenerarGamma = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (activeGammaModuloIdx === null) return;
+        setIsGeneratingGamma(true);
+        setGammaError('');
+        setGammaSuccessResult(null);
+
+        try {
+            const res = await fetch('/api/profesor/gamma/generar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: gammaPrompt,
+                    numSlides: gammaNumSlides,
+                    formato: gammaFormato,
+                    idioma: gammaIdioma,
+                    tema: gammaTema,
+                    cursoId: id,
+                    moduloId: modulos[activeGammaModuloIdx]?.id || null
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                setGammaError(data.error || 'Error al generar la presentación.');
+                setIsGeneratingGamma(false);
+                return;
+            }
+
+            const generationId = data.generationId;
+            if (!generationId) {
+                setGammaError('No se recibió un ID de generación válido.');
+                setIsGeneratingGamma(false);
+                return;
+            }
+
+            const pollStatus = async () => {
+                try {
+                    const statusRes = await fetch(
+                        `/api/profesor/gamma/status?generationId=${generationId}&prompt=${encodeURIComponent(gammaPrompt)}&numSlides=${gammaNumSlides}&formato=${gammaFormato}&cursoId=${id}&moduloId=${modulos[activeGammaModuloIdx]?.id || 'null'}`
+                    );
+                    if (!statusRes.ok) {
+                        setGammaError('Error al consultar el estado de la generación.');
+                        setIsGeneratingGamma(false);
+                        return;
+                    }
+
+                    const statusData = await statusRes.json();
+                    if (statusData.status === 'failed') {
+                        setGammaError('La generación falló en los servidores de Gamma.');
+                        setIsGeneratingGamma(false);
+                        return;
+                    }
+
+                    if (statusData.status === 'completed') {
+                        setGammaSuccessResult({
+                            id: statusData.id,
+                            gammaUrl: statusData.gammaUrl,
+                            exportUrl: statusData.exportUrl,
+                            creditsUsed: statusData.creditsUsed
+                        });
+
+                        const { data: { user: authUser } } = await supabase.auth.getUser();
+                        const userId = authUser?.id || profile?.id;
+                        
+                        const newGen = {
+                            id: statusData.id || generationId,
+                            prompt: gammaPrompt,
+                            num_slides: gammaNumSlides,
+                            formato: gammaFormato,
+                            gamma_url: statusData.gammaUrl,
+                            export_url: statusData.exportUrl,
+                            credits_used: Number(statusData.creditsUsed) || (gammaNumSlides * 4),
+                            descargado: false,
+                            utilizado: false,
+                            curso_id: id,
+                            profile_id: userId
+                        };
+
+                        setGammaGenerations(prev => {
+                            if (prev.some(g => g.id === newGen.id || g.export_url === newGen.export_url)) {
+                                return prev;
+                            }
+                            return [...prev, newGen];
+                        });
+
+                        setIsGeneratingGamma(false);
+                        return;
+                    }
+
+                    // Sigue generando, reintentar en 5 segundos
+                    setTimeout(pollStatus, 5000);
+                } catch (err: any) {
+                    setGammaError(err.message || 'Error de conexión durante el monitoreo.');
+                    setIsGeneratingGamma(false);
+                }
+            };
+
+            // Iniciar primer chequeo a los 3 segundos
+            setTimeout(pollStatus, 3000);
+
+        } catch (err: any) {
+            setGammaError(err.message || 'Error de conexión.');
+            setIsGeneratingGamma(false);
+        }
     }
 
     // Modular resources helpers
@@ -1084,17 +1256,66 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
                 // Guardar examen modular y recursos si tiene id
                 if (moduloId) {
-                    // Actualizar recursos de modulo
-                    await supabase.from('ie_modulo_recursos').delete().eq('modulo_id', moduloId);
+                    // ── PROTECCIÓN CONTRA PÉRDIDA DE RECURSOS ────────────────
+                    // 1. Obtener los recursos actuales en la DB para este módulo
+                    const { data: recursosEnDB } = await supabase
+                        .from('ie_modulo_recursos')
+                        .select('id, url_contenido')
+                        .eq('modulo_id', moduloId);
+
+                    // 2. Validación de seguridad: si la DB tiene recursos pero el
+                    //    estado en memoria está vacío, algo falló en la carga.
+                    //    Bloqueamos el guardado para no perder datos.
+                    if ((recursosEnDB?.length ?? 0) > 0 && mod.recursos.length === 0) {
+                        setModalMessage({
+                            title: 'Protección de Recursos',
+                            content: `El módulo "${mod.titulo}" tiene ${recursosEnDB!.length} recurso(s) guardado(s) en la base de datos, pero aparece vacío en el editor. Por seguridad, el guardado fue cancelado para evitar pérdida de datos. Por favor recarga la página e intenta de nuevo.`,
+                            type: 'error'
+                        });
+                        setSaving(false);
+                        return;
+                    }
+
+                    // 3. Insertar o actualizar los recursos del estado actual (seguros)
+                    const idsInsertados: string[] = [];
                     for (let rIdx = 0; rIdx < mod.recursos.length; rIdx++) {
                         const rec = mod.recursos[rIdx];
-                        await supabase.from('ie_modulo_recursos').insert({
-                            modulo_id: moduloId,
-                            titulo: rec.titulo,
-                            url_contenido: rec.url_contenido,
-                            orden: rIdx + 1,
-                            descargable: rec.descargable || false
-                        });
+
+                        if (rec.id) {
+                            // Recurso existente → actualizar
+                            await supabase.from('ie_modulo_recursos').update({
+                                titulo: rec.titulo,
+                                url_contenido: rec.url_contenido,
+                                orden: rIdx + 1,
+                                descargable: rec.descargable || false
+                            }).eq('id', rec.id);
+                            idsInsertados.push(rec.id);
+                        } else {
+                            // Recurso nuevo → insertar
+                            const { data: newRec } = await supabase.from('ie_modulo_recursos').insert({
+                                modulo_id: moduloId,
+                                titulo: rec.titulo,
+                                url_contenido: rec.url_contenido,
+                                orden: rIdx + 1,
+                                descargable: rec.descargable || false
+                            }).select('id').single();
+                            if (newRec?.id) idsInsertados.push(newRec.id);
+                        }
+
+                        // Vincular generación de Gamma como utilizada
+                        await supabase
+                            .from('ie_gamma_generations')
+                            .update({ utilizado: true, modulo_id: moduloId })
+                            .eq('export_url', rec.url_contenido);
+                    }
+
+                    // 4. Borrar solo los recursos que el usuario eliminó deliberadamente
+                    //    (los que están en DB pero no en el estado actual)
+                    const idsAEliminar = (recursosEnDB || [])
+                        .filter(r => !idsInsertados.includes(r.id))
+                        .map(r => r.id);
+                    if (idsAEliminar.length > 0) {
+                        await supabase.from('ie_modulo_recursos').delete().in('id', idsAEliminar);
                     }
 
                     if (mod.requiereExamen && mod.examenPreguntas.length > 0) {
@@ -1613,14 +1834,62 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                             <div className="space-y-4 pt-2 col-span-full">
                                                 <div className="flex justify-between items-center">
                                                     <label className="block text-xs font-extrabold text-gray-600 uppercase tracking-wider">Recursos del Módulo ({modulo.recursos.length})</label>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleAgregarRecurso(index)}
-                                                        className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-extrabold transition flex items-center gap-1 border border-blue-200"
-                                                    >
-                                                        <Plus className="h-3.5 w-3.5" /> Añadir Recurso
-                                                    </button>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setActiveGammaModuloIdx(index);
+                                                                setGammaError('');
+                                                                setGammaSuccessResult(null);
+                                                                setGammaPrompt('');
+                                                            }}
+                                                            className="px-3 py-1.5 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 border border-indigo-200 shadow-sm cursor-pointer"
+                                                        >
+                                                            <Sparkles className="h-3.5 w-3.5" /> Generar con IA (Gamma)
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAgregarRecurso(index)}
+                                                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-extrabold transition flex items-center gap-1 border border-blue-200"
+                                                        >
+                                                            <Plus className="h-3.5 w-3.5" /> Añadir Recurso
+                                                        </button>
+                                                    </div>
                                                 </div>
+
+                                                {/* Alertas de presentaciones descargadas no utilizadas */}
+                                                {getUnusedGenerationsForModule(index).map((gen) => (
+                                                    <div key={gen.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-amber-800 shadow-sm">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                                                                <Sparkles className="h-5 w-5" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs font-bold">¡Presentación descargada sin utilizar!</p>
+                                                                <p className="text-[11px] text-amber-700 font-medium">Generaste y descargaste la presentación "{gen.prompt}" pero aún no la has agregado como recurso del módulo.</p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const nuevosModulos = [...modulos];
+                                                                const truncatedPrompt = gen.prompt.length > 50 ? `${gen.prompt.substring(0, 50)}...` : gen.prompt;
+                                                                nuevosModulos[index].recursos.push({
+                                                                    titulo: `Presentación: ${truncatedPrompt}`,
+                                                                    tipo: gen.formato === 'pdf' ? 'pdf' : 'ppt',
+                                                                    url_contenido: gen.export_url,
+                                                                    archivoPdf: null,
+                                                                    descargable: true
+                                                                });
+                                                                setModulos(nuevosModulos);
+                                                                handleMarcarGammaUtilizado(gen.id);
+                                                            }}
+                                                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition shadow-sm self-start md:self-auto cursor-pointer"
+                                                        >
+                                                            Utilizar esta presentación
+                                                        </button>
+                                                    </div>
+                                                ))}
 
                                                 {modulo.recursos.length === 0 ? (
                                                     <p className="text-xs text-gray-500 italic py-4 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-center">No hay recursos en este módulo. Los alumnos verán solo el título y la evaluación (si requiere).</p>
@@ -2372,6 +2641,247 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 Aceptar
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Gamma AI Presentation Generation Modal */}
+            {activeGammaModuloIdx !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+                    <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-zinc-200/80 p-7 max-w-xl w-full shadow-2xl text-left text-zinc-800 space-y-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b border-zinc-150 pb-3">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <Sparkles className="h-6 w-6 text-violet-500 animate-pulse" />
+                                Generar Presentación con IA (Gamma)
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setActiveGammaModuloIdx(null)}
+                                className="text-gray-400 hover:text-gray-650 font-extrabold text-sm hover:scale-105 transition cursor-pointer"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+
+                        <div className="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-xl text-xs space-y-1">
+                            <p className="font-extrabold text-indigo-950 uppercase tracking-wider text-[10px]">Aviso de Uso y Costos</p>
+                            <p className="text-indigo-800 font-medium leading-relaxed">
+                                Esta es una herramienta de ayuda y tiene un costo de consumo de tokens. Su disponibilidad y utilidad futura podrían verse reducidas.
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 pt-2 font-bold text-indigo-900 text-xs items-center">
+                                <span>Usos realizados: {gammaGenerations.length} / {maxGammaAttempts}</span>
+                                <span>Límite: Máx 20 diapositivas</span>
+                                <span>Tokens (créditos) gastados: {gammaGenerations.reduce((sum, g) => sum + (g.credits_used || 0), 0)}</span>
+                                {gammaGenerations.length >= maxGammaAttempts && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSolicitarMasIntentosGamma}
+                                        disabled={isRequestingGamma || profile?.solicitud_mas_intentos_gamma}
+                                        className="ml-auto bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-indigo-700 disabled:opacity-50"
+                                    >
+                                        {isRequestingGamma || profile?.solicitud_mas_intentos_gamma ? 'Solicitud pendiente' : 'Solicitar más intentos'}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {gammaError && (
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 font-semibold leading-relaxed">
+                                {gammaError}
+                            </div>
+                        )}
+
+                        {!gammaSuccessResult ? (
+                            <form onSubmit={handleGenerarGamma} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Título del Recurso</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={gammaTitleInput}
+                                        onChange={(e) => setGammaTitleInput(e.target.value)}
+                                        placeholder="Ej. Presentación: Estructura Ósea Humana"
+                                        disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                        className="w-full rounded-xl border-gray-300 p-3 border bg-white text-zinc-950 text-xs font-bold focus:ring-indigo-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tema / Instrucciones de la presentación</label>
+                                    <textarea
+                                        required
+                                        rows={3}
+                                        value={gammaPrompt}
+                                        onChange={(e) => setGammaPrompt(e.target.value)}
+                                        placeholder="Ej. Una presentación detallada sobre la anatomía del corazón humano, funciones de las aurículas, ventrículos y circulación mayor..."
+                                        disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                        className="w-full rounded-xl border-gray-300 p-3 border bg-white text-zinc-950 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500"
+                                    />
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-1.5 gap-1">
+                                        <span className="text-[10px] text-gray-400">Entre más detalles ingreses, mejor será la presentación.</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setGammaPrompt("Una presentación médica y didáctica sobre la anatomía del corazón humano. Debe incluir la estructura interna y externa, las funciones principales de las aurículas y ventrículos, la diferencia entre la circulación mayor y menor, y consejos prácticos para mantener una buena salud cardiovascular.");
+                                                if (!gammaTitleInput.trim()) {
+                                                    setGammaTitleInput("Anatomía del Corazón Humano");
+                                                }
+                                            }}
+                                            disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                            className="text-[10px] text-indigo-650 hover:text-indigo-850 font-bold underline transition-colors cursor-pointer"
+                                        >
+                                            ✨ Autocompletar ejemplo detallado
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Número de Diapositivas (Máx 20)</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            max={20}
+                                            required
+                                            value={gammaNumSlides}
+                                            onChange={(e) => setGammaNumSlides(Math.min(20, Math.max(1, Number(e.target.value) || 10)))}
+                                            disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                            className="w-full rounded-xl border-gray-300 p-3 border bg-white text-zinc-950 text-xs font-bold focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Formato de Exportación</label>
+                                        <div className="flex gap-4 items-center h-12">
+                                            <label className="flex items-center text-xs font-semibold text-gray-700 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="gammaFormatOpt"
+                                                    checked={gammaFormato === 'pptx'}
+                                                    onChange={() => setGammaFormato('pptx')}
+                                                    disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                                    className="mr-1.5 h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                PowerPoint (PPTX)
+                                            </label>
+                                            <label className="flex items-center text-xs font-semibold text-gray-700 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="gammaFormatOpt"
+                                                    checked={gammaFormato === 'pdf'}
+                                                    onChange={() => setGammaFormato('pdf')}
+                                                    disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                                    className="mr-1.5 h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                PDF
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Idioma</label>
+                                        <select
+                                            value={gammaIdioma}
+                                            onChange={(e) => setGammaIdioma(e.target.value as any)}
+                                            disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                            className="w-full rounded-xl border-gray-300 p-3 border bg-white text-zinc-950 text-xs font-bold focus:ring-indigo-500"
+                                        >
+                                            <option value="es-419">Español (Latino)</option>
+                                            <option value="en">Inglés</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Diseño (Tema Visual)</label>
+                                        <select
+                                            value={gammaTema}
+                                            onChange={(e) => setGammaTema(e.target.value)}
+                                            disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                            className="w-full rounded-xl border-gray-300 p-3 border bg-white text-zinc-950 text-xs font-bold focus:ring-indigo-500"
+                                        >
+                                            <option value="">Predeterminado del Sistema</option>
+                                            <option value="editoria">Editoria (Clásico y Elegante)</option>
+                                            <option value="electric">Electric (Morado/Azul Oscuro y Vibrante)</option>
+                                            <option value="elysia">Elysia (Pastel Degradado)</option>
+                                            <option value="gamma-dark">Gamma Dark (Oscuro con Naranja)</option>
+                                            <option value="gleam">Gleam (Plata Minimalista y Profesional)</option>
+                                            <option value="gold-leaf">Gold Leaf (Dorado y Crema Premium)</option>
+                                            <option value="icebreaker">Icebreaker (Azul Cool Corporativo)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveGammaModuloIdx(null)}
+                                        disabled={isGeneratingGamma}
+                                        className="w-1/3 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl text-xs hover:bg-zinc-50 transition cursor-pointer"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isGeneratingGamma || gammaGenerations.length >= maxGammaAttempts}
+                                        className="flex-grow py-3 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                                    >
+                                        {isGeneratingGamma && (
+                                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        )}
+                                        {isGeneratingGamma ? 'Generando presentación... (puede tardar 1 min)' : 'Generar Presentación con IA'}
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="space-y-6 text-center py-4">
+                                <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <CheckCircle className="h-10 w-10 animate-bounce" />
+                                </div>
+                                <div>
+                                    <h4 className="text-base font-bold text-gray-900">¡Tu presentación está lista!</h4>
+                                    <p className="text-xs text-gray-500 mt-1">Se generó la presentación con éxito en idioma Español (Latino).</p>
+                                    {gammaSuccessResult.creditsUsed !== undefined && (
+                                        <p className="text-[11px] text-indigo-600 font-bold mt-1 bg-indigo-50 px-2.5 py-1 rounded-full inline-block border border-indigo-100">
+                                            Créditos consumidos: {gammaSuccessResult.creditsUsed} créditos de IA
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-col gap-2 max-w-sm mx-auto">
+                                    <a
+                                        href={gammaSuccessResult.exportUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={() => handleRegistrarGammaDescarga(gammaSuccessResult.id)}
+                                        className="py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer font-bold"
+                                    >
+                                        Descargar Presentación (PPTX/PDF) ⬇
+                                    </a>
+                                </div>
+
+                                <div className="border-t border-zinc-150 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const nuevosModulos = [...modulos];
+                                            nuevosModulos[activeGammaModuloIdx].recursos.push({
+                                                titulo: gammaTitleInput.trim() || `Presentación: ${gammaPrompt.substring(0, 40)}...`,
+                                                tipo: gammaFormato === 'pdf' ? 'pdf' : 'ppt',
+                                                url_contenido: gammaSuccessResult.exportUrl,
+                                                archivoPdf: null,
+                                                descargable: true
+                                            });
+                                            setModulos(nuevosModulos);
+                                            handleMarcarGammaUtilizado(gammaSuccessResult.id);
+                                            setActiveGammaModuloIdx(null);
+                                        }}
+                                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-md cursor-pointer"
+                                    >
+                                        Añadir automáticamente como recurso al Módulo
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

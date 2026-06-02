@@ -34,7 +34,9 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
 
     // 2. Grade the exam
     let correctas = 0;
-    const total = preguntas.length;
+    const preguntasMultipleChoice = preguntas.filter(p => p.tipo_pregunta !== 'respuesta_libre');
+    const totalMultipleChoice = preguntasMultipleChoice.length;
+    const divisor = totalMultipleChoice > 0 ? totalMultipleChoice : (preguntas.length > 0 ? preguntas.length : 1);
     const respuestasDetalle: Record<string, { respuesta: string, respuesta_texto: string, explicacion: string, correcta: boolean }> = {};
 
     preguntas.forEach(p => {
@@ -59,7 +61,7 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
             esCorrecta = !!userLetter && userLetter === normalize(p.respuesta_correcta).toUpperCase();
         }
 
-        if (esCorrecta) {
+        if (esCorrecta && p.tipo_pregunta !== 'respuesta_libre') {
             correctas++;
         }
 
@@ -71,7 +73,7 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
         };
     })
 
-    const calificacionFinal = Math.round((correctas / total) * 100);
+    const calificacionFinal = Math.round((correctas / divisor) * 100);
     const aprobado = calificacionFinal >= examen.min_aprobacion;
 
     // 3. Save result
@@ -128,7 +130,9 @@ export async function submitExamenModular(examenId: string, respuestasUsuario: R
 
     // 2. Grade the exam
     let correctas = 0;
-    const total = preguntas.length;
+    const preguntasMultipleChoice = preguntas.filter(p => p.tipo_pregunta !== 'respuesta_libre');
+    const totalMultipleChoice = preguntasMultipleChoice.length;
+    const divisor = totalMultipleChoice > 0 ? totalMultipleChoice : (preguntas.length > 0 ? preguntas.length : 1);
     const respuestasDetalle: Record<string, { respuesta: string, respuesta_texto: string, explicacion: string, correcta: boolean }> = {};
 
     preguntas.forEach(p => {
@@ -153,7 +157,7 @@ export async function submitExamenModular(examenId: string, respuestasUsuario: R
             esCorrecta = !!userLetter && userLetter === normalize(p.respuesta_correcta).toUpperCase();
         }
 
-        if (esCorrecta) {
+        if (esCorrecta && p.tipo_pregunta !== 'respuesta_libre') {
             correctas++;
         }
 
@@ -165,7 +169,7 @@ export async function submitExamenModular(examenId: string, respuestasUsuario: R
         };
     })
 
-    const calificacionFinal = Math.round((correctas / total) * 100);
+    const calificacionFinal = Math.round((correctas / divisor) * 100);
     const aprobado = calificacionFinal >= examen.min_aprobacion;
 
     // 3. Save result

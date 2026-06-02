@@ -148,8 +148,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 7. Actualizar Políticas de RLS en ie_cursos para el rol 'instructor'
--- Ejecuta esto en Supabase > SQL Editor para permitir que los Instructores creen y gestionen sus propios cursos.
+-- 7. Actualizar Políticas de RLS en ie_cursos para el rol 'instructor' e 'institucion'
+-- Ejecuta esto en Supabase > SQL Editor para permitir que los Instructores e Instituciones creen y gestionen sus propios cursos.
 
 -- Habilitar RLS en ie_cursos si no está habilitado
 ALTER TABLE public.ie_cursos ENABLE ROW LEVEL SECURITY;
@@ -176,7 +176,7 @@ CREATE POLICY "Permitir crear cursos a admin, profesor e instructor" ON public.i
     FOR INSERT WITH CHECK (
         EXISTS (
             SELECT 1 FROM public.ie_profiles
-            WHERE id = auth.uid() AND rol IN ('admin', 'profesor', 'instructor')
+            WHERE id = auth.uid() AND rol IN ('admin', 'profesor', 'instructor', 'institucion')
         )
     );
 

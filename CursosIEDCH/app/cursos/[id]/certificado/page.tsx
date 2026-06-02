@@ -17,8 +17,12 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia').eq('id', id).single()
     if (!curso) notFound()
+
+    if (curso.mostrar_constancia === false) {
+        redirect(`/cursos/${id}/contenido`)
+    }
 
     // Verificar si el creador es instructor
     let esCreadoPorInstructor = false

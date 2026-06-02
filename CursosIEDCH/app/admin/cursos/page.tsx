@@ -232,7 +232,10 @@ export default function AdminCursosPage() {
         examen: m?.examen ? {
             min_aprobacion: m.examen.min_aprobacion ?? 80,
             preguntas: (m.examen.preguntas || []).map(normalizePregunta)
-        } : null
+        } : null,
+        requiereTarea: !!m?.requiereTarea,
+        tareaInstrucciones: m?.tareaInstrucciones || '',
+        tareaPuntos: m?.tareaPuntos || ''
     })
 
     const normalizeExam = (exam: any, preguntas: any[] = []) => exam ? ({
@@ -254,7 +257,7 @@ export default function AdminCursosPage() {
         setAuditOriginal(null)
         setLoadingAudit(true)
 
-        const [{ data: modulos }, { data: examenes }] = await Promise.all([
+        const [{ data: modulos }, { data: examenes }, { data: respuestas }] = await Promise.all([
             supabase
                 .from('ie_curso_modulos')
                 .select('*')
@@ -263,7 +266,12 @@ export default function AdminCursosPage() {
             supabase
                 .from('ie_examenes')
                 .select('*')
+                .eq('curso_id', curso.id),
+            supabase
+                .from('ie_preguntas_respuestas')
+                .select('pregunta')
                 .eq('curso_id', curso.id)
+                .eq('respuesta', 'TAREA_DEFINICION')
         ])
 
         const moduloIds = (modulos || []).map((m: any) => m.id)
@@ -291,6 +299,21 @@ export default function AdminCursosPage() {
             const moduloExam = (examenes || []).find((e: any) => e.modulo_id === m.id)
             const moduloPreguntas = moduloExam ? (preguntas || []).filter((p: any) => p.examen_id === moduloExam.id) : []
 
+            const tareaDefData = (respuestas || []).find((r: any) => r.pregunta.startsWith(`TAREA_DEFINICION:${m.id}::`));
+            let requiereTarea = false;
+            let tareaInstrucciones = '';
+            let tareaPuntos = '';
+            
+            if (tareaDefData) {
+                requiereTarea = true;
+                const parts = tareaDefData.pregunta.split('::');
+                try {
+                    const payload = JSON.parse(parts.slice(1).join('::'));
+                    tareaInstrucciones = payload.instrucciones || '';
+                    tareaPuntos = payload.puntos || '';
+                } catch (e) {}
+            }
+
             return {
                 titulo: m.titulo || '',
                 orden: m.orden || idx + 1,
@@ -301,7 +324,10 @@ export default function AdminCursosPage() {
                     url_contenido: r.url_contenido || '',
                     orden: r.orden || rIdx + 1
                 })),
-                examen: moduloExam ? normalizeExam(moduloExam, moduloPreguntas) : null
+                examen: moduloExam ? normalizeExam(moduloExam, moduloPreguntas) : null,
+                requiereTarea,
+                tareaInstrucciones,
+                tareaPuntos
             }
         })
 
@@ -397,6 +423,16 @@ export default function AdminCursosPage() {
                             ))}
                         </ul>
                     ) : <p className="text-xs text-gray-500 italic">Sin recursos</p>}
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Tarea del módulo</p>
+                    {mod.requiereTarea ? (
+                        <div className="space-y-1 bg-blue-50 p-2 rounded-md border border-blue-100">
+                            <p className="text-xs font-semibold text-blue-900">Instrucciones:</p>
+                            <p className="text-xs text-blue-800 whitespace-pre-wrap">{mod.tareaInstrucciones || 'Sin instrucciones'}</p>
+                            {mod.tareaPuntos && <p className="text-xs text-blue-800 mt-1 font-semibold">Valor: {mod.tareaPuntos} pts</p>}
+                        </div>
+                    ) : <p className="text-xs text-gray-500 italic">No requiere tarea</p>}
                 </div>
                 <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Examen del módulo</p>

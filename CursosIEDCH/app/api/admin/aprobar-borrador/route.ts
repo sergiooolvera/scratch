@@ -121,7 +121,7 @@ export async function POST(req: Request) {
                         m.recursos.forEach((r: any, rIdx: number) => {
                             recursosPayload.push({
                                 modulo_id: moduloId,
-                                titulo: r.titulo || 'Material del Módulo',
+                                titulo: (r.titulo || 'Material del Módulo').substring(0, 250),
                                 url_contenido: r.url_contenido || '',
                                 orden: rIdx + 1,
                                 descargable: !!r.descargable

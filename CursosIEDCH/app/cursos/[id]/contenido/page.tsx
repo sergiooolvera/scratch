@@ -157,7 +157,7 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                         )}
                     </div>
                     <div className="mt-4 md:mt-0 space-y-2 text-right flex flex-col items-end">
-                        {(curso.requiere_examen ? examPassed : true) && (
+                        {(curso.mostrar_constancia !== false) && (curso.requiere_examen ? examPassed : true) && (
                             <>
                                 <a
                                     href={constanciaHref}
@@ -169,7 +169,7 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                                 {curso.requiere_examen && <p className="text-xs text-green-600 font-medium">¡Examen aprobado!</p>}
                             </>
                         )}
-                        {curso.requiere_examen && !examPassed && (
+                        {(curso.mostrar_examen_final !== false) && curso.requiere_examen && !examPassed && (
                             <>
                                 <Link
                                     href={`/cursos/${id}/examen`}
@@ -226,6 +226,9 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                         urlExamen={curso.url_examen}
                         cursoId={id}
                         userId={user.id}
+                        bloquearAvance={curso.bloquear_avance}
+                        requiereTareasAvance={curso.requiere_tareas_avance}
+                        requiereExamenAvance={curso.requiere_examen_avance}
                     />
                 </div>
 

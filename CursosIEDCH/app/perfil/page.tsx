@@ -28,6 +28,7 @@ export default function PerfilPage() {
     const [nombreInstitucion, setNombreInstitucion] = useState('')
     const [estadoMunicipio, setEstadoMunicipio] = useState('')
     const [cedulaProfesional, setCedulaProfesional] = useState('')
+    const [siglas, setSiglas] = useState('')
     
     const [csfFile, setCsfFile] = useState<File | null>(null)
     const [fotoFile, setFotoFile] = useState<File | null>(null)
@@ -135,6 +136,7 @@ export default function PerfilPage() {
                 setProfesionEspecialidad(prof.profesion_especialidad || '')
                 setEstadoMunicipio(prof.estado_municipio || '')
                 setCedulaProfesional(prof.cedula_profesional || '')
+                setSiglas(prof.clave_cct || '')
                 
                 if (prof.institucion_labora) {
                     if (prof.institucion_labora.startsWith('Pública - ')) {
@@ -217,7 +219,8 @@ export default function PerfilPage() {
                 profesion_especialidad: profesionEspecialidad,
                 institucion_labora: combinedInstitucion,
                 estado_municipio: estadoMunicipio,
-                cedula_profesional: cedulaProfesional
+                cedula_profesional: cedulaProfesional,
+                clave_cct: siglas
             })
             .eq('id', user.id)
 
@@ -260,28 +263,32 @@ export default function PerfilPage() {
         <div className="min-h-[calc(100vh-64px)] bg-zinc-50 font-sans py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-xl mx-auto">
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
-                    <div 
-                        onClick={handleAvatarClick}
-                        className="relative flex items-center justify-center h-20 w-20 bg-blue-100 text-blue-600 rounded-full mx-auto mb-6 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
-                    >
-                        {fotografiaPerfil ? (
-                            <img src={fotografiaPerfil} alt="Avatar" className="h-full w-full object-cover" />
-                        ) : (
-                            <User className="h-10 w-10" />
-                        )}
-                        {uploadingAvatar && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                <div className="border-4 border-t-blue-500 border-gray-200 rounded-full h-6 w-6 animate-spin"></div>
-                            </div>
-                        )}
-                    </div>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={handleAvatarChange} 
-                        accept="image/*" 
-                        className="hidden" 
-                    />
+                    {rol !== 'institucion' && (
+                        <div 
+                            onClick={handleAvatarClick}
+                            className="relative flex items-center justify-center h-20 w-20 bg-blue-100 text-blue-600 rounded-full mx-auto mb-6 cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
+                        >
+                            {fotografiaPerfil ? (
+                                <img src={fotografiaPerfil} alt="Avatar" className="h-full w-full object-cover" />
+                            ) : (
+                                <User className="h-10 w-10" />
+                            )}
+                            {uploadingAvatar && (
+                                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                    <div className="border-4 border-t-blue-500 border-gray-200 rounded-full h-6 w-6 animate-spin"></div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {rol !== 'institucion' && (
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleAvatarChange} 
+                            accept="image/*" 
+                            className="hidden" 
+                        />
+                    )}
                     
                     <h1 className="text-2xl font-bold text-gray-900 text-center mb-8">Mi Perfil</h1>
 
@@ -349,119 +356,187 @@ export default function PerfilPage() {
                             </div>
                         )}
 
-                        <div className="pt-4 border-t border-gray-100">
-                            <h2 className="text-lg font-bold text-gray-800 mb-4">Información Personal</h2>
-                            <p className="text-sm text-gray-500 mb-5 leading-relaxed">Estos son los datos que aparecerán impresos en tus constancias y certificados de los cursos acreditados. Asegúrate de que estén escritos correctamente.</p>
-                            
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">Nombre(s)</label>
-                                    <input 
-                                        type="text" 
-                                        required 
-                                        value={nombre} 
-                                        onChange={(e) => setNombre(e.target.value)}
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                        placeholder="Ej. Juan Carlos"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">Apellido Paterno</label>
-                                    <input 
-                                        type="text" 
-                                        required 
-                                        value={apellidoPaterno} 
-                                        onChange={(e) => setApellidoPaterno(e.target.value)}
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                        placeholder="Ej. Pérez"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">Apellido Materno (Opcional)</label>
-                                    <input 
-                                        type="text" 
-                                        value={apellidoMaterno} 
-                                        onChange={(e) => setApellidoMaterno(e.target.value)}
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                        placeholder="Ej. García"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">
-                                        Correo Electrónico Adicional <span className="text-red-500">*</span>
-                                    </label>
-                                    <input 
-                                        type="email" 
-                                        required 
-                                        value={correoAdicional} 
-                                        onChange={(e) => setCorreoAdicional(e.target.value)}
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                        placeholder="Ej. correo.secundario@gmail.com"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">
-                                        Profesión / Especialidad <span className="text-red-500">*</span>
-                                    </label>
-                                    <input 
-                                        type="text" 
-                                        required
-                                        value={profesionEspecialidad} 
-                                        onChange={(e) => setProfesionEspecialidad(e.target.value)}
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                        placeholder="Ej. Lic. en Enfermería, Psicólogo Clínico"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">
-                                        Sector Institucional <span className="text-red-500">*</span>
-                                    </label>
-                                    <select 
-                                        required
-                                        value={tipoInstitucion} 
-                                        onChange={(e) => setTipoInstitucion(e.target.value)}
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium bg-white"
-                                    >
-                                        <option value="">Seleccione sector...</option>
-                                        <option value="Pública">Pública</option>
-                                        <option value="Privada">Privada</option>
-                                        <option value="Otra">Otra / Independiente</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">
-                                        Estado y Municipio de Residencia <span className="text-red-500">*</span>
-                                    </label>
-                                    <input 
-                                        type="text" 
-                                        required
-                                        value={estadoMunicipio} 
-                                        onChange={(e) => setEstadoMunicipio(e.target.value)}
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                        placeholder="Ej. Chiapas, Tuxtla Gutiérrez"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">
-                                        Cédula Profesional (Si aplica)
-                                    </label>
-                                    <input 
-                                        type="text" 
-                                        value={cedulaProfesional} 
-                                        onChange={(e) => setCedulaProfesional(e.target.value)}
-                                        className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                        placeholder="Ej. 12345678 (Opcional)"
-                                    />
+                        {rol === 'institucion' ? (
+                            <div className="pt-4 border-t border-gray-100">
+                                <h2 className="text-lg font-bold text-gray-800 mb-4">Información de la Institución</h2>
+                                <p className="text-sm text-gray-500 mb-5 leading-relaxed">
+                                    Por favor introduce los datos de tu institución. Estos datos serán utilizados para la emisión de constancias y la visualización pública de tu perfil.
+                                </p>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Nombre de la Escuela / Institución</label>
+                                        <input 
+                                            type="text" 
+                                            required 
+                                            value={nombre} 
+                                            onChange={(e) => setNombre(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. Instituto Taydalin"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Siglas</label>
+                                        <input 
+                                            type="text" 
+                                            required 
+                                            value={siglas} 
+                                            onChange={(e) => setSiglas(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. ITAY"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono de Contacto</label>
+                                        <input 
+                                            type="tel" 
+                                            required
+                                            value={telefono} 
+                                            onChange={(e) => setTelefono(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. 961 123 4567"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Logotipo (Imagen)</label>
+                                        {fotografiaPerfil && (
+                                            <div className="mb-3 flex items-center gap-3 p-3 bg-gray-50 border border-gray-150 rounded-xl">
+                                                <img 
+                                                    src={fotografiaPerfil} 
+                                                    alt="Logotipo actual" 
+                                                    className="w-16 h-16 object-contain rounded-lg border bg-white"
+                                                />
+                                                <div>
+                                                    <span className="text-xs font-semibold text-green-600 block">Logotipo guardado</span>
+                                                    <span className="text-[10px] text-gray-400 block truncate max-w-[200px]">{fotografiaPerfil}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <input 
+                                            type="file" 
+                                            accept="image/*"
+                                            onChange={(e) => setFotoFile(e.target.files?.[0] || null)}
+                                            className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 rounded-md bg-white border-gray-300"
+                                        />
+                                        <p className="mt-1 text-[10px] text-gray-400">Recomendado: Imagen cuadrada (PNG, JPG) de máximo 2MB.</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="pt-4 border-t border-gray-100">
+                                <h2 className="text-lg font-bold text-gray-800 mb-4">Información Personal</h2>
+                                <p className="text-sm text-gray-500 mb-5 leading-relaxed">Estos son los datos que aparecerán impresos en tus constancias y certificados de los cursos acreditados. Asegúrate de que estén escritos correctamente.</p>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Nombre(s)</label>
+                                        <input 
+                                            type="text" 
+                                            required 
+                                            value={nombre} 
+                                            onChange={(e) => setNombre(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. Juan Carlos"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Apellido Paterno</label>
+                                        <input 
+                                            type="text" 
+                                            required 
+                                            value={apellidoPaterno} 
+                                            onChange={(e) => setApellidoPaterno(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. Pérez"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Apellido Materno (Opcional)</label>
+                                        <input 
+                                            type="text" 
+                                            value={apellidoMaterno} 
+                                            onChange={(e) => setApellidoMaterno(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. García"
+                                        />
+                                    </div>
 
-                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion') && (
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Correo Electrónico Adicional <span className="text-red-500">*</span>
+                                        </label>
+                                        <input 
+                                            type="email" 
+                                            required 
+                                            value={correoAdicional} 
+                                            onChange={(e) => setCorreoAdicional(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. correo.secundario@gmail.com"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Profesión / Especialidad <span className="text-red-500">*</span>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            required
+                                            value={profesionEspecialidad} 
+                                            onChange={(e) => setProfesionEspecialidad(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. Lic. en Enfermería, Psicólogo Clínico"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Sector Institucional <span className="text-red-500">*</span>
+                                        </label>
+                                        <select 
+                                            required
+                                            value={tipoInstitucion} 
+                                            onChange={(e) => setTipoInstitucion(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium bg-white"
+                                        >
+                                            <option value="">Seleccione sector...</option>
+                                            <option value="Pública">Pública</option>
+                                            <option value="Privada">Privada</option>
+                                            <option value="Otra">Otra / Independiente</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Estado y Municipio de Residencia <span className="text-red-500">*</span>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            required
+                                            value={estadoMunicipio} 
+                                            onChange={(e) => setEstadoMunicipio(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. Chiapas, Tuxtla Gutiérrez"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">
+                                            Cédula Profesional (Si aplica)
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            value={cedulaProfesional} 
+                                            onChange={(e) => setCedulaProfesional(e.target.value)}
+                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
+                                            placeholder="Ej. 12345678 (Opcional)"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Validación de Identidad</h2>
@@ -499,7 +574,7 @@ export default function PerfilPage() {
                             </div>
                         )}
 
-                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion') && (
+                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Datos de Contacto y Pago</h2>
@@ -515,7 +590,7 @@ export default function PerfilPage() {
                                         <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
                                         <input 
                                             type="tel" 
-                                            required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion'}
+                                            required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
                                             value={telefono} 
                                             onChange={(e) => setTelefono(e.target.value)}
                                             disabled={datosBancariosCapturados}
@@ -528,7 +603,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">Banco</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion'}
+                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
                                                 value={banco} 
                                                 onChange={(e) => setBanco(e.target.value)}
                                                 disabled={datosBancariosCapturados}
@@ -540,7 +615,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">CLABE Interbancaria</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor' || rol === 'institucion'}
+                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
                                                 value={clabe} 
                                                 onChange={(e) => setClabe(e.target.value)}
                                                 disabled={datosBancariosCapturados}

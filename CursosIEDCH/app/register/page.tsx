@@ -78,7 +78,8 @@ export default function RegisterPage() {
             email,
             password,
             options: {
-                data: metadata
+                data: metadata,
+                emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined
             }
         })
 
@@ -147,7 +148,7 @@ export default function RegisterPage() {
                                 <button
                                     onClick={() => setTipoCuenta('persona')}
                                     className={`flex-1 flex items-center justify-center py-2.5 text-sm font-medium rounded-lg transition-all ${
-                                        tipoCuenta === 'persona' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                                        tipoCuenta === 'persona' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
                                     }`}
                                 >
                                     <User className="w-4 h-4 mr-2" />
@@ -156,7 +157,7 @@ export default function RegisterPage() {
                                 <button
                                     onClick={() => setTipoCuenta('institucion')}
                                     className={`flex-1 flex items-center justify-center py-2.5 text-sm font-medium rounded-lg transition-all ${
-                                        tipoCuenta === 'institucion' ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                                        tipoCuenta === 'institucion' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
                                     }`}
                                 >
                                     <Building2 className="w-4 h-4 mr-2" />

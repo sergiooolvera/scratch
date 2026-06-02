@@ -22,6 +22,16 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         notFound()
     }
 
+    const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+    const allowedEmails = ['sergio.olver@gmail.com', 'sergio.olvera@bracer.biz'];
+    const userEmail = user?.email?.toLowerCase();
+
+    if (curso.creado_por === maestroId) {
+        if (!userEmail || !allowedEmails.includes(userEmail)) {
+            notFound();
+        }
+    }
+
     const { data: compra } = await supabase
         .from('ie_compras')
         .select('*')
@@ -106,6 +116,8 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                         precioCurso={curso.precio}
                         montoPagado={compra?.monto_pagado || 0}
                         esCreadoPorInstructor={esCreadoPorInstructor}
+                        mostrarExamenFinal={curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true}
+                        mostrarConstancia={curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true}
                     />
                 </div>
             </div>
