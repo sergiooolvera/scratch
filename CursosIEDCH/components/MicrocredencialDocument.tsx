@@ -66,7 +66,7 @@ export default function MicrocredencialDocument({
                         {/* Card Body Grid */}
                         <div className="grid grid-cols-12 gap-3 mt-4 items-stretch flex-grow">
                             {/* Left Area (Details) */}
-                            <div className="col-span-8 flex flex-col justify-between pr-2 border-r border-slate-100">
+                            <div className="col-span-8 flex flex-col justify-start pr-2 border-r border-slate-100 space-y-2.5">
                                 <div>
                                     <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider block">
                                         Otorgada a:
@@ -76,7 +76,7 @@ export default function MicrocredencialDocument({
                                     </h4>
                                 </div>
 
-                                <div className="mt-2.5">
+                                <div>
                                     <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider block">
                                         Por su participación en la capacitación:
                                     </span>
@@ -85,15 +85,16 @@ export default function MicrocredencialDocument({
                                     </h5>
                                 </div>
 
-                                <div className="mt-2.5">
+                                <div>
                                     <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider block">
                                         Descripción de la capacitación:
                                     </span>
-                                    <p className="text-[8.5px] text-slate-650 leading-relaxed line-clamp-3 mt-0.5">
+                                    <p className="text-[7.8px] text-slate-650 leading-relaxed line-clamp-6 mt-0.5">
                                         {descripcionFinal}
                                     </p>
                                 </div>
                             </div>
+
 
                             {/* Right Area (Folio, QR, Dates) */}
                             <div className="col-span-4 pl-1.5 flex flex-col justify-between items-center text-center">
