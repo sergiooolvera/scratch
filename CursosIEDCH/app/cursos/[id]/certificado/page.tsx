@@ -3,8 +3,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Lock, CreditCard } from 'lucide-react'
-import BotonDescarga from './BotonDescarga'
-import CertificadoDocument from '@/components/CertificadoDocument'
+import CertificadoTabWrapper from './CertificadoTabWrapper'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 
 export default async function CertificadoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +16,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia').eq('id', id).single()
     if (!curso) notFound()
 
     if (curso.mostrar_constancia === false) {
@@ -152,27 +151,19 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                         </div>
                     </div>
                 ) : (
-                    <>
-                        <ResponsiveCertificateWrapper>
-                            {/* Contenedor principal de la constancia imitando una hoja horizontal (landscape) premium */}
-                            <CertificadoDocument
-                                id="certificado-content"
-                                alumnoNombre={alumnoNombre}
-                                cursoTitulo={curso.titulo}
-                                cursoDuracion={curso.duracion && curso.duracion.length <= 30 ? curso.duracion : '40 horas'}
-                                fechaAprobacion={fechaFormateada}
-                                folio={folioVenta}
-                                vigenciaStr={vigStr}
-                                qrUrl={`https://cursos-iedch.vercel.app/validar?folio=${folioVenta}`}
-                                className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
-                            />
-                        </ResponsiveCertificateWrapper>
-
-                        <div className="flex justify-center mt-12 mb-20 font-sans z-10 relative">
-                            <BotonDescarga />
-                        </div>
-                    </>
+                    <CertificadoTabWrapper
+                        alumnoNombre={alumnoNombre}
+                        cursoTitulo={curso.titulo}
+                        cursoDescripcion={curso.descripcion || ''}
+                        cursoDuracion={curso.duracion && curso.duracion.length <= 30 ? curso.duracion : '40 horas'}
+                        fechaAprobacion={fechaFormateada}
+                        fechaAprobacionRaw={fechaAprobacionObj.toISOString()}
+                        folio={folioVenta}
+                        vigenciaStr={vigStr}
+                        vigAnos={vigAnos}
+                    />
                 )}
+
             </div>
         </div>
     )
