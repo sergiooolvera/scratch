@@ -83,8 +83,8 @@ export default function CertificadoTabWrapper({
             const dataUrl = await htmlToImage.toPng(element, { 
                 quality: 1.0, 
                 pixelRatio: 2,
-                width: 1056,
-                height: 816,
+                width: 816,
+                height: 1056,
                 style: {
                     transform: 'scale(1)',
                     transformOrigin: 'top left'
@@ -92,7 +92,7 @@ export default function CertificadoTabWrapper({
             });
 
             const pdf = new jsPDF({
-                orientation: 'landscape',
+                orientation: 'portrait',
                 unit: 'px',
                 format: [element.offsetWidth, element.offsetHeight]
             });
@@ -159,8 +159,8 @@ export default function CertificadoTabWrapper({
                 </button>
             </div>
 
-            <ResponsiveCertificateWrapper>
-                {activeTab === 'constancia' ? (
+            {activeTab === 'constancia' ? (
+                <ResponsiveCertificateWrapper width={1056} height={816}>
                     <CertificadoDocument
                         documentRef={constanciaRef}
                         alumnoNombre={alumnoNombre}
@@ -172,7 +172,9 @@ export default function CertificadoTabWrapper({
                         qrUrl={qrValue}
                         className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
                     />
-                ) : (
+                </ResponsiveCertificateWrapper>
+            ) : (
+                <ResponsiveCertificateWrapper width={816} height={1056}>
                     <MicrocredencialDocument
                         documentRef={microcredencialRef}
                         alumnoNombre={alumnoNombre}
@@ -185,8 +187,8 @@ export default function CertificadoTabWrapper({
                         qrVerificacionUrl={qrValue}
                         className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in-95 duration-200"
                     />
-                )}
-            </ResponsiveCertificateWrapper>
+                </ResponsiveCertificateWrapper>
+            )}
 
         </div>
     )

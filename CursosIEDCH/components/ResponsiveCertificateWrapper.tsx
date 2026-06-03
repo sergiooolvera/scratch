@@ -4,9 +4,15 @@ import { useState, useEffect, useRef } from 'react'
 
 interface ResponsiveCertificateWrapperProps {
     children: React.ReactNode;
+    width?: number;
+    height?: number;
 }
 
-export default function ResponsiveCertificateWrapper({ children }: ResponsiveCertificateWrapperProps) {
+export default function ResponsiveCertificateWrapper({ 
+    children, 
+    width = 1056, 
+    height = 816 
+}: ResponsiveCertificateWrapperProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const [scale, setScale] = useState(1)
 
@@ -16,11 +22,9 @@ export default function ResponsiveCertificateWrapper({ children }: ResponsiveCer
                 const parent = containerRef.current.parentElement
                 if (parent) {
                     const parentWidth = parent.clientWidth
-                    // Subtract dynamic padding/margin for a clean fit
-                    const targetWidth = 1056
                     const padding = window.innerWidth < 640 ? 16 : 32
-                    const availableWidth = Math.min(parentWidth - padding, targetWidth)
-                    setScale(availableWidth / targetWidth)
+                    const availableWidth = Math.min(parentWidth - padding, width)
+                    setScale(availableWidth / width)
                 }
             }
         }
@@ -37,20 +41,20 @@ export default function ResponsiveCertificateWrapper({ children }: ResponsiveCer
             clearTimeout(timer1)
             clearTimeout(timer2)
         }
-    }, [])
+    }, [width])
 
     return (
         <div 
             ref={containerRef} 
             className="w-full flex justify-center items-start overflow-hidden transition-all duration-200" 
-            style={{ height: `${816 * scale}px` }}
+            style={{ height: `${height * scale}px` }}
         >
             <div 
                 style={{ 
                     transform: `scale(${scale})`, 
                     transformOrigin: 'top center',
-                    width: '1056px',
-                    height: '816px',
+                    width: `${width}px`,
+                    height: `${height}px`,
                     flexShrink: 0
                 }}
             >
