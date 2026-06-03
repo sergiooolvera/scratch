@@ -7,6 +7,7 @@ import jsPDF from 'jspdf'
 import { Download, ChevronLeft, Lock, BadgeCheck, CreditCard, Banknote, UploadCloud } from 'lucide-react'
 import Link from 'next/link'
 import CertificadoDocument from '@/components/CertificadoDocument'
+import MicrocredencialDocument from '@/components/MicrocredencialDocument'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 
 export default function ConstanciaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -23,6 +24,8 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
     const [uploadingComp, setUploadingComp] = useState(false)
     const [mensajePago, setMensajePago] = useState('')
     const constanciaRef = useRef<HTMLDivElement>(null)
+    const microcredencialRef = useRef<HTMLDivElement>(null)
+    const [activeTab, setActiveTab] = useState<'constancia' | 'microcredencial'>('constancia')
     const router = useRouter()
     const supabase = createClient()
 
@@ -140,6 +143,35 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
         } catch (error: any) {
             console.error('Error generando PDF', error)
             alert('Hubo un error al generar el PDF: ' + (error?.message || String(error)))
+        }
+    }
+
+    const handleDownloadMicrocredencialPDF = async () => {
+        if (!microcredencialRef.current) return
+        try {
+            const htmlToImage = await import('html-to-image');
+            const dataUrl = await htmlToImage.toPng(microcredencialRef.current, { 
+                quality: 1.0, 
+                pixelRatio: 2,
+                width: 1056,
+                height: 816,
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left'
+                }
+            });
+
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'px',
+                format: [microcredencialRef.current.offsetWidth, microcredencialRef.current.offsetHeight]
+            });
+
+            pdf.addImage(dataUrl, 'PNG', 0, 0, microcredencialRef.current.offsetWidth, microcredencialRef.current.offsetHeight);
+            pdf.save(`Microcredencial_${curso?.titulo.replace(/\s+/g, '_')}.pdf`);
+        } catch (error: any) {
+            console.error('Error generando PDF de la microcredencial', error)
+            alert('Hubo un error al generar el PDF de la microcredencial: ' + (error?.message || String(error)))
         }
     }
 
@@ -293,18 +325,48 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                     <ChevronLeft className="h-4 w-4 mr-1" /> Volver al Curso
                 </Link>
 
+                {/* Tabs Selector */}
+                <div className="flex bg-gray-200/60 p-1 rounded-xl mb-6 max-w-sm border border-gray-300">
+                    <button
+                        onClick={() => setActiveTab('constancia')}
+                        className={`flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${
+                            activeTab === 'constancia' 
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200/50'
+                        }`}
+                    >
+                        Constancia Oficial
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('microcredencial')}
+                        className={`flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg transition-all ${
+                            activeTab === 'microcredencial' 
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200/50'
+                        }`}
+                    >
+                        Microcredencial
+                    </button>
+                </div>
+
                 <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-                        <div className="bg-yellow-100 p-3 rounded-full text-yellow-700">
+                        <div className="bg-blue-50 p-3 rounded-full text-blue-600">
                             <BadgeCheck className="h-8 w-8" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Tu Constancia Digital</h1>
-                            <p className="text-gray-500 text-sm mt-1">Lista para imprimir o descargar en formato PDF de alta resolución.</p>
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                {activeTab === 'constancia' ? 'Tu Constancia Digital' : 'Tu Microcredencial Digital'}
+                            </h1>
+                            <p className="text-gray-500 text-sm mt-1 font-medium">
+                                {activeTab === 'constancia' 
+                                    ? 'Lista para imprimir o descargar en formato PDF de alta resolución.' 
+                                    : 'Lista para recortar, doblar e imprimir como credencial de bolsillo.'}
+                            </p>
                         </div>
                     </div>
                     <button
-                        onClick={handleDownloadPDF}
+                        onClick={activeTab === 'constancia' ? handleDownloadPDF : handleDownloadMicrocredencialPDF}
                         className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition shadow-md font-medium"
                     >
                         <Download className="h-4 w-4" />
@@ -312,7 +374,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                     </button>
                 </div>
 
-                {/* CONTENEDOR DE LA CONSTANCIA */}
+                {/* CONTENEDOR DE PREVISUALIZACIÓN */}
                 <div className="p-4 flex justify-center bg-gray-300 rounded-xl shadow-inner border border-gray-400">
                     {(() => {
                         const fechaEmision = new Date(examen?.fecha || new Date())
@@ -321,24 +383,46 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                         fechaVig.setFullYear(fechaVig.getFullYear() + vigAnos)
                         const vigStr = fechaVig.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
                         const fechaAp = fechaEmision.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+                        
+                        // Formato fecha abreviado para la microcredencial (DD/MM/YYYY)
+                        const pad = (n: number) => n.toString().padStart(2, '0')
+                        const fechaApAbrev = `${pad(fechaEmision.getDate())}/${pad(fechaEmision.getMonth() + 1)}/${fechaEmision.getFullYear()}`
+                        const fechaVigAbrev = `${pad(fechaVig.getDate())}/${pad(fechaVig.getMonth() + 1)}/${fechaVig.getFullYear()}`
+                        
                         const qrValue = `https://cursos-iedch.vercel.app/validar?folio=${examen?.id}`
+                        const alumnoNombreCompleto = profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || profile.email : 'Estudiante'
                         
                         return (
                             <ResponsiveCertificateWrapper>
-                                <CertificadoDocument
-                                    alumnoNombre={profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || profile.email : 'Estudiante'}
-                                    cursoTitulo={curso?.titulo || 'Nombre del Curso'}
-                                    cursoDuracion={curso?.duracion}
-                                    fechaAprobacion={fechaAp}
-                                    folio={String(examen?.id).toUpperCase() || '112233445'}
-                                    vigenciaStr={`${vigStr} (${vigAnos} ${vigAnos === 1 ? 'año' : 'años'})`}
-                                    qrUrl={qrValue}
-                                    documentRef={constanciaRef as any}
-                                />
+                                {activeTab === 'constancia' ? (
+                                    <CertificadoDocument
+                                        alumnoNombre={alumnoNombreCompleto}
+                                        cursoTitulo={curso?.titulo || 'Nombre del Curso'}
+                                        cursoDuracion={curso?.duracion}
+                                        fechaAprobacion={fechaAp}
+                                        folio={String(examen?.id).toUpperCase() || '112233445'}
+                                        vigenciaStr={`${vigStr} (${vigAnos} ${vigAnos === 1 ? 'año' : 'años'})`}
+                                        qrUrl={qrValue}
+                                        documentRef={constanciaRef as any}
+                                    />
+                                ) : (
+                                    <MicrocredencialDocument
+                                        alumnoNombre={alumnoNombreCompleto}
+                                        cursoTitulo={curso?.titulo || 'Nombre del Curso'}
+                                        cursoDescripcion={curso?.descripcion || ''}
+                                        cursoDuracion={curso?.duracion}
+                                        fechaAprobacion={fechaApAbrev}
+                                        fechaVigencia={fechaVigAbrev}
+                                        folio={String(examen?.id).toUpperCase() || '112233445'}
+                                        qrVerificacionUrl={qrValue}
+                                        documentRef={microcredencialRef as any}
+                                    />
+                                )}
                             </ResponsiveCertificateWrapper>
                         )
                     })()}
                 </div>
+
             </div>
         </div>
     )
