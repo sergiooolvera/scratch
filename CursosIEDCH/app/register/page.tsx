@@ -17,6 +17,7 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [aceptaTerminos, setAceptaTerminos] = useState(false)
 
     // Estados Persona
     const [nombre, setNombre] = useState('')
@@ -49,6 +50,11 @@ export default function RegisterPage() {
 
         if (password.length < 6) {
             setError('La contraseña debe tener al menos 6 caracteres.')
+            return
+        }
+
+        if (!aceptaTerminos) {
+            setError('Debes aceptar los términos y condiciones para continuar.')
             return
         }
 
@@ -376,6 +382,37 @@ export default function RegisterPage() {
                                             </button>
                                         </div>
                                         <p className="mt-2 text-xs text-gray-500">Asegúrate de que coincida con la contraseña anterior.</p>
+                                    </div>
+
+                                    <div>
+                                        <label className="flex items-start cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                required
+                                                checked={aceptaTerminos}
+                                                onChange={(e) => setAceptaTerminos(e.target.checked)}
+                                                className={`mt-1 h-4 w-4 rounded border-gray-350 transition-colors cursor-pointer ${
+                                                    tipoCuenta === 'persona' 
+                                                        ? 'text-blue-600 focus:ring-blue-500 focus:border-blue-500' 
+                                                        : 'text-orange-600 focus:ring-orange-500 focus:border-orange-500'
+                                                }`}
+                                            />
+                                            <span className="ml-3 text-xs sm:text-sm text-gray-600 select-none">
+                                                He leído y acepto los{' '}
+                                                <Link href="/legal/terminos-uso" target="_blank" className={`font-semibold underline ${tipoCuenta === 'persona' ? 'text-blue-600 hover:text-blue-800' : 'text-orange-600 hover:text-orange-850'}`}>
+                                                    Términos de Uso
+                                                </Link>
+                                                , el{' '}
+                                                <Link href="/legal/aviso-privacidad" target="_blank" className={`font-semibold underline ${tipoCuenta === 'persona' ? 'text-blue-600 hover:text-blue-800' : 'text-orange-600 hover:text-orange-850'}`}>
+                                                    Aviso de Privacidad
+                                                </Link>{' '}
+                                                y los{' '}
+                                                <Link href="/legal/terminos-creadores" target="_blank" className={`font-semibold underline ${tipoCuenta === 'persona' ? 'text-blue-600 hover:text-blue-800' : 'text-orange-600 hover:text-orange-850'}`}>
+                                                    Términos para Creadores
+                                                </Link>
+                                                .
+                                            </span>
+                                        </label>
                                     </div>
 
                                     {error && (
