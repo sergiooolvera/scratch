@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2 } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart } from 'lucide-react'
 
 export default function Navbar() {
     const supabase = createClient()
@@ -96,6 +96,11 @@ export default function Navbar() {
                                 {profile?.rol !== 'admin' && (
                                     <Link href="/mis-cursos/revision-examenes" className={navItemClass('/mis-cursos/revision-examenes')}>
                                         <BadgeCheck className="h-4 w-4" /> <span>Mis Exámenes</span>
+                                    </Link>
+                                )}
+                                {profile?.rol !== 'admin' && (
+                                    <Link href="/mis-cursos/expediente" className={navItemClass('/mis-cursos/expediente')}>
+                                        <FolderHeart className="h-4 w-4" /> <span>Mi Expediente</span>
                                     </Link>
                                 )}
                                 {profile?.rol === 'financiero' && (
@@ -265,6 +270,9 @@ export default function Navbar() {
                                         </Link>
                                         <Link href="/mis-cursos/revision-examenes" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
                                             <BadgeCheck className="h-5 w-5" /> <span>Mis Exámenes</span>
+                                        </Link>
+                                        <Link href="/mis-cursos/expediente" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+                                            <FolderHeart className="h-5 w-5" /> <span>Mi Expediente</span>
                                         </Link>
                                     </>
                                 )}
