@@ -393,7 +393,10 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                         const alumnoNombreCompleto = profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || profile.email : 'Estudiante'
                         
                         return (
-                            <ResponsiveCertificateWrapper>
+                            <ResponsiveCertificateWrapper 
+                                width={activeTab === 'constancia' ? 1056 : 816} 
+                                height={activeTab === 'constancia' ? 816 : 1056}
+                            >
                                 {activeTab === 'constancia' ? (
                                     <CertificadoDocument
                                         alumnoNombre={alumnoNombreCompleto}
