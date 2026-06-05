@@ -198,16 +198,37 @@ export default function ProfesorVentasPage() {
                                 )
                             }
                             
-                            // Si es cerrada, contar 15 días a partir del último día de inscripción
-                            const fechaLimite = new Date(cursoSeleccionado.limite_inscripcion)
-                            const fechaPago = new Date(fechaLimite)
-                            fechaPago.setDate(fechaPago.getDate() + 15)
+                            const [y, m, d] = cursoSeleccionado.limite_inscripcion.split('-').map(Number)
+                            const baseDate = new Date(y, m - 1, d)
+                            
+                            const d15 = new Date(baseDate)
+                            d15.setDate(baseDate.getDate() + 15)
+                            
+                            const d16 = new Date(baseDate)
+                            d16.setDate(baseDate.getDate() + 16)
+                            
+                            const d17 = new Date(baseDate)
+                            d17.setDate(baseDate.getDate() + 17)
 
-                            const fechaPagoFormateada = fechaPago.toLocaleDateString('es-MX', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            })
+                            const formatMonthYear = (date: Date) => date.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })
+                            const formatMonth = (date: Date) => date.toLocaleDateString('es-MX', { month: 'long' })
+
+                            let fechaPagoFormateada = ""
+                            const m1 = d15.getMonth()
+                            const m2 = d16.getMonth()
+                            const m3 = d17.getMonth()
+                            const y1 = d15.getFullYear()
+                            const y3 = d17.getFullYear()
+
+                            if (m1 === m3 && y1 === y3) {
+                                fechaPagoFormateada = `${d15.getDate()}, ${d16.getDate()} o ${d17.getDate()} de ${formatMonthYear(d15)}`
+                            } else if (m1 !== m2 && m2 === m3) {
+                                fechaPagoFormateada = `${d15.getDate()} de ${formatMonth(d15)}, ${d16.getDate()} o ${d17.getDate()} de ${formatMonthYear(d17)}`
+                            } else if (m1 === m2 && m2 !== m3) {
+                                fechaPagoFormateada = `${d15.getDate()}, ${d16.getDate()} de ${formatMonth(d15)} o ${d17.getDate()} de ${formatMonthYear(d17)}`
+                            } else {
+                                fechaPagoFormateada = `${d15.toLocaleDateString('es-MX', {day: 'numeric', month: 'short'})}, ${d16.toLocaleDateString('es-MX', {day: 'numeric', month: 'short'})} o ${d17.toLocaleDateString('es-MX', {day: 'numeric', month: 'short', year: 'numeric'})}`
+                            }
 
                             return (
                                 <div className="bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-xl p-4 mb-8 text-sm flex items-start gap-2">
