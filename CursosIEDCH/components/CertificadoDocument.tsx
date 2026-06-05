@@ -80,7 +80,15 @@ export default function CertificadoDocument({
                     “{cursoTitulo}”
                 </h3>
 
-                <p className="mt-12 text-[20px] font-bold text-red-600 font-sans tracking-wide">
+                <p className={`mt-12 font-bold text-red-600 font-sans tracking-wide text-center max-w-[800px] px-4 ${
+                    cursoDuracion && cursoDuracion.length > 80 
+                        ? 'text-[13px] leading-snug' 
+                        : cursoDuracion && cursoDuracion.length > 50 
+                            ? 'text-[15px] leading-snug' 
+                            : cursoDuracion && cursoDuracion.length > 30 
+                                ? 'text-[17px] leading-tight' 
+                                : 'text-[20px]'
+                }`}>
                     Valor curricular: {cursoDuracion || '40 horas'}
                 </p>
 

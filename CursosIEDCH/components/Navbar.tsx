@@ -17,6 +17,7 @@ export default function Navbar() {
     const [isFinMenuOpen, setIsFinMenuOpen] = useState(false)
     const [isInstMenuOpen, setIsInstMenuOpen] = useState(false)
     const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false)
+    const [isEstudiosMenuOpen, setIsEstudiosMenuOpen] = useState(false)
 
     useEffect(() => {
         const fetchUser = async (sessionUser: any) => {
@@ -89,20 +90,32 @@ export default function Navbar() {
                                     </Link>
                                 )}
                                 {profile?.rol !== 'admin' && (
-                                    <Link href="/mis-cursos" className={navItemClass('/mis-cursos')}>
-                                        <GraduationCap className="h-4 w-4" /> <span>Mis Cursos</span>
-                                    </Link>
-                                )}
-                                {profile?.rol !== 'admin' && (
-                                    <Link href="/mis-cursos/revision-examenes" className={navItemClass('/mis-cursos/revision-examenes')}>
-                                        <BadgeCheck className="h-4 w-4" /> <span>Mis Exámenes</span>
-                                    </Link>
-                                )}
-                                {profile?.rol !== 'admin' && (
-                                    <Link href="/mis-cursos/expediente" className={navItemClass('/mis-cursos/expediente')}>
-                                        <FolderHeart className="h-4 w-4" /> <span>Mi Expediente</span>
-                                    </Link>
-                                )}
+                                     <div className="relative group">
+                                         <button
+                                             onClick={() => setIsEstudiosMenuOpen(!isEstudiosMenuOpen)}
+                                             className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium focus:outline-none transition-colors ${
+                                                 pathname.startsWith('/mis-cursos')
+                                                     ? 'text-blue-600 bg-blue-50/50'
+                                                     : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                                             }`}
+                                         >
+                                             <GraduationCap className="h-4 w-4" /> <span>Mis Estudios</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isEstudiosMenuOpen ? 'rotate-180' : ''}`} />
+                                         </button>
+                                         <div className={`absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-[100] pt-2 ${isEstudiosMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'}`}>
+                                             <div className="py-1 bg-white rounded-md border border-gray-100" role="menu">
+                                                 <Link href="/mis-cursos" onClick={() => setIsEstudiosMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                                                     <GraduationCap className="h-4 w-4" /> Mis Cursos
+                                                 </Link>
+                                                 <Link href="/mis-cursos/revision-examenes" onClick={() => setIsEstudiosMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                                                     <BadgeCheck className="h-4 w-4" /> Mis Exámenes
+                                                 </Link>
+                                                 <Link href="/mis-cursos/expediente" onClick={() => setIsEstudiosMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                                                     <FolderHeart className="h-4 w-4" /> Mi Expediente
+                                                 </Link>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 )}
                                 {profile?.rol === 'financiero' && (
                                     <div className="relative group">
                                         <button
