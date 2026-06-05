@@ -251,6 +251,8 @@ export default function AdminCursosPage() {
         setAuditCurso(curso)
         setAuditDraft({
             ...curso.cambios_pendientes,
+            modalidad: curso.cambios_pendientes?.modalidad,
+            limite_inscripcion: curso.cambios_pendientes?.limite_inscripcion ? new Date(curso.cambios_pendientes.limite_inscripcion).toISOString().split('T')[0] : null,
             modulos: (curso.cambios_pendientes?.modulos || []).map(normalizeDraftModule),
             examen: curso.cambios_pendientes?.examen ? normalizeExam(curso.cambios_pendientes.examen, curso.cambios_pendientes.examen.preguntas || []) : null
         })
@@ -347,6 +349,8 @@ export default function AdminCursosPage() {
             requiere_examen: curso.requiere_examen,
             reunion_url: curso.reunion_url,
             nota_profesor: curso.nota_profesor,
+            modalidad: curso.modalidad,
+            limite_inscripcion: curso.limite_inscripcion ? new Date(curso.limite_inscripcion).toISOString().split('T')[0] : null,
             modulos: normalizedModules,
             examen: normalizeExam(finalExam, finalQuestions)
         })
@@ -365,6 +369,13 @@ export default function AdminCursosPage() {
         if (value === true) return 'Sí'
         if (value === false) return 'No'
         if (value === null || value === undefined || value === '') return 'Sin dato'
+        
+        // Si el valor tiene el patrón de fecha YYYY-MM-DD (ej. 2026-06-03)
+        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            const [y, m, d] = value.split('-')
+            return `${d}/${m}/${y}`
+        }
+        
         return String(value)
     }
 
@@ -638,6 +649,8 @@ export default function AdminCursosPage() {
                                         {renderFieldCompare('Requiere examen', 'requiere_examen')}
                                         {renderFieldCompare('Enlace reunión', 'reunion_url')}
                                         {renderFieldCompare('Nota instructor', 'nota_profesor')}
+                                        {renderFieldCompare('Modalidad', 'modalidad')}
+                                        {renderFieldCompare('Límite Inscripción', 'limite_inscripcion')}
                                     </section>
 
                                     <section className="space-y-3">

@@ -1246,15 +1246,62 @@ export default function SubirCursoPage() {
                                     </div>
                                     {formData.modalidad === 'cerrada' && (
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha límite de inscripción</label>
-                                            <input
-                                                type="date"
-                                                name="limite_inscripcion"
-                                                required={formData.modalidad === 'cerrada'}
-                                                value={formData.limite_inscripcion}
-                                                onChange={handleChange}
-                                                className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
-                                            />
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha límite de inscripción (dd/mm/aaaa)</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    name="limite_inscripcion"
+                                                    required={formData.modalidad === 'cerrada'}
+                                                    placeholder="dd/mm/aaaa"
+                                                    pattern="(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/(19|20)\d\d"
+                                                    title="El formato debe ser dd/mm/aaaa"
+                                                    value={
+                                                        // Convertir YYYY-MM-DD del estado local a DD/MM/YYYY para la vista del input
+                                                        formData.limite_inscripcion && /^\d{4}-\d{2}-\d{2}$/.test(formData.limite_inscripcion)
+                                                            ? `${formData.limite_inscripcion.split('-')[2]}/${formData.limite_inscripcion.split('-')[1]}/${formData.limite_inscripcion.split('-')[0]}`
+                                                            : formData.limite_inscripcion
+                                                    }
+                                                    onChange={(e) => {
+                                                        let val = e.target.value;
+                                                        // Autoformatear añadiendo diagonales conforme escribe
+                                                        val = val.replace(/\D/g, '');
+                                                        if (val.length > 2) val = val.substring(0, 2) + '/' + val.substring(2);
+                                                        if (val.length > 5) val = val.substring(0, 5) + '/' + val.substring(5, 9);
+                                                        
+                                                        // Si completó la fecha en formato DD/MM/YYYY, guardarla como YYYY-MM-DD en el formData
+                                                        if (val.length === 10) {
+                                                            const [d, m, y] = val.split('/');
+                                                            setFormData(prev => ({ ...prev, limite_inscripcion: `${y}-${m}-${d}` }));
+                                                        } else {
+                                                            // Guardar el valor parcial para permitir que borre o edite libremente
+                                                            setFormData(prev => ({ ...prev, limite_inscripcion: val }));
+                                                        }
+                                                    }}
+                                                    className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 pr-10 text-black bg-white"
+                                                />
+                                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                                    <div className="relative w-6 h-6 flex items-center justify-center">
+                                                        <input
+                                                            type="date"
+                                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                            value={
+                                                                formData.limite_inscripcion && /^\d{4}-\d{2}-\d{2}$/.test(formData.limite_inscripcion)
+                                                                    ? formData.limite_inscripcion
+                                                                    : ""
+                                                            }
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                if (val) {
+                                                                    setFormData(prev => ({ ...prev, limite_inscripcion: val }));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <svg className="h-5 w-5 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>

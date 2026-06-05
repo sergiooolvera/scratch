@@ -107,13 +107,16 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                 <div className="border-t border-gray-200 pt-6">
                     {(() => {
                         const esCerrada = curso.modalidad === 'cerrada'
-                        const limiteDate = curso.limite_inscripcion ? new Date(curso.limite_inscripcion) : null
-                        if (limiteDate) {
-                            limiteDate.setHours(23, 59, 59, 999)
+                        let limiteDate: Date | null = null
+                        if (curso.limite_inscripcion) {
+                            const [y, m, d] = curso.limite_inscripcion.split('-').map(Number)
+                            limiteDate = new Date(y, m - 1, d, 23, 59, 59, 999)
                         }
                         const haExpirado = esCerrada && limiteDate && (new Date() > limiteDate)
 
                         if (haExpirado && !isPagado) {
+                            const [y, m, d] = curso.limite_inscripcion.split('-').map(Number)
+                            const dateLabel = new Date(y, m - 1, d).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })
                             return (
                                 <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
                                     <div className="bg-red-100 p-2 rounded-full text-red-600">
@@ -123,7 +126,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                                     </div>
                                     <div>
                                         <h4 className="text-red-900 font-bold text-base">Inscripciones Cerradas</h4>
-                                        <p className="text-red-700 text-sm mt-1">El periodo de inscripción para este curso ha finalizado el día <strong>{new Date(curso.limite_inscripcion).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>.</p>
+                                        <p className="text-red-700 text-sm mt-1">El periodo de inscripción para este curso ha finalizado el día <strong>{dateLabel}</strong>.</p>
                                     </div>
                                 </div>
                             )

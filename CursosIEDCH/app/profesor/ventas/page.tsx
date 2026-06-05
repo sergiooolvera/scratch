@@ -219,17 +219,26 @@ export default function ProfesorVentasPage() {
                                 </div>
                             )
                         } else {
-                            // Abierta: cada 15, 16 o 17 (mes actual) y 30 (mes actual), 1 o 2 (del mes siguiente)
+                            // Abierta: A partir de la fecha de creación del curso
+                            // Usar el mes actual en el que nos encontramos para indicarle las fechas de pago correspondientes
                             const hoy = new Date()
                             const mesActualNombre = hoy.toLocaleDateString('es-MX', { month: 'long' })
                             const proximoMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
                             const proximoMesNombre = proximoMes.toLocaleDateString('es-MX', { month: 'long' })
 
+                            // Obtener la fecha de creación del curso
+                            const fechaCreacion = cursoSeleccionado.created_at ? new Date(cursoSeleccionado.created_at) : null
+                            const fechaCreacionFormateada = fechaCreacion ? fechaCreacion.toLocaleDateString('es-MX', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            }) : 'la fecha de creación'
+
                             return (
                                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-8 text-sm flex items-start gap-2">
                                     <Calendar className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-600" />
                                     <div>
-                                        <strong>Modalidad Abierta:</strong> Para cursos de modalidad abierta, las comisiones se depositan de manera quincenal. <br />
+                                        <strong>Modalidad Abierta:</strong> Para cursos de modalidad abierta, las comisiones se depositan de manera quincenal a partir de que se creó el curso ({fechaCreacionFormateada}). <br />
                                         Tu pago llegará entre los días: <strong className="underline text-emerald-900">15, 16 o 17 de {mesActualNombre}</strong> (para ventas del 1 al 15) y <strong className="underline text-emerald-900">30 de {mesActualNombre}, 1 o 2 de {proximoMesNombre}</strong> (para ventas del 16 al fin de mes).
                                     </div>
                                 </div>

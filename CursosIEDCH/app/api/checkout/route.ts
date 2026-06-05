@@ -32,9 +32,8 @@ export async function POST(req: Request) {
         // Validate modality and registration deadline
         if (curso.modalidad === 'cerrada' && curso.limite_inscripcion) {
             const now = new Date()
-            const limitDate = new Date(curso.limite_inscripcion)
-            // set limitDate to end of day to be generous
-            limitDate.setHours(23, 59, 59, 999)
+            const [y, m, d] = curso.limite_inscripcion.split('-').map(Number)
+            const limitDate = new Date(y, m - 1, d, 23, 59, 59, 999)
             if (now > limitDate) {
                 return NextResponse.json({ error: 'El periodo de inscripción para este curso ha finalizado.' }, { status: 400 })
             }
