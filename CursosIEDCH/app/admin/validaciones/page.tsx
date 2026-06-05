@@ -25,7 +25,7 @@ export default function AdminValidacionesPage() {
             const result = await res.json()
             if (res.ok) {
                 const filtered = (result.data || []).filter((p: any) => 
-                    ['profesor', 'vendedor', 'instructor'].includes(p.rol)
+                    ['instructor', 'vendedor', 'capacitador'].includes(p.rol)
                 )
                 // Pendientes de validar primero
                 filtered.sort((a: any, b: any) => {
@@ -79,7 +79,7 @@ export default function AdminValidacionesPage() {
                         <ShieldAlert className="h-8 w-8 text-blue-600" />
                         Validación de Identidades
                     </h1>
-                    <p className="text-gray-500 mt-2">Revisa y aprueba la documentación de profesores, instructores y vendedores.</p>
+                    <p className="text-gray-500 mt-2">Revisa y aprueba la documentación de instructores, capacitadores y vendedores.</p>
                 </div>
             </div>
 

@@ -47,6 +47,8 @@ export default function SubirCursoPage() {
         reunion_url: '',
         nota_profesor: '',
         categoria: 'desarrollo',
+        modalidad: 'abierta',
+        limite_inscripcion: '',
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
@@ -320,7 +322,7 @@ export default function SubirCursoPage() {
 
             if (prof) {
                 setProfile(prof)
-                if (prof.rol === 'instructor') {
+                if (prof.rol === 'capacitador') {
                     setFormData(prev => ({ ...prev, precio: 0 }))
                 }
 
@@ -834,7 +836,8 @@ export default function SubirCursoPage() {
             nota_profesor: formData.nota_profesor?.trim() || null,
             mostrar_examen_final: mostrarExamenFinal,
             mostrar_constancia: mostrarConstancia,
-            mostrar_revision_examen: mostrarRevisionExamen
+            mostrar_revision_examen: mostrarRevisionExamen,
+            limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null
         }
 
         const { data: cursoGuardado, error: errorCurso } = await supabase.from('ie_cursos').insert(cursoDraftObj).select().single()
@@ -1050,7 +1053,7 @@ export default function SubirCursoPage() {
         setLoading(false)
     }
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
     }
 
@@ -1229,7 +1232,35 @@ export default function SubirCursoPage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
-                                    {profile?.rol !== 'instructor' ? (
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Modalidad del Curso</label>
+                                        <select
+                                            name="modalidad"
+                                            value={formData.modalidad}
+                                            onChange={handleChange}
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                        >
+                                            <option value="abierta">Abierta (El alumno puede inscribirse cuando quiera)</option>
+                                            <option value="cerrada">Cerrada (Inscripción en un lapso de tiempo)</option>
+                                        </select>
+                                    </div>
+                                    {formData.modalidad === 'cerrada' && (
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha límite de inscripción</label>
+                                            <input
+                                                type="date"
+                                                name="limite_inscripcion"
+                                                required={formData.modalidad === 'cerrada'}
+                                                value={formData.limite_inscripcion}
+                                                onChange={handleChange}
+                                                className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+                                    {profile?.rol !== 'capacitador' ? (
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">Precio de Venta (MXN)</label>
                                             <div className="relative rounded-xl shadow-sm">
@@ -1241,11 +1272,11 @@ export default function SubirCursoPage() {
                                         </div>
                                     ) : (
                                         <div className="bg-gray-50 rounded-xl p-4 flex items-center">
-                                            <p className="text-sm text-gray-500 italic">Eres un instructor validado. Tus cursos son gratuitos o gestionados por la institución.</p>
+                                            <p className="text-sm text-gray-500 italic">Eres un capacitador validado. Tus cursos son gratuitos o gestionados por la institución.</p>
                                         </div>
                                     )}
 
-                                    {profile?.rol !== 'instructor' && (
+                                    {profile?.rol !== 'capacitador' && (
                                         <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-start gap-3">
                                             <input
                                                 type="checkbox"
@@ -2057,7 +2088,7 @@ export default function SubirCursoPage() {
                                     </div>
                                     <div>
                                         <div className="flex justify-between items-center mb-1">
-                                            <label className="block text-sm font-semibold text-gray-700">Nota del Profesor para los Estudiantes</label>
+                                            <label className="block text-sm font-semibold text-gray-700">Nota del Instructor para los Estudiantes</label>
                                             {formData.nota_profesor && (
                                                 <button type="button" onClick={() => setFormData(prev => ({ ...prev, reunion_url: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
                                                     ✕ QUITAR NOTA

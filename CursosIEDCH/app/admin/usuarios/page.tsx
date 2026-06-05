@@ -56,7 +56,7 @@ export default function AdminUsuariosPage() {
         const { data: cursos } = await supabase.from('ie_cursos').select('id').eq('creado_por', userId).limit(1);
 
         if ((compras && compras.length > 0) || (cursos && cursos.length > 0)) {
-            alert("No se puede eliminar este usuario porque tiene cursos comprados asociados a su cuenta, o ha creado cursos como profesor.");
+            alert("No se puede eliminar este usuario porque tiene cursos comprados asociados a su cuenta, o ha creado cursos como instructor.");
             return;
         }
 
@@ -115,8 +115,8 @@ export default function AdminUsuariosPage() {
                                     <div className="flex flex-col gap-1">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-max ${
                                             u.rol === 'admin' ? 'bg-purple-100 text-purple-800' : 
-                                            u.rol === 'profesor' ? 'bg-green-100 text-green-800' : 
-                                            u.rol === 'instructor' ? 'bg-emerald-100 text-emerald-800' : 
+                                            u.rol === 'instructor' ? 'bg-green-100 text-green-800' : 
+                                            u.rol === 'capacitador' ? 'bg-emerald-100 text-emerald-800' : 
                                             u.rol === 'vendedor' ? 'bg-blue-100 text-blue-800' :
                                             u.rol === 'institucion' ? 'bg-indigo-100 text-indigo-800' :
                                             'bg-gray-100 text-gray-800'
@@ -140,8 +140,8 @@ export default function AdminUsuariosPage() {
                                             className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
                                         >
                                             <option value="alumno">Alumno</option>
-                                            <option value="profesor">Profesor</option>
                                             <option value="instructor">Instructor</option>
+                                            <option value="capacitador">Capacitador</option>
                                             <option value="vendedor">Vendedor</option>
                                             <option value="institucion">Institución</option>
                                             <option value="admin">Admin</option>

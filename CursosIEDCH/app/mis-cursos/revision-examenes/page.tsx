@@ -159,7 +159,7 @@ export default function AlumnoRevisionExamenesPage() {
         if (detalleGral.retroalimentacion_profesor) {
             content += `
                 <div style="margin-bottom: 20px; padding: 15px; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; color: #1e3a8a;">
-                    <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 1.05em;">Retroalimentación del Profesor:</p>
+                    <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 1.05em;">Retroalimentación del Instructor:</p>
                     <p style="margin: 0; font-style: italic; line-height: 1.4;">${detalleGral.retroalimentacion_profesor}</p>
                 </div>
             `;
@@ -221,7 +221,7 @@ export default function AlumnoRevisionExamenesPage() {
             if (!isMultipleChoice && detalle?.calificacion_abierta) {
                 califAbiertaHtml = `
                     <p style="margin: 5px 0; color: #d97706; font-weight: bold;">
-                        Calificación del profesor: <span style="background: #fef3c7; padding: 2px 8px; border-radius: 9999px;">${detalle.calificacion_abierta}</span>
+                        Calificación del instructor: <span style="background: #fef3c7; padding: 2px 8px; border-radius: 9999px;">${detalle.calificacion_abierta}</span>
                     </p>
                 `;
             }
@@ -292,7 +292,7 @@ export default function AlumnoRevisionExamenesPage() {
                     <h1 className="text-3xl font-bold text-gray-900 flex items-center">
                         <Award className="h-8 w-8 mr-3 text-blue-600" /> Historial de Evaluaciones
                     </h1>
-                    <p className="text-gray-500 mt-2">Consulta tus resultados, repasa tus respuestas y lee las notas de tus profesores.</p>
+                    <p className="text-gray-500 mt-2">Consulta tus resultados, repasa tus respuestas y lee las notas de tus instructores.</p>
                 </div>
 
                 {resultados.length === 0 ? (
@@ -409,7 +409,7 @@ export default function AlumnoRevisionExamenesPage() {
                                         <div className="mb-8 p-5 bg-gradient-to-r from-blue-50/70 to-blue-50/30 border border-blue-200 rounded-2xl flex items-start gap-3.5 shadow-sm">
                                             <MessageSquare className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                                             <div>
-                                                <p className="font-bold text-sm text-blue-950">Nota de retroalimentación de tu profesor:</p>
+                                                <p className="font-bold text-sm text-blue-950">Nota de retroalimentación de tu instructor:</p>
                                                 <p className="text-sm text-blue-900 mt-1 italic whitespace-pre-wrap leading-relaxed">
                                                     "{selectedResultado.respuestas_detalle.retroalimentacion_profesor}"
                                                 </p>

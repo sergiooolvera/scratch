@@ -103,7 +103,7 @@ export default function SolicitudesAjustePage() {
             </div>
 
             <p className="text-gray-600 mb-8 max-w-2xl">
-                Los siguientes usuarios (profesores o vendedores) han solicitado permiso para modificar sus datos bancarios y de contacto. Al aprobar, sus campos se desbloquearán temporalmente hasta que los guarden de nuevo.
+                Los siguientes usuarios (instructores o vendedores) han solicitado permiso para modificar sus datos bancarios y de contacto. Al aprobar, sus campos se desbloquearán temporalmente hasta que los guarden de nuevo.
             </p>
 
             <div className="bg-white shadow rounded-xl overflow-hidden border border-gray-200">
@@ -128,7 +128,7 @@ export default function SolicitudesAjustePage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${solicitud.rol === 'profesor' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${solicitud.rol === 'instructor' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
                                                 {solicitud.rol}
                                             </span>
                                         </td>
@@ -174,7 +174,7 @@ export default function SolicitudesAjustePage() {
             </div>
 
             <p className="text-gray-600 mb-8 max-w-2xl">
-                Los siguientes profesores han agotado sus intentos de generación de presentaciones con IA y solicitan más. Al aprobar, se sumarán 3 intentos adicionales a su límite actual.
+                Los siguientes instructores han agotado sus intentos de generación de presentaciones con IA y solicitan más. Al aprobar, se sumarán 3 intentos adicionales a su límite actual.
             </p>
 
             {errorGamma && (

@@ -808,7 +808,7 @@ export default function PlaylistClient({
 
                                                     {entregas[currentItem.id].calificacion !== null && (
                                                         <div className="bg-emerald-100/50 border border-emerald-200/80 rounded-lg p-4 space-y-1">
-                                                            <h5 className="text-xs font-bold text-emerald-900">Retroalimentación del Profesor:</h5>
+                                                            <h5 className="text-xs font-bold text-emerald-900">Retroalimentación del Instructor:</h5>
                                                             <p className="text-sm text-emerald-800 italic">
                                                                 {entregas[currentItem.id].retroalimentacion || 'Sin comentarios adicionales.'}
                                                             </p>

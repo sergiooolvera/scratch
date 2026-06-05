@@ -208,7 +208,7 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                         {curso.nota_profesor && (
                             <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 shadow-sm">
                                 <h3 className="text-orange-600 text-lg font-bold flex items-center gap-2 mb-2">
-                                    <Info className="h-5 w-5" /> Aviso del Profesor
+                                    <Info className="h-5 w-5" /> Aviso del Instructor
                                 </h3>
                                 <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
                                     {curso.nota_profesor}

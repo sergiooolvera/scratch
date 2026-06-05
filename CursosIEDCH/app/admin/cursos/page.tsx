@@ -637,7 +637,7 @@ export default function AdminCursosPage() {
                                         {renderFieldCompare('Pago completo', 'requiere_pago_completo')}
                                         {renderFieldCompare('Requiere examen', 'requiere_examen')}
                                         {renderFieldCompare('Enlace reunión', 'reunion_url')}
-                                        {renderFieldCompare('Nota profesor', 'nota_profesor')}
+                                        {renderFieldCompare('Nota instructor', 'nota_profesor')}
                                     </section>
 
                                     <section className="space-y-3">

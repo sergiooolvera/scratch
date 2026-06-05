@@ -536,7 +536,7 @@ export default function PerfilPage() {
                             </div>
                         )}
 
-                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor') && (
+                        {(rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Validación de Identidad</h2>
@@ -574,14 +574,14 @@ export default function PerfilPage() {
                             </div>
                         )}
 
-                        {(rol === 'profesor' || rol === 'vendedor' || rol === 'instructor') && (
+                        {(rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Datos de Contacto y Pago</h2>
                                     <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Obligatorio</span>
                                 </div>
                                 <p className="text-sm text-gray-500 mb-5 leading-relaxed">
-                                    Como profesor o vendedor, estos datos son obligatorios para poder gestionar cursos y recibir tus comisiones. 
+                                    Como instructor o vendedor, estos datos son obligatorios para poder gestionar cursos y recibir tus comisiones. 
                                     {datosBancariosCapturados && !solicitudCambioDatos && " Por seguridad, estos datos están bloqueados tras su captura."}
                                 </p>
                                 
@@ -590,7 +590,7 @@ export default function PerfilPage() {
                                         <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono</label>
                                         <input 
                                             type="tel" 
-                                            required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
+                                            required={rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador'}
                                             value={telefono} 
                                             onChange={(e) => setTelefono(e.target.value)}
                                             disabled={datosBancariosCapturados}
@@ -603,7 +603,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">Banco</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
+                                                required={rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador'}
                                                 value={banco} 
                                                 onChange={(e) => setBanco(e.target.value)}
                                                 disabled={datosBancariosCapturados}
@@ -615,7 +615,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">CLABE Interbancaria</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'profesor' || rol === 'vendedor' || rol === 'instructor'}
+                                                required={rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador'}
                                                 value={clabe} 
                                                 onChange={(e) => setClabe(e.target.value)}
                                                 disabled={datosBancariosCapturados}

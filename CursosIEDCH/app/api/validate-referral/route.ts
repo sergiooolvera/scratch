@@ -18,7 +18,7 @@ export async function GET(request: Request) {
         .from('ie_profiles')
         .select('id, nombre, apellido_paterno, rol, referral_code')
         .eq('referral_code', code)
-        .in('rol', ['profesor', 'vendedor'])
+        .in('rol', ['instructor', 'vendedor'])
         .eq('activo', true)
         .single()
 

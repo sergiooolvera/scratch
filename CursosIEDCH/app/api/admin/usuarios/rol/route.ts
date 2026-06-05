@@ -62,8 +62,8 @@ export async function POST(request: Request) {
         // Actualización a aplicar
         const updatePayload: Record<string, any> = { rol: newRole }
 
-        // Si el nuevo rol es profesor o vendedor, generar código de referido si no tiene uno
-        if (newRole === 'profesor' || newRole === 'vendedor') {
+        // Si el nuevo rol es instructor o vendedor, generar código de referido si no tiene uno
+        if (newRole === 'instructor' || newRole === 'vendedor') {
             const { data: targetProfile } = await supabaseAdmin
                 .from('ie_profiles')
                 .select('nombre, referral_code')

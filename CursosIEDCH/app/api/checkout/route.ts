@@ -29,6 +29,17 @@ export async function POST(req: Request) {
             return new NextResponse('Course not found', { status: 404 })
         }
 
+        // Validate modality and registration deadline
+        if (curso.modalidad === 'cerrada' && curso.limite_inscripcion) {
+            const now = new Date()
+            const limitDate = new Date(curso.limite_inscripcion)
+            // set limitDate to end of day to be generous
+            limitDate.setHours(23, 59, 59, 999)
+            if (now > limitDate) {
+                return NextResponse.json({ error: 'El periodo de inscripción para este curso ha finalizado.' }, { status: 400 })
+            }
+        }
+
         // 3. Resolver código de referido (opcional, se ignora si inválido)
         let referredById: string | null = null
         if (referralCode) {
@@ -40,7 +51,7 @@ export async function POST(req: Request) {
 
             if (referrer) {
                 const esSelfReferral = referrer.id === userId
-                // Profesores pueden referir sus propios cursos (40%) o cursos ajenos (20% como vendedor).
+                // Instructores pueden referir sus propios cursos (40%) o cursos ajenos (20% como vendedor).
                 // Vendedores pueden referir cualquier curso (20%).
                 const codigoValido = !esSelfReferral
                 if (codigoValido) referredById = referrer.id
@@ -60,24 +71,24 @@ export async function POST(req: Request) {
             montoPrevio = compraPrevia.monto_pagado
         }
 
-        let esCreadoPorInstructor = false
+        let esCreadoPorCapacitador = false
         if (curso.creado_por) {
             const { data: creatorProfile } = await supabase
                 .from('ie_profiles')
                 .select('rol')
                 .eq('id', curso.creado_por)
                 .single()
-            esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
+            esCreadoPorCapacitador = creatorProfile?.rol === 'capacitador'
         }
 
         // 5. Procesar Cupón si existe
         let porcentajeDescuento = 0
-        const PRECIO_CONSTANCIA_INSTRUCTOR = Number(process.env.NEXT_PUBLIC_PRECIO_CONSTANCIA_INSTRUCTOR || '199')
+        const PRECIO_CONSTANCIA_CAPACITADOR = Number(process.env.NEXT_PUBLIC_PRECIO_CONSTANCIA_INSTRUCTOR || '199')
 
         let finalPrice = curso.precio
-        if (esCreadoPorInstructor) {
+        if (esCreadoPorCapacitador) {
             if (esConstancia) {
-                finalPrice = PRECIO_CONSTANCIA_INSTRUCTOR
+                finalPrice = PRECIO_CONSTANCIA_CAPACITADOR
             } else {
                 finalPrice = 0
             }

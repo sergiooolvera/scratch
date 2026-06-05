@@ -100,7 +100,7 @@ export default function CourseQA({ cursoId, userId, userName }: { cursoId: strin
                                 id="pregunta"
                                 value={nuevaPregunta}
                                 onChange={(e) => setNuevaPregunta(e.target.value)}
-                                placeholder="Escribe tu pregunta al profesor aquí..."
+                                placeholder="Escribe tu pregunta al instructor aquí..."
                                 disabled={submitting}
                                 className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3 bg-gray-50 disabled:opacity-50 border"
                             />
@@ -190,7 +190,7 @@ export default function CourseQA({ cursoId, userId, userName }: { cursoId: strin
                         </div>
                         
                         <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                            <p className="font-semibold text-gray-800 text-sm mb-1">¿En cuánto tiempo responde el profesor?</p>
+                            <p className="font-semibold text-gray-800 text-sm mb-1">¿En cuánto tiempo responde el instructor?</p>
                             <p className="text-xs text-gray-600">Considera de 24 a 48 horas hábiles para recibir una respuesta, que aparecerá notificada aquí mismo.</p>
                         </div>
                         

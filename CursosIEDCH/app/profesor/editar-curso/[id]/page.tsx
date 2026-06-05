@@ -52,6 +52,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         reunion_url: '',
         nota_profesor: '',
         categoria: 'desarrollo',
+        modalidad: 'abierta',
+        limite_inscripcion: '',
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
@@ -139,6 +141,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 reunion_url: formData.reunion_url?.trim() || null,
                 nota_profesor: formData.nota_profesor?.trim() || null,
                 categoria: formData.categoria,
+                modalidad: formData.modalidad,
+                limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null,
                 bloquear_avance: bloquearAvance,
                 requiere_tareas_avance: requiereTareasAvance,
                 requiere_examen_avance: requiereExamenAvance,
@@ -315,6 +319,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     reunion_url: borrador.reunion_url || curso.reunion_url || '',
                     nota_profesor: borrador.nota_profesor || curso.nota_profesor || '',
                     categoria: borrador.categoria || curso.categoria || 'desarrollo',
+                    modalidad: borrador.modalidad || curso.modalidad || 'abierta',
+                    limite_inscripcion: borrador.limite_inscripcion || (curso.limite_inscripcion ? new Date(curso.limite_inscripcion).toISOString().split('T')[0] : '') || '',
                 })
                 setVigenciaAnos(borrador.vigencia_anos || curso.vigencia_anos || 3)
                 setRequiereExamen(borrador.requiere_examen !== undefined ? borrador.requiere_examen : (curso.requiere_examen || false))
@@ -436,6 +442,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 reunion_url: curso.reunion_url || '',
                 nota_profesor: curso.nota_profesor || '',
                 categoria: curso.categoria || 'desarrollo',
+                modalidad: curso.modalidad || 'abierta',
+                limite_inscripcion: curso.limite_inscripcion ? new Date(curso.limite_inscripcion).toISOString().split('T')[0] : '',
             })
             setVigenciaAnos(curso.vigencia_anos || 3)
             setRequiereExamen(curso.requiere_examen || false)
@@ -1132,6 +1140,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 reunion_url: formData.reunion_url?.trim() || null,
                 nota_profesor: formData.nota_profesor?.trim() || null,
                 categoria: formData.categoria,
+                modalidad: formData.modalidad,
+                limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null,
                 bloquear_avance: bloquearAvance,
                 requiere_tareas_avance: requiereTareasAvance,
                 requiere_examen_avance: requiereExamenAvance,
@@ -1214,6 +1224,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     reunion_url: formData.reunion_url?.trim() || null,
                     nota_profesor: formData.nota_profesor?.trim() || null,
                     categoria: formData.categoria,
+                    modalidad: formData.modalidad,
+                    limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null,
                     requiere_examen: requiereExamen,
                     bloquear_avance: bloquearAvance,
                     requiere_tareas_avance: requiereTareasAvance,
@@ -1637,6 +1649,34 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                             <option value="educacion">📚 Educación</option>
                                         </select>
                                     </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Modalidad del Curso</label>
+                                        <select
+                                            name="modalidad"
+                                            value={formData.modalidad}
+                                            onChange={handleChange}
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                        >
+                                            <option value="abierta">Abierta (El alumno puede inscribirse cuando quiera)</option>
+                                            <option value="cerrada">Cerrada (Inscripción en un lapso de tiempo)</option>
+                                        </select>
+                                    </div>
+                                    {formData.modalidad === 'cerrada' && (
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha límite de inscripción</label>
+                                            <input
+                                                type="date"
+                                                name="limite_inscripcion"
+                                                required={formData.modalidad === 'cerrada'}
+                                                value={formData.limite_inscripcion}
+                                                onChange={handleChange}
+                                                className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">

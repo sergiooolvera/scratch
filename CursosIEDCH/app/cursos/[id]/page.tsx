@@ -39,20 +39,20 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         .eq('user_id', user.id)
         .single()
 
-    let esCreadoPorInstructor = false
+    let esCreadoPorCapacitador = false
     if (curso?.creado_por) {
         const { data: creatorProfile } = await supabase
             .from('ie_profiles')
             .select('rol')
             .eq('id', curso.creado_por)
             .single()
-        esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
+        esCreadoPorCapacitador = creatorProfile?.rol === 'capacitador'
     }
 
     const isPagado = compra?.pagado || false
     const pagoCompleto = compra?.pago_completo || false
-    // Si el curso requiere pago completo O es creado por instructor, y el alumno no pagó completo → bloquear constancia
-    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || esCreadoPorInstructor) && !pagoCompleto
+    // Si el curso requiere pago completo O es creado por capacitador, y el alumno no pagó completo → bloquear constancia
+    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || esCreadoPorCapacitador) && !pagoCompleto
 
     let isAprobado = false;
 
@@ -105,20 +105,47 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                 </div>
  
                 <div className="border-t border-gray-200 pt-6">
-                    <CourseActions
-                        cursoId={curso.id}
-                        isPagado={isPagado}
-                        pagoCompleto={pagoCompleto}
-                        constanciaRequierePago={constanciaRequierePago}
-                        isAprobado={isAprobado}
-                        requiereExamen={curso.requiere_examen}
-                        userId={user.id}
-                        precioCurso={curso.precio}
-                        montoPagado={compra?.monto_pagado || 0}
-                        esCreadoPorInstructor={esCreadoPorInstructor}
-                        mostrarExamenFinal={curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true}
-                        mostrarConstancia={curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true}
-                    />
+                    {(() => {
+                        const esCerrada = curso.modalidad === 'cerrada'
+                        const limiteDate = curso.limite_inscripcion ? new Date(curso.limite_inscripcion) : null
+                        if (limiteDate) {
+                            limiteDate.setHours(23, 59, 59, 999)
+                        }
+                        const haExpirado = esCerrada && limiteDate && (new Date() > limiteDate)
+
+                        if (haExpirado && !isPagado) {
+                            return (
+                                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+                                    <div className="bg-red-100 p-2 rounded-full text-red-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-red-900 font-bold text-base">Inscripciones Cerradas</h4>
+                                        <p className="text-red-700 text-sm mt-1">El periodo de inscripción para este curso ha finalizado el día <strong>{new Date(curso.limite_inscripcion).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</strong>.</p>
+                                    </div>
+                                </div>
+                            )
+                        }
+
+                        return (
+                            <CourseActions
+                                cursoId={curso.id}
+                                isPagado={isPagado}
+                                pagoCompleto={pagoCompleto}
+                                constanciaRequierePago={constanciaRequierePago}
+                                isAprobado={isAprobado}
+                                requiereExamen={curso.requiere_examen}
+                                userId={user.id}
+                                precioCurso={curso.precio}
+                                montoPagado={compra?.monto_pagado || 0}
+                                esCreadoPorCapacitador={esCreadoPorCapacitador}
+                                mostrarExamenFinal={curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true}
+                                mostrarConstancia={curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true}
+                            />
+                        )
+                    })()}
                 </div>
             </div>
 

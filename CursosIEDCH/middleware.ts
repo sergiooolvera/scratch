@@ -48,10 +48,10 @@ export async function middleware(request: NextRequest) {
         }
 
         if (pathname.startsWith('/profesor')) {
-            if (rol !== 'admin' && rol !== 'profesor' && rol !== 'vendedor' && rol !== 'instructor' && rol !== 'institucion') {
+            if (rol !== 'admin' && rol !== 'instructor' && rol !== 'vendedor' && rol !== 'capacitador' && rol !== 'institucion') {
                 return NextResponse.redirect(new URL('/dashboard', request.url))
             }
-            if (pathname.startsWith('/profesor/ventas') && rol === 'instructor') {
+            if (pathname.startsWith('/profesor/ventas') && rol === 'capacitador') {
                 return NextResponse.redirect(new URL('/profesor/cursos', request.url))
             }
         }

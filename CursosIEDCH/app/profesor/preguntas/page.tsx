@@ -19,7 +19,7 @@ export default async function PreguntasPage() {
         .eq('id', user.id)
         .single()
 
-    if (profile?.rol !== 'profesor' && profile?.rol !== 'admin' && profile?.rol !== 'instructor' && profile?.rol !== 'institucion') {
+    if (profile?.rol !== 'instructor' && profile?.rol !== 'admin' && profile?.rol !== 'capacitador' && profile?.rol !== 'institucion') {
         redirect('/dashboard')
     }
 

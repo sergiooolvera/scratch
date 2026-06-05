@@ -37,7 +37,7 @@ export default function ProfesorVentasPage() {
         const resP = await fetch('/api/perfil')
         const resultP = await resP.json()
         const prof = resultP.data
-        if (prof && (prof.rol === 'profesor' || prof.rol === 'vendedor' || prof.rol === 'institucion')) {
+        if (prof && (prof.rol === 'instructor' || prof.rol === 'vendedor' || prof.rol === 'institucion')) {
             if (!prof.telefono || !prof.banco || !prof.clabe) {
                 setPerfilIncompleto(true)
                 setLoadingCursos(false)
@@ -45,11 +45,11 @@ export default function ProfesorVentasPage() {
             }
         }
 
-        // Cargar SOLO los títulos de cursos creados por el profesor actual para poblar el selector rápidamente
+        // Cargar SOLO los títulos de cursos creados por el instructor actual para poblar el selector rápidamente
         try {
             const { data } = await supabase
                 .from('ie_cursos')
-                .select('id, titulo')
+                .select('id, titulo, modalidad, limite_inscripcion, created_at')
                 .eq('estado', 'aprobado')
                 .eq('creado_por', user.id)
             
@@ -179,6 +179,63 @@ export default function ProfesorVentasPage() {
                     <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 mb-8 text-sm">
                         <strong>Consulta Eficiente de Ventas:</strong> Para optimizar la velocidad del sistema, no se cargarán las transacciones hasta que selecciones un filtro y hagas clic en el botón de búsqueda.
                     </div>
+
+                    {(() => {
+                        // Si hay un curso filtrado, mostramos el mensaje de pago correspondiente
+                        const cursoSeleccionado = cursos.find(c => c.titulo === filtroCurso)
+                        if (!cursoSeleccionado) return null
+
+                        const esCerrada = cursoSeleccionado.modalidad === 'cerrada'
+                        if (esCerrada) {
+                            if (!cursoSeleccionado.limite_inscripcion) {
+                                return (
+                                    <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-8 text-sm flex items-start gap-2">
+                                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <strong>Modalidad Cerrada:</strong> Aún no has definido una fecha límite de inscripción para este curso. Por favor edítalo para que se pueda calcular tu fecha de pago.
+                                        </div>
+                                    </div>
+                                )
+                            }
+                            
+                            // Si es cerrada, contar 15 días a partir del último día de inscripción
+                            const fechaLimite = new Date(cursoSeleccionado.limite_inscripcion)
+                            const fechaPago = new Date(fechaLimite)
+                            fechaPago.setDate(fechaPago.getDate() + 15)
+
+                            const fechaPagoFormateada = fechaPago.toLocaleDateString('es-MX', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            })
+
+                            return (
+                                <div className="bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-xl p-4 mb-8 text-sm flex items-start gap-2">
+                                    <Calendar className="w-5 h-5 flex-shrink-0 mt-0.5 text-indigo-600" />
+                                    <div>
+                                        <strong>Modalidad Cerrada:</strong> Al ser un curso de modalidad cerrada, tu pago se procesará 15 días después del cierre de inscripciones. <br />
+                                        Tu pago llegará entre los días: <strong className="underline text-indigo-900">{fechaPagoFormateada}</strong>
+                                    </div>
+                                </div>
+                            )
+                        } else {
+                            // Abierta: cada 15, 16 o 17 (mes actual) y 30 (mes actual), 1 o 2 (del mes siguiente)
+                            const hoy = new Date()
+                            const mesActualNombre = hoy.toLocaleDateString('es-MX', { month: 'long' })
+                            const proximoMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
+                            const proximoMesNombre = proximoMes.toLocaleDateString('es-MX', { month: 'long' })
+
+                            return (
+                                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-8 text-sm flex items-start gap-2">
+                                    <Calendar className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-600" />
+                                    <div>
+                                        <strong>Modalidad Abierta:</strong> Para cursos de modalidad abierta, las comisiones se depositan de manera quincenal. <br />
+                                        Tu pago llegará entre los días: <strong className="underline text-emerald-900">15, 16 o 17 de {mesActualNombre}</strong> (para ventas del 1 al 15) y <strong className="underline text-emerald-900">30 de {mesActualNombre}, 1 o 2 de {proximoMesNombre}</strong> (para ventas del 16 al fin de mes).
+                                    </div>
+                                </div>
+                            )
+                        }
+                    })()}
 
                     {/* Panel de Filtros */}
                     <div className="bg-white rounded-2xl border border-gray-250 p-6 shadow-sm mb-8">
