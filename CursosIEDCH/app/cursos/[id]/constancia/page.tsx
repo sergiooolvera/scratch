@@ -153,8 +153,8 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
             const dataUrl = await htmlToImage.toPng(microcredencialRef.current, { 
                 quality: 1.0, 
                 pixelRatio: 2,
-                width: 1056,
-                height: 816,
+                width: 816,
+                height: 1056,
                 style: {
                     transform: 'scale(1)',
                     transformOrigin: 'top left'
@@ -162,7 +162,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
             });
 
             const pdf = new jsPDF({
-                orientation: 'landscape',
+                orientation: 'portrait',
                 unit: 'px',
                 format: [microcredencialRef.current.offsetWidth, microcredencialRef.current.offsetHeight]
             });
