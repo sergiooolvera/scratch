@@ -164,7 +164,7 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-[calc(100vh-64px)] flex bg-zinc-50 font-sans">
-            <div className={`hidden lg:block relative w-0 flex-1 bg-gradient-to-t transition-all duration-500 ${theme.gradient}`}>
+            <div className={`hidden lg:block sticky top-16 h-[calc(100vh-64px)] w-0 flex-1 bg-gradient-to-t transition-all duration-500 ${theme.gradient}`}>
                 <div className="absolute inset-0 h-full w-full object-cover px-16 py-24 flex flex-col justify-center text-center" >
                     <div className="mx-auto bg-white/10 p-6 rounded-full inline-block backdrop-blur-sm shadow-xl mb-8">
                         {theme.icon}
