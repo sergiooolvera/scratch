@@ -14,6 +14,7 @@ type Recurso = {
     url_contenido: string;
     archivoPdf: File | null;
     descargable?: boolean;
+    isPersisted?: boolean;
 }
 
 type Modulo = {
@@ -295,7 +296,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                     tipo: r.tipo || 'video',
                                     url_contenido: r.url_contenido || '',
                                     archivoPdf: null,
-                                    descargable: r.descargable !== undefined ? !!r.descargable : false
+                                    descargable: r.descargable !== undefined ? !!r.descargable : false,
+                                    isPersisted: true
                                 });
                             });
                         } else if (m.url_contenido) {
@@ -307,7 +309,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 titulo: 'Material del Módulo',
                                 tipo,
                                 url_contenido: m.url_contenido,
-                                archivoPdf: null
+                                archivoPdf: null,
+                                isPersisted: true
                             });
                         }
 
@@ -441,7 +444,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             tipo,
                             url_contenido: r.url_contenido,
                             archivoPdf: null,
-                            descargable: !!r.descargable
+                            descargable: !!r.descargable,
+                            isPersisted: true
                         };
                     });
 
@@ -456,7 +460,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             tipo,
                             url_contenido: m.url_contenido,
                             archivoPdf: null,
-                            descargable: false
+                            descargable: false,
+                            isPersisted: true
                         });
                     }
 
@@ -1637,16 +1642,25 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </button>
 
+                                                                {recurso.isPersisted && (
+                                                                    <div className="mb-3">
+                                                                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+                                                                            Recurso guardado (Para modificarlo, elimínalo y vuelve a añadirlo)
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                     <div>
                                                                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Título del Recurso</label>
                                                                         <input
                                                                             type="text"
                                                                             required
+                                                                            disabled={!!recurso.isPersisted}
                                                                             placeholder="Ej. Diapositivas de la clase o Lectura obligatoria"
                                                                             value={recurso.titulo || ''}
                                                                             onChange={(e) => handleRecursoChange(index, rIdx, 'titulo', e.target.value)}
-                                                                            className="w-full text-xs rounded border-gray-300 p-2 border bg-white text-black font-medium"
+                                                                            className="w-full text-xs rounded border-gray-300 p-2 border bg-white disabled:bg-zinc-100 disabled:text-zinc-500 text-black font-medium disabled:cursor-not-allowed"
                                                                         />
                                                                     </div>
 
@@ -1657,9 +1671,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                                 <label key={tipoOpt} className="flex items-center text-xs font-semibold text-gray-700 cursor-pointer">
                                                                                     <input
                                                                                         type="radio"
+                                                                                        disabled={!!recurso.isPersisted}
                                                                                         checked={recurso.tipo === tipoOpt}
                                                                                         onChange={() => handleRecursoChange(index, rIdx, 'tipo', tipoOpt)}
-                                                                                        className="mr-1.5 h-3.5 w-3.5 text-blue-600 focus:ring-blue-500"
+                                                                                        className="mr-1.5 h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                                                                     />
                                                                                     {tipoOpt.toUpperCase()}
                                                                                 </label>
@@ -1674,10 +1689,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                                 <input
                                                                                     type="url"
                                                                                     required
+                                                                                    disabled={!!recurso.isPersisted}
                                                                                     placeholder="https://www.youtube.com/watch?v=..."
                                                                                     value={recurso.url_contenido || ''}
                                                                                     onChange={(e) => handleRecursoChange(index, rIdx, 'url_contenido', e.target.value)}
-                                                                                    className="w-full text-xs rounded border-gray-300 p-2 border bg-white text-black"
+                                                                                    className="w-full text-xs rounded border-gray-300 p-2 border bg-white disabled:bg-zinc-100 disabled:text-zinc-500 text-black disabled:cursor-not-allowed"
                                                                                 />
                                                                             </div>
                                                                         ) : (
@@ -1693,6 +1709,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                                 <input
                                                                                     type="file"
                                                                                     required={!recurso.url_contenido}
+                                                                                    disabled={!!recurso.isPersisted}
                                                                                     accept={
                                                                                         recurso.tipo === 'html'
                                                                                             ? '.html,.htm,text/html'
@@ -1701,7 +1718,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                                                 : '.pdf,application/pdf'
                                                                                     }
                                                                                     onChange={(e) => handleRecursoChange(index, rIdx, 'archivoPdf', e.target.files?.[0] || null)}
-                                                                                    className="w-full text-xs text-gray-500 border border-gray-200 p-1 rounded bg-white file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                                                                                    className="w-full text-xs text-gray-500 border border-gray-200 p-1 rounded bg-white file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                                                                 />
                                                                             </div>
                                                                         )}
@@ -1711,9 +1728,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                                 <input
                                                                                     type="checkbox"
                                                                                     id={`descargable-${index}-${rIdx}`}
+                                                                                    disabled={!!recurso.isPersisted}
                                                                                     checked={recurso.descargable || false}
                                                                                     onChange={(e) => handleRecursoChange(index, rIdx, 'descargable', e.target.checked)}
-                                                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                                                                 />
                                                                                 <label htmlFor={`descargable-${index}-${rIdx}`} className="text-xs font-semibold text-gray-700 cursor-pointer select-none">
                                                                                     Permitir descarga del archivo por los alumnos
