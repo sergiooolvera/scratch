@@ -1233,7 +1233,7 @@ export default function SubirCursoPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Modalidad del Curso</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Modalidad de Inscripción</label>
                                         <select
                                             name="modalidad"
                                             value={formData.modalidad}
