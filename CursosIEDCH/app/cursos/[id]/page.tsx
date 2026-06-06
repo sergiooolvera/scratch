@@ -46,7 +46,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
             .select('rol')
             .eq('id', curso.creado_por)
             .single()
-        esCreadoPorCapacitador = creatorProfile?.rol === 'capacitador'
+        esCreadoPorCapacitador = creatorProfile?.rol === 'instructor' || creatorProfile?.rol === 'capacitador'
     }
 
     const isPagado = compra?.pagado || false
