@@ -125,6 +125,7 @@ export default function SubirCursoPage() {
     const [tieneBorradorLocal, setTieneBorradorLocal] = useState(false)
     const [mostrarExamenFinal, setMostrarExamenFinal] = useState(true)
     const [mostrarConstancia, setMostrarConstancia] = useState(true)
+    const [mostrarCalificacionConstancia, setMostrarCalificacionConstancia] = useState(true)
     const [mostrarRevisionExamen, setMostrarRevisionExamen] = useState(false)
     const [borradorInicializado, setBorradorInicializado] = useState(false)
 
@@ -159,6 +160,7 @@ export default function SubirCursoPage() {
             preguntasExtraidas,
             mostrarExamenFinal,
             mostrarConstancia,
+            mostrarCalificacionConstancia,
             mostrarRevisionExamen,
             modulos: modulos.map(m => ({
                 titulo: m.titulo,
@@ -199,6 +201,7 @@ export default function SubirCursoPage() {
         preguntasExtraidas,
         mostrarExamenFinal,
         mostrarConstancia,
+        mostrarCalificacionConstancia,
         modulos
     ]);
 
@@ -221,6 +224,7 @@ export default function SubirCursoPage() {
                 preguntasExtraidas,
                 mostrarExamenFinal,
                 mostrarConstancia,
+                mostrarCalificacionConstancia,
                 mostrarRevisionExamen,
                 modulos: modulos.map(m => ({
                     titulo: m.titulo,
@@ -274,6 +278,7 @@ export default function SubirCursoPage() {
             if (borrador.preguntasExtraidas !== undefined) setPreguntasExtraidas(borrador.preguntasExtraidas);
             if (borrador.mostrarExamenFinal !== undefined) setMostrarExamenFinal(borrador.mostrarExamenFinal);
             if (borrador.mostrarConstancia !== undefined) setMostrarConstancia(borrador.mostrarConstancia);
+            if (borrador.mostrarCalificacionConstancia !== undefined) setMostrarCalificacionConstancia(borrador.mostrarCalificacionConstancia);
             if (borrador.mostrarRevisionExamen !== undefined) setMostrarRevisionExamen(borrador.mostrarRevisionExamen);
             if (borrador.modulos !== undefined) {
                 setModulos(borrador.modulos.map((m: any) => ({
@@ -836,6 +841,7 @@ export default function SubirCursoPage() {
             nota_profesor: formData.nota_profesor?.trim() || null,
             mostrar_examen_final: mostrarExamenFinal,
             mostrar_constancia: mostrarConstancia,
+            mostrar_calificacion_constancia: mostrarCalificacionConstancia,
             mostrar_revision_examen: mostrarRevisionExamen,
             limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null
         }
@@ -1430,6 +1436,20 @@ export default function SubirCursoPage() {
                                                 <label htmlFor="mostrarConstancia" className="cursor-pointer">
                                                     <span className="block text-sm font-bold text-indigo-950">Habilitar Obtención de Constancia</span>
                                                     <span className="block text-xs text-indigo-700 mt-1">El alumno podrá visualizar y descargar el botón de su constancia digital.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="mostrarCalificacionConstancia"
+                                                    checked={mostrarCalificacionConstancia}
+                                                    onChange={(e) => setMostrarCalificacionConstancia(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="mostrarCalificacionConstancia" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-blue-950">Mostrar Calificación en Constancia</span>
+                                                    <span className="block text-xs text-blue-700 mt-1">Si está activo, la calificación final del examen se imprimirá en el certificado del alumno.</span>
                                                 </label>
                                             </div>
 

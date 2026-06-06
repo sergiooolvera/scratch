@@ -16,7 +16,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia, mostrar_calificacion_constancia').eq('id', id).single()
     if (!curso) notFound()
 
     if (curso.mostrar_constancia === false) {
@@ -46,6 +46,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
 
     let fechaAprobacionObj: Date;
     let folioVenta: string;
+    let calificacionFinal: number | string = '';
 
     if (curso.requiere_examen) {
         const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single()
@@ -54,7 +55,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
         // Verify they actually passed
         const { data: resultRow } = await supabase
             .from('ie_resultados_examenes')
-            .select('id, aprobado, created_at')
+            .select('id, aprobado, created_at, calificacion')
             .eq('examen_id', examenRow.id)
             .eq('user_id', user.id)
             .eq('aprobado', true)
@@ -67,6 +68,9 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
 
         fechaAprobacionObj = new Date(resultRow[0].created_at);
         folioVenta = resultRow[0].id.toUpperCase();
+        calificacionFinal = resultRow[0].calificacion !== undefined && resultRow[0].calificacion !== null
+            ? (Number(resultRow[0].calificacion) / 10).toFixed(1)
+            : '';
     } else {
         // If it doesn't require an exam, they just get it if they have access to the course (compra exists)
         if (!compra) {
@@ -161,6 +165,8 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                         folio={folioVenta}
                         vigenciaStr={vigStr}
                         vigAnos={vigAnos}
+                        calificacion={calificacionFinal}
+                        mostrarCalificacionConstancia={curso.mostrar_calificacion_constancia}
                     />
                 )}
 

@@ -13,6 +13,8 @@ interface CertificadoDocumentProps {
     id?: string;
     documentRef?: React.Ref<HTMLDivElement>;
     className?: string;
+    calificacion?: number | string;
+    mostrarCalificacionConstancia?: boolean;
 }
 
 export default function CertificadoDocument({
@@ -25,119 +27,150 @@ export default function CertificadoDocument({
     qrUrl,
     id,
     documentRef,
-    className = ""
+    className = "",
+    calificacion = "",
+    mostrarCalificacionConstancia = true
 }: CertificadoDocumentProps) {
     return (
         <div
             id={id}
             ref={documentRef}
-            className={`bg-white relative mx-auto overflow-hidden flex flex-col shrink-0 min-w-[1056px] ${className}`}
-            style={{ width: '1056px', height: '816px', boxSizing: 'border-box', fontFamily: 'Georgia, serif' }}
+            className={`bg-white relative mx-auto overflow-hidden flex shrink-0 min-w-[1056px] ${className}`}
+            style={{ 
+                width: '1056px', 
+                height: '816px', 
+                boxSizing: 'border-box'
+            }}
         >
-            {/* Left Vertical Black Line - de arriba a abajo del certificado */}
-            <div className="absolute left-[100px] top-0 bottom-0 w-[4px] bg-black z-[5]"></div>
-
-            {/* Top Navy Blue Header Bar - baja 20px del borde, se extiende -2px a cada lado para no dejar gap blanco */}
-            <div className="absolute z-[15] bg-[#002060]" style={{ top: '35px', left: '-2px', right: '-2px' }}>
-                <img src="/encabezado-modelo3.png" alt="Encabezado IEDCH" className="w-full h-auto block" />
-            </div>
-
-            {/* Bottom Left Circles */}
-            <div className="absolute bottom-[40px] left-[50px] z-20">
-                <div className="w-[200px] h-[200px] bg-[#8a8a8a] rounded-full"></div>
-                <div className="w-[120px] h-[120px] bg-[#002060] rounded-full absolute -bottom-[20px] -right-[20px]"></div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="relative z-30 flex flex-col items-center justify-start h-full pt-[160px] pb-4 px-24">
+            {/* Left Sidebar */}
+            <div className="w-[280px] bg-[#0B1A3F] h-full flex flex-col items-center justify-between py-16 shrink-0 relative z-30">
+                {/* Globe Logo */}
+                <div className="w-[140px] flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="130" height="130" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="0.75" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        {/* Longitudes */}
+                        <ellipse cx="12" cy="12" rx="3.33" ry="10" />
+                        <ellipse cx="12" cy="12" rx="6.66" ry="10" />
+                        <line x1="12" y1="2" x2="12" y2="22" />
+                        {/* Latitudes */}
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <line x1="2.32" y1="9.5" x2="21.68" y2="9.5" />
+                        <line x1="3.34" y1="7" x2="20.66" y2="7" />
+                        <line x1="5.39" y1="4.5" x2="18.61" y2="4.5" />
+                        <line x1="2.32" y1="14.5" x2="21.68" y2="14.5" />
+                        <line x1="3.34" y1="17" x2="20.66" y2="17" />
+                        <line x1="5.39" y1="19.5" x2="18.61" y2="19.5" />
+                    </svg>
+                </div>
                 
-                {/* Emitter Text */}
-                <p className="text-center text-[17px] leading-snug text-black max-w-4xl tracking-wide">
-                    El Instituto Educativo De Especialidades Para La Conducta y el Desarrollo Humano S.C<br/>
-                    a través de su centro de capacitación y acreditación profesional emite la presente:
-                </p>
-
-                {/* CONSTANCIA */}
-                <h1 className="mt-3 text-[48px] font-normal tracking-wide text-black">
-                    CONSTANCIA
-                </h1>
-
-                <p className="mt-1 text-lg text-black font-semibold">a:</p>
-
-                {/* Name */}
-                <h2 className={`mt-1 text-black tracking-wide leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[850px] text-center ${alumnoNombre.length > 30 ? 'text-[34px]' : alumnoNombre.length > 22 ? 'text-[40px]' : 'text-[48px]'}`}>
-                    {alumnoNombre}
-                </h2>
-
-                {/* Course Details */}
-                <p className="mt-6 text-[20px] text-black">
-                    Por haber acreditado el Curso:
-                </p>
-                <h3 
-                    className={`mt-2 font-bold text-black uppercase text-center max-w-[900px] tracking-wide leading-tight truncate px-4 ${cursoTitulo.length > 45 ? 'text-[20px]' : 'text-[26px]'}`}
-                    title={cursoTitulo}
-                >
-                    “{cursoTitulo}”
-                </h3>
-
-                <p className={`mt-12 font-bold text-red-600 font-sans tracking-wide text-center max-w-[800px] px-4 ${
-                    cursoDuracion && cursoDuracion.length > 80 
-                        ? 'text-[13px] leading-snug' 
-                        : cursoDuracion && cursoDuracion.length > 50 
-                            ? 'text-[15px] leading-snug' 
-                            : cursoDuracion && cursoDuracion.length > 30 
-                                ? 'text-[17px] leading-tight' 
-                                : 'text-[20px]'
-                }`}>
-                    Valor curricular: {cursoDuracion || '40 horas'}
-                </p>
-
-                <p className="mt-1 text-[20px] font-bold text-black font-sans tracking-wide">
-                    {fechaAprobacion}
-                </p>
-
+                {/* QR Code Block */}
+                <div className="bg-white p-3 flex flex-col items-center rounded-sm">
+                    <QRCodeCanvas 
+                        value={qrUrl} 
+                        size={100} 
+                        level="L"
+                        includeMargin={false}
+                    />
+                    <p className="text-[11px] font-bold text-black font-sans mt-2 tracking-wide">
+                        Microdencial
+                    </p>
+                </div>
             </div>
 
-            {/* Signature Area (Absolute to guarantee space) */}
-            <div className="absolute bottom-[50px] left-0 right-0 flex flex-col items-center w-full z-30">
-                <div className="w-[480px] text-center">
-                    {/* Firma del director */}
+            {/* Right Content Area */}
+            <div className="flex-1 relative flex flex-col px-[60px] pt-[60px] pb-[40px] bg-white">
+                
+                {/* Watermark Background */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 pr-[50px] overflow-hidden">
+                    <img src="/constancia_watermark.png" alt="watermark" className="w-[950px] max-w-none opacity-100" />
+                </div>
+
+                {/* Header Row */}
+                <div className="flex justify-between items-center w-full z-20">
+                    <p className="text-[13.5px] leading-snug font-bold text-black max-w-[450px] font-sans">
+                        El Instituto Educativo De Especialidades Para La Conducta y el Desarrollo Humano S.C<br/>
+                        a través del Ecosistema Global de Acreditación y Certificación.
+                    </p>
+                    <div className="flex items-center">
+                        <img src="/logoegac.jpg" alt="EGAC Logo" className="h-[110px] object-contain" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                    </div>
+                </div>
+
+                {/* Main Center Content */}
+                <div className="flex-1 flex flex-col items-center justify-center w-full z-20 mt-4">
+                    <p className="text-[14px] text-black font-sans tracking-wide">Emite la presente:</p>
+                    
+                    <h1 className="text-[#0B1A3F] text-[58px] font-serif tracking-[0.1em] mt-1">
+                        CONSTANCIA
+                    </h1>
+                    
+                    <p className="text-[14px] text-black font-sans mt-5">a:</p>
+                    
+                    {/* Alumno Name */}
+                    <h2 
+                        className={`text-[#0B1A3F] mt-2 font-normal leading-none whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[700px] text-center ${alumnoNombre.length > 30 ? 'text-[50px]' : alumnoNombre.length > 22 ? 'text-[60px]' : 'text-[70px]'}`}
+                        style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive, serif" }}
+                    >
+                        {alumnoNombre}
+                    </h2>
+                    
+                    {/* Name Underline */}
+                    <div className="w-[85%] border-b border-black mt-2"></div>
+
+                    {/* Course Section */}
+                    <p className="text-[14px] text-black font-sans mt-6">
+                        Por haber acreditado la capacitación:
+                    </p>
+                    
+                    <h3 className="text-[20px] font-bold text-black uppercase mt-1 text-center px-4 max-w-[700px] italic">
+                        “{cursoTitulo}”
+                    </h3>
+
+                    {/* Details Grid */}
+                    <div className="flex justify-between items-start w-[85%] mt-12 text-[15px] font-sans text-black">
+                        {/* Left Column - Takes up available space */}
+                        <div className="flex flex-col text-left gap-1 flex-1 pr-6">
+                            <p className="leading-snug text-justify">
+                                <span className="font-semibold">Valor curricular:</span> {cursoDuracion || '5 Horas'}
+                            </p>
+                            <p className="mt-1">{fechaAprobacion}</p>
+                        </div>
+                        
+                        {/* Right Column - Fixed maximum width for Folio to wrap correctly */}
+                        <div className="flex flex-col text-left w-[300px] shrink-0">
+                            <p className="break-words leading-snug">
+                                <span className="font-semibold">Folio:</span> <span className="break-all">{folio}</span>
+                            </p>
+                            {mostrarCalificacionConstancia && calificacion && (
+                                <div className="mt-1 flex items-center justify-between">
+                                    <span className="font-semibold">Dominio demostrado:</span>
+                                    <span className="text-red-600 font-bold border border-red-500 px-3 ml-2">{calificacion}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Signature Area */}
+                <div className="flex flex-col items-center z-20 mt-auto">
                     <img
                         src="/firma.png"
                         alt="Firma Director"
-                        className="mx-auto mb-1"
-                        style={{ height: '80px', objectFit: 'contain' }}
+                        className="h-[60px] object-contain mb-1"
                     />
-                    <div className="border-t-2 border-black pt-2">
-                        <p className="font-serif font-bold text-black uppercase text-[11px] tracking-widest leading-loose whitespace-nowrap">
+                    <div className="border-t border-black w-[500px] pt-1.5 text-center">
+                        <p className="text-[11px] font-sans text-black">
                             D. EN E. Irvin Rodolfo Tapia Bernabé
                         </p>
-                        <p className="text-[14px] font-sans text-black font-semibold">
+                        <p className="text-[12px] font-bold font-sans text-black">
                             Director Académico del IEDCH
                         </p>
-                        <p className="text-[12px] italic mt-0.5 font-serif text-black leading-tight">
-                            Instituto Educativo de Especialidades para la Conducta y el<br/>Desarrollo Humano S.C
+                        <p className="text-[9px] font-sans text-black mt-0.5 leading-tight">
+                            Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C.
                         </p>
                     </div>
                 </div>
-            </div>
 
-            {/* QR Code and Folio (Bottom Right Absolute) */}
-            <div className="absolute bottom-[40px] right-[40px] flex flex-col items-center z-30">
-                <QRCodeCanvas 
-                    value={qrUrl} 
-                    size={110} 
-                    level="L"
-                    includeMargin={false}
-                />
-                <div className="mt-2 text-center w-[220px]">
-                    <p className="text-[12px] font-bold text-red-600 font-sans uppercase tracking-widest break-all">
-                        FOLIO: {folio.substring(0, 18)}
-                    </p>
-                    <p className="text-[11px] font-bold text-black font-sans mt-1 leading-tight w-full">
-                        Vigencia hasta: {vigenciaStr}
-                    </p>
-                </div>
             </div>
         </div>
     )

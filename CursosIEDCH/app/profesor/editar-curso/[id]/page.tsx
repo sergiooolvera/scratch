@@ -65,6 +65,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [requiereExamenAvance, setRequiereExamenAvance] = useState(false)
     const [mostrarExamenFinal, setMostrarExamenFinal] = useState(true)
     const [mostrarConstancia, setMostrarConstancia] = useState(true)
+    const [mostrarCalificacionConstancia, setMostrarCalificacionConstancia] = useState(true)
     const [mostrarRevisionExamen, setMostrarRevisionExamen] = useState(false)
     
     // Modules state
@@ -148,6 +149,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 requiere_examen_avance: requiereExamenAvance,
                 mostrar_examen_final: mostrarExamenFinal,
                 mostrar_constancia: mostrarConstancia,
+                mostrar_calificacion_constancia: mostrarCalificacionConstancia,
                 mostrar_revision_examen: mostrarRevisionExamen,
                 modulos: modulos.map((m, idx) => ({
                     id: m.id,
@@ -329,6 +331,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setRequiereExamenAvance(borrador.requiere_examen_avance !== undefined ? borrador.requiere_examen_avance : (curso.requiere_examen_avance || false))
                 setMostrarExamenFinal(borrador.mostrar_examen_final !== undefined ? borrador.mostrar_examen_final : (curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true))
                 setMostrarConstancia(borrador.mostrar_constancia !== undefined ? borrador.mostrar_constancia : (curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true))
+                setMostrarCalificacionConstancia(borrador.mostrar_calificacion_constancia !== undefined ? borrador.mostrar_calificacion_constancia : (curso.mostrar_calificacion_constancia !== undefined ? curso.mostrar_calificacion_constancia : true))
                 setMostrarRevisionExamen(borrador.mostrar_revision_examen !== undefined ? borrador.mostrar_revision_examen : (curso.mostrar_revision_examen !== undefined ? curso.mostrar_revision_examen : false))
                 
                 if (borrador.modulos) {
@@ -452,6 +455,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             setRequiereExamenAvance(curso.requiere_examen_avance || false)
             setMostrarExamenFinal(curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true)
             setMostrarConstancia(curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true)
+            setMostrarCalificacionConstancia(curso.mostrar_calificacion_constancia !== undefined ? curso.mostrar_calificacion_constancia : true)
             setMostrarRevisionExamen(curso.mostrar_revision_examen !== undefined ? curso.mostrar_revision_examen : false)
 
             // Módulos
@@ -1147,6 +1151,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 requiere_examen_avance: requiereExamenAvance,
                 mostrar_examen_final: mostrarExamenFinal,
                 mostrar_constancia: mostrarConstancia,
+                mostrar_calificacion_constancia: mostrarCalificacionConstancia,
                 mostrar_revision_examen: mostrarRevisionExamen,
                 modulos: modulosFinales.map(m => ({
                     id: m.id,
@@ -1232,6 +1237,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     requiere_examen_avance: requiereExamenAvance,
                     mostrar_examen_final: mostrarExamenFinal,
                     mostrar_constancia: mostrarConstancia,
+                    mostrar_calificacion_constancia: mostrarCalificacionConstancia,
                     mostrar_revision_examen: mostrarRevisionExamen,
                     url_contenido: firstUrlContenido,
                     cambios_pendientes: null, // Clear draft upon official publication
@@ -1851,6 +1857,20 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                 <label htmlFor="mostrarConstancia" className="cursor-pointer">
                                                     <span className="block text-sm font-bold text-indigo-950">Habilitar Obtención de Constancia</span>
                                                     <span className="block text-xs text-indigo-700 mt-1">El alumno podrá visualizar y descargar el botón de su constancia digital.</span>
+                                                </label>
+                                            </div>
+
+                                            <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 flex items-start gap-3 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    id="mostrarCalificacionConstancia"
+                                                    checked={mostrarCalificacionConstancia}
+                                                    onChange={(e) => setMostrarCalificacionConstancia(e.target.checked)}
+                                                    className="h-5 w-5 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                                />
+                                                <label htmlFor="mostrarCalificacionConstancia" className="cursor-pointer">
+                                                    <span className="block text-sm font-bold text-blue-950">Mostrar Calificación en Constancia</span>
+                                                    <span className="block text-xs text-blue-700 mt-1">Si está activo, la calificación final del examen se imprimirá en el certificado del alumno.</span>
                                                 </label>
                                             </div>
 

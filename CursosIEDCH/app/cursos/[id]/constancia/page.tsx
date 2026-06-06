@@ -406,6 +406,8 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                                         folio={String(examen?.id).toUpperCase() || '112233445'}
                                         vigenciaStr={`${vigStr} (${vigAnos} ${vigAnos === 1 ? 'año' : 'años'})`}
                                         qrUrl={qrValue}
+                                        calificacion={examen?.calificacion !== undefined && examen?.calificacion !== null ? (Number(examen.calificacion) / 10).toFixed(1) : ''}
+                                        mostrarCalificacionConstancia={curso?.mostrar_calificacion_constancia}
                                         documentRef={constanciaRef as any}
                                     />
                                 ) : (
