@@ -87,7 +87,7 @@ export default function RegisterPage() {
                 linkTextColor: 'text-orange-600 hover:text-orange-850',
                 checkboxColor: 'text-orange-600 focus:ring-orange-500 focus:border-orange-500',
                 icon: <Building2 className="h-16 w-16 text-orange-200" />,
-                title: 'Impulsa el aprendizaje en tu institución',
+                title: 'Impulsa el aprendizaje en tu organización',
                 description: 'Registra y certifica las actividades educativas de tu escuela con nuestra plataforma oficial.'
             }
         }
@@ -236,7 +236,7 @@ export default function RegisterPage() {
                                     }`}
                                 >
                                     <Building2 className="w-4 h-4 mr-1.5" />
-                                    Institución
+                                    Organización
                                 </button>
                             </div>
 
@@ -248,9 +248,9 @@ export default function RegisterPage() {
                                             <Building2 className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-sm text-orange-900">Registro de Institución</h3>
+                                            <h3 className="font-bold text-sm text-orange-900">Registro de Organización</h3>
                                             <p className="text-xs text-orange-800 mt-1 leading-relaxed">
-                                                Estás registrando una <strong>escuela, academia, agencia o institución</strong>. Esto permitirá emitir certificados institucionales y organizar cursos grupales.
+                                                Estás registrando una <strong>escuela, academia, agencia u organización</strong>. Esto permitirá emitir certificados organizacionales y organizar cursos grupales.
                                             </p>
                                         </div>
                                     </div>
@@ -347,7 +347,7 @@ export default function RegisterPage() {
                                     ) : (
                                         <>
                                             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                                                <label className="block text-sm font-medium text-gray-700">Nombre de la escuela, academia, agencia o institución</label>
+                                                <label className="block text-sm font-medium text-gray-700">Nombre de la escuela, academia, agencia u organización</label>
                                                 <div className="mt-1 relative rounded-md shadow-sm">
                                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                         <Building2 className="h-5 w-5 text-gray-400" />
@@ -517,7 +517,7 @@ export default function RegisterPage() {
                                                         ? 'Crear mi cuenta' 
                                                         : (tipoCuenta === 'instructor' 
                                                             ? 'Registrarme como Instructor' 
-                                                            : 'Registrar Institución'
+                                                            : 'Registrar Organización'
                                                           )
                                                       )
                                                 }
