@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus } from 'lucide-react'
 
 export default function Navbar() {
     const supabase = createClient()
@@ -153,26 +153,30 @@ export default function Navbar() {
                                     </div>
                                 )}
                                 {(profile?.rol === 'instructor' || profile?.rol === 'capacitador' || profile?.rol === 'institucion') && (
-                                    <div className="relative group">
-                                        <button 
-                                            onClick={() => setIsProfMenuOpen(!isProfMenuOpen)}
-                                            className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 focus:outline-none"
-                                        >
-                                            <BookOpen className="h-4 w-4" /> <span>{profile?.rol === 'capacitador' ? 'Panel Capacitador' : 'Panel Instructor'}</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isProfMenuOpen ? 'rotate-180' : ''}`} />
-                                        </button>
-                                        <div className={`absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-[100] pt-2 ${isProfMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'}`}>
-                                            <div className="py-1 bg-white rounded-md border border-gray-100" role="menu">
-                                                <Link href="/profesor/cursos" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Cursos Creados</Link>
-                                                <Link href="/profesor/subir-curso" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Subir Curso</Link>
-                                                <Link href="/profesor/preguntas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Dudas de Alumnos</Link>
-                                                <Link href="/profesor/revision-examen" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Revisión de Exámenes</Link>
-                                                <Link href="/profesor/revision-tareas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Revisión de Tareas</Link>
-                                                {profile?.rol === 'instructor' && (
-                                                    <Link href="/profesor/ventas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Ventas</Link>
-                                                )}
+                                    <>
+                                        <div className="relative group">
+                                            <button 
+                                                onClick={() => setIsProfMenuOpen(!isProfMenuOpen)}
+                                                className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-50 focus:outline-none"
+                                            >
+                                                <BookOpen className="h-4 w-4" /> <span>{profile?.rol === 'capacitador' ? 'Panel Capacitador' : 'Panel Instructor'}</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isProfMenuOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            <div className={`absolute left-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-[100] pt-2 ${isProfMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'}`}>
+                                                <div className="py-1 bg-white rounded-md border border-gray-100" role="menu">
+                                                    <Link href="/profesor/cursos" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Cursos Creados</Link>
+                                                    <Link href="/profesor/preguntas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Dudas de Alumnos</Link>
+                                                    <Link href="/profesor/revision-examen" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Revisión de Exámenes</Link>
+                                                    <Link href="/profesor/revision-tareas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Revisión de Tareas</Link>
+                                                    {profile?.rol === 'instructor' && (
+                                                        <Link href="/profesor/ventas" onClick={() => setIsProfMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">Mis Ventas</Link>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                        <Link href="/profesor/subir-curso" className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200">
+                                            <Plus className="h-4 w-4" /> <span>Subir Curso</span>
+                                        </Link>
+                                    </>
                                 )}
                                 {profile?.rol === 'vendedor' && (
                                     <Link href="/profesor/ventas" className={navItemClass('/profesor/ventas')}>
@@ -306,8 +310,12 @@ export default function Navbar() {
                                 {(profile?.rol === 'instructor' || profile?.rol === 'capacitador' || profile?.rol === 'institucion') && (
                                     <div className="space-y-1">
                                         <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Panel {profile?.rol === 'capacitador' ? 'Capacitador' : 'Instructor'}</div>
+                                        <div className="px-3 py-1">
+                                            <Link href="/profesor/subir-curso" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center space-x-1.5 w-full py-2.5 px-4 rounded-xl text-base font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-md transition-all duration-200">
+                                                <Plus className="h-5 w-5" /> <span>Subir Curso</span>
+                                            </Link>
+                                        </div>
                                         <Link href="/profesor/cursos" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Mis Cursos Creados</Link>
-                                        <Link href="/profesor/subir-curso" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Subir Curso</Link>
                                         <Link href="/profesor/preguntas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Dudas de Alumnos</Link>
                                         <Link href="/profesor/revision-examen" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Revisión de Exámenes</Link>
                                         <Link href="/profesor/revision-tareas" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Revisión de Tareas</Link>
