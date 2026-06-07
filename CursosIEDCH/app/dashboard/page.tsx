@@ -23,7 +23,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     }
 
     if (profile?.rol === 'institucion') {
-        redirect('/institucion/registrar-actividad')
+        redirect('/profesor/cursos')
     }
 
     const { data: rawCursos } = await supabase

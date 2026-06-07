@@ -136,8 +136,8 @@ export default function Navbar() {
                                         </div>
                                     </div>
                                 )}
-                                {profile?.rol === 'institucion' && (
-                                    <div className="relative group">
+                                {profile?.rol === 'institucion' && false && (
+                                     <div className="relative group">
                                         <button
                                             onClick={() => setIsInstMenuOpen(!isInstMenuOpen)}
                                             className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-gray-50 focus:outline-none"
@@ -300,8 +300,8 @@ export default function Navbar() {
                                         <Link href="/financiero/colaboradores" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Pago de Colaboradores</Link>
                                     </div>
                                 )}
-                                {profile?.rol === 'institucion' && (
-                                    <div className="space-y-1">
+                                {profile?.rol === 'institucion' && false && (
+                                     <div className="space-y-1">
                                         <div className="px-3 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Panel Institución</div>
                                         <Link href="/institucion/registrar-actividad" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-indigo-50 border-l-2 border-transparent hover:border-indigo-500">Registrar Actividad</Link>
                                         <Link href="/institucion/expediente" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-indigo-50 border-l-2 border-transparent hover:border-indigo-500">Ver Expediente</Link>
