@@ -88,7 +88,7 @@ export default function RegisterPage() {
                 checkboxColor: 'text-orange-600 focus:ring-orange-500 focus:border-orange-500',
                 icon: <Building2 className="h-16 w-16 text-orange-200" />,
                 title: 'Impulsa el aprendizaje en tu organización',
-                description: 'Registra y certifica las actividades educativas de tu escuela con nuestra plataforma oficial.'
+                description: 'Registra, gestiona, crea y certifica las actividades de capacitación de tu organización con nuestra plataforma oficial.'
             }
         }
     }
