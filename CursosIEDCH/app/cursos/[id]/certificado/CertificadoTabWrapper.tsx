@@ -17,6 +17,8 @@ interface CertificadoTabWrapperProps {
     folio: string;
     vigenciaStr: string;
     vigAnos: number;
+    calificacion?: number | string;
+    mostrarCalificacionConstancia?: boolean;
 }
 
 export default function CertificadoTabWrapper({
@@ -28,7 +30,9 @@ export default function CertificadoTabWrapper({
     fechaAprobacionRaw,
     folio,
     vigenciaStr,
-    vigAnos
+    vigAnos,
+    calificacion = '',
+    mostrarCalificacionConstancia = true
 }: CertificadoTabWrapperProps) {
     const [activeTab, setActiveTab] = useState<'constancia' | 'microcredencial'>('constancia')
     const constanciaRef = useRef<HTMLDivElement>(null)
@@ -170,6 +174,8 @@ export default function CertificadoTabWrapper({
                         folio={folio}
                         vigenciaStr={vigenciaStr}
                         qrUrl={qrValue}
+                        calificacion={calificacion}
+                        mostrarCalificacionConstancia={mostrarCalificacionConstancia}
                         className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
                     />
                 </ResponsiveCertificateWrapper>
