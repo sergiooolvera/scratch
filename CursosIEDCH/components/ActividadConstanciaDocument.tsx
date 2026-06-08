@@ -47,14 +47,9 @@ export default function ActividadConstanciaDocument({
             <div className="absolute z-[15] bg-[#002060] flex items-center justify-start px-12" style={{ top: '35px', left: '-2px', right: '-2px', height: '77px' }}>
                 <div className="flex items-center gap-5">
                     <img src="/logoegac.jpg" alt="Logo EGAC" className="h-[52px] object-contain rounded bg-white p-0.5" />
-                    <div className="text-white font-sans text-left">
-                        <p className="text-[14px] font-bold leading-tight uppercase tracking-wider">
-                            El Instituto Educativo De Especialidades Para La Conducta y el Desarrollo Humano S.C
-                        </p>
-                        <p className="text-[11px] font-normal text-gray-200 mt-0.5">
-                            a través del Ecosistema Global de Acreditación y Certificación.
-                        </p>
-                    </div>
+                    <p className="text-[16px] font-bold leading-tight uppercase tracking-wider text-white font-sans">
+                        Ecosistema Global de Acreditación y Certificación
+                    </p>
                 </div>
             </div>
 
