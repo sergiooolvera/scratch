@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight } from 'lucide-react'
+import CertificadoDocument from '@/components/CertificadoDocument'
+import CertificadoModelo2 from '@/components/CertificadoModelo2'
+import CertificadoModelo3 from '@/components/CertificadoModelo3'
+import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 
 type Recurso = {
     id?: string;
@@ -1349,19 +1353,50 @@ export default function SubirCursoPage() {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Plantilla de Constancia</label>
-                                        <select
-                                            value={plantillaConstancia}
-                                            onChange={(e) => setPlantillaConstancia(e.target.value)}
-                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
-                                        >
-                                            <option value="modelo1">Plantilla 1: Lateral Azul Marino (Actual)</option>
-                                            <option value="modelo2">Plantilla 2: Encabezado y Círculos (Tradicional)</option>
-                                            <option value="modelo3">Plantilla 3: Centralizada y Bordes Elegantes (Nueva)</option>
-                                        </select>
-                                        <p className="text-[10px] text-gray-500 mt-1 italic">Elige el estilo visual con el que se generará el certificado de los alumnos al acreditar el curso.</p>
+                                <div className="col-span-full pt-4 border-t border-gray-100 space-y-4">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <div className="flex flex-col justify-start">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Plantilla de Constancia</label>
+                                            <select
+                                                value={plantillaConstancia}
+                                                onChange={(e) => setPlantillaConstancia(e.target.value)}
+                                                className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white mb-2"
+                                            >
+                                                <option value="modelo1">Plantilla 1: Lateral Azul Marino (Actual)</option>
+                                                <option value="modelo2">Plantilla 2: Encabezado y Círculos (Tradicional)</option>
+                                                <option value="modelo3">Plantilla 3: Centralizada y Bordes Elegantes (Nueva)</option>
+                                            </select>
+                                            <p className="text-[10px] text-gray-500 italic mb-4">Elige el estilo visual con el que se generará el certificado de los alumnos al acreditar el curso.</p>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-start bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
+                                            <span className="text-xs font-bold text-gray-500 mb-2">Vista Previa de la Plantilla</span>
+                                            <div className="w-full max-w-[480px] border border-gray-300 rounded-lg overflow-hidden bg-white shadow-md relative scale-95 origin-top">
+                                                <ResponsiveCertificateWrapper width={1056} height={816}>
+                                                    {(() => {
+                                                        const props = {
+                                                            alumnoNombre: "JUAN PÉREZ LÓPEZ",
+                                                            cursoTitulo: formData.titulo || "TÍTULO DEL CURSO DE EJEMPLO",
+                                                            cursoDuracion: formData.duracion || "40 Horas",
+                                                            fechaAprobacion: "24 de Noviembre de 2025",
+                                                            folio: "FOLIO-DEMO-12345",
+                                                            vigenciaStr: "24 de Noviembre de 2028 (3 años)",
+                                                            qrUrl: "https://cursos-iedch.vercel.app/",
+                                                            calificacion: "9.5",
+                                                            mostrarCalificacionConstancia: true,
+                                                            logoUrl: logoPreviewUrl,
+                                                            mostrarLogoConstancia: mostrarLogoConstancia
+                                                        };
+                                                        if (plantillaConstancia === 'modelo2') {
+                                                            return <CertificadoModelo2 {...props} />
+                                                        }
+                                                        if (plantillaConstancia === 'modelo3') {
+                                                            return <CertificadoModelo3 {...props} />
+                                                        }
+                                                        return <CertificadoDocument {...props} />
+                                                    })()}
+                                                </ResponsiveCertificateWrapper>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
