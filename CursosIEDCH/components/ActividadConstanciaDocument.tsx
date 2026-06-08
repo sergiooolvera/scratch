@@ -44,9 +44,18 @@ export default function ActividadConstanciaDocument({
             <div className="absolute left-[100px] top-0 bottom-0 w-[4px] bg-black z-[5]"></div>
 
             {/* Top Navy Blue Header Bar */}
-            <div className="absolute z-[15] bg-[#002060]" style={{ top: '35px', left: '-2px', right: '-2px' }}>
-                {/* Asumiendo que pueden usar el mismo encabezado o uno similar */}
-                <img src="/encabezado-modelo3.png" alt="Encabezado IEDCH" className="w-full h-auto block" />
+            <div className="absolute z-[15] bg-[#002060] flex items-center justify-start px-12" style={{ top: '35px', left: '-2px', right: '-2px', height: '77px' }}>
+                <div className="flex items-center gap-5">
+                    <img src="/logoegac.jpg" alt="Logo EGAC" className="h-[52px] object-contain rounded bg-white p-0.5" />
+                    <div className="text-white font-sans text-left">
+                        <p className="text-[14px] font-bold leading-tight uppercase tracking-wider">
+                            El Instituto Educativo De Especialidades Para La Conducta y el Desarrollo Humano S.C
+                        </p>
+                        <p className="text-[11px] font-normal text-gray-200 mt-0.5">
+                            a través del Ecosistema Global de Acreditación y Certificación.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Bottom Left Circles */}
@@ -60,8 +69,8 @@ export default function ActividadConstanciaDocument({
                 
                 {/* Emitter Text */}
                 <p className="text-center text-[17px] leading-snug text-black max-w-4xl tracking-wide uppercase font-bold">
-                    El INSTITUTO EDUCATIVO DE ESPECIALIDADES PARA LA CAPACITACION NACIONAL<br/>
-                    <span className="font-normal normal-case">a través de su centro de capacitación y acreditación profesional emite la presente:</span>
+                    El Instituto Educativo De Especialidades Para La Conducta y el Desarrollo Humano S.C<br/>
+                    <span className="font-normal normal-case">a través del Ecosistema Global de Acreditación y Certificación.</span>
                 </p>
 
                 {/* CONSTANCIA */}

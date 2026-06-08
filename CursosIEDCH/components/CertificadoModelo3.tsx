@@ -77,8 +77,8 @@ export default function CertificadoModelo3({
                 {/* Center: Emitter Details */}
                 <div className="flex-1 text-center px-4 max-w-[550px]">
                     <p className="text-[12px] font-sans font-bold leading-normal text-gray-800 uppercase tracking-widest">
-                        El Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C.<br/>
-                        <span className="text-[10px] lowercase font-normal italic tracking-wide text-gray-600">a través de su centro de capacitación y acreditación profesional</span>
+                        El Instituto Educativo De Especialidades Para La Conducta y el Desarrollo Humano S.C<br/>
+                        <span className="text-[10px] lowercase font-normal italic tracking-wide text-gray-600">a través del Ecosistema Global de Acreditación y Certificación.</span>
                     </p>
                 </div>
 
