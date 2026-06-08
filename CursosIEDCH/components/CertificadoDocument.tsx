@@ -15,6 +15,8 @@ interface CertificadoDocumentProps {
     className?: string;
     calificacion?: number | string;
     mostrarCalificacionConstancia?: boolean;
+    logoUrl?: string | null;
+    mostrarLogoConstancia?: boolean;
 }
 
 export default function CertificadoDocument({
@@ -29,7 +31,9 @@ export default function CertificadoDocument({
     documentRef,
     className = "",
     calificacion = "",
-    mostrarCalificacionConstancia = true
+    mostrarCalificacionConstancia = true,
+    logoUrl = null,
+    mostrarLogoConstancia = false
 }: CertificadoDocumentProps) {
     return (
         <div
@@ -62,6 +66,13 @@ export default function CertificadoDocument({
                         <line x1="5.39" y1="19.5" x2="18.61" y2="19.5" />
                     </svg>
                 </div>
+                
+                {/* Institution Custom Logo */}
+                {mostrarLogoConstancia && logoUrl && (
+                    <div className="w-[140px] h-[90px] flex items-center justify-center overflow-hidden my-4 bg-white/10 rounded p-2">
+                        <img src={logoUrl} alt="Logo Institución" className="max-w-full max-h-full object-contain" />
+                    </div>
+                )}
                 
                 {/* QR Code Block */}
                 <div className="bg-white p-3 flex flex-col items-center rounded-sm">

@@ -129,6 +129,11 @@ export default function SubirCursoPage() {
     const [mostrarRevisionExamen, setMostrarRevisionExamen] = useState(false)
     const [borradorInicializado, setBorradorInicializado] = useState(false)
 
+    // Logo custom states
+    const [archivoLogo, setArchivoLogo] = useState<File | null>(null)
+    const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
+    const [mostrarLogoConstancia, setMostrarLogoConstancia] = useState(false)
+
     // Check for draft on mount
     useEffect(() => {
         const raw = localStorage.getItem('curso_nuevo_borrador');
@@ -162,6 +167,7 @@ export default function SubirCursoPage() {
             mostrarConstancia,
             mostrarCalificacionConstancia,
             mostrarRevisionExamen,
+            mostrarLogoConstancia,
             modulos: modulos.map(m => ({
                 titulo: m.titulo,
                 requiereExamen: m.requiereExamen,
@@ -202,6 +208,7 @@ export default function SubirCursoPage() {
         mostrarExamenFinal,
         mostrarConstancia,
         mostrarCalificacionConstancia,
+        mostrarLogoConstancia,
         modulos
     ]);
 
@@ -226,6 +233,7 @@ export default function SubirCursoPage() {
                 mostrarConstancia,
                 mostrarCalificacionConstancia,
                 mostrarRevisionExamen,
+                mostrarLogoConstancia,
                 modulos: modulos.map(m => ({
                     titulo: m.titulo,
                     requiereExamen: m.requiereExamen,
@@ -280,6 +288,7 @@ export default function SubirCursoPage() {
             if (borrador.mostrarConstancia !== undefined) setMostrarConstancia(borrador.mostrarConstancia);
             if (borrador.mostrarCalificacionConstancia !== undefined) setMostrarCalificacionConstancia(borrador.mostrarCalificacionConstancia);
             if (borrador.mostrarRevisionExamen !== undefined) setMostrarRevisionExamen(borrador.mostrarRevisionExamen);
+            if (borrador.mostrarLogoConstancia !== undefined) setMostrarLogoConstancia(borrador.mostrarLogoConstancia);
             if (borrador.modulos !== undefined) {
                 setModulos(borrador.modulos.map((m: any) => ({
                     titulo: m.titulo || '',
@@ -823,6 +832,26 @@ export default function SubirCursoPage() {
             ? `${profileRow?.nombre || ''}`.trim() 
             : `${profileRow?.nombre || ''} ${profileRow?.apellido_paterno || ''} ${profileRow?.apellido_materno || ''}`.trim()) || user.email;
 
+        let logoUrl = null;
+        if (archivoLogo) {
+            setMensaje('Subiendo logotipo de la organización...')
+            const fileExt = archivoLogo.name.split('.').pop()
+            const fileName = `logo_curso_${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
+            const { error: uploadError } = await supabase.storage
+                .from('cursos_contenido')
+                .upload(fileName, archivoLogo, { contentType: archivoLogo.type })
+            if (uploadError) {
+                setModalMessage({
+                    title: 'Error de Logotipo',
+                    content: `Error subiendo el logotipo de la organización: ${uploadError.message}`,
+                    type: 'error'
+                });
+                setLoading(false);
+                return;
+            }
+            logoUrl = supabase.storage.from('cursos_contenido').getPublicUrl(fileName).data.publicUrl
+        }
+
         const cursoDraftObj: any = {
             ...formData,
             instructor: instructorNombre,
@@ -843,7 +872,9 @@ export default function SubirCursoPage() {
             mostrar_constancia: mostrarConstancia,
             mostrar_calificacion_constancia: mostrarCalificacionConstancia,
             mostrar_revision_examen: mostrarRevisionExamen,
-            limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null
+            limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null,
+            logo_url: logoUrl,
+            mostrar_logo_constancia: mostrarLogoConstancia
         }
 
         const { data: cursoGuardado, error: errorCurso } = await supabase.from('ie_cursos').insert(cursoDraftObj).select().single()
@@ -1329,19 +1360,69 @@ export default function SubirCursoPage() {
                                         </div>
                                     )}
 
-                                    {profile?.rol !== 'capacitador' && (
-                                        <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-start gap-3">
-                                            <input
-                                                type="checkbox"
-                                                id="requierePagoCompleto"
-                                                checked={requierePagoCompleto}
-                                                onChange={(e) => setRequierePagoCompleto(e.target.checked)}
-                                                className="h-4 w-4 mt-1 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-                                            />
-                                            <label htmlFor="requierePagoCompleto" className="cursor-pointer">
-                                                <span className="block text-sm font-semibold text-orange-950">Pago Completo Obligatorio</span>
-                                                <span className="block text-[11px] text-orange-700 mt-0.5">Los alumnos que usen cupones deberán pagar la diferencia restante para poder obtener la constancia.</span>
-                                            </label>
+                                    {profile?.rol === 'institucion' && (
+                                        <div className="col-span-full pt-4 border-t border-gray-100 space-y-4">
+                                            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Logotipo de la Organización (Constancia)</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="flex flex-col gap-2">
+                                                    <label className="block text-sm font-semibold text-gray-700">Subir Logotipo</label>
+                                                    <div className="flex items-center gap-4">
+                                                        {logoPreviewUrl ? (
+                                                            <div className="relative w-24 h-24 border border-gray-300 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center p-2">
+                                                                <img src={logoPreviewUrl} alt="Vista previa del logo" className="max-w-full max-h-full object-contain" />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setArchivoLogo(null);
+                                                                        setLogoPreviewUrl(null);
+                                                                    }}
+                                                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div
+                                                                className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition"
+                                                                onClick={() => document.getElementById('logo-upload-input')?.click()}
+                                                            >
+                                                                <Plus className="w-6 h-6 text-gray-400" />
+                                                                <span className="text-[10px] text-gray-500 font-semibold mt-1">Subir Logo</span>
+                                                            </div>
+                                                        )}
+                                                        <input
+                                                            id="logo-upload-input"
+                                                            type="file"
+                                                            accept="image/png, image/jpeg, image/webp"
+                                                            className="hidden"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    setArchivoLogo(file);
+                                                                    setLogoPreviewUrl(URL.createObjectURL(file));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <div className="text-xs text-gray-500 max-w-xs leading-relaxed">
+                                                            Soporta archivos PNG, JPG o WEBP. Recomendado: fondo transparente y formato horizontal o cuadrado.
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3 self-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="mostrarLogoConstancia"
+                                                        checked={mostrarLogoConstancia}
+                                                        onChange={(e) => setMostrarLogoConstancia(e.target.checked)}
+                                                        className="h-4 w-4 mt-1 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                    />
+                                                    <label htmlFor="mostrarLogoConstancia" className="cursor-pointer">
+                                                        <span className="block text-sm font-semibold text-blue-950">Incluir logotipo en la Constancia</span>
+                                                        <span className="block text-[11px] text-blue-700 mt-0.5">Si se activa, el logotipo de la organización se imprimirá en el lateral izquierdo de las constancias de los alumnos.</span>
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 

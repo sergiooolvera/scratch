@@ -408,6 +408,8 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                                         qrUrl={qrValue}
                                         calificacion={examen?.calificacion !== undefined && examen?.calificacion !== null ? (Number(examen.calificacion) / 10).toFixed(1) : ''}
                                         mostrarCalificacionConstancia={curso?.mostrar_calificacion_constancia}
+                                        logoUrl={curso?.logo_url}
+                                        mostrarLogoConstancia={curso?.mostrar_logo_constancia}
                                         documentRef={constanciaRef as any}
                                     />
                                 ) : (
