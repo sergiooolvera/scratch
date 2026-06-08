@@ -83,9 +83,9 @@ export default function CertificadoModelo3({
                 </div>
 
                 {/* Right: Custom Institution Logo or Placeholder */}
-                <div className="w-[140px] flex items-center justify-end">
+                <div className="w-[140px] flex items-center justify-center">
                     {mostrarLogoConstancia && logoUrl ? (
-                        <div className="h-[75px] w-full flex items-center justify-end overflow-hidden p-1 border border-gray-100 rounded bg-gray-50/50">
+                        <div className="h-[75px] w-full bg-white flex items-center justify-center p-1.5 rounded border border-gray-200 shadow-sm">
                             <img src={logoUrl} alt="Logo Institución" className="max-h-full max-w-full object-contain" />
                         </div>
                     ) : (

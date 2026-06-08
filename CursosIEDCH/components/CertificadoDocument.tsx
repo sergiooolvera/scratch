@@ -69,7 +69,7 @@ export default function CertificadoDocument({
                 
                 {/* Institution Custom Logo */}
                 {mostrarLogoConstancia && logoUrl && (
-                    <div className="w-[140px] h-[90px] flex items-center justify-center overflow-hidden my-4 bg-white/10 rounded p-2">
+                    <div className="w-[140px] h-[80px] flex items-center justify-center overflow-hidden my-4 bg-white rounded-xl p-2 shadow-sm border border-white/20">
                         <img src={logoUrl} alt="Logo Institución" className="max-w-full max-h-full object-contain" />
                     </div>
                 )}

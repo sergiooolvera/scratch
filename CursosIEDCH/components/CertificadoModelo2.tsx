@@ -46,21 +46,19 @@ export default function CertificadoModelo2({
             <div className="absolute left-[100px] top-0 bottom-0 w-[4px] bg-black z-[5]"></div>
 
             {/* Top Navy Blue Header Bar */}
-            <div className="absolute z-[15] bg-[#002060] flex items-center justify-start px-12" style={{ top: '35px', left: '-2px', right: '-2px', height: '77px' }}>
+            <div className="absolute z-[15] bg-[#002060] flex items-center justify-between px-12" style={{ top: '35px', left: '-2px', right: '-2px', height: '77px' }}>
                 <div className="flex items-center gap-5">
                     <img src="/logoegac.jpg" alt="Logo EGAC" className="h-[52px] object-contain rounded bg-white p-0.5" />
                     <p className="text-[16px] font-bold leading-tight uppercase tracking-wider text-white font-sans">
                         Ecosistema Global de Acreditación y Certificación
                     </p>
                 </div>
+                {mostrarLogoConstancia && logoUrl && (
+                    <div className="h-[52px] w-[120px] bg-white flex items-center justify-center p-1 rounded shadow-sm">
+                        <img src={logoUrl} alt="Logo Institución" className="max-w-full max-h-full object-contain" />
+                    </div>
+                )}
             </div>
-
-            {/* Institution Custom Logo (Top Right Overlay) */}
-            {mostrarLogoConstancia && logoUrl && (
-                <div className="absolute z-[25] top-[45px] right-[40px] w-[140px] h-[75px] bg-white flex items-center justify-center p-1.5 rounded shadow-sm border border-gray-200">
-                    <img src={logoUrl} alt="Logo Institución" className="max-w-full max-h-full object-contain" />
-                </div>
-            )}
 
             {/* Bottom Left Circles */}
             <div className="absolute bottom-[40px] left-[50px] z-20">
