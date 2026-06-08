@@ -133,6 +133,7 @@ export default function SubirCursoPage() {
     const [archivoLogo, setArchivoLogo] = useState<File | null>(null)
     const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
     const [mostrarLogoConstancia, setMostrarLogoConstancia] = useState(false)
+    const [plantillaConstancia, setPlantillaConstancia] = useState('modelo1')
 
     // Check for draft on mount
     useEffect(() => {
@@ -168,6 +169,7 @@ export default function SubirCursoPage() {
             mostrarCalificacionConstancia,
             mostrarRevisionExamen,
             mostrarLogoConstancia,
+            plantillaConstancia,
             modulos: modulos.map(m => ({
                 titulo: m.titulo,
                 requiereExamen: m.requiereExamen,
@@ -209,6 +211,7 @@ export default function SubirCursoPage() {
         mostrarConstancia,
         mostrarCalificacionConstancia,
         mostrarLogoConstancia,
+        plantillaConstancia,
         modulos
     ]);
 
@@ -234,6 +237,7 @@ export default function SubirCursoPage() {
                 mostrarCalificacionConstancia,
                 mostrarRevisionExamen,
                 mostrarLogoConstancia,
+                plantillaConstancia,
                 modulos: modulos.map(m => ({
                     titulo: m.titulo,
                     requiereExamen: m.requiereExamen,
@@ -289,6 +293,7 @@ export default function SubirCursoPage() {
             if (borrador.mostrarCalificacionConstancia !== undefined) setMostrarCalificacionConstancia(borrador.mostrarCalificacionConstancia);
             if (borrador.mostrarRevisionExamen !== undefined) setMostrarRevisionExamen(borrador.mostrarRevisionExamen);
             if (borrador.mostrarLogoConstancia !== undefined) setMostrarLogoConstancia(borrador.mostrarLogoConstancia);
+            if (borrador.plantillaConstancia !== undefined) setPlantillaConstancia(borrador.plantillaConstancia);
             if (borrador.modulos !== undefined) {
                 setModulos(borrador.modulos.map((m: any) => ({
                     titulo: m.titulo || '',
@@ -874,7 +879,8 @@ export default function SubirCursoPage() {
             mostrar_revision_examen: mostrarRevisionExamen,
             limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null,
             logo_url: logoUrl,
-            mostrar_logo_constancia: mostrarLogoConstancia
+            mostrar_logo_constancia: mostrarLogoConstancia,
+            plantilla_constancia: plantillaConstancia
         }
 
         const { data: cursoGuardado, error: errorCurso } = await supabase.from('ie_cursos').insert(cursoDraftObj).select().single()
@@ -1341,6 +1347,22 @@ export default function SubirCursoPage() {
                                             </div>
                                         </div>
                                     )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Plantilla de Constancia</label>
+                                        <select
+                                            value={plantillaConstancia}
+                                            onChange={(e) => setPlantillaConstancia(e.target.value)}
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                        >
+                                            <option value="modelo1">Plantilla 1: Lateral Azul Marino (Actual)</option>
+                                            <option value="modelo2">Plantilla 2: Encabezado y Círculos (Tradicional)</option>
+                                            <option value="modelo3">Plantilla 3: Centralizada y Bordes Elegantes (Nueva)</option>
+                                        </select>
+                                        <p className="text-[10px] text-gray-500 mt-1 italic">Elige el estilo visual con el que se generará el certificado de los alumnos al acreditar el curso.</p>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">

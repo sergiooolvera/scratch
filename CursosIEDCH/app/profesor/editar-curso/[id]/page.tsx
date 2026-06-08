@@ -74,6 +74,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
     const [logoUrl, setLogoUrl] = useState<string | null>(null)
     const [mostrarLogoConstancia, setMostrarLogoConstancia] = useState(false)
+    const [plantillaConstancia, setPlantillaConstancia] = useState('modelo1')
     
     // Modules state
     const [modulos, setModulos] = useState<Modulo[]>([])
@@ -160,6 +161,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 mostrar_revision_examen: mostrarRevisionExamen,
                 logo_url: logoUrl,
                 mostrar_logo_constancia: mostrarLogoConstancia,
+                plantilla_constancia: plantillaConstancia,
                 modulos: modulos.map((m, idx) => ({
                     id: m.id,
                     titulo: m.titulo,
@@ -347,6 +349,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setLogoUrl(lUrl)
                 setLogoPreviewUrl(lUrl)
                 setMostrarLogoConstancia(borrador.mostrar_logo_constancia !== undefined ? borrador.mostrar_logo_constancia : (curso.mostrar_logo_constancia !== undefined ? curso.mostrar_logo_constancia : false))
+                setPlantillaConstancia(borrador.plantilla_constancia !== undefined ? borrador.plantilla_constancia : (curso.plantilla_constancia !== undefined ? curso.plantilla_constancia : 'modelo1'))
                 
                 if (borrador.modulos) {
                     setModulos(borrador.modulos.map((m: any) => {
@@ -476,6 +479,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             setLogoUrl(curso.logo_url)
             setLogoPreviewUrl(curso.logo_url)
             setMostrarLogoConstancia(curso.mostrar_logo_constancia !== undefined ? curso.mostrar_logo_constancia : false)
+            setPlantillaConstancia(curso.plantilla_constancia !== undefined ? curso.plantilla_constancia : 'modelo1')
 
             // Módulos
             const { data: mods } = await supabase
@@ -1174,6 +1178,9 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 mostrar_constancia: mostrarConstancia,
                 mostrar_calificacion_constancia: mostrarCalificacionConstancia,
                 mostrar_revision_examen: mostrarRevisionExamen,
+                logo_url: logoUrl,
+                mostrar_logo_constancia: mostrarLogoConstancia,
+                plantilla_constancia: plantillaConstancia,
                 modulos: modulosFinales.map(m => ({
                     id: m.id,
                     titulo: m.titulo,
@@ -1263,6 +1270,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     url_contenido: firstUrlContenido,
                     logo_url: logoUrl,
                     mostrar_logo_constancia: mostrarLogoConstancia,
+                    plantilla_constancia: plantillaConstancia,
                     cambios_pendientes: null, // Clear draft upon official publication
                     estado: 'pendiente'
                 })
@@ -1868,6 +1876,24 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                             </div>
                                         </div>
                                     )}
+
+                                    <div className="col-span-full pt-4 border-t border-gray-100 space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Plantilla de Constancia</label>
+                                                <select
+                                                    value={plantillaConstancia}
+                                                    onChange={(e) => setPlantillaConstancia(e.target.value)}
+                                                    className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                                >
+                                                    <option value="modelo1">Plantilla 1: Lateral Azul Marino (Actual)</option>
+                                                    <option value="modelo2">Plantilla 2: Encabezado y Círculos (Tradicional)</option>
+                                                    <option value="modelo3">Plantilla 3: Centralizada y Bordes Elegantes (Nueva)</option>
+                                                </select>
+                                                <p className="text-[10px] text-gray-500 mt-1 italic">Elige el estilo visual con el que se generará el certificado de los alumnos al acreditar el curso.</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
                                         <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Reglas de Avance del Curso</h3>

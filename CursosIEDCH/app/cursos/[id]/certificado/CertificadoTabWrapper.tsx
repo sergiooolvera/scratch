@@ -4,6 +4,8 @@ import { useState, useRef } from 'react'
 import jsPDF from 'jspdf'
 import { Download, BadgeCheck } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
+import CertificadoModelo2 from '@/components/CertificadoModelo2'
+import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import MicrocredencialDocument from '@/components/MicrocredencialDocument'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 
@@ -21,6 +23,7 @@ interface CertificadoTabWrapperProps {
     mostrarCalificacionConstancia?: boolean;
     logoUrl?: string | null;
     mostrarLogoConstancia?: boolean;
+    plantillaConstancia?: string;
 }
 
 export default function CertificadoTabWrapper({
@@ -36,7 +39,8 @@ export default function CertificadoTabWrapper({
     calificacion = '',
     mostrarCalificacionConstancia = true,
     logoUrl = null,
-    mostrarLogoConstancia = false
+    mostrarLogoConstancia = false,
+    plantillaConstancia = 'modelo1'
 }: CertificadoTabWrapperProps) {
     const [activeTab, setActiveTab] = useState<'constancia' | 'microcredencial'>('constancia')
     const constanciaRef = useRef<HTMLDivElement>(null)
@@ -169,21 +173,30 @@ export default function CertificadoTabWrapper({
 
             {activeTab === 'constancia' ? (
                 <ResponsiveCertificateWrapper width={1056} height={816}>
-                    <CertificadoDocument
-                        documentRef={constanciaRef}
-                        alumnoNombre={alumnoNombre}
-                        cursoTitulo={cursoTitulo}
-                        cursoDuracion={cursoDuracion}
-                        fechaAprobacion={fechaAprobacion}
-                        folio={folio}
-                        vigenciaStr={vigenciaStr}
-                        qrUrl={qrValue}
-                        calificacion={calificacion}
-                        mostrarCalificacionConstancia={mostrarCalificacionConstancia}
-                        logoUrl={logoUrl}
-                        mostrarLogoConstancia={mostrarLogoConstancia}
-                        className="shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
-                    />
+                    {(() => {
+                        const props = {
+                            documentRef: constanciaRef,
+                            alumnoNombre,
+                            cursoTitulo,
+                            cursoDuracion,
+                            fechaAprobacion,
+                            folio,
+                            vigenciaStr,
+                            qrUrl: qrValue,
+                            calificacion,
+                            mostrarCalificacionConstancia,
+                            logoUrl,
+                            mostrarLogoConstancia,
+                            className: "shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)]"
+                        };
+                        if (plantillaConstancia === 'modelo2') {
+                            return <CertificadoModelo2 {...props} />
+                        }
+                        if (plantillaConstancia === 'modelo3') {
+                            return <CertificadoModelo3 {...props} />
+                        }
+                        return <CertificadoDocument {...props} />
+                    })()}
                 </ResponsiveCertificateWrapper>
             ) : (
                 <ResponsiveCertificateWrapper width={816} height={1056}>

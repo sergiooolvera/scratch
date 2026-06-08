@@ -7,6 +7,8 @@ import jsPDF from 'jspdf'
 import { Download, ChevronLeft, Lock, BadgeCheck, CreditCard, Banknote, UploadCloud } from 'lucide-react'
 import Link from 'next/link'
 import CertificadoDocument from '@/components/CertificadoDocument'
+import CertificadoModelo2 from '@/components/CertificadoModelo2'
+import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import MicrocredencialDocument from '@/components/MicrocredencialDocument'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 
@@ -398,20 +400,29 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                                 height={activeTab === 'constancia' ? 816 : 1056}
                             >
                                 {activeTab === 'constancia' ? (
-                                    <CertificadoDocument
-                                        alumnoNombre={alumnoNombreCompleto}
-                                        cursoTitulo={curso?.titulo || 'Nombre del Curso'}
-                                        cursoDuracion={curso?.duracion}
-                                        fechaAprobacion={fechaAp}
-                                        folio={String(examen?.id).toUpperCase() || '112233445'}
-                                        vigenciaStr={`${vigStr} (${vigAnos} ${vigAnos === 1 ? 'año' : 'años'})`}
-                                        qrUrl={qrValue}
-                                        calificacion={examen?.calificacion !== undefined && examen?.calificacion !== null ? (Number(examen.calificacion) / 10).toFixed(1) : ''}
-                                        mostrarCalificacionConstancia={curso?.mostrar_calificacion_constancia}
-                                        logoUrl={curso?.logo_url}
-                                        mostrarLogoConstancia={curso?.mostrar_logo_constancia}
-                                        documentRef={constanciaRef as any}
-                                    />
+                                    (() => {
+                                        const props = {
+                                            alumnoNombre: alumnoNombreCompleto,
+                                            cursoTitulo: curso?.titulo || 'Nombre del Curso',
+                                            cursoDuracion: curso?.duracion,
+                                            fechaAprobacion: fechaAp,
+                                            folio: String(examen?.id).toUpperCase() || '112233445',
+                                            vigenciaStr: `${vigStr} (${vigAnos} ${vigAnos === 1 ? 'año' : 'años'})`,
+                                            qrUrl: qrValue,
+                                            calificacion: examen?.calificacion !== undefined && examen?.calificacion !== null ? (Number(examen.calificacion) / 10).toFixed(1) : '',
+                                            mostrarCalificacionConstancia: curso?.mostrar_calificacion_constancia,
+                                            logoUrl: curso?.logo_url,
+                                            mostrarLogoConstancia: curso?.mostrar_logo_constancia,
+                                            documentRef: constanciaRef as any
+                                        };
+                                        if (curso?.plantilla_constancia === 'modelo2') {
+                                            return <CertificadoModelo2 {...props} />
+                                        }
+                                        if (curso?.plantilla_constancia === 'modelo3') {
+                                            return <CertificadoModelo3 {...props} />
+                                        }
+                                        return <CertificadoDocument {...props} />
+                                    })()
                                 ) : (
                                     <MicrocredencialDocument
                                         alumnoNombre={alumnoNombreCompleto}

@@ -16,7 +16,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia, mostrar_calificacion_constancia, logo_url, mostrar_logo_constancia').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia, mostrar_calificacion_constancia, logo_url, mostrar_logo_constancia, plantilla_constancia').eq('id', id).single()
     if (!curso) notFound()
 
     if (curso.mostrar_constancia === false) {
@@ -169,6 +169,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                         mostrarCalificacionConstancia={curso.mostrar_calificacion_constancia}
                         logoUrl={curso.logo_url}
                         mostrarLogoConstancia={curso.mostrar_logo_constancia}
+                        plantillaConstancia={curso.plantilla_constancia || 'modelo1'}
                     />
                 )}
 
