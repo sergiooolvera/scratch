@@ -387,17 +387,6 @@ export default function PerfilPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Teléfono de Contacto</label>
-                                        <input 
-                                            type="tel" 
-                                            required
-                                            value={telefono} 
-                                            onChange={(e) => setTelefono(e.target.value)}
-                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                            placeholder="Ej. 961 123 4567"
-                                        />
-                                    </div>
-                                    <div>
                                         <label className="block text-sm font-bold text-gray-700 mb-1">Logotipo (Imagen)</label>
                                         {fotografiaPerfil && (
                                             <div className="mb-3 flex items-center gap-3 p-3 bg-gray-50 border border-gray-150 rounded-xl">
@@ -536,7 +525,7 @@ export default function PerfilPage() {
                             </div>
                         )}
 
-                        {(rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador') && (
+                        {(rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador' || rol === 'institucion') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Validación de Identidad</h2>
@@ -574,14 +563,14 @@ export default function PerfilPage() {
                             </div>
                         )}
 
-                        {(rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador') && (
+                        {(rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador' || rol === 'institucion') && (
                             <div className="pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-lg font-bold text-gray-800">Datos de Contacto y Pago</h2>
                                     <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Obligatorio</span>
                                 </div>
                                 <p className="text-sm text-gray-500 mb-5 leading-relaxed">
-                                    Como instructor o vendedor, estos datos son obligatorios para poder gestionar cursos y recibir tus comisiones. 
+                                    Como instructor, vendedor o institución, estos datos son obligatorios para poder gestionar cursos y recibir tus comisiones. 
                                     {datosBancariosCapturados && !solicitudCambioDatos && " Por seguridad, estos datos están bloqueados tras su captura."}
                                 </p>
                                 
@@ -603,7 +592,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">Banco</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador'}
+                                                required={rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador' || rol === 'institucion'}
                                                 value={banco} 
                                                 onChange={(e) => setBanco(e.target.value)}
                                                 disabled={datosBancariosCapturados}
@@ -615,7 +604,7 @@ export default function PerfilPage() {
                                             <label className="block text-sm font-bold text-gray-700 mb-1">CLABE Interbancaria</label>
                                             <input 
                                                 type="text" 
-                                                required={rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador'}
+                                                required={rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador' || rol === 'institucion'}
                                                 value={clabe} 
                                                 onChange={(e) => setClabe(e.target.value)}
                                                 disabled={datosBancariosCapturados}

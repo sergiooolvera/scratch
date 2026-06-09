@@ -25,7 +25,7 @@ export default function AdminValidacionesPage() {
             const result = await res.json()
             if (res.ok) {
                 const filtered = (result.data || []).filter((p: any) => 
-                    ['instructor', 'vendedor', 'capacitador'].includes(p.rol)
+                    ['instructor', 'vendedor', 'capacitador', 'institucion'].includes(p.rol)
                 )
                 // Pendientes de validar primero
                 filtered.sort((a: any, b: any) => {
