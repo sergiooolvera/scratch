@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -548,6 +548,22 @@ export default function SubirCursoPage() {
             if (value === 'video') nuevosModulos[moduloIdx].recursos[recursoIdx].archivoPdf = null
             if (value === 'pdf' || value === 'html' || value === 'ppt') nuevosModulos[moduloIdx].recursos[recursoIdx].url_contenido = ''
         }
+        setModulos(nuevosModulos)
+    }
+
+    const handleMoverRecurso = (moduloIdx: number, recursoIdx: number, direccion: 'subir' | 'bajar') => {
+        const nuevosModulos = [...modulos]
+        const recursos = [...nuevosModulos[moduloIdx].recursos]
+        if (direccion === 'subir' && recursoIdx > 0) {
+            const temp = recursos[recursoIdx]
+            recursos[recursoIdx] = recursos[recursoIdx - 1]
+            recursos[recursoIdx - 1] = temp
+        } else if (direccion === 'bajar' && recursoIdx < recursos.length - 1) {
+            const temp = recursos[recursoIdx]
+            recursos[recursoIdx] = recursos[recursoIdx + 1]
+            recursos[recursoIdx + 1] = temp
+        }
+        nuevosModulos[moduloIdx].recursos = recursos
         setModulos(nuevosModulos)
     }
 
@@ -1712,14 +1728,36 @@ export default function SubirCursoPage() {
                                                     <div className="space-y-3">
                                                         {modulo.recursos.map((recurso, rIdx) => (
                                                             <div key={rIdx} className="bg-zinc-50 border border-zinc-200/80 rounded-xl p-4 relative shadow-sm hover:shadow transition">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleEliminarRecurso(index, rIdx)}
-                                                                    className="absolute top-3 right-3 text-zinc-400 hover:text-red-500 transition"
-                                                                    title="Eliminar recurso"
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </button>
+                                                                <div className="absolute top-3 right-3 flex items-center gap-2">
+                                                                    {rIdx > 0 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleMoverRecurso(index, rIdx, 'subir')}
+                                                                            className="text-zinc-400 hover:text-blue-600 transition"
+                                                                            title="Subir recurso"
+                                                                        >
+                                                                            <ArrowUp className="h-4 w-4" />
+                                                                        </button>
+                                                                    )}
+                                                                    {rIdx < modulo.recursos.length - 1 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleMoverRecurso(index, rIdx, 'bajar')}
+                                                                            className="text-zinc-400 hover:text-blue-600 transition"
+                                                                            title="Bajar recurso"
+                                                                        >
+                                                                            <ArrowDown className="h-4 w-4" />
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleEliminarRecurso(index, rIdx)}
+                                                                        className="text-zinc-400 hover:text-red-500 transition"
+                                                                        title="Eliminar recurso"
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </button>
+                                                                </div>
 
                                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                     <div>
