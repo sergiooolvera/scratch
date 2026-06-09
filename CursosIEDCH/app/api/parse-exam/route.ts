@@ -118,7 +118,8 @@ export async function POST(req: Request) {
 
             for (const line of lines) {
                 // ¿Es línea de respuesta? Formato: (Texto LETRA) ej. (Hipótesis B) o (Respuesta Libre)
-                const answerMatch = line.match(/^\((.+)\)$/);
+                // También acepta sin paréntesis de cierre: (Reconocer B  ← error tipográfico en PDF
+                const answerMatch = line.match(/^\((.+)\)$/) || line.match(/^\((.+[A-D])\s*$/);
                 if (answerMatch) {
                     const inner = answerMatch[1].trim();
                     const isLibre = inner.toLowerCase().includes('respuesta libre') || inner.toLowerCase().includes('respuestalibre');

@@ -699,6 +699,44 @@ export default function SubirCursoPage() {
             return
         }
 
+        // Validate general course fields
+        if (!formData.titulo?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor escribe el título del curso.',
+                type: 'error'
+            });
+            setLoading(false)
+            return
+        }
+        if (!formData.descripcion?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor escribe la descripción del curso.',
+                type: 'error'
+            });
+            setLoading(false)
+            return
+        }
+        if (!formData.beneficios?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor especifica los beneficios del curso.',
+                type: 'error'
+            });
+            setLoading(false)
+            return
+        }
+        if (!formData.duracion?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor especifica la duración del curso.',
+                type: 'error'
+            });
+            setLoading(false)
+            return
+        }
+
         // Validate modules
         if (modulos.length === 0) {
             setModalMessage({
@@ -995,7 +1033,14 @@ export default function SubirCursoPage() {
                         descargable: rec.descargable || false
                     });
                 if (errorRecurso) {
-                    console.error('Error insertando recurso en DB:', errorRecurso);
+                    console.error('Error insertando recurso en DB:', JSON.stringify(errorRecurso), errorRecurso);
+                    setModalMessage({
+                        title: 'Error de Base de Datos',
+                        content: `Error al guardar el recurso "${rec.titulo}": ${errorRecurso.message || JSON.stringify(errorRecurso)}`,
+                        type: 'error'
+                    });
+                    setLoading(false);
+                    return;
                 }
 
                 // Vincular y marcar la generación de Gamma como utilizada
@@ -1234,10 +1279,8 @@ export default function SubirCursoPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-8">
-                    
-                    {/* Tab 1: Info General */}
-                    {activeTab === 'info' && (
+                <form onSubmit={handleSubmit} noValidate className="space-y-8">
+                    <div className={activeTab === 'info' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">1. Información Básica del Curso</h2>
@@ -1630,10 +1673,10 @@ export default function SubirCursoPage() {
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Tab 2: Temario y Clases (Módulos & Múltiples Recursos & Exámenes Modulares) */}
-                    {activeTab === 'modulos' && (
+                    <div className={activeTab === 'modulos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">2. Temario del Curso (Módulos)</h2>
@@ -1766,7 +1809,7 @@ export default function SubirCursoPage() {
                                                                             type="text"
                                                                             required
                                                                             placeholder="Ej. Diapositivas de la clase o Lectura obligatoria"
-                                                                            value={recurso.titulo}
+                                                                            value={recurso.titulo || ''}
                                                                             onChange={(e) => handleRecursoChange(index, rIdx, 'titulo', e.target.value)}
                                                                             className="w-full text-xs rounded border-gray-300 p-2 border bg-white text-black font-medium"
                                                                         />
@@ -1797,7 +1840,7 @@ export default function SubirCursoPage() {
                                                                                     type="url"
                                                                                     required
                                                                                     placeholder="https://www.youtube.com/watch?v=..."
-                                                                                    value={recurso.url_contenido}
+                                                                                    value={recurso.url_contenido || ''}
                                                                                     onChange={(e) => handleRecursoChange(index, rIdx, 'url_contenido', e.target.value)}
                                                                                     className="w-full text-xs rounded border-gray-300 p-2 border bg-white text-black"
                                                                                 />
@@ -2070,10 +2113,10 @@ export default function SubirCursoPage() {
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Tab 3: Examen Final */}
-                    {activeTab === 'examen' && (
+                    <div className={activeTab === 'examen' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">3. Evaluación (Examen Final del Curso)</h2>
@@ -2294,10 +2337,10 @@ export default function SubirCursoPage() {
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Tab 4: Avisos e Historial (Clases en vivo y notas) */}
-                    {activeTab === 'avisos' && (
+                    <div className={activeTab === 'avisos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">4. Clase en Vivo / Enlace e Indicaciones</h2>
@@ -2359,7 +2402,7 @@ export default function SubirCursoPage() {
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </form>
             </div>
 

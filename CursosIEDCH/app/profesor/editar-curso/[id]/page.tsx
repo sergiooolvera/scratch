@@ -958,6 +958,44 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             return
         }
 
+        // Validate general course fields
+        if (!formData.titulo?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor escribe el título del curso.',
+                type: 'error'
+            });
+            setSaving(false)
+            return
+        }
+        if (!formData.descripcion?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor escribe la descripción del curso.',
+                type: 'error'
+            });
+            setSaving(false)
+            return
+        }
+        if (!formData.beneficios?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor especifica los beneficios del curso.',
+                type: 'error'
+            });
+            setSaving(false)
+            return
+        }
+        if (!formData.duracion?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor especifica la duración del curso.',
+                type: 'error'
+            });
+            setSaving(false)
+            return
+        }
+
         // Validaciones
         if (modulos.length === 0) {
             setModalMessage({
@@ -1361,13 +1399,16 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             idsInsertados.push(rec.id);
                         } else {
                             // Recurso nuevo → insertar
-                            const { data: newRec } = await supabase.from('ie_modulo_recursos').insert({
+                            const { data: newRec, error: errorInsert } = await supabase.from('ie_modulo_recursos').insert({
                                 modulo_id: moduloId,
                                 titulo: rec.titulo,
                                 url_contenido: rec.url_contenido,
                                 orden: rIdx + 1,
                                 descargable: rec.descargable || false
                             }).select('id').single();
+                            if (errorInsert) {
+                                console.error('Error insertando nuevo recurso:', JSON.stringify(errorInsert), errorInsert);
+                            }
                             if (newRec?.id) idsInsertados.push(newRec.id);
                         }
 
@@ -1648,10 +1689,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-8">
-                    
-                    {/* Tab 1: Info General */}
-                    {activeTab === 'info' && (
+                <form onSubmit={handleSubmit} noValidate className="space-y-8">
+                    <div className={activeTab === 'info' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">1. Información Básica del Curso</h2>
@@ -2088,10 +2127,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Tab 2: Temario y Clases (Módulos & PPT/Modular Exams) */}
-                    {activeTab === 'modulos' && (
+                    <div className={activeTab === 'modulos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">2. Temario del Curso (Módulos)</h2>
@@ -2564,10 +2603,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Tab 3: Examen Final */}
-                    {activeTab === 'examen' && (
+                    <div className={activeTab === 'examen' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">3. Configuración del Examen Final del Curso</h2>
@@ -2832,10 +2871,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Tab 4: Avisos e Historial */}
-                    {activeTab === 'avisos' && (
+                    <div className={activeTab === 'avisos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">4. Avisos, Videoconferencias e Historial de Cambios</h2>
@@ -2926,7 +2965,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                 </div>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </form>
             </div>
 

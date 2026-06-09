@@ -189,7 +189,9 @@ export async function POST(req: Request) {
                         }
 
                         // Insertar preguntas reactivas modulares en ie_preguntas
-                        if (examenId && !examenesConResultados.has(examenId) && m.examen.preguntas && m.examen.preguntas.length > 0) {
+                        // Siempre actualizar las preguntas, incluso si hay resultados de alumnos.
+                        // Los resultados históricos se conservan; solo cambiamos las preguntas para nuevos intentos.
+                        if (examenId && m.examen.preguntas && m.examen.preguntas.length > 0) {
                             await supabaseAdmin.from('ie_preguntas').delete().eq('examen_id', examenId)
                             const pregsModularParaInsertar = m.examen.preguntas.map((p: any) => {
                                 const isLibre = p.tipo_pregunta === 'respuesta_libre';
