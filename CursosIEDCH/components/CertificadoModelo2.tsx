@@ -133,13 +133,13 @@ export default function CertificadoModelo2({
                     </div>
                     <div className="border-t border-black pt-1.5">
                         <p className="font-sans font-bold text-black text-[12px] tracking-wider leading-tight">
-                            D. EN E. Irvin Rodolfo Tapia Bernabé
+                            Lic. Juan Manuel De la luz Sierra
                         </p>
                         <p className="text-[12px] font-semibold text-black font-sans leading-tight mt-0.5">
-                            Director Académico del IEDCH
+                            Director General
                         </p>
                         <p className="text-[9px] mt-0.5 font-sans text-black leading-tight">
-                            Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C.
+                            Instituto Educativo de Especialdiades para la Conducta y el Desarrollo Humano S.C.
                         </p>
                     </div>
                 </div>

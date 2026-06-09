@@ -119,13 +119,13 @@ export default function ActividadConstanciaDocument({
                     </div>
                     <div className="border-t-2 border-black pt-2">
                         <p className="font-serif font-bold text-black uppercase text-[12px] tracking-widest leading-loose whitespace-nowrap">
-                            L.C.P Sergio de Jesus Olvera Narcía
+                            Lic. Juan Manuel De la luz Sierra
                         </p>
                         <p className="text-[14px] font-sans text-black font-semibold">
                             Director General
                         </p>
                         <p className="text-[12px] italic mt-0.5 font-serif text-black leading-tight">
-                            Instituto Educativo de Especialidades para la Capacitación Nacional
+                            Instituto Educativo de Especialdiades para la Conducta y el Desarrollo Humano S.C.
                         </p>
                     </div>
                 </div>

@@ -199,10 +199,10 @@ export default function MicrocredencialDocument({
                         </div>
                         <div className="border-t border-black w-full pt-1.5 mt-1">
                             <p className="text-[10px] font-bold text-slate-900 uppercase tracking-widest leading-none">
-                                DIRECTOR ACADÉMICO
+                                DIRECTOR GENERAL
                             </p>
                             <p className="text-[10.5px] font-bold text-slate-900 uppercase tracking-wide mt-1.5 leading-none">
-                                D. EN E. IRVIN RODOLFO TAPIA BERNABÉ
+                                LIC. JUAN MANUEL DE LA LUZ SIERRA
                             </p>
                         </div>
                     </div>
