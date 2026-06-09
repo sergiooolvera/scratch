@@ -68,6 +68,8 @@ export default function ActividadConstanciaDocument({
                     <span className="font-normal normal-case">a través del Ecosistema Global de Acreditación y Certificación.</span>
                 </p>
 
+                <p className="mt-2 text-[14px] text-black font-sans tracking-wide">Otorga la siguiente</p>
+
                 {/* CONSTANCIA */}
                 <h1 className="mt-4 text-[60px] font-normal tracking-wide text-black">
                     CONSTANCIA

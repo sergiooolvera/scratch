@@ -75,6 +75,8 @@ export default function CertificadoModelo2({
                     <span className="font-normal normal-case text-[14px]">a través del Ecosistema Global de Acreditación y Certificación.</span>
                 </p>
 
+                <p className="mt-2 text-[14px] text-black font-sans tracking-wide">Otorga la siguiente</p>
+
                 {/* CONSTANCIA */}
                 <h1 className="mt-2 text-[56px] font-normal tracking-wide text-black">
                     CONSTANCIA
