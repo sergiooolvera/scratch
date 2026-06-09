@@ -102,6 +102,11 @@ export async function GET(req: Request) {
                 } else {
                     syncedCount++;
                 }
+            } else {
+                // Si ya existe, nos aseguramos de actualizar el monto pagado y el estado de pago completo
+                await supabaseAdmin.from('ie_compras')
+                    .update({ pago_completo: pagoCompleto, monto_pagado: montoPagado })
+                    .eq('id', existe.id);
             }
         }
 
