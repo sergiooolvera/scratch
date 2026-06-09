@@ -86,8 +86,6 @@ export default function ProfesorVentasPage() {
                     (t.origin === 'Stripe' || t.origin === 'Stripe (Historial)' || t.origin === 'Manual')
                 )
                 
-                const isInstitucion = userProfile?.rol === 'institucion'
-                
                 const mappedVentas = txs.map((t: any) => {
                     return {
                         id: t.id,
@@ -95,7 +93,7 @@ export default function ProfesorVentasPage() {
                         fecha_compra: new Date((t.paid_at || t.created) * 1000).toISOString(),
                         alumno_nombre: t.customer_name,
                         curso_titulo: t.curso_titulo,
-                        monto: isInstitucion ? t.amount * 0.5 : t.amount
+                        monto: t.amount
                     }
                 }).sort((a: any, b: any) => b.fecha_compra_timestamp - a.fecha_compra_timestamp)
                 
@@ -141,8 +139,10 @@ export default function ProfesorVentasPage() {
 
     // Suma total de los montos filtrados
     const totalMontoFiltrado = useMemo(() => {
-        return ventasFiltradas.reduce((sum, v) => sum + v.monto, 0)
-    }, [ventasFiltradas])
+        const total = ventasFiltradas.reduce((sum, v) => sum + v.monto, 0)
+        const isInstitucion = userProfile?.rol === 'institucion'
+        return isInstitucion ? total * 0.5 : total
+    }, [ventasFiltradas, userProfile])
 
     const limpiarFiltros = () => {
         setFiltroCurso('')
