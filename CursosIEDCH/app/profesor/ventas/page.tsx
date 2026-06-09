@@ -11,6 +11,7 @@ export default function ProfesorVentasPage() {
     const [loadingSearch, setLoadingSearch] = useState(false)
     const [hasSearched, setHasSearched] = useState(false)
     const [perfilIncompleto, setPerfilIncompleto] = useState(false)
+    const [userProfile, setUserProfile] = useState<any>(null)
     const supabase = createClient()
 
     // Filtros de estado
@@ -37,6 +38,9 @@ export default function ProfesorVentasPage() {
         const resP = await fetch('/api/perfil')
         const resultP = await resP.json()
         const prof = resultP.data
+        if (prof) {
+            setUserProfile(prof)
+        }
         if (prof && (prof.rol === 'instructor' || prof.rol === 'vendedor' || prof.rol === 'institucion')) {
             if (!prof.telefono || !prof.banco || !prof.clabe) {
                 setPerfilIncompleto(true)
@@ -82,6 +86,8 @@ export default function ProfesorVentasPage() {
                     (t.origin === 'Stripe' || t.origin === 'Stripe (Historial)' || t.origin === 'Manual')
                 )
                 
+                const isInstitucion = userProfile?.rol === 'institucion'
+                
                 const mappedVentas = txs.map((t: any) => {
                     return {
                         id: t.id,
@@ -89,7 +95,7 @@ export default function ProfesorVentasPage() {
                         fecha_compra: new Date((t.paid_at || t.created) * 1000).toISOString(),
                         alumno_nombre: t.customer_name,
                         curso_titulo: t.curso_titulo,
-                        monto: t.amount
+                        monto: isInstitucion ? t.amount * 0.5 : t.amount
                     }
                 }).sort((a: any, b: any) => b.fecha_compra_timestamp - a.fecha_compra_timestamp)
                 
@@ -152,8 +158,17 @@ export default function ProfesorVentasPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8 font-sans">
+         <div className="max-w-6xl mx-auto px-4 py-8 font-sans">
             <h1 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Mis Ventas de Cursos</h1>
+            
+            {userProfile?.rol === 'institucion' && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex items-start gap-2 shadow-sm">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600" />
+                    <div>
+                        <strong>Nota importante:</strong> Los montos mostrados en este panel representan el 50% de las ventas brutas. Esta es una cifra aproximada, ya que faltan deducciones por impuestos, comisiones por pasarela de pago, cupones de descuento aplicados, etc.
+                    </div>
+                </div>
+            )}
             
             {perfilIncompleto ? (
                 <div className="mt-12 bg-white border border-gray-200 rounded-3xl p-12 flex flex-col items-center text-center shadow-xl">
@@ -383,7 +398,9 @@ export default function ProfesorVentasPage() {
                                     <div>
                                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Ingresos Totales</p>
                                         <p className="text-2xl font-black text-blue-600">${totalMontoFiltrado.toFixed(2)}</p>
-                                        <p className="text-[10px] text-gray-400 font-medium">MXN (Filtrado)</p>
+                                        <p className="text-[10px] text-gray-400 font-medium">
+                                            {userProfile?.rol === 'institucion' ? 'MXN (Aprox. 50% neto)' : 'MXN (Filtrado)'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center gap-4">
