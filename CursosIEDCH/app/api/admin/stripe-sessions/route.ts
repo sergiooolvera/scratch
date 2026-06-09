@@ -141,6 +141,17 @@ export async function GET() {
             };
         }).filter((t): t is NonNullable<typeof t> => t !== null);
 
+        // Compras (Cupones 100% o accesos directos base de datos)
+        const { data: comprasDB } = await supabaseAdmin
+            .from('ie_compras')
+            .select('*')
+            .eq('pagado', true);
+
+        const purchaseMap: Record<string, any> = {};
+        comprasDB?.forEach(c => {
+            purchaseMap[`${c.user_id}_${c.curso_id}`] = c;
+        });
+
         // Manuales
         const { data: manuales } = await supabaseAdmin
             .from('ie_pagos_manuales')
@@ -170,12 +181,15 @@ export async function GET() {
                     if (diffHours < 48) manualReferredBy = refEntry.referred_by;
                 }
 
+                const purchase = purchaseMap[`${m.user_id}_${m.curso_id}`];
+                const amount = (purchase && purchase.monto_pagado !== null) ? purchase.monto_pagado : (curso?.precio || 0);
+
                 return {
                 id: m.id,
                 origin: 'Manual',
                 created: Math.floor(new Date(m.fecha_solicitud).getTime() / 1000),
                 paid_at: m.estado === 'aprobado' ? Math.floor(new Date(m.fecha_revision || m.fecha_solicitud).getTime() / 1000) : null,
-                amount: curso?.precio || 0,
+                amount: amount,
                 currency: 'MXN',
                 status: m.estado === 'aprobado' ? 'complete' : m.estado === 'rechazado' ? 'expired' : 'open',
                 payment_status: m.estado === 'aprobado' ? 'paid' : 'unpaid',
@@ -189,12 +203,6 @@ export async function GET() {
                 referred_by: manualReferredBy,
             };
         }));
-
-        // Compras (Cupones 100% o accesos directos base de datos)
-        const { data: comprasDB } = await supabaseAdmin
-            .from('ie_compras')
-            .select('*')
-            .eq('pagado', true);
 
         const comprasUnmatched = await Promise.all((comprasDB || []).filter(c => !matchedKeys.has(`${c.user_id}_${c.curso_id}`)).map(async c => {
             const curso = cursoMap[c.curso_id];
