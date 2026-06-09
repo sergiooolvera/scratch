@@ -442,6 +442,7 @@ export default function ProfesorVentasPage() {
                                     <table className="min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
+                                                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-8">#</th>
                                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
                                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Alumno</th>
                                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Curso</th>
@@ -451,8 +452,9 @@ export default function ProfesorVentasPage() {
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {ventasFiltradas.length > 0 ? (
-                                                ventasFiltradas.map((venta) => (
+                                                ventasFiltradas.map((venta, index) => (
                                                     <tr key={venta.id} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-400 font-bold">{index + 1}</td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
                                                             {new Date(venta.fecha_compra).toLocaleDateString('es-MX', {
                                                                 year: 'numeric', month: 'short', day: 'numeric',
@@ -467,7 +469,7 @@ export default function ProfesorVentasPage() {
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td colSpan={5} className="px-6 py-16 text-center text-gray-400">
+                                                    <td colSpan={6} className="px-6 py-16 text-center text-gray-400">
                                                         <svg className="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                                         </svg>
