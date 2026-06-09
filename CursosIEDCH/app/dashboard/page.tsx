@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import CourseCard from '@/components/CourseCard'
+import DashboardSearch from '@/components/DashboardSearch'
 import { BookMarked, User, Search } from 'lucide-react'
 import Link from 'next/link'
 
@@ -65,9 +66,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     // 3. Filtrar por Categoría seleccionada
     if (activeCategory !== 'todas') {
         cursosDisponibles = cursosDisponibles.filter(c => (c.categoria || 'desarrollo') === activeCategory)
-    } else if (!query) {
-        // Al entrar (cuando la categoría es 'todas' y no hay búsqueda activa), solo se muestran los supercursos
-        cursosDisponibles = cursosDisponibles.filter(c => c.es_super_curso === true)
     }
 
     // Super Cursos primero
@@ -116,21 +114,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     </div>
                     
                     {/* Barra de Búsqueda */}
-                    <form action="/dashboard" method="GET" className="relative w-full md:w-96">
-                        {activeCategory !== 'todas' && (
-                            <input type="hidden" name="category" value={activeCategory} />
-                        )}
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            name="q"
-                            defaultValue={query}
-                            placeholder="Buscar curso o instructor..."
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-black shadow-sm"
-                        />
-                    </form>
+                    <DashboardSearch defaultValue={query} activeCategory={activeCategory} />
                 </div>
 
                 {/* Fila de Píldoras de Categoría */}
