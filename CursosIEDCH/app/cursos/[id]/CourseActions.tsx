@@ -1,22 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { X, UploadCloud, Ticket, CreditCard, Banknote, AlertCircle, Lock, Store, Tag, ArrowLeftRight } from 'lucide-react'
 
-export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso, montoPagado, esCreadoPorCapacitador = false, mostrarExamenFinal = true, mostrarConstancia = true }: {
+export default function CourseActions({ cursoId, isPagado, pagoCompleto, constanciaRequierePago, isAprobado, requiereExamen, userId, precioCurso, montoPagado, esCreadoPorInstructor = false, mostrarExamenFinal = true, mostrarConstancia = true }: {
     cursoId: string,
     isPagado: boolean,
     pagoCompleto: boolean,
     constanciaRequierePago: boolean,
     isAprobado: boolean,
+    requiresExamen?: boolean, // note: requiresExamen isn't strictly here, let's look at signature
     requiereExamen: boolean,
     userId: string,
     precioCurso?: number,
     montoPagado?: number,
-    esCreadoPorCapacitador?: boolean,
+    esCreadoPorInstructor?: boolean,
     mostrarExamenFinal?: boolean,
     mostrarConstancia?: boolean
 }) {
@@ -55,6 +56,21 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     const router = useRouter()
     const supabase = createClient()
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search)
+            if (params.get('payConstancia') === 'true') {
+                setShowPagoConstancia(true)
+                setTimeout(() => {
+                    const el = document.getElementById('pago-constancia-seccion')
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' })
+                    }
+                }, 150)
+            }
+        }
+    }, [])
+
     const handleComprarStrípe = async (cuponCode?: string, esConstancia: boolean = false) => {
         setLoading(true)
         try {
@@ -68,7 +84,12 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                 window.location.href = data.url
             } else if (data.success) {
                 // If it was a 100% coupon, the API might just grant access and return success
-                router.refresh()
+                if (esConstancia) {
+                    router.push(`/cursos/${cursoId}/certificado`)
+                } else {
+                    router.refresh()
+                }
+                setLoading(false)
             } else {
                 throw new Error(data.error || 'No se recibió URL de Stripe')
             }
@@ -277,7 +298,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     }
 
     if (!isPagado) {
-        if (esCreadoPorCapacitador || precioCurso === 0) {
+        if (esCreadoPorInstructor || precioCurso === 0) {
             return (
                 <div className="w-full flex flex-col items-center p-6 bg-blue-50 border border-blue-100 rounded-2xl">
                     <p className="text-sm font-semibold text-blue-800 mb-4 text-center">
@@ -578,7 +599,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
 
             {/* BLOQUE DE PAGO PENDIENTE PARA CONSTANCIA */}
             {showPagoConstancia && !pagoCompleto && (
-                <div className="mt-2 p-5 bg-amber-50 border border-amber-200 shadow-lg rounded-xl flex flex-col relative transition-all">
+                <div id="pago-constancia-seccion" className="mt-2 p-5 bg-amber-50 border border-amber-200 shadow-lg rounded-xl flex flex-col relative transition-all">
                     <button onClick={() => setShowPagoConstancia(false)} className="absolute top-3 right-3 text-amber-400 hover:text-amber-600"><X className="w-5 h-5" /></button>
 
                     <div className="flex items-start gap-3 mb-4">
@@ -588,7 +609,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                         <div>
                             <h3 className="text-base font-bold text-amber-900">Constancia pendiente de pago</h3>
                             <p className="text-sm text-amber-800 mt-1 leading-relaxed">
-                                {esCreadoPorCapacitador ? (
+                                {esCreadoPorInstructor ? (
                                     'Este curso es gratuito para su estudio. Para tener acceso a la constancia con valor curricular debes cubrir el costo de recuperación de $199 pesos (MXN).'
                                 ) : (
                                     `Utilizaste un cupón de descuento para acceder al curso. Para recibir tu constancia deberás cubrir el monto restante` +
@@ -639,7 +660,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                                 <li><strong>Cuenta:</strong> 047 011 9024</li>
                                 <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
                                 <li><strong>Titular:</strong> Sergio Olvera</li>
-                                <li className="font-bold text-blue-700 mt-1"><strong>Monto a pagar:</strong> ${esCreadoPorCapacitador ? 199 : Math.max(0, (precioCurso || 0) - (montoPagado || 0))} MXN</li>
+                                <li className="font-bold text-blue-700 mt-1"><strong>Monto a pagar:</strong> ${esCreadoPorInstructor ? 199 : Math.max(0, (precioCurso || 0) - (montoPagado || 0))} MXN</li>
                             </ul>
 
                             <form onSubmit={(e) => handleSubirPagoConstancia(e, 'transferencia')} className="flex flex-col gap-3 mt-4">

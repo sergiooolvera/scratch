@@ -147,7 +147,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                                 &ldquo;Si pagas tu curso al 100% completo, la constancia está incluida. Si utilizas un cupón de descuento, el beneficio es solo para el curso; para recibir la constancia deberás cubrir el valor total de la misma al finalizar.&rdquo;
                             </p>
                             <div className="grid grid-cols-1 gap-3">
-                                <Link href={`/cursos/${id}`} className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm">
+                                <Link href={`/cursos/${id}?payConstancia=true`} className="flex items-center justify-center py-3 px-4 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm">
                                     <CreditCard className="w-4 h-4 mr-2" />
                                     Ir a Pagar el Curso Completo
                                 </Link>

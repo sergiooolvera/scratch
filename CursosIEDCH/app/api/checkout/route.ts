@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-01-27.acacia' as any,
@@ -70,14 +71,14 @@ export async function POST(req: Request) {
             montoPrevio = compraPrevia.monto_pagado
         }
 
-        let esCreadoPorCapacitador = false
+        let esCreadoPorInstructor = false
         if (curso.creado_por) {
             const { data: creatorProfile } = await supabase
                 .from('ie_profiles')
                 .select('rol')
                 .eq('id', curso.creado_por)
                 .single()
-            esCreadoPorCapacitador = creatorProfile?.rol === 'capacitador'
+            esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
         }
 
         // 5. Procesar Cupón si existe
@@ -85,7 +86,7 @@ export async function POST(req: Request) {
         const PRECIO_CONSTANCIA_CAPACITADOR = Number(process.env.NEXT_PUBLIC_PRECIO_CONSTANCIA_INSTRUCTOR || '199')
 
         let finalPrice = curso.precio
-        if (esCreadoPorCapacitador) {
+        if (esCreadoPorInstructor) {
             if (esConstancia) {
                 finalPrice = PRECIO_CONSTANCIA_CAPACITADOR
             } else {
@@ -118,9 +119,14 @@ export async function POST(req: Request) {
             }
         }
 
-        // 6. Si el precio final es 0, registramos directo sin Stripe
+        // 6. Si el precio final es 0, registramos directo sin Stripe (usando adminSupabase para saltar RLS)
         if (finalPrice <= 0) {
-            const { data: existe } = await supabase
+            const adminSupabase = createSupabaseClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            )
+
+            const { data: existe } = await adminSupabase
                 .from('ie_compras')
                 .select('id')
                 .eq('user_id', userId)
@@ -128,7 +134,7 @@ export async function POST(req: Request) {
                 .single()
 
             if (!existe) {
-                await supabase.from('ie_compras').insert({
+                await adminSupabase.from('ie_compras').insert({
                     user_id: userId,
                     curso_id: cursoId,
                     pagado: true,
@@ -137,7 +143,7 @@ export async function POST(req: Request) {
                     ...(referredById ? { referred_by: referredById } : {}),
                 })
             } else if (esConstancia) {
-                await supabase.from('ie_compras')
+                await adminSupabase.from('ie_compras')
                     .update({ pago_completo: true })
                     .eq('id', existe.id)
             }

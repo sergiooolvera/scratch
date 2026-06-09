@@ -39,20 +39,20 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         .eq('user_id', user.id)
         .single()
 
-    let esCreadoPorCapacitador = false
+    let esCreadoPorInstructor = false
     if (curso?.creado_por) {
         const { data: creatorProfile } = await supabase
             .from('ie_profiles')
             .select('rol')
             .eq('id', curso.creado_por)
             .single()
-        esCreadoPorCapacitador = creatorProfile?.rol === 'capacitador'
+        esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
     }
 
     const isPagado = compra?.pagado || false
     const pagoCompleto = compra?.pago_completo || false
-    // Si el curso requiere pago completo O es creado por capacitador, y el alumno no pagó completo → bloquear constancia
-    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || esCreadoPorCapacitador) && !pagoCompleto
+    // Si el curso requiere pago completo O es creado por instructor, y el alumno no pagó completo → bloquear constancia
+    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || esCreadoPorInstructor) && !pagoCompleto
 
     let isAprobado = false;
 
@@ -143,7 +143,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                                 userId={user.id}
                                 precioCurso={curso.precio}
                                 montoPagado={compra?.monto_pagado || 0}
-                                esCreadoPorCapacitador={esCreadoPorCapacitador}
+                                esCreadoPorInstructor={esCreadoPorInstructor}
                                 mostrarExamenFinal={curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true}
                                 mostrarConstancia={curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true}
                             />
