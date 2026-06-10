@@ -51,8 +51,8 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
 
     const isPagado = compra?.pagado || false
     const pagoCompleto = compra?.pago_completo || false
-    // Si el curso requiere pago completo O es creado por instructor, y el alumno no pagó completo → bloquear constancia
-    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || esCreadoPorInstructor) && !pagoCompleto
+    // Si el curso requiere pago completo O es creado por instructor (siendo gratuito), y el alumno no pagó completo → bloquear constancia
+    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || (esCreadoPorInstructor && curso.precio === 0)) && !pagoCompleto
 
     let isAprobado = false;
 

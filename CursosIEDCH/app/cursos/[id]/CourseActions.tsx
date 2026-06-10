@@ -298,7 +298,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     }
 
     if (!isPagado) {
-        if (esCreadoPorInstructor || precioCurso === 0) {
+        if (precioCurso === 0) {
             return (
                 <div className="w-full flex flex-col items-center p-6 bg-blue-50 border border-blue-100 rounded-2xl">
                     <p className="text-sm font-semibold text-blue-800 mb-4 text-center">
@@ -609,7 +609,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                         <div>
                             <h3 className="text-base font-bold text-amber-900">Constancia pendiente de pago</h3>
                             <p className="text-sm text-amber-800 mt-1 leading-relaxed">
-                                {esCreadoPorInstructor ? (
+                                {esCreadoPorInstructor && precioCurso === 0 ? (
                                     'Este curso es gratuito para su estudio. Para tener acceso a la constancia con valor curricular debes cubrir el costo de recuperación de $199 pesos (MXN).'
                                 ) : (
                                     `Utilizaste un cupón de descuento para acceder al curso. Para recibir tu constancia deberás cubrir el monto restante` +
@@ -660,7 +660,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                                 <li><strong>Cuenta:</strong> 047 011 9024</li>
                                 <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
                                 <li><strong>Titular:</strong> Sergio Olvera</li>
-                                <li className="font-bold text-blue-700 mt-1"><strong>Monto a pagar:</strong> ${esCreadoPorInstructor ? 199 : Math.max(0, (precioCurso || 0) - (montoPagado || 0))} MXN</li>
+                                <li className="font-bold text-blue-700 mt-1"><strong>Monto a pagar:</strong> ${esCreadoPorInstructor && precioCurso === 0 ? 199 : Math.max(0, (precioCurso || 0) - (montoPagado || 0))} MXN</li>
                             </ul>
 
                             <form onSubmit={(e) => handleSubirPagoConstancia(e, 'transferencia')} className="flex flex-col gap-3 mt-4">
