@@ -235,7 +235,9 @@ export default function AdminCursosPage() {
         } : null,
         requiereTarea: !!m?.requiereTarea,
         tareaInstrucciones: m?.tareaInstrucciones || '',
-        tareaPuntos: m?.tareaPuntos || ''
+        tareaPuntos: m?.tareaPuntos || '',
+        requiereCuestionario: !!m?.requiereCuestionario,
+        cuestionarioPreguntas: m?.cuestionarioPreguntas || []
     })
 
     const normalizeExam = (exam: any, preguntas: any[] = []) => exam ? ({
@@ -279,7 +281,7 @@ export default function AdminCursosPage() {
         const moduloIds = (modulos || []).map((m: any) => m.id)
         const examenIds = (examenes || []).map((e: any) => e.id)
 
-        const [{ data: recursos }, { data: preguntas }] = await Promise.all([
+        const [{ data: recursos }, { data: preguntas }, { data: cuestionarios }] = await Promise.all([
             moduloIds.length > 0
                 ? supabase
                     .from('ie_modulo_recursos')
@@ -292,6 +294,13 @@ export default function AdminCursosPage() {
                     .from('ie_preguntas')
                     .select('*')
                     .in('examen_id', examenIds)
+                    .order('orden', { ascending: true })
+                : Promise.resolve({ data: [] } as any),
+            moduloIds.length > 0
+                ? supabase
+                    .from('ie_cuestionario_preguntas')
+                    .select('*')
+                    .in('modulo_id', moduloIds)
                     .order('orden', { ascending: true })
                 : Promise.resolve({ data: [] } as any)
         ])
@@ -329,7 +338,13 @@ export default function AdminCursosPage() {
                 examen: moduloExam ? normalizeExam(moduloExam, moduloPreguntas) : null,
                 requiereTarea,
                 tareaInstrucciones,
-                tareaPuntos
+                tareaPuntos,
+                requiereCuestionario: (cuestionarios || []).filter((q: any) => q.modulo_id === m.id).length > 0,
+                cuestionarioPreguntas: (cuestionarios || []).filter((q: any) => q.modulo_id === m.id).map((q: any) => ({
+                    id: q.id,
+                    pregunta: q.pregunta,
+                    orden: q.orden
+                }))
             }
         })
 
@@ -453,6 +468,18 @@ export default function AdminCursosPage() {
                             {renderQuestionList(mod.examen.preguntas || [])}
                         </div>
                     ) : <p className="text-xs text-gray-500 italic">Sin examen modular</p>}
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Cuestionario del módulo</p>
+                    {mod.requiereCuestionario && mod.cuestionarioPreguntas && mod.cuestionarioPreguntas.length > 0 ? (
+                        <div className="space-y-2">
+                            {mod.cuestionarioPreguntas.map((p: any, i: number) => (
+                                <div key={i} className="bg-white p-2 rounded-md border border-gray-100 text-xs">
+                                    <p className="font-bold text-gray-800">{i + 1}. {p.pregunta}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : <p className="text-xs text-gray-500 italic">No requiere cuestionario</p>}
                 </div>
             </div>
         )

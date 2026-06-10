@@ -21,6 +21,9 @@ type Modulo = {
     url_contenido?: string;
     recursos?: Recurso[];
     descargable?: boolean;
+    requiere_cuestionario?: boolean;
+    cuestionarioPreguntas?: any[];
+    cuestionarioRespuestas?: any[];
 }
 
 type ExamenModular = {
@@ -258,6 +261,64 @@ export default function PlaylistClient({
     const [enviandoTarea, setEnviandoTarea] = useState(false)
     const [subiendoArchivos, setSubiendoArchivos] = useState(false)
 
+    // Cuestionarios Abiertos
+    const [respuestasCuestionario, setRespuestasCuestionario] = useState<Record<string, string>>({})
+    const [enviandoCuestionario, setEnviandoCuestionario] = useState(false)
+    const [localCuestionarioRespuestas, setLocalCuestionarioRespuestas] = useState<Record<string, any>>({})
+    const handleEnviarCuestionario = async (e: React.FormEvent) => {
+        e.preventDefault()
+        
+        if (currentItem.cuestionarioPreguntas) {
+            for (const preg of currentItem.cuestionarioPreguntas) {
+                if (!respuestasCuestionario[preg.id]?.trim()) {
+                    setModalMensaje('Por favor responde todas las preguntas del cuestionario antes de enviar.')
+                    return
+                }
+            }
+        }
+
+        setEnviandoCuestionario(true)
+        try {
+            const respuestasArray = Object.entries(respuestasCuestionario).map(([preguntaId, respuesta]) => ({
+                pregunta_id: preguntaId,
+                user_id: userId,
+                respuesta: respuesta
+            }));
+
+            const { error: insertError } = await supabase
+                .from('ie_cuestionario_respuestas')
+                .insert(respuestasArray)
+
+            if (insertError) throw insertError
+
+            // Notificar al profesor
+            try {
+                const { notifyProfesorCuestionarioSubmission } = await import('@/app/actions/taskNotifications')
+                await notifyProfesorCuestionarioSubmission(cursoId, userId, 'Un alumno', currentItem.titulo || 'Módulo')
+            } catch (err) {
+                console.error('Error enviando notificación al profesor:', err)
+            }
+
+            setLocalCuestionarioRespuestas(prev => ({
+                ...prev,
+                [currentItem.id]: {
+                    modulo_id: currentItem.id,
+                    user_id: userId,
+                    respuestas: respuestasCuestionario,
+                    estado: 'entregado',
+                    created_at: new Date().toISOString()
+                }
+            }))
+            
+            setModalMensaje('¡Cuestionario enviado con éxito! El profesor lo revisará pronto.')
+        } catch (err: any) {
+            console.error('Error al enviar cuestionario:', err)
+            setModalMensaje('Ocurrió un error al enviar tus respuestas.')
+        } finally {
+            setEnviandoCuestionario(false)
+        }
+    }
+
     useEffect(() => {
         setMostrarExamenActivo(false)
         setRespuestasExamen({})
@@ -268,6 +329,8 @@ export default function PlaylistClient({
         setArchivosSeleccionados([])
         setEnviandoTarea(false)
         setSubiendoArchivos(false)
+        setRespuestasCuestionario({})
+        setEnviandoCuestionario(false)
     }, [currentIndex])
 
     const fetchProgreso = async () => {
@@ -896,6 +959,95 @@ export default function PlaylistClient({
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Cuestionario Modular */}
+                                {currentItem.id && currentItem.requiere_cuestionario && currentItem.cuestionarioPreguntas && currentItem.cuestionarioPreguntas.length > 0 && (
+                                    <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
+                                        <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
+                                            <div className="p-2.5 bg-blue-500 text-white rounded-xl">
+                                                <FileText className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900">Cuestionario Abierto</h3>
+                                                <p className="text-xs text-gray-500">Responde las siguientes preguntas. El profesor evaluará tus respuestas.</p>
+                                            </div>
+                                        </div>
+
+                                        {(localCuestionarioRespuestas[currentItem.id] || (currentItem.cuestionarioRespuestas && currentItem.cuestionarioRespuestas.length > 0)) ? (
+                                            (() => {
+                                                const respuestaObj = localCuestionarioRespuestas[currentItem.id] || currentItem.cuestionarioRespuestas![0]
+                                                return (
+                                                    <div className="bg-blue-50/50 border border-blue-200 rounded-xl p-5 sm:p-6 space-y-4">
+                                                        <div className="flex items-center gap-2 mb-4">
+                                                            <CheckCircle className="h-5 w-5 text-blue-600" />
+                                                            <span className="font-bold text-blue-900 text-sm">Cuestionario Enviado</span>
+                                                        </div>
+                                                        
+                                                        <div className="space-y-4">
+                                                            {currentItem.cuestionarioPreguntas.map((preg: any, idx: number) => {
+                                                                const localAns = localCuestionarioRespuestas[currentItem.id]?.respuestas?.[preg.id]
+                                                                const dbAnsObj = currentItem.cuestionarioRespuestas?.find((r: any) => r.pregunta_id === preg.id)
+                                                                const answerText = localAns || dbAnsObj?.respuesta || 'Sin respuesta'
+                                                                
+                                                                return (
+                                                                <div key={preg.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                                                                    <p className="text-sm font-bold text-gray-800">{idx + 1}. {preg.pregunta}</p>
+                                                                    <div className="text-sm text-gray-700 mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200 whitespace-pre-wrap">
+                                                                        {answerText}
+                                                                    </div>
+                                                                    
+                                                                    {dbAnsObj?.calificacion && (
+                                                                        <div className="mt-4 p-4 rounded-xl border bg-blue-50/30 flex items-start gap-4 shadow-sm">
+                                                                            <div className="flex-1 space-y-2">
+                                                                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                                                                    dbAnsObj.calificacion === 'Excelente' || dbAnsObj.calificacion === 'Buena' ? 'bg-green-100 text-green-700 border border-green-200' :
+                                                                                    dbAnsObj.calificacion === 'Regular' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                                                                                    'bg-red-100 text-red-700 border border-red-200'
+                                                                                }`}>
+                                                                                    Evaluación del Profesor: {dbAnsObj.calificacion}
+                                                                                </span>
+                                                                                {dbAnsObj.feedback && (
+                                                                                    <p className="text-sm text-gray-700 italic border-l-2 border-blue-200 pl-3">"{dbAnsObj.feedback}"</p>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )})}
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })()
+                                        ) : (
+                                            <form onSubmit={handleEnviarCuestionario} className="space-y-6">
+                                                <div className="space-y-6">
+                                                    {currentItem.cuestionarioPreguntas.map((preg: any, idx: number) => (
+                                                        <div key={preg.id} className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                                                            <p className="text-sm font-bold text-gray-900 mb-3">{idx + 1}. {preg.pregunta}</p>
+                                                            <textarea
+                                                                rows={4}
+                                                                required
+                                                                placeholder="Escribe tu respuesta aquí..."
+                                                                value={respuestasCuestionario[preg.id] || ''}
+                                                                onChange={(e) => setRespuestasCuestionario(prev => ({ ...prev, [preg.id]: e.target.value }))}
+                                                                className="w-full text-sm rounded-xl border-gray-300 p-3 border bg-white text-black focus:ring-blue-500 focus:border-blue-500"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="flex justify-end pt-4 border-t border-gray-100">
+                                                    <button
+                                                        type="submit"
+                                                        disabled={enviandoCuestionario}
+                                                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 text-sm"
+                                                    >
+                                                        {enviandoCuestionario ? 'Enviando...' : 'Enviar Respuestas'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -962,6 +1114,16 @@ export default function PlaylistClient({
                                                     }`}>
                                                         <Sparkles className="h-3 w-3" />
                                                         {isExamPassed ? 'Examen listo' : 'Tiene Examen'}
+                                                    </span>
+                                                )}
+                                                {(item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) && (
+                                                    <span className={`inline-flex items-center gap-1 mt-1 ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                                        (item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0)
+                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                        : 'bg-blue-50 text-blue-600 border border-blue-200'
+                                                    }`}>
+                                                        <FileText className="h-3 w-3" />
+                                                        {(item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0) ? 'Cuest. Enviado' : 'Tiene Cuest.'}
                                                     </span>
                                                 )}
                                             </div>

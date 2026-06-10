@@ -100,10 +100,28 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
             .in('modulo_id', moduloIds)
             .order('orden', { ascending: true });
 
+        const { data: cuestionarioPreguntas } = await supabaseContent
+            .from('ie_cuestionario_preguntas')
+            .select('*')
+            .in('modulo_id', moduloIds)
+            .order('orden', { ascending: true });
+
+        const preguntaIds = (cuestionarioPreguntas || []).map(p => p.id);
+        const { data: cuestionarioRespuestas } = preguntaIds.length > 0 ? await supabaseContent
+            .from('ie_cuestionario_respuestas')
+            .select('*')
+            .eq('user_id', user.id)
+            .in('pregunta_id', preguntaIds) : { data: [] };
+
         playlist = modulos.map(m => {
             const modRecursos = recursos?.filter(r => r.modulo_id === m.id) || [];
+            const modPreguntas = cuestionarioPreguntas?.filter(p => p.modulo_id === m.id) || [];
+            const modPreguntasIds = modPreguntas.map(p => p.id);
+            const modRespuestas = cuestionarioRespuestas?.filter(r => modPreguntasIds.includes(r.pregunta_id)) || [];
             return {
                 ...m,
+                cuestionarioPreguntas: modPreguntas,
+                cuestionarioRespuestas: modRespuestas,
                 recursos: modRecursos.length > 0 ? modRecursos : (m.url_contenido ? [{
                     id: `legacy-${m.id}`,
                     modulo_id: m.id,

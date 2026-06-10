@@ -32,6 +32,8 @@ type Modulo = {
     requiereTarea?: boolean;
     tareaInstrucciones?: string;
     tareaPuntos?: string;
+    requiereCuestionario?: boolean;
+    cuestionarioPreguntas?: { id?: string; pregunta: string; orden?: number }[];
 }
 
 type PreguntaParsed = {
@@ -182,6 +184,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     requiereTarea: m.requiereTarea,
                     tareaInstrucciones: m.tareaInstrucciones,
                     tareaPuntos: m.tareaPuntos,
+                    requiereCuestionario: m.requiereCuestionario,
+                    cuestionarioPreguntas: m.cuestionarioPreguntas?.map((p: any, pIdx: number) => ({
+                        id: p.id,
+                        pregunta: p.pregunta,
+                        orden: pIdx + 1
+                    })),
                     examen: m.requiereExamen ? {
                         min_aprobacion: m.examenMinAprobacion,
                         preguntas: m.examenPreguntas.map((p, pIdx) => ({
@@ -404,7 +412,9 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             })),
                             requiereTarea: m.requiereTarea !== undefined ? m.requiereTarea : !!taskDef?.instrucciones,
                             tareaInstrucciones: m.tareaInstrucciones || taskDef?.instrucciones || '',
-                            tareaPuntos: m.tareaPuntos || taskDef?.puntos || ''
+                            tareaPuntos: m.tareaPuntos || taskDef?.puntos || '',
+                            requiereCuestionario: m.requiereCuestionario || false,
+                            cuestionarioPreguntas: m.cuestionarioPreguntas || []
                         }
                     }))
                 }
@@ -504,6 +514,16 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 if (recs) todosRecursos = recs;
             }
 
+            let todosCuestionarios: any[] = [];
+            if (modIds.length > 0) {
+                const { data: cuestData } = await supabase
+                    .from('ie_cuestionario_preguntas')
+                    .select('*')
+                    .in('modulo_id', modIds)
+                    .order('orden', { ascending: true });
+                if (cuestData) todosCuestionarios = cuestData;
+            }
+
             if (mods) {
                 setModulos(mods.map(m => {
                     const exmMod = todosExm?.find(e => e.modulo_id === m.id);
@@ -544,6 +564,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     }
 
                     const taskDef = tasksMap[m.id];
+                    const cuestionarioPreguntas = todosCuestionarios.filter(q => q.modulo_id === m.id);
                     return {
                         id: m.id,
                         titulo: m.titulo,
@@ -562,7 +583,13 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         })),
                         requiereTarea: !!taskDef,
                         tareaInstrucciones: taskDef?.instrucciones || '',
-                        tareaPuntos: taskDef?.puntos || ''
+                        tareaPuntos: taskDef?.puntos || '',
+                        requiereCuestionario: cuestionarioPreguntas.length > 0,
+                        cuestionarioPreguntas: cuestionarioPreguntas.map(p => ({
+                            id: p.id,
+                            pregunta: p.pregunta,
+                            orden: p.orden
+                        }))
                     }
                 }))
             }
@@ -820,6 +847,32 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             recursos[recursoIdx + 1] = temp
         }
         nuevosModulos[moduloIdx].recursos = recursos
+        setModulos(nuevosModulos)
+    }
+
+    // Cuestionarios helpers
+    const handleAgregarPreguntaCuestionario = (moduloIdx: number) => {
+        const nuevosModulos = [...modulos]
+        if (!nuevosModulos[moduloIdx].cuestionarioPreguntas) {
+            nuevosModulos[moduloIdx].cuestionarioPreguntas = []
+        }
+        nuevosModulos[moduloIdx].cuestionarioPreguntas.push({
+            pregunta: ''
+        })
+        setModulos(nuevosModulos)
+    }
+
+    const handleEliminarPreguntaCuestionario = (moduloIdx: number, preguntaIdx: number) => {
+        const nuevosModulos = [...modulos]
+        nuevosModulos[moduloIdx].cuestionarioPreguntas = nuevosModulos[moduloIdx].cuestionarioPreguntas?.filter((_, i) => i !== preguntaIdx) || []
+        setModulos(nuevosModulos)
+    }
+
+    const handlePreguntaCuestionarioChange = (moduloIdx: number, preguntaIdx: number, value: string) => {
+        const nuevosModulos = [...modulos]
+        if (nuevosModulos[moduloIdx].cuestionarioPreguntas && nuevosModulos[moduloIdx].cuestionarioPreguntas![preguntaIdx]) {
+            nuevosModulos[moduloIdx].cuestionarioPreguntas![preguntaIdx].pregunta = value
+        }
         setModulos(nuevosModulos)
     }
 
@@ -1209,7 +1262,9 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 examenPreguntas: currentMod.examenPreguntas,
                 requiereTarea: currentMod.requiereTarea,
                 tareaInstrucciones: currentMod.tareaInstrucciones,
-                tareaPuntos: currentMod.tareaPuntos
+                tareaPuntos: currentMod.tareaPuntos,
+                requiereCuestionario: currentMod.requiereCuestionario,
+                cuestionarioPreguntas: currentMod.cuestionarioPreguntas
             });
         }
 
@@ -1255,6 +1310,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     requiereTarea: m.requiereTarea,
                     tareaInstrucciones: m.tareaInstrucciones,
                     tareaPuntos: m.tareaPuntos,
+                    requiereCuestionario: !!m.requiereCuestionario,
+                    cuestionarioPreguntas: m.cuestionarioPreguntas?.map((p, idx) => ({
+                        id: p.id,
+                        pregunta: p.pregunta,
+                        orden: idx + 1
+                    })) || [],
                     examen: m.requiereExamen ? {
                         min_aprobacion: m.examenMinAprobacion,
                         preguntas: m.examenPreguntas.map((p, idx) => ({
@@ -1351,7 +1412,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     curso_id: id,
                     titulo: mod.titulo,
                     url_contenido: mod.recursos.length > 0 ? mod.recursos[0].url_contenido : '',
-                    orden: mod.orden
+                    orden: mod.orden,
+                    requiere_cuestionario: !!mod.requiereCuestionario
                 };
                 
                 let moduloId = mod.id;
@@ -1486,6 +1548,21 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             return
                         }
                         await supabase.from('ie_examenes').delete().eq('modulo_id', moduloId)
+                    }
+
+                    if (mod.requiereCuestionario) {
+                        await supabase.from('ie_cuestionario_preguntas').delete().eq('modulo_id', moduloId);
+                        if (mod.cuestionarioPreguntas && mod.cuestionarioPreguntas.length > 0) {
+                            const pregsCuestInsert = mod.cuestionarioPreguntas.map((p, idx) => ({
+                                curso_id: id,
+                                modulo_id: moduloId,
+                                pregunta: p.pregunta,
+                                orden: idx + 1
+                            }));
+                            await supabase.from('ie_cuestionario_preguntas').insert(pregsCuestInsert);
+                        }
+                    } else {
+                        await supabase.from('ie_cuestionario_preguntas').delete().eq('modulo_id', moduloId);
                     }
 
                     // Save or update task definition inside ie_preguntas_respuestas
@@ -2567,6 +2644,69 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                 required
                                                             />
                                                         </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Modular Questionnaire Box */}
+                                        <div className="mt-4 pt-4 border-t border-zinc-100">
+                                            <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!modulo.requiereCuestionario}
+                                                        onChange={(e) => handleModuloChange(index, 'requiereCuestionario', e.target.checked)}
+                                                        className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                                    />
+                                                    <span className="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
+                                                        <MessageSquare className="h-4 w-4 text-emerald-700" />
+                                                        ¿Este módulo requiere un Cuestionario de preguntas abiertas?
+                                                    </span>
+                                                </label>
+
+                                                {modulo.requiereCuestionario && (
+                                                    <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-emerald-250 space-y-4">
+                                                        <div className="flex justify-between items-center border-b border-emerald-100 pb-2">
+                                                            <p className="text-xs text-emerald-800 font-semibold">Configura las preguntas que el alumno deberá responder con texto libre.</p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleAgregarPreguntaCuestionario(index)}
+                                                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                                            >
+                                                                <Plus className="h-3.5 w-3.5" /> Agregar Pregunta
+                                                            </button>
+                                                        </div>
+
+                                                        {!modulo.cuestionarioPreguntas || modulo.cuestionarioPreguntas.length === 0 ? (
+                                                            <p className="text-xs text-emerald-600/80 italic text-center py-4 bg-white/40 border border-dashed border-emerald-200 rounded-lg">No hay preguntas en el cuestionario. Haz clic en "Agregar Pregunta" para iniciar.</p>
+                                                        ) : (
+                                                            <div className="space-y-3">
+                                                                {modulo.cuestionarioPreguntas.map((pregunta, pIdx) => (
+                                                                    <div key={pIdx} className="bg-white p-3 rounded-lg border border-emerald-200 relative shadow-sm flex items-start gap-3">
+                                                                        <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-1 rounded">#{pIdx + 1}</span>
+                                                                        <div className="flex-1">
+                                                                            <textarea
+                                                                                required
+                                                                                rows={2}
+                                                                                placeholder="Escribe la pregunta abierta aquí..."
+                                                                                value={pregunta.pregunta || ''}
+                                                                                onChange={(e) => handlePreguntaCuestionarioChange(index, pIdx, e.target.value)}
+                                                                                className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black font-medium resize-y"
+                                                                            />
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleEliminarPreguntaCuestionario(index, pIdx)}
+                                                                            className="text-zinc-300 hover:text-red-500 transition mt-1"
+                                                                            title="Eliminar pregunta"
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>

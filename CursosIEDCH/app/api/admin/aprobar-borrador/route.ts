@@ -87,7 +87,8 @@ export async function POST(req: Request) {
                     curso_id: cursoId,
                     titulo: m.titulo,
                     url_contenido: m.url_contenido,
-                    orden: m.orden
+                    orden: m.orden,
+                    requiere_cuestionario: !!m.requiereCuestionario
                 }
 
                 if (m.id) {
@@ -255,6 +256,21 @@ export async function POST(req: Request) {
                             .eq('curso_id', cursoId)
                             .eq('respuesta', 'TAREA_DEFINICION')
                             .like('pregunta', `TAREA_DEFINICION:${moduloId}%`);
+                    }
+
+                    // Sincronizar Cuestionarios Abiertos
+                    if (m.requiereCuestionario && m.cuestionarioPreguntas) {
+                        await supabaseAdmin.from('ie_cuestionario_preguntas').delete().eq('modulo_id', moduloId);
+                        if (m.cuestionarioPreguntas.length > 0) {
+                            const pregsCuestionario = m.cuestionarioPreguntas.map((p: any, pIdx: number) => ({
+                                modulo_id: moduloId,
+                                pregunta: p.pregunta,
+                                orden: pIdx + 1
+                            }));
+                            await supabaseAdmin.from('ie_cuestionario_preguntas').insert(pregsCuestionario);
+                        }
+                    } else {
+                        await supabaseAdmin.from('ie_cuestionario_preguntas').delete().eq('modulo_id', moduloId);
                     }
                 }
             }
