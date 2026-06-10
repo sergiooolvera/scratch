@@ -167,6 +167,13 @@ export async function POST(req: Request) {
             }, { status: 400 });
         }
 
+        const tieneRespuestaLibre = questions.some((q: any) => q.tipo_pregunta === 'respuesta_libre');
+        if (tieneRespuestaLibre) {
+            return NextResponse.json({
+                error: 'Los exámenes solo pueden contener preguntas de opción múltiple.'
+            }, { status: 400 });
+        }
+
         // Verificar que todas las preguntas de opción múltiple tengan respuesta
         const sinRespuesta = questions
             .map((q: any, i: number) => ({ num: i + 1, q }))

@@ -2048,7 +2048,7 @@ export default function SubirCursoPage() {
                                                                                         className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black"
                                                                                     >
                                                                                         <option value="opcion_multiple">🔘 Opción Múltiple</option>
-                                                                                        <option value="respuesta_libre">✏️ Respuesta Libre (Abierta)</option>
+                                                                                        
                                                                                     </select>
                                                                                 </div>
                                                                             </div>
@@ -2389,7 +2389,7 @@ export default function SubirCursoPage() {
                                                                         className="w-full text-xs rounded border-gray-200 p-2.5 border bg-white text-black"
                                                                     >
                                                                         <option value="opcion_multiple">🔘 Opción Múltiple</option>
-                                                                        <option value="respuesta_libre">✏️ Respuesta Libre (Abierta)</option>
+                                                                        
                                                                     </select>
                                                                 </div>
                                                             </div>
