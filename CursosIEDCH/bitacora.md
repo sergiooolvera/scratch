@@ -111,3 +111,11 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, organ
 
 ---
 *Ãšltima actualizaciÃ³n: 20 de Mayo de 2026*
+
+### ?? Restricción de Exámenes a Opción Múltiple
+- **Uso exclusivo de Opción Múltiple:** Se eliminó la posibilidad de agregar preguntas de 'Respuesta Libre' en los módulos de creación y edición de cursos (subir-curso y editar-curso).
+- **Validación en Extracción PDF:** Se actualizó la ruta de extracción de exámenes (parse-exam) para rechazar PDFs que contengan indicaciones de respuesta libre, retornando un error claro al profesor.
+- **Actualización de Plantilla:** Se modificó la plantilla de ejemplo (ejemplo-examen.html), retirando los ejemplos de preguntas abiertas y añadiendo una nota explícita sobre el uso obligatorio y exclusivo de preguntas de opción múltiple.
+
+---
+*Última actualización: 9 de Junio de 2026*
