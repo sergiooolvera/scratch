@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus } from 'lucide-react'
+import NotificationBell from './NotificationBell'
 
 export default function Navbar() {
     const supabase = createClient()
@@ -215,6 +216,7 @@ export default function Navbar() {
                                         </span>
                                         <span className="text-xs text-gray-500 capitalize">{profile?.rol || 'Alumno'}</span>
                                     </div>
+                                    <NotificationBell userId={user.id} />
                                     <Link href="/perfil" className="p-1 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 rounded-full transition-colors border border-transparent overflow-hidden flex items-center justify-center w-9 h-9" title="Mi Perfil">
                                         {profile?.fotografia_perfil ? (
                                             <img src={profile.fotografia_perfil} alt="Perfil" className="w-full h-full object-cover rounded-full" />
@@ -256,6 +258,7 @@ export default function Navbar() {
                                     <BadgeCheck className="h-6 w-6" />
                                 </Link>
                             )}
+                            {user && <NotificationBell userId={user.id} />}
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                                 className="p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-100 focus:outline-none"

@@ -55,5 +55,24 @@ export async function calificarTarea(submissionId: string, calificacion: number,
         throw new Error('No se pudo guardar la calificación.')
     }
 
+    // 4. Notificar al alumno
+    try {
+        if (submission.user_id && submission.curso_id) {
+            const { data: cursoData } = await supabaseAdmin.from('ie_cursos').select('titulo').eq('id', submission.curso_id).single()
+            const { createClient: createServerClient } = await import('@/lib/supabase/server')
+            const { data: { user } } = await (await createServerClient()).auth.getUser()
+
+            await supabaseAdmin.from('ie_notificaciones').insert({
+                usuario_id: submission.user_id,
+                actor_id: user?.id,
+                tipo: 'tarea_calificada',
+                mensaje: `El profesor ha calificado tu tarea del curso "${cursoData?.titulo || 'Módulo'}". Obtuviste ${calificacion}/100.`,
+                enlace: `/mis-cursos/${submission.curso_id}`
+            })
+        }
+    } catch (notifErr) {
+        console.error('Error enviando notificación de tarea calificada:', notifErr)
+    }
+
     revalidatePath('/profesor/revision-tareas')
 }

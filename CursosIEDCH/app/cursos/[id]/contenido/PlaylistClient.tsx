@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X } from 'lucide-react'
+import { notifyProfesorTaskSubmission } from '@/app/actions/taskNotifications'
 import { createClient } from '@/lib/supabase/client'
 
 type Recurso = {
@@ -230,6 +231,14 @@ export default function PlaylistClient({
 
             if (insertError) {
                 throw new Error(insertError.message)
+            }
+
+            // Notificar al profesor
+            try {
+                // userName might not be available directly, but we can pass a generic or fetch it if needed. Let's use 'Un alumno' since we don't have user profile here easily, or we can just send the email if available. We'll let the action handle it if it wants, but we'll pass 'Un alumno'.
+                await notifyProfesorTaskSubmission(cursoId, userId, 'Un alumno', currentItem.titulo || 'Módulo');
+            } catch (err) {
+                console.error('Error enviando notificación:', err)
             }
 
             setModalMensaje('¡Tu tarea ha sido entregada con éxito!')

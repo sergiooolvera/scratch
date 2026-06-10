@@ -73,6 +73,46 @@ export async function POST(req: Request) {
                 }
             }
 
+            // 4. NOTIFICACIONES (Profesor, Admins, Financieros)
+            try {
+                const { data: cursoData } = await supabaseAdmin.from('ie_cursos').select('creado_por').eq('id', cursoId).single();
+                const { data: rolesAuth } = await supabaseAdmin.from('ie_profiles').select('id, rol').in('rol', ['admin', 'financiero']);
+                
+                const notificacionesInsert = [];
+                const msgBase = `El alumno ${userEmail} ha comprado el curso "${cursoTitulo}".`;
+                const enlace = `/admin/transacciones`;
+
+                if (cursoData?.creado_por) {
+                    notificacionesInsert.push({
+                        usuario_id: cursoData.creado_por,
+                        actor_id: userId,
+                        tipo: 'venta_curso',
+                        mensaje: `¡Felicidades! ${msgBase}`,
+                        enlace: `/profesor/ventas`
+                    });
+                }
+
+                if (rolesAuth) {
+                    rolesAuth.forEach(u => {
+                        if (u.id !== userId) {
+                            notificacionesInsert.push({
+                                usuario_id: u.id,
+                                actor_id: userId,
+                                tipo: 'venta_curso',
+                                mensaje: msgBase,
+                                enlace: enlace
+                            });
+                        }
+                    });
+                }
+
+                if (notificacionesInsert.length > 0) {
+                    await supabaseAdmin.from('ie_notificaciones').insert(notificacionesInsert);
+                }
+            } catch (notifErr) {
+                console.error("Error creando notificaciones de pago manual:", notifErr);
+            }
+
             return NextResponse.json({ success: true, message: 'Aprobado y notificado' })
 
         } else if (accion === 'rechazar') {

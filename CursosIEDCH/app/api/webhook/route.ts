@@ -115,6 +115,55 @@ export async function POST(req: Request) {
                 throw new Error("Database Error");
             }
             console.log(`Compra registrada en DB: User ${userId}, Curso ${cursoId}`);
+
+            // NOTIFICACIONES
+            try {
+                // Obtener detalles del alumno y del curso
+                const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
+                const emailAlumno = userData?.user?.email || 'un alumno';
+                const { data: cursoData } = await supabaseAdmin.from('ie_cursos').select('titulo, creado_por').eq('id', cursoId).single();
+                const tituloCurso = cursoData?.titulo || 'un curso';
+                
+                // Obtener administradores y financieros
+                const { data: rolesAuth } = await supabaseAdmin.from('ie_profiles').select('id, rol').in('rol', ['admin', 'financiero']);
+                
+                const notificacionesInsert = [];
+                const mensaje = `El alumno ${emailAlumno} ha comprado el curso "${tituloCurso}".`;
+                const enlace = `/admin/transacciones`; // Enlace genérico para revisar compras
+
+                // Notificar al profesor (creador)
+                if (cursoData?.creado_por) {
+                    notificacionesInsert.push({
+                        usuario_id: cursoData.creado_por,
+                        actor_id: userId,
+                        tipo: 'venta_curso',
+                        mensaje: `¡Felicidades! ${mensaje}`,
+                        enlace: `/profesor/ventas`
+                    });
+                }
+
+                // Notificar a admins y financieros
+                if (rolesAuth) {
+                    rolesAuth.forEach(u => {
+                        // Evitar notificar al admin/financiero si él mismo compró el curso para probar
+                        if (u.id !== userId) {
+                            notificacionesInsert.push({
+                                usuario_id: u.id,
+                                actor_id: userId,
+                                tipo: 'venta_curso',
+                                mensaje: mensaje,
+                                enlace: enlace
+                            });
+                        }
+                    });
+                }
+
+                if (notificacionesInsert.length > 0) {
+                    await supabaseAdmin.from('ie_notificaciones').insert(notificacionesInsert);
+                }
+            } catch (notifErr) {
+                console.error("Error creando notificaciones post-compra:", notifErr);
+            }
         }
     }
 

@@ -169,6 +169,28 @@ export async function guardarRevisionExamenProfesor(
         return { error: 'Error al guardar la revisión: ' + updateError.message }
     }
 
+    // 5. Notificar al alumno
+    try {
+        const { data: userData } = await supabaseAdmin.from('ie_resultados_examenes').select('user_id, examen_id').eq('id', resultadoId).single()
+        if (userData?.user_id && userData?.examen_id) {
+            // Buscamos el nombre del curso
+            const { data: examenData } = await supabaseAdmin.from('ie_examenes').select('curso_id').eq('id', userData.examen_id).single()
+            if (examenData?.curso_id) {
+                const { data: cursoData } = await supabaseAdmin.from('ie_cursos').select('titulo').eq('id', examenData.curso_id).single()
+                
+                await supabaseAdmin.from('ie_notificaciones').insert({
+                    usuario_id: userData.user_id,
+                    actor_id: user.id,
+                    tipo: 'examen_calificado',
+                    mensaje: `El profesor ha revisado tu examen y añadido comentarios en el curso "${cursoData?.titulo || 'Módulo'}".`,
+                    enlace: `/mis-cursos/${examenData.curso_id}`
+                })
+            }
+        }
+    } catch (notifErr) {
+        console.error('Error notificando alumno de examen revisado:', notifErr)
+    }
+
     return { success: true }
 }
 

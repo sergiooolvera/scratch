@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react'
 import Link from 'next/link'
 import { moduloTieneExamenContestado } from './actions'
+import { notifyAdminsOnCourseEdit } from '@/app/actions/notifications'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -1578,6 +1579,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             modificado_por: user.id,
             detalles_cambio: historialMensaje || 'Actualización de curso por profesor',
         })
+
+        // Notificar a Admins y Financieros (usando Server Action)
+        if (estadoActual === 'aprobado') {
+            await notifyAdminsOnCourseEdit(formData.titulo, user.id, profile?.nombre || user.email || 'Profesor');
+        }
 
         setModalMessage({
             title: '¡Curso Guardado!',

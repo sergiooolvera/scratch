@@ -339,40 +339,80 @@ export async function POST(req: Request) {
                 .eq('curso_id', cursoId)
                 .eq('pagado', true)
 
-            if (compras && compras.length > 0) {
-                const studentIds = compras.map(c => c.user_id)
+            const studentIds = (compras || []).map(c => c.user_id)
 
-                // Obtener datos FINALES del curso (por si el draft venía incompleto)
-                const { data: cursoFinal } = await supabaseAdmin
-                    .from('ie_cursos')
-                    .select('titulo, reunion_url, nota_profesor')
-                    .eq('id', cursoId)
-                    .single()
+            // Obtener datos FINALES del curso
+            const { data: cursoFinal } = await supabaseAdmin
+                .from('ie_cursos')
+                .select('titulo, reunion_url, nota_profesor, creado_por')
+                .eq('id', cursoId)
+                .single()
 
-                if (cursoFinal && (cursoFinal.reunion_url || cursoFinal.nota_profesor)) {
-                    // Obtener Correos de Alumnos (Desde Auth via Admin)
-                    const { data: { users: allUsers } } = await supabaseAdmin.auth.admin.listUsers({
-                        perPage: 1000
-                    })
+            const tituloCurso = cursoFinal?.titulo || 'curso actualizado';
+            const notificacionesInsert: any[] = [];
 
-                    if (allUsers) {
-                        const emailMap: Record<string, string> = {}
-                        allUsers.forEach(u => { emailMap[u.id] = u.email || '' })
-                        const emails = studentIds.map(id => emailMap[id]).filter(e => !!e)
+            // Notificar al profesor
+            if (cursoFinal?.creado_por) {
+                notificacionesInsert.push({
+                    usuario_id: cursoFinal.creado_por,
+                    tipo: 'curso_aprobado',
+                    mensaje: `Tus cambios en el curso "${tituloCurso}" han sido aprobados y publicados.`,
+                    enlace: `/profesor/cursos`
+                });
+            }
 
-                        if (emails.length > 0) {
-                            const { sendReunionNotification } = await import('@/lib/mail')
-                            try {
-                                await sendReunionNotification({
-                                    emails, 
-                                    cursoTitulo: cursoFinal.titulo, 
-                                    reunionUrl: cursoFinal.reunion_url, 
-                                    notaProfesor: cursoFinal.nota_profesor 
-                                })
-                                console.log('[AUTO_NOTIFY_SUCCESS] Notificaciones enviadas vía Node.js')
-                            } catch (mailErr) {
-                                console.error('[AUTO_NOTIFY_MAIL_ERROR]', mailErr)
-                            }
+            // Notificar a los alumnos
+            studentIds.forEach(id => {
+                notificacionesInsert.push({
+                    usuario_id: id,
+                    tipo: 'curso_actualizado',
+                    mensaje: `El curso "${tituloCurso}" ha sido actualizado por el profesor con nuevo contenido.`,
+                    enlace: `/mis-cursos/${cursoId}`
+                });
+            });
+
+            // Notificar a los financieros
+            const { data: rolesAuth } = await supabaseAdmin.from('ie_profiles').select('id, rol').eq('rol', 'financiero');
+            if (rolesAuth) {
+                rolesAuth.forEach(u => {
+                    notificacionesInsert.push({
+                        usuario_id: u.id,
+                        tipo: 'curso_aprobado',
+                        mensaje: `Los cambios del curso "${tituloCurso}" han sido aprobados y publicados.`,
+                        enlace: `/admin/cursos`
+                    });
+                });
+            }
+
+            // Insertar notificaciones en la app
+            if (notificacionesInsert.length > 0) {
+                await supabaseAdmin.from('ie_notificaciones').insert(notificacionesInsert);
+            }
+
+            // Enviar email si hay notas/reunion
+            if (studentIds.length > 0 && cursoFinal && (cursoFinal.reunion_url || cursoFinal.nota_profesor)) {
+                // Obtener Correos de Alumnos (Desde Auth via Admin)
+                const { data: { users: allUsers } } = await supabaseAdmin.auth.admin.listUsers({
+                    perPage: 1000
+                })
+
+                if (allUsers) {
+                    const emailMap: Record<string, string> = {}
+                    allUsers.forEach(u => { emailMap[u.id] = u.email || '' })
+                    const emails = studentIds.map(id => emailMap[id]).filter(e => !!e)
+
+                    if (emails.length > 0) {
+                        const { sendReunionNotification } = await import('@/lib/mail')
+                        try {
+                            await sendReunionNotification({
+                                emails, 
+                                cursoTitulo: cursoFinal.titulo, 
+                                reunionUrl: cursoFinal.reunion_url, 
+                                notaProfesor: cursoFinal.nota_profesor 
+                            })
+                            console.log('[AUTO_NOTIFY_SUCCESS] Correos enviados vía Node.js')
+                        } catch (mailErr) {
+                            console.error('[AUTO_NOTIFY_MAIL_ERROR]', mailErr)
                         }
                     }
                 }
