@@ -798,13 +798,13 @@ export default function PlaylistClient({
                                 {/* Tarea / Entregable Modular */}
                                 {currentItem.id && tareasDef[currentItem.id] && (
                                     <div className="mt-12 bg-zinc-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6">
-                                        <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
-                                            <div className="p-2.5 bg-amber-500 text-white rounded-xl">
+                                        <div className="flex items-center gap-3 border-2 border-amber-400 bg-amber-50/80 rounded-xl p-4 shadow-sm">
+                                            <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-sm">
                                                 <FileText className="h-5 w-5" />
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-bold text-gray-900">Proyecto o Tarea Práctica</h3>
-                                                <p className="text-xs text-gray-500">Completa y envía esta práctica modular para la revisión del tutor.</p>
+                                                <h3 className="text-lg font-bold text-amber-900">Proyecto o Tarea Práctica</h3>
+                                                <p className="text-xs text-amber-700/80">Completa y envía esta práctica modular para la revisión del tutor.</p>
                                             </div>
                                         </div>
 
@@ -963,13 +963,13 @@ export default function PlaylistClient({
                                 {/* Cuestionario Modular */}
                                 {currentItem.id && currentItem.requiere_cuestionario && currentItem.cuestionarioPreguntas && currentItem.cuestionarioPreguntas.length > 0 && (
                                     <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
-                                        <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
-                                            <div className="p-2.5 bg-blue-500 text-white rounded-xl">
+                                        <div className="flex items-center gap-3 border-2 border-blue-400 bg-blue-50/80 rounded-xl p-4 shadow-sm">
+                                            <div className="p-2.5 bg-blue-500 text-white rounded-xl shadow-sm">
                                                 <FileText className="h-5 w-5" />
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-bold text-gray-900">Cuestionario Abierto</h3>
-                                                <p className="text-xs text-gray-500">Responde las siguientes preguntas. El profesor evaluará tus respuestas.</p>
+                                                <h3 className="text-lg font-bold text-blue-900">Cuestionario Abierto</h3>
+                                                <p className="text-xs text-blue-700/80">Responde las siguientes preguntas. El profesor evaluará tus respuestas.</p>
                                             </div>
                                         </div>
 
