@@ -181,7 +181,7 @@ export default function RevisionTareasClient({ entregas: initialEntregas }: { en
             {/* Right: Submission Details & Grading Panel */}
             <div className="lg:col-span-1">
                 {selectedEntrega ? (
-                    <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-md space-y-6 sticky top-8">
+                    <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-md space-y-6 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto">
                         <div className="border-b border-gray-100 pb-4">
                             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <Edit className="h-5 w-5 text-blue-600" />

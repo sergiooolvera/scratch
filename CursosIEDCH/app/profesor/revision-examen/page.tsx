@@ -367,7 +367,7 @@ export default function RevisionExamenPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Sidebar: Cursos y Alumnos */}
-                    <div className="lg:col-span-1 space-y-6">
+                    <div className="lg:col-span-1 space-y-6 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto pr-2">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Selecciona un Curso:</label>
                             <select 
