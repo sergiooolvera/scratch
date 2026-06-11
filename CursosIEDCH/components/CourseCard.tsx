@@ -63,7 +63,7 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
 
             <div className={(isSuper ? 'bg-gradient-to-r from-amber-50 via-white to-indigo-50 ' : 'bg-gray-50 ') + 'px-4 py-4 sm:px-6 mt-auto'}>
                 <Link
-                    href={`/cursos/${course.id}`}
+                    href={isPagado ? `/cursos/${course.id}/contenido` : `/cursos/${course.id}`}
                     className={
                         'w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-bold rounded-full shadow-sm text-white transition-all duration-200 ' +
                         (isSuper
