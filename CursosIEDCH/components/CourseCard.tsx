@@ -61,7 +61,7 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                 </div>
             </div>
 
-            <div className={(isSuper ? 'bg-gradient-to-r from-amber-50 via-white to-indigo-50 ' : 'bg-gray-50 ') + 'px-4 py-4 sm:px-6 mt-auto'}>
+            <div className={(isSuper ? 'bg-gradient-to-r from-amber-50 via-white to-indigo-50 ' : 'bg-gray-50 ') + 'px-4 py-4 sm:px-6 mt-auto flex flex-col gap-2'}>
                 <Link
                     href={isPagado ? `/cursos/${course.id}/contenido` : `/cursos/${course.id}`}
                     className={
@@ -73,6 +73,14 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                 >
                     {isPagado ? 'Ir a Curso' : 'Ver Detalles'}
                 </Link>
+                {isPagado && (
+                    <Link
+                        href={`/cursos/${course.id}`}
+                        className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-bold rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200"
+                    >
+                        Ver Detalles / Calificar
+                    </Link>
+                )}
             </div>
         </div>
     )
