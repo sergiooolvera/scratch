@@ -671,6 +671,20 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         setModulos(nuevosModulos)
     }
 
+    const handleMoverModulo = (index: number, direccion: 'subir' | 'bajar') => {
+        const nuevosModulos = [...modulos]
+        if (direccion === 'subir' && index > 0) {
+            const temp = nuevosModulos[index]
+            nuevosModulos[index] = nuevosModulos[index - 1]
+            nuevosModulos[index - 1] = temp
+        } else if (direccion === 'bajar' && index < nuevosModulos.length - 1) {
+            const temp = nuevosModulos[index]
+            nuevosModulos[index] = nuevosModulos[index + 1]
+            nuevosModulos[index + 1] = temp
+        }
+        setModulos(nuevosModulos)
+    }
+
     // Gamma Helper functions
     const getUnusedGenerationsForModule = (moduloIdx: number) => {
         const modulo = modulos[moduloIdx];
@@ -2222,15 +2236,39 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
                             <div className="space-y-6">
                                 {modulos.map((modulo, index) => (
-                                    <div key={index} className="bg-white border-2 border-zinc-150 p-6 rounded-2xl relative shadow-md hover:border-zinc-200 transition">
+                                    <div key={index} className="bg-white border-2 border-zinc-150 p-6 rounded-2xl relative shadow-md hover:border-zinc-200 transition-all duration-300 ease-in-out">
                                         <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
                                             <h3 className="text-md font-bold text-gray-800 flex items-center gap-2">
                                                 <span className="bg-blue-600 text-white text-xs h-6 w-6 rounded-full flex items-center justify-center font-black">{index + 1}</span>
                                                 Clase / Objeto de Aprendizaje {modulo.id ? <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Existente</span> : <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Nuevo</span>}
                                             </h3>
-                                            <button type="button" onClick={() => handleEliminarModulo(index)} className="text-red-500 hover:text-red-700 flex items-center text-xs font-bold transition">
-                                                <Trash2 className="h-4 w-4 mr-1" /> Eliminar Módulo
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                {modulos.length > 1 && (
+                                                    <div className="flex gap-1 mr-2 border-r border-gray-200 pr-3">
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => index > 0 && handleMoverModulo(index, 'subir')} 
+                                                            disabled={index === 0}
+                                                            className={`p-1 rounded-md transition ${index === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
+                                                            title="Mover arriba"
+                                                        >
+                                                            <ArrowUp className="h-4 w-4" />
+                                                        </button>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => index < modulos.length - 1 && handleMoverModulo(index, 'bajar')} 
+                                                            disabled={index === modulos.length - 1}
+                                                            className={`p-1 rounded-md transition ${index === modulos.length - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
+                                                            title="Mover abajo"
+                                                        >
+                                                            <ArrowDown className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                <button type="button" onClick={() => handleEliminarModulo(index)} className="text-red-500 hover:text-red-700 flex items-center text-xs font-bold transition">
+                                                    <Trash2 className="h-4 w-4 mr-1" /> Eliminar Módulo
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 gap-6">
