@@ -383,7 +383,7 @@ export async function POST(req: Request) {
                     usuario_id: id,
                     tipo: 'curso_actualizado',
                     mensaje: `El curso "${tituloCurso}" ha sido actualizado por el profesor con nuevo contenido.`,
-                    enlace: `/mis-cursos/${cursoId}`
+                    enlace: `/cursos/${cursoId}`
                 });
             });
 

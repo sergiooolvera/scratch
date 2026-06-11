@@ -183,7 +183,7 @@ export async function guardarRevisionExamenProfesor(
                     actor_id: user.id,
                     tipo: 'examen_calificado',
                     mensaje: `El profesor ha revisado tu examen y añadido comentarios en el curso "${cursoData?.titulo || 'Módulo'}".`,
-                    enlace: `/mis-cursos/${examenData.curso_id}`
+                    enlace: `/cursos/${examenData.curso_id}`
                 })
             }
         }

@@ -67,7 +67,7 @@ export async function calificarTarea(submissionId: string, calificacion: number,
                 actor_id: user?.id,
                 tipo: 'tarea_calificada',
                 mensaje: `El profesor ha calificado tu tarea del curso "${cursoData?.titulo || 'Módulo'}". Obtuviste ${calificacion}/100.`,
-                enlace: `/mis-cursos/${submission.curso_id}`
+                enlace: `/cursos/${submission.curso_id}`
             })
         }
     } catch (notifErr) {
