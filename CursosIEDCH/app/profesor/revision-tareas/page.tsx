@@ -58,10 +58,10 @@ export default async function RevisionTareasPage() {
             const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(uid)
             const { data: perfil } = await supabaseAdmin
                 .from('ie_profiles')
-                .select('nombre')
+                .select('nombre, apellidos')
                 .eq('id', uid)
                 .single()
-            perfilesMap[uid] = perfil?.nombre || authUser?.email || 'Alumno sin nombre'
+            perfilesMap[uid] = `${perfil?.nombre || ''} ${perfil?.apellidos || ''}`.trim() || authUser?.email || 'Alumno sin nombre'
         } catch {
             perfilesMap[uid] = 'Alumno sin nombre'
         }
