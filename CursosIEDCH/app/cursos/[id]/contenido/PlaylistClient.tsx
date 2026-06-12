@@ -818,11 +818,11 @@ export default function PlaylistClient({
                                                 {tareasDef[currentItem.id].puntos && (
                                                     <div className="mt-4 pt-4 border-t border-gray-100">
                                                         <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Criterios de Evaluación / Puntos a Revisar:</h5>
-                                                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        <ul className="flex flex-col gap-3">
                                                             {tareasDef[currentItem.id].puntos.split(',').map((p, idx) => (
-                                                                <li key={idx} className="flex items-center gap-2 text-xs font-semibold text-gray-700">
-                                                                    <div className="h-1.5 w-1.5 bg-amber-500 rounded-full" />
-                                                                    <span>{p.trim()}</span>
+                                                                <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm font-medium text-gray-700">
+                                                                    <div className="h-1.5 w-1.5 bg-amber-500 rounded-full mt-1.5 flex-shrink-0" />
+                                                                    <span className="leading-relaxed whitespace-pre-wrap">{p.trim()}</span>
                                                                 </li>
                                                             ))}
                                                         </ul>
@@ -890,7 +890,12 @@ export default function PlaylistClient({
                                             ) : (
                                                 /* Formulario de Entrega */
                                                 <form onSubmit={handleEnviarTarea} className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 space-y-4">
-                                                    <h4 className="text-sm font-bold text-gray-800">Enviar tu Entrega:</h4>
+                                                    <div className="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                                                        <div className="bg-blue-500 text-white p-2 rounded-lg shadow-sm">
+                                                            <FileText className="h-5 w-5" />
+                                                        </div>
+                                                        <h4 className="text-lg font-extrabold text-blue-900 tracking-wide uppercase">Datos de Tarea</h4>
+                                                    </div>
                                                     
                                                     <div>
                                                         <label className="block text-xs font-bold text-gray-500 mb-1">Explicación del trabajo realizado:</label>
