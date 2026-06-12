@@ -95,10 +95,10 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
     try {
         const supabaseAdmin = createClient() // Admin is needed if RLS blocks reading ie_cursos 'creado_por'
         const { data: cursoData } = await supabase.from('ie_cursos').select('creado_por, titulo').eq('id', cursoId).single()
-        const { data: profileData } = await supabase.from('ie_profiles').select('nombre, email').eq('id', user.id).single()
+        const { data: profileData } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
         
         if (cursoData?.creado_por) {
-            const nombreAlumno = profileData?.nombre || profileData?.email || 'Un alumno';
+            const nombreAlumno = [profileData?.nombre, profileData?.apellido_paterno, profileData?.apellido_materno].filter(Boolean).join(' ').trim() || 'Un alumno';
             await supabase.from('ie_notificaciones').insert({
                 usuario_id: cursoData.creado_por,
                 actor_id: user.id,
@@ -213,10 +213,10 @@ export async function submitExamenModular(examenId: string, respuestasUsuario: R
         const { data: cursoDataExm } = await supabase.from('ie_examenes').select('curso_id').eq('id', examenId).single()
         if (cursoDataExm?.curso_id) {
             const { data: cursoData } = await supabase.from('ie_cursos').select('creado_por, titulo').eq('id', cursoDataExm.curso_id).single()
-            const { data: profileData } = await supabase.from('ie_profiles').select('nombre, email').eq('id', user.id).single()
+            const { data: profileData } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
             
             if (cursoData?.creado_por) {
-                const nombreAlumno = profileData?.nombre || profileData?.email || 'Un alumno';
+                const nombreAlumno = [profileData?.nombre, profileData?.apellido_paterno, profileData?.apellido_materno].filter(Boolean).join(' ').trim() || 'Un alumno';
                 await supabase.from('ie_notificaciones').insert({
                     usuario_id: cursoData.creado_por,
                     actor_id: user.id,
