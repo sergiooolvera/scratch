@@ -86,14 +86,15 @@ export async function POST(req: Request) {
         const PRECIO_CONSTANCIA_CAPACITADOR = Number(process.env.NEXT_PUBLIC_PRECIO_CONSTANCIA_INSTRUCTOR || '199')
 
         let finalPrice = curso.precio
-        if (esCreadoPorInstructor) {
-            if (esConstancia) {
+        
+        if (esConstancia) {
+            if (esCreadoPorInstructor && curso.precio === 0) {
                 finalPrice = PRECIO_CONSTANCIA_CAPACITADOR
             } else {
-                finalPrice = 0
+                finalPrice = Math.max(0, curso.precio - montoPrevio)
             }
         } else {
-            finalPrice = esConstancia ? Math.max(0, curso.precio - montoPrevio) : curso.precio
+            finalPrice = curso.precio
         }
 
         let basePrice = finalPrice
