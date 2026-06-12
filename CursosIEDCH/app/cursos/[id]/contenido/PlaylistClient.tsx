@@ -1119,7 +1119,7 @@ export default function PlaylistClient({
                                                     </p>
                                                 )}
                                                 <div className="flex flex-col items-start gap-1.5 mt-2">
-                                                    {hasExam && (
+                                                    {(item.id && tareasDef[item.id]) && (
                                                         <span 
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -1127,18 +1127,18 @@ export default function PlaylistClient({
                                                                 if (index !== currentIndex) {
                                                                     setCurrentIndex(index);
                                                                     setActiveRecursoIndex(0);
-                                                                    setTimeout(() => document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                                    setTimeout(() => document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
                                                                 } else {
-                                                                    document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                                    document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' });
                                                                 }
                                                             }}
                                                             className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
-                                                            isExamPassed
+                                                            entregas[item.id]
                                                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                                            : 'bg-amber-50 text-amber-600 border border-amber-200'
+                                                            : 'bg-purple-50 text-purple-600 border border-purple-200'
                                                         }`}>
-                                                            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                                            {isExamPassed ? 'Examen listo' : 'Tiene Examen'}
+                                                            <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                            {entregas[item.id] ? 'Tarea Enviada' : 'Tiene Tarea'}
                                                         </span>
                                                     )}
                                                     {(item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) && (
@@ -1160,10 +1160,10 @@ export default function PlaylistClient({
                                                             : 'bg-blue-50 text-blue-600 border border-blue-200'
                                                         }`}>
                                                             <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                                            {(item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0) ? 'Cuest. Enviado' : 'Tiene Cuest.'}
+                                                            {(item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0) ? 'Cuestionario Enviado' : 'Tiene Cuestionario'}
                                                         </span>
                                                     )}
-                                                    {(item.id && tareasDef[item.id]) && (
+                                                    {hasExam && (
                                                         <span 
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -1171,18 +1171,18 @@ export default function PlaylistClient({
                                                                 if (index !== currentIndex) {
                                                                     setCurrentIndex(index);
                                                                     setActiveRecursoIndex(0);
-                                                                    setTimeout(() => document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                                    setTimeout(() => document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
                                                                 } else {
-                                                                    document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                                    document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' });
                                                                 }
                                                             }}
                                                             className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
-                                                            entregas[item.id]
+                                                            isExamPassed
                                                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                                            : 'bg-purple-50 text-purple-600 border border-purple-200'
+                                                            : 'bg-amber-50 text-amber-600 border border-amber-200'
                                                         }`}>
-                                                            <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                                            {entregas[item.id] ? 'Tarea Enviada' : 'Tiene Tarea'}
+                                                            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                            {isExamPassed ? 'Examen listo' : 'Tiene Examen'}
                                                         </span>
                                                     )}
                                                 </div>
