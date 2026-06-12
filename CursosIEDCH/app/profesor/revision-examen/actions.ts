@@ -92,7 +92,7 @@ export async function getResultadosExamen(cursoId: string) {
         const userIds = res.map(r => r.user_id);
         const { data: profiles } = await supabaseAdmin
             .from('ie_profiles')
-            .select('id, nombre, apellidos')
+            .select('id, nombre, apellido_paterno, apellido_materno')
             .in('id', userIds);
 
         const resWithProfiles = res.map(r => {

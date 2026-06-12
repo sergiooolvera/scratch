@@ -190,7 +190,7 @@ export default function RevisionExamenPage() {
         if (!selectedResultado) return;
 
         const preguntasResultado = preguntas.filter(p => p.examen_id === selectedResultado.examen_id);
-        const alumno = `${selectedResultado.ie_profiles?.nombre || ''} ${selectedResultado.ie_profiles?.apellidos || ''}`.trim() || 'Alumno';
+        const alumno = `${selectedResultado.ie_profiles?.nombre || ''} ${selectedResultado.ie_profiles?.apellido_paterno || ''} ${selectedResultado.ie_profiles?.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Alumno';
         const fecha = new Date(selectedResultado.created_at).toLocaleString();
         const calificacion = selectedResultado.calificacion;
         const aprobado = selectedResultado.aprobado ? 'APROBADO' : 'REPROBADO';
@@ -408,7 +408,7 @@ export default function RevisionExamenPage() {
                                                                 <div>
                                                                     <p className="font-medium text-gray-900 text-sm flex items-center gap-1">
                                                                         <User className="h-3.5 w-3.5 text-gray-500" />
-                                                                        {`${r.ie_profiles?.nombre || ''} ${r.ie_profiles?.apellidos || ''}`.trim() || 'Alumno'}
+                                                                        {`${r.ie_profiles?.nombre || ''} ${r.ie_profiles?.apellido_paterno || ''} ${r.ie_profiles?.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Alumno'}
                                                                     </p>
                                                                     <p className="text-xs text-gray-500">{new Date(r.created_at).toLocaleDateString()}</p>
                                                                 </div>
@@ -434,7 +434,7 @@ export default function RevisionExamenPage() {
                                 <div className="border-b pb-4 mb-6 flex justify-between items-center">
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-900">
-                                            Detalle de: {`${selectedResultado.ie_profiles?.nombre || ''} ${selectedResultado.ie_profiles?.apellidos || ''}`.trim() || 'Alumno'}
+                                            Detalle de: {`${selectedResultado.ie_profiles?.nombre || ''} ${selectedResultado.ie_profiles?.apellido_paterno || ''} ${selectedResultado.ie_profiles?.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || 'Alumno'}
                                         </h2>
                                         <p className="text-sm font-semibold text-blue-700 mb-1">
                                             {selectedResultado.examen?.titulo || 'Examen'}
