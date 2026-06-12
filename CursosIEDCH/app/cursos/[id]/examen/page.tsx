@@ -171,7 +171,7 @@ export default async function ExamenContenidoPage({ params }: { params: Promise<
                 tipo="warning"
                 titulo="Evaluación no disponible"
                 subtitulo="Aviso del portal"
-                descripcion="El profesor indicó que este curso requiere una evaluación final, pero el formulario interactivo aún no ha sido cargado."
+                descripcion="El profesor indicó que este curso requiere una evaluación final, pero el formulario interactivo aún no ha sido cargado o no se han acreditado los modulos anteriores que anteceden a este examen."
                 id={id}
             />
         );
