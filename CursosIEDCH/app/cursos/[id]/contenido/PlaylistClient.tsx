@@ -1199,9 +1199,19 @@ export default function PlaylistClient({
                                                             if (index !== currentIndex) {
                                                                 setCurrentIndex(index);
                                                                 setActiveRecursoIndex(0);
-                                                                setTimeout(() => document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                                if (!isExamPassed) {
+                                                                    setMostrarExamenActivo(true);
+                                                                    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+                                                                } else {
+                                                                    setTimeout(() => document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                                }
                                                             } else {
-                                                                document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                                if (!isExamPassed) {
+                                                                    setMostrarExamenActivo(true);
+                                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                                } else {
+                                                                    document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                                }
                                                             }
                                                         }}
                                                         className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
