@@ -40,10 +40,12 @@ export default async function RevisionTareasPage() {
         console.error('Error entregas:', JSON.stringify(errEntregas))
     }
 
-    // 2. Obtener todos los cursos
-    const { data: todosCursos } = await supabaseAdmin
-        .from('ie_cursos')
-        .select('id, titulo, creado_por')
+    // 2. Obtener todos los cursos del profesor (o todos si es admin)
+    let queryCursos = supabaseAdmin.from('ie_cursos').select('id, titulo, creado_por')
+    if (profile?.rol !== 'admin') {
+        queryCursos = queryCursos.eq('creado_por', user.id)
+    }
+    const { data: cursosDelProfesor } = await queryCursos.order('created_at', { ascending: false })
 
     // 3. Obtener todos los módulos para mapear títulos
     const { data: todosModulos } = await supabaseAdmin
@@ -69,7 +71,10 @@ export default async function RevisionTareasPage() {
 
     // Build lookups
     const cursosMap: Record<string, any> = {}
-    todosCursos?.forEach(c => { cursosMap[c.id] = c })
+    // We only need to lookup titles for courses. 
+    // We'll fetch titles from all available courses, but in this case we'll fetch them from a broader query if needed.
+    // However, since we filtered courses to only the professor's, we might miss some if an admin is looking at it and we didn't fetch them all. But we did fetch all if admin!
+    cursosDelProfesor?.forEach(c => { cursosMap[c.id] = c })
 
     const modulosMap: Record<string, string> = {}
     todosModulos?.forEach(m => { modulosMap[m.id] = m.titulo })
@@ -77,7 +82,7 @@ export default async function RevisionTareasPage() {
     // 5. Cruzar datos y filtrar
     let entregasFormateadas: any[] = []
 
-    if (todasEntregas && todosCursos) {
+    if (todasEntregas && cursosDelProfesor) {
         entregasFormateadas = todasEntregas
             .filter(e => {
                 if (profile?.rol === 'admin') return true
@@ -118,7 +123,7 @@ export default async function RevisionTareasPage() {
             <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Revisión de Tareas Modulares</h1>
             <p className="text-gray-500 text-sm mb-8">Califica los proyectos, entregables y prácticas enviadas por tus alumnos por cada módulo.</p>
             
-            <RevisionTareasClient entregas={entregasFormateadas} />
+            <RevisionTareasClient entregas={entregasFormateadas} cursos={cursosDelProfesor || []} />
         </div>
     )
 }

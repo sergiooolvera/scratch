@@ -59,10 +59,11 @@ export default async function RevisionCuestionariosPage() {
     const cursoIds = [...new Set(modulosInvolucrados?.map(m => m.curso_id) || [])]
 
     // 4. Obtener cursos
-    const { data: cursosInvolucrados } = await supabaseAdmin
-        .from('ie_cursos')
-        .select('id, titulo, creado_por')
-        .in('id', cursoIds)
+    let queryCursos = supabaseAdmin.from('ie_cursos').select('id, titulo, creado_por')
+    if (profile?.rol !== 'admin') {
+        queryCursos = queryCursos.eq('creado_por', user.id)
+    }
+    const { data: cursosDelProfesor } = await queryCursos.order('created_at', { ascending: false })
 
     // 5. Nombres de alumnos
     const userIdsConEntregas = [...new Set(todasEntregas?.map(e => e.user_id) || [])]
@@ -83,7 +84,7 @@ export default async function RevisionCuestionariosPage() {
 
     // Build lookups
     const cursosMap: Record<string, any> = {}
-    cursosInvolucrados?.forEach(c => { cursosMap[c.id] = c })
+    cursosDelProfesor?.forEach(c => { cursosMap[c.id] = c })
 
     const modulosMap: Record<string, any> = {}
     modulosInvolucrados?.forEach(m => { modulosMap[m.id] = m })
@@ -158,7 +159,7 @@ export default async function RevisionCuestionariosPage() {
             <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Revisión de Cuestionarios Abiertos</h1>
             <p className="text-gray-500 text-sm mb-8">Evalúa los cuestionarios de preguntas libres enviados por tus alumnos.</p>
             
-            <RevisionCuestionariosClient entregas={entregasFormateadas} />
+            <RevisionCuestionariosClient entregas={entregasFormateadas} cursos={cursosDelProfesor || []} />
         </div>
     )
 }

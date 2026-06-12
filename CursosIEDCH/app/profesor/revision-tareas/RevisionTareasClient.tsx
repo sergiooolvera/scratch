@@ -19,11 +19,10 @@ type Entrega = {
     responded_at?: string;
 }
 
-export default function RevisionTareasClient({ entregas: initialEntregas }: { entregas: Entrega[] }) {
+export default function RevisionTareasClient({ entregas: initialEntregas, cursos = [] }: { entregas: Entrega[], cursos?: any[] }) {
     const [entregas, setEntregas] = useState<Entrega[]>(initialEntregas)
     const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null)
-    const [filterCurso, setFilterCurso] = useState('all')
-    const [filterEstado, setFilterEstado] = useState('all') // 'all', 'pending', 'graded'
+    const [selectedCurso, setSelectedCurso] = useState<string>('')
 
     // Form states
     const [calificacion, setCalificacion] = useState<number | ''>('')
@@ -32,8 +31,12 @@ export default function RevisionTareasClient({ entregas: initialEntregas }: { en
     const [mensaje, setMensaje] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
     // Courses list for filter dropdown
-    const cursosDisponibles = Array.from(new Set(entregas.map(e => JSON.stringify({ id: e.curso_id, titulo: e.curso_titulo }))))
-        .map(str => JSON.parse(str))
+    // Si pasamos los cursos como prop, usamos esos, sino los inferimos de las entregas
+    const cursosDisponibles = cursos.length > 0 
+        ? cursos 
+        : Array.from(
+            new Set(entregas.map(e => JSON.stringify({ id: e.curso_id, titulo: e.curso_titulo })))
+        ).map(str => JSON.parse(str))
 
     const handleSelectEntrega = (ent: Entrega) => {
         setSelectedEntrega(ent)
@@ -76,106 +79,93 @@ export default function RevisionTareasClient({ entregas: initialEntregas }: { en
         }
     }
 
-    // Apply filtering
-    const filteredEntregas = entregas.filter(e => {
-        if (filterCurso !== 'all' && e.curso_id !== filterCurso) return false
-        if (filterEstado === 'pending' && e.calificacion !== null) return false
-        if (filterEstado === 'graded' && e.calificacion === null) return false
-        return true
-    })
+    // Entregas of selected course
+    const entregasDelCurso = selectedCurso 
+        ? entregas.filter(e => e.curso_id === selectedCurso) 
+        : []
+
+    // Group by module
+    const modulosDelCurso = Array.from(
+        new Set(entregasDelCurso.map(e => JSON.stringify({ id: e.modulo_id, titulo: e.modulo_titulo })))
+    ).map(str => JSON.parse(str))
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left/Middle: List & Filters */}
             <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-2xl border border-zinc-150 p-5 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
-                    <div className="flex items-center gap-2 text-gray-700 font-bold">
-                        <Filter className="h-5 w-5 text-blue-600" />
-                        <span>Filtrar Entregas</span>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                        <select
-                            value={filterCurso}
-                            onChange={(e) => setFilterCurso(e.target.value)}
-                            className="text-xs rounded-xl border-gray-250 p-2.5 border bg-white text-gray-700 font-semibold focus:outline-none"
-                        >
-                            <option value="all">Todos los Cursos</option>
-                            {cursosDisponibles.map(c => (
-                                <option key={c.id} value={c.id}>{c.titulo}</option>
-                            ))}
-                        </select>
-
-                        <select
-                            value={filterEstado}
-                            onChange={(e) => setFilterEstado(e.target.value)}
-                            className="text-xs rounded-xl border-gray-255 p-2.5 border bg-white text-gray-700 font-semibold focus:outline-none"
-                        >
-                            <option value="all">Todos los Estados</option>
-                            <option value="pending">⏳ Pendiente de Revisión</option>
-                            <option value="graded">✅ Calificadas</option>
-                        </select>
-                    </div>
+                
+                {/* Course Selection */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Selecciona un Curso:</label>
+                    <select 
+                        value={selectedCurso} 
+                        onChange={(e) => { setSelectedCurso(e.target.value); setSelectedEntrega(null); }}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2 text-black bg-white"
+                    >
+                        <option value="">-- Elige un curso --</option>
+                        {cursosDisponibles.map(c => (
+                            <option key={c.id} value={c.id}>{c.titulo}</option>
+                        ))}
+                    </select>
                 </div>
 
-                <div className="space-y-4">
-                    {filteredEntregas.length === 0 ? (
-                        <div className="text-center py-16 bg-white border border-dashed border-gray-300 rounded-2xl">
-                            <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3 animate-pulse" />
-                            <p className="text-gray-500 font-bold">No se encontraron entregas con los filtros seleccionados.</p>
-                        </div>
-                    ) : (
-                        filteredEntregas.map(ent => {
-                            const isSelected = selectedEntrega?.id === ent.id
-                            return (
-                                <button
-                                    key={ent.id}
-                                    onClick={() => handleSelectEntrega(ent)}
-                                    className={`w-full text-left p-5 bg-white hover:bg-zinc-50 border rounded-2xl shadow-sm transition flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${
-                                        isSelected ? 'ring-2 ring-blue-500 border-transparent bg-blue-50/10' : 'border-zinc-200'
-                                    }`}
-                                >
-                                    <div className="space-y-1.5 flex-grow">
-                                        <div className="flex items-center gap-2">
-                                            <span className="px-2 py-0.5 bg-zinc-100 border border-zinc-250 text-zinc-650 rounded text-[10px] font-black uppercase">
-                                                {ent.curso_titulo}
-                                            </span>
-                                            <span className="text-[10px] text-gray-400">
-                                                {new Date(ent.created_at).toLocaleDateString()}
-                                            </span>
+                {selectedCurso && (
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 className="font-bold text-gray-900 mb-4">Tareas del curso</h2>
+                        {modulosDelCurso.length === 0 ? (
+                            <p className="text-gray-500 text-sm">Este curso no tiene entregas de tareas todavía.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {modulosDelCurso.map(modulo => {
+                                    const entregasModulo = entregasDelCurso.filter(e => e.modulo_id === modulo.id)
+                                    return (
+                                        <div key={modulo.id} className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50">
+                                            <div className="px-3 py-2 bg-white border-b border-gray-100">
+                                                <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                    <BookOpen className="h-4 w-4 text-blue-600" />
+                                                    {modulo.titulo}
+                                                </p>
+                                            </div>
+                                            <div className="p-2 space-y-2">
+                                                {entregasModulo.map(ent => {
+                                                    const isSelected = selectedEntrega?.id === ent.id
+                                                    return (
+                                                        <button
+                                                            key={ent.id}
+                                                            onClick={() => handleSelectEntrega(ent)}
+                                                            className={`w-full text-left p-3 rounded-lg border transition-colors flex justify-between items-center ${isSelected ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-100 hover:bg-gray-100'}`}
+                                                        >
+                                                            <div>
+                                                                <p className="font-medium text-gray-900 text-sm flex items-center gap-1">
+                                                                    <User className="h-3.5 w-3.5 text-gray-500" />
+                                                                    {ent.alumno_nombre}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500">{new Date(ent.created_at).toLocaleDateString()}</p>
+                                                            </div>
+                                                            <div>
+                                                                {ent.calificacion !== null ? (
+                                                                    <span className="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black rounded-full flex items-center gap-1">
+                                                                        <Award className="h-4 w-4" />
+                                                                        {ent.calificacion}%
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-black rounded-full flex items-center gap-1 animate-pulse">
+                                                                        <Clock className="h-4 w-4" />
+                                                                        Pendiente
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
                                         </div>
-
-                                        <h3 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
-                                            <User className="h-4 w-4 text-gray-400" />
-                                            {ent.alumno_nombre}
-                                        </h3>
-
-                                        <p className="text-xs text-gray-550 font-semibold flex items-center gap-1">
-                                            <BookOpen className="h-3.5 w-3.5 text-blue-600" />
-                                            {ent.modulo_titulo}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex-shrink-0 flex items-center gap-3">
-                                        {ent.calificacion !== null ? (
-                                            <span className="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black rounded-full flex items-center gap-1">
-                                                <Award className="h-4 w-4" />
-                                                Nota: {ent.calificacion}/100
-                                            </span>
-                                        ) : (
-                                            <span className="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-black rounded-full flex items-center gap-1 animate-pulse">
-                                                <Clock className="h-4 w-4" />
-                                                Pendiente
-                                            </span>
-                                        )}
-
-                                        <ArrowRight className="h-5 w-5 text-gray-400 hidden sm:block" />
-                                    </div>
-                                </button>
-                            )
-                        })
-                    )}
-                </div>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Right: Submission Details & Grading Panel */}
