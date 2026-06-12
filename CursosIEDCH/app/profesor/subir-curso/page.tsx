@@ -1759,13 +1759,13 @@ export default function SubirCursoPage() {
                                             </h3>
                                             <div className="flex items-center gap-2">
                                                 {modulos.length > 1 && (
-                                                    <div className="flex gap-1 mr-2 border-r border-gray-200 pr-3">
+                                                    <div className="flex gap-1.5 mr-3 border-r border-gray-200 pr-4">
                                                         <button 
                                                             type="button" 
                                                             onClick={() => index > 0 && handleMoverModulo(index, 'subir')} 
                                                             disabled={index === 0}
-                                                            className={`p-1 rounded-md transition ${index === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
-                                                            title="Mover arriba"
+                                                            className={`p-1.5 rounded-md border transition-all duration-200 ${index === 0 ? 'border-transparent text-gray-300 bg-gray-50 cursor-not-allowed opacity-50' : 'border-gray-200 text-gray-600 bg-white shadow-sm hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'}`}
+                                                            title="Subir módulo"
                                                         >
                                                             <ArrowUp className="h-4 w-4" />
                                                         </button>
@@ -1773,8 +1773,8 @@ export default function SubirCursoPage() {
                                                             type="button" 
                                                             onClick={() => index < modulos.length - 1 && handleMoverModulo(index, 'bajar')} 
                                                             disabled={index === modulos.length - 1}
-                                                            className={`p-1 rounded-md transition ${index === modulos.length - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
-                                                            title="Mover abajo"
+                                                            className={`p-1.5 rounded-md border transition-all duration-200 ${index === modulos.length - 1 ? 'border-transparent text-gray-300 bg-gray-50 cursor-not-allowed opacity-50' : 'border-gray-200 text-gray-600 bg-white shadow-sm hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'}`}
+                                                            title="Bajar módulo"
                                                         >
                                                             <ArrowDown className="h-4 w-4" />
                                                         </button>
@@ -1861,31 +1861,30 @@ export default function SubirCursoPage() {
                                                     <div className="space-y-3">
                                                         {modulo.recursos.map((recurso, rIdx) => (
                                                             <div key={rIdx} className="bg-zinc-50 border border-zinc-200/80 rounded-xl p-4 relative shadow-sm hover:shadow transition">
-                                                                <div className="absolute top-3 right-3 flex items-center gap-2">
-                                                                    {rIdx > 0 && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleMoverRecurso(index, rIdx, 'subir')}
-                                                                            className="text-zinc-400 hover:text-blue-600 transition"
-                                                                            title="Subir recurso"
-                                                                        >
-                                                                            <ArrowUp className="h-4 w-4" />
-                                                                        </button>
-                                                                    )}
-                                                                    {rIdx < modulo.recursos.length - 1 && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleMoverRecurso(index, rIdx, 'bajar')}
-                                                                            className="text-zinc-400 hover:text-blue-600 transition"
-                                                                            title="Bajar recurso"
-                                                                        >
-                                                                            <ArrowDown className="h-4 w-4" />
-                                                                        </button>
-                                                                    )}
+                                                                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => rIdx > 0 && handleMoverRecurso(index, rIdx, 'subir')}
+                                                                        disabled={rIdx === 0}
+                                                                        className={`p-1.5 rounded-md border transition-all duration-200 ${rIdx === 0 ? 'border-transparent text-zinc-300 bg-zinc-50 cursor-not-allowed opacity-50' : 'border-zinc-200 text-zinc-500 bg-white shadow-sm hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'}`}
+                                                                        title="Subir recurso"
+                                                                    >
+                                                                        <ArrowUp className="h-4 w-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => rIdx < modulo.recursos.length - 1 && handleMoverRecurso(index, rIdx, 'bajar')}
+                                                                        disabled={rIdx === modulo.recursos.length - 1}
+                                                                        className={`p-1.5 rounded-md border transition-all duration-200 ${rIdx === modulo.recursos.length - 1 ? 'border-transparent text-zinc-300 bg-zinc-50 cursor-not-allowed opacity-50' : 'border-zinc-200 text-zinc-500 bg-white shadow-sm hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 hover:shadow-md'}`}
+                                                                        title="Bajar recurso"
+                                                                    >
+                                                                        <ArrowDown className="h-4 w-4" />
+                                                                    </button>
+                                                                    <div className="w-px h-6 bg-zinc-200 mx-0.5"></div>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleEliminarRecurso(index, rIdx)}
-                                                                        className="text-zinc-400 hover:text-red-500 transition"
+                                                                        className="p-1.5 rounded-md border border-zinc-200 text-zinc-400 bg-white shadow-sm hover:border-red-300 hover:text-red-500 hover:bg-red-50 hover:shadow-md transition-all duration-200"
                                                                         title="Eliminar recurso"
                                                                     >
                                                                         <Trash2 className="h-4 w-4" />
