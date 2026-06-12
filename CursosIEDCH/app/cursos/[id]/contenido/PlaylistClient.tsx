@@ -760,7 +760,7 @@ export default function PlaylistClient({
                                     </div>
                                 )}
                                 
-                                <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
+                                <div id="examen-section" className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
                                     {hasActiveExam && !activeExamPassed && (
                                         <button
                                             onClick={() => setMostrarExamenActivo(true)}
@@ -797,7 +797,7 @@ export default function PlaylistClient({
 
                                 {/* Tarea / Entregable Modular */}
                                 {currentItem.id && tareasDef[currentItem.id] && (
-                                    <div className="mt-12 bg-zinc-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6">
+                                    <div id="tarea-section" className="mt-12 bg-zinc-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6">
                                         <div className="flex items-center gap-3 border-2 border-amber-400 bg-amber-50/80 rounded-xl p-4 shadow-sm">
                                             <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-sm">
                                                 <FileText className="h-5 w-5" />
@@ -967,7 +967,7 @@ export default function PlaylistClient({
 
                                 {/* Cuestionario Modular */}
                                 {currentItem.id && currentItem.requiere_cuestionario && currentItem.cuestionarioPreguntas && currentItem.cuestionarioPreguntas.length > 0 && (
-                                    <div className="mt-12 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
+                                    <div id="cuestionario-section" className="mt-12 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
                                         <div className="flex items-center gap-3 border-2 border-blue-400 bg-blue-50/80 rounded-xl p-4 shadow-sm">
                                             <div className="p-2.5 bg-blue-500 text-white rounded-xl shadow-sm">
                                                 <FileText className="h-5 w-5" />
@@ -1111,26 +1111,74 @@ export default function PlaylistClient({
                                                         {recursos.length} recurso{recursos.length === 1 ? '' : 's'}
                                                     </p>
                                                 )}
-                                                {hasExam && (
-                                                    <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                                                        isExamPassed
-                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                                        : 'bg-amber-50 text-amber-600 border border-amber-200'
-                                                    }`}>
-                                                        <Sparkles className="h-3 w-3" />
-                                                        {isExamPassed ? 'Examen listo' : 'Tiene Examen'}
-                                                    </span>
-                                                )}
-                                                {(item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) && (
-                                                    <span className={`inline-flex items-center gap-1 mt-1 ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                                                        (item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0)
-                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                                        : 'bg-blue-50 text-blue-600 border border-blue-200'
-                                                    }`}>
-                                                        <FileText className="h-3 w-3" />
-                                                        {(item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0) ? 'Cuest. Enviado' : 'Tiene Cuest.'}
-                                                    </span>
-                                                )}
+                                                <div className="flex flex-col items-start gap-1.5 mt-2">
+                                                    {hasExam && (
+                                                        <span 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (locked) return;
+                                                                if (index !== currentIndex) {
+                                                                    setCurrentIndex(index);
+                                                                    setActiveRecursoIndex(0);
+                                                                    setTimeout(() => document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                                } else {
+                                                                    document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                                }
+                                                            }}
+                                                            className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                                            isExamPassed
+                                                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                            : 'bg-amber-50 text-amber-600 border border-amber-200'
+                                                        }`}>
+                                                            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                            {isExamPassed ? 'Examen listo' : 'Tiene Examen'}
+                                                        </span>
+                                                    )}
+                                                    {(item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) && (
+                                                        <span 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (locked) return;
+                                                                if (index !== currentIndex) {
+                                                                    setCurrentIndex(index);
+                                                                    setActiveRecursoIndex(0);
+                                                                    setTimeout(() => document.getElementById('cuestionario-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                                } else {
+                                                                    document.getElementById('cuestionario-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                                }
+                                                            }}
+                                                            className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                                            (item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0)
+                                                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                            : 'bg-blue-50 text-blue-600 border border-blue-200'
+                                                        }`}>
+                                                            <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                            {(item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0) ? 'Cuest. Enviado' : 'Tiene Cuest.'}
+                                                        </span>
+                                                    )}
+                                                    {(item.id && tareasDef[item.id]) && (
+                                                        <span 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (locked) return;
+                                                                if (index !== currentIndex) {
+                                                                    setCurrentIndex(index);
+                                                                    setActiveRecursoIndex(0);
+                                                                    setTimeout(() => document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                                } else {
+                                                                    document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                                }
+                                                            }}
+                                                            className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                                            entregas[item.id]
+                                                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                            : 'bg-purple-50 text-purple-600 border border-purple-200'
+                                                        }`}>
+                                                            <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                            {entregas[item.id] ? 'Tarea Enviada' : 'Tiene Tarea'}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </button>
                                         {recursos.length > 0 && !locked && (
