@@ -18,12 +18,15 @@ export async function notifyProfesorTaskSubmission(cursoId: string, actorId: str
 
         if (!cursoData || !cursoData.creado_por) return { success: false, error: 'Curso o profesor no encontrado' }
 
+        const { data: profileData } = await supabaseAdmin.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', actorId).single()
+        const realNombre = [profileData?.nombre, profileData?.apellido_paterno, profileData?.apellido_materno].filter(Boolean).join(' ').trim() || actorNombre || 'Un alumno';
+
         // Insertar notificación
         const { error } = await supabaseAdmin.from('ie_notificaciones').insert({
             usuario_id: cursoData.creado_por,
             actor_id: actorId,
             tipo: 'tarea_entregada',
-            mensaje: `El alumno ${actorNombre} ha entregado una tarea en el curso "${cursoTitulo}".`,
+            mensaje: `El alumno ${realNombre} ha entregado una tarea en el curso "${cursoTitulo}".`,
             enlace: `/profesor/revision-tareas`
         })
 
@@ -54,11 +57,14 @@ export async function notifyProfesorCuestionarioSubmission(cursoId: string, acto
 
         if (!cursoData || !cursoData.creado_por) return { success: false, error: 'Curso o profesor no encontrado' }
 
+        const { data: profileData } = await supabaseAdmin.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', actorId).single()
+        const realNombre = [profileData?.nombre, profileData?.apellido_paterno, profileData?.apellido_materno].filter(Boolean).join(' ').trim() || actorNombre || 'Un alumno';
+
         const { error } = await supabaseAdmin.from('ie_notificaciones').insert({
             usuario_id: cursoData.creado_por,
             actor_id: actorId,
             tipo: 'cuestionario_entregado',
-            mensaje: `El alumno ${actorNombre} ha enviado sus respuestas de cuestionario abierto en el curso "${cursoTitulo}".`,
+            mensaje: `El alumno ${realNombre} ha enviado sus respuestas de cuestionario abierto en el curso "${cursoTitulo}".`,
             enlace: `/profesor/revision-cuestionarios`
         })
 

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
 export async function submitExamen(cursoId: string, respuestasUsuario: Record<string, string>, explicaciones: Record<string, string>) {
@@ -93,9 +94,12 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
 
     // 4. Notificar al profesor
     try {
-        const supabaseAdmin = createClient() // Admin is needed if RLS blocks reading ie_cursos 'creado_por'
-        const { data: cursoData } = await supabase.from('ie_cursos').select('creado_por, titulo').eq('id', cursoId).single()
-        const { data: profileData } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
+        const supabaseAdmin = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+        const { data: cursoData } = await supabaseAdmin.from('ie_cursos').select('creado_por, titulo').eq('id', cursoId).single()
+        const { data: profileData } = await supabaseAdmin.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
         
         if (cursoData?.creado_por) {
             const nombreAlumno = [profileData?.nombre, profileData?.apellido_paterno, profileData?.apellido_materno].filter(Boolean).join(' ').trim() || 'Un alumno';
@@ -209,11 +213,15 @@ export async function submitExamenModular(examenId: string, respuestasUsuario: R
 
     // 4. Notificar al profesor
     try {
+        const supabaseAdmin = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
         // Necesitamos curso_id para saber quién es el profesor
-        const { data: cursoDataExm } = await supabase.from('ie_examenes').select('curso_id').eq('id', examenId).single()
+        const { data: cursoDataExm } = await supabaseAdmin.from('ie_examenes').select('curso_id').eq('id', examenId).single()
         if (cursoDataExm?.curso_id) {
-            const { data: cursoData } = await supabase.from('ie_cursos').select('creado_por, titulo').eq('id', cursoDataExm.curso_id).single()
-            const { data: profileData } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
+            const { data: cursoData } = await supabaseAdmin.from('ie_cursos').select('creado_por, titulo').eq('id', cursoDataExm.curso_id).single()
+            const { data: profileData } = await supabaseAdmin.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', user.id).single()
             
             if (cursoData?.creado_por) {
                 const nombreAlumno = [profileData?.nombre, profileData?.apellido_paterno, profileData?.apellido_materno].filter(Boolean).join(' ').trim() || 'Un alumno';
