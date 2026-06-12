@@ -34,6 +34,8 @@ type Modulo = {
     tareaPuntos?: string;
     requiereCuestionario?: boolean;
     cuestionarioPreguntas?: { id?: string; pregunta: string; orden?: number }[];
+    seguridadAumentada?: boolean;
+    maxCambiosPantalla?: number | '';
 }
 
 type PreguntaParsed = {
@@ -192,6 +194,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     })),
                     examen: m.requiereExamen ? {
                         min_aprobacion: m.examenMinAprobacion,
+                        seguridad_aumentada: m.seguridadAumentada,
+                        max_cambios_pantalla: m.maxCambiosPantalla,
                         preguntas: m.examenPreguntas.map((p, pIdx) => ({
                             id: p.id,
                             pregunta: p.pregunta,
@@ -400,6 +404,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             recursos,
                             requiereExamen: !!m.examen,
                             examenMinAprobacion: m.examen?.min_aprobacion || 80,
+                            seguridadAumentada: m.examen?.seguridad_aumentada || false,
+                            maxCambiosPantalla: m.examen?.max_cambios_pantalla || 3,
                             examenPreguntas: (m.examen?.preguntas || []).map((p: any) => ({
                                 id: p.id,
                                 pregunta: p.pregunta,
@@ -571,6 +577,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         recursos,
                         requiereExamen: !!exmMod,
                         examenMinAprobacion: exmMod?.min_aprobacion || 80,
+                        seguridadAumentada: exmMod?.seguridad_aumentada || false,
+                        maxCambiosPantalla: exmMod?.max_cambios_pantalla || 3,
                         examenPreguntas: pregsMod.map(p => ({
                             id: p.id,
                             pregunta: p.pregunta,
@@ -630,7 +638,9 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             recursos: [],
             requiereExamen: false,
             examenMinAprobacion: 80,
-            examenPreguntas: []
+            examenPreguntas: [],
+            seguridadAumentada: false,
+            maxCambiosPantalla: 3
         }])
     }
 
@@ -1513,8 +1523,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             modulo_id: moduloId,
                             min_aprobacion: mod.examenMinAprobacion,
                             tiempo_limite: null,
-                            seguridad_aumentada: false,
-                            max_cambios_pantalla: 3,
+                            seguridad_aumentada: mod.seguridadAumentada || false,
+                            max_cambios_pantalla: mod.seguridadAumentada ? (mod.maxCambiosPantalla === '' || mod.maxCambiosPantalla === undefined ? 3 : mod.maxCambiosPantalla) : 3,
                             intentos_permitidos: 3
                         };
 
@@ -2538,7 +2548,35 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex justify-between items-center">
+                                                        <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-indigo-100/50">
+                                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={modulo.seguridadAumentada || false}
+                                                                    onChange={(e) => handleModuloChange(index, 'seguridadAumentada', e.target.checked)}
+                                                                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                                                />
+                                                                <span className="text-sm font-semibold text-gray-750">
+                                                                    🛡️ Seguridad Aumentada (Pantalla Completa Obligatoria)
+                                                                </span>
+                                                            </label>
+                                                            {modulo.seguridadAumentada && (
+                                                                <div className="ml-6 flex items-center gap-2">
+                                                                    <label className="text-xs font-semibold text-gray-600">Cambios de pantalla permitidos (abandonos):</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        max="20"
+                                                                        value={modulo.maxCambiosPantalla === undefined ? 3 : modulo.maxCambiosPantalla}
+                                                                        onChange={(e) => handleModuloChange(index, 'maxCambiosPantalla', e.target.value === '' ? '' : Number(e.target.value))}
+                                                                        className="w-16 rounded border-gray-300 p-1 border bg-white text-black text-xs"
+                                                                    />
+                                                                    <span className="text-[10px] text-gray-500 italic">Si el alumno cambia de pestaña más veces, el examen se suspenderá.</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center mt-4">
                                                             <a href="/ejemplo-examen.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-850 underline underline-offset-2 transition-colors">
                                                                 📄 Ver ejemplo del formato de examen PDF
                                                             </a>

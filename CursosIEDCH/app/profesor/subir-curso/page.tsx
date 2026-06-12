@@ -30,6 +30,8 @@ type Modulo = {
     tareaPuntos?: string;
     requiereCuestionario?: boolean;
     cuestionarioPreguntas?: { id?: string; pregunta: string; orden?: number }[];
+    seguridadAumentada?: boolean;
+    maxCambiosPantalla?: number | '';
 }
 
 type PreguntaParsed = {
@@ -70,7 +72,9 @@ export default function SubirCursoPage() {
         tareaInstrucciones: '',
         tareaPuntos: '',
         requiereCuestionario: false,
-        cuestionarioPreguntas: []
+        cuestionarioPreguntas: [],
+        seguridadAumentada: false,
+        maxCambiosPantalla: 3
     }])
 
     // Exam state (Final exam)
@@ -188,6 +192,8 @@ export default function SubirCursoPage() {
                 tareaPuntos: m.tareaPuntos,
                 requiereCuestionario: m.requiereCuestionario,
                 cuestionarioPreguntas: m.cuestionarioPreguntas,
+                seguridadAumentada: m.seguridadAumentada,
+                maxCambiosPantalla: m.maxCambiosPantalla,
                 recursos: m.recursos.map(r => ({
                     titulo: r.titulo,
                     tipo: r.tipo,
@@ -258,6 +264,8 @@ export default function SubirCursoPage() {
                     tareaPuntos: m.tareaPuntos,
                     requiereCuestionario: m.requiereCuestionario,
                     cuestionarioPreguntas: m.cuestionarioPreguntas,
+                    seguridadAumentada: m.seguridadAumentada,
+                    maxCambiosPantalla: m.maxCambiosPantalla,
                     recursos: m.recursos.map(r => ({
                         titulo: r.titulo,
                         tipo: r.tipo,
@@ -317,6 +325,8 @@ export default function SubirCursoPage() {
                     tareaPuntos: m.tareaPuntos || '',
                     requiereCuestionario: !!m.requiereCuestionario,
                     cuestionarioPreguntas: m.cuestionarioPreguntas || [],
+                    seguridadAumentada: !!m.seguridadAumentada,
+                    maxCambiosPantalla: m.maxCambiosPantalla !== undefined ? m.maxCambiosPantalla : 3,
                     recursos: (m.recursos || []).map((r: any) => ({
                         titulo: r.titulo || '',
                         tipo: r.tipo || 'video',
@@ -387,7 +397,9 @@ export default function SubirCursoPage() {
             tareaInstrucciones: '',
             tareaPuntos: '',
             requiereCuestionario: false,
-            cuestionarioPreguntas: []
+            cuestionarioPreguntas: [],
+            seguridadAumentada: false,
+            maxCambiosPantalla: 3
         }])
     }
 
@@ -1112,8 +1124,8 @@ export default function SubirCursoPage() {
                         modulo_id: moduloInsertado.id, // Link to module!
                         min_aprobacion: currentMod.examenMinAprobacion,
                         tiempo_limite: null,
-                        seguridad_aumentada: false,
-                        max_cambios_pantalla: 3,
+                        seguridad_aumentada: currentMod.seguridadAumentada || false,
+                        max_cambios_pantalla: currentMod.seguridadAumentada ? (currentMod.maxCambiosPantalla === '' || currentMod.maxCambiosPantalla === undefined ? 3 : currentMod.maxCambiosPantalla) : 3,
                         intentos_permitidos: 3
                     })
                     .select()
@@ -2038,7 +2050,35 @@ export default function SubirCursoPage() {
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex justify-between items-center">
+                                                        <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-indigo-100/50">
+                                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={modulo.seguridadAumentada || false}
+                                                                    onChange={(e) => handleModuloChange(index, 'seguridadAumentada', e.target.checked)}
+                                                                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                                                />
+                                                                <span className="text-sm font-semibold text-gray-750">
+                                                                    🛡️ Seguridad Aumentada (Pantalla Completa Obligatoria)
+                                                                </span>
+                                                            </label>
+                                                            {modulo.seguridadAumentada && (
+                                                                <div className="ml-6 flex items-center gap-2">
+                                                                    <label className="text-xs font-semibold text-gray-600">Cambios de pantalla permitidos (abandonos):</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        max="20"
+                                                                        value={modulo.maxCambiosPantalla === undefined ? 3 : modulo.maxCambiosPantalla}
+                                                                        onChange={(e) => handleModuloChange(index, 'maxCambiosPantalla', e.target.value === '' ? '' : Number(e.target.value))}
+                                                                        className="w-16 rounded border-gray-300 p-1 border bg-white text-black text-xs"
+                                                                    />
+                                                                    <span className="text-[10px] text-gray-500 italic">Si el alumno cambia de pestaña más veces, el examen se suspenderá.</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex justify-between items-center mt-4">
                                                             <a href="/ejemplo-examen.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-850 underline underline-offset-2 transition-colors">
                                                                 📄 Ver ejemplo del formato de examen PDF
                                                             </a>

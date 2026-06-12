@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
-export async function submitExamen(cursoId: string, respuestasUsuario: Record<string, string>, explicaciones: Record<string, string>) {
+export async function submitExamen(cursoId: string, respuestasUsuario: Record<string, string>, explicaciones: Record<string, string>, bloqueadoPorSeguridad: boolean = false) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -74,6 +74,8 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
         };
     })
 
+    respuestasDetalle['_metadata'] = { bloqueado_seguridad: bloqueadoPorSeguridad } as any;
+
     const calificacionFinal = Math.round((correctas / divisor) * 100);
     const aprobado = calificacionFinal >= examen.min_aprobacion;
 
@@ -123,7 +125,7 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
     }
 }
 
-export async function submitExamenModular(examenId: string, respuestasUsuario: Record<string, string>, explicaciones: Record<string, string>) {
+export async function submitExamenModular(examenId: string, respuestasUsuario: Record<string, string>, explicaciones: Record<string, string>, bloqueadoPorSeguridad: boolean = false) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -192,6 +194,8 @@ export async function submitExamenModular(examenId: string, respuestasUsuario: R
             correcta: esCorrecta
         };
     })
+
+    respuestasDetalle['_metadata'] = { bloqueado_seguridad: bloqueadoPorSeguridad } as any;
 
     const calificacionFinal = Math.round((correctas / divisor) * 100);
     const aprobado = calificacionFinal >= examen.min_aprobacion;

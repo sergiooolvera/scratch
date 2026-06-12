@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield } from 'lucide-react'
 import { notifyProfesorTaskSubmission } from '@/app/actions/taskNotifications'
 import { createClient } from '@/lib/supabase/client'
 
@@ -39,6 +39,9 @@ type ExamenModular = {
         tipo_pregunta?: string;
     }[];
     aprobado: boolean;
+    seguridad_aumentada?: boolean;
+    max_cambios_pantalla?: number;
+    bloqueado?: boolean;
 }
 
 export default function PlaylistClient({
@@ -110,7 +113,14 @@ export default function PlaylistClient({
         aprobado?: boolean;
         minAprobacion?: number;
         error?: string;
+        bloqueado?: boolean;
     } | null>(null)
+
+    // Security tracking
+    const [cambiosRealizados, setCambiosRealizados] = useState(0)
+    const [mostrarBloqueo, setMostrarBloqueo] = useState(false)
+    const lastBloqueoTime = useRef(0)
+    const enviandoRef = useRef(false)
 
     // Tasks and submissions state
     const [tareasDef, setTareasDef] = useState<Record<string, { instrucciones: string, puntos: string }>>({})
@@ -352,7 +362,7 @@ export default function PlaylistClient({
             // Fetch exams linked to modules of this course
             const { data: exams } = await supabase
                 .from('ie_examenes')
-                .select('id, modulo_id, min_aprobacion')
+                .select('id, modulo_id, min_aprobacion, seguridad_aumentada, max_cambios_pantalla')
                 .eq('curso_id', cursoId)
                 .not('modulo_id', 'is', null)
 
@@ -369,9 +379,10 @@ export default function PlaylistClient({
                 // Fetch user results for these exams
                 const { data: resultsData } = await supabase
                     .from('ie_resultados_examenes')
-                    .select('examen_id, calificacion, aprobado')
+                    .select('examen_id, calificacion, aprobado, respuestas_detalle, created_at')
                     .eq('user_id', userId)
                     .in('examen_id', examIds)
+                    .order('created_at', { ascending: true })
 
                 const questionsByExam: Record<string, any[]> = {}
                 if (qData) {
@@ -384,10 +395,21 @@ export default function PlaylistClient({
                 }
 
                 const passedExams = new Set<string>()
+                const blockedExams = new Set<string>()
                 if (resultsData) {
                     resultsData.forEach(r => {
                         if (r.aprobado) {
                             passedExams.add(r.examen_id)
+                        }
+                        if (r.respuestas_detalle?._metadata?.bloqueado_seguridad) {
+                            blockedExams.add(r.examen_id)
+                        } else if (!r.aprobado) {
+                            // If they have a newer attempt that is NOT blocked, we should probably unblock them?
+                            // No, if any is blocked, they are blocked until deleted. Or just check the latest attempt.
+                            // Since we ordered by created_at asc, we can just track the latest block state
+                            if (blockedExams.has(r.examen_id)) {
+                                blockedExams.delete(r.examen_id)
+                            }
                         }
                     })
                 }
@@ -397,8 +419,11 @@ export default function PlaylistClient({
                     examMap[e.modulo_id] = {
                         id: e.id,
                         min_aprobacion: e.min_aprobacion,
+                        seguridad_aumentada: e.seguridad_aumentada,
+                        max_cambios_pantalla: e.max_cambios_pantalla || 3,
                         preguntas: questionsByExam[e.id] || [],
-                        aprobado: passedExams.has(e.id)
+                        aprobado: passedExams.has(e.id),
+                        bloqueado: blockedExams.has(e.id)
                     }
                 })
 
@@ -464,6 +489,104 @@ export default function PlaylistClient({
         setRespuestasExamen(prev => ({ ...prev, [preguntaId]: opcionTexto }))
     }
 
+    const activarBloqueo = () => {
+        const now = Date.now();
+        if (now - lastBloqueoTime.current < 1000) {
+            return;
+        }
+        lastBloqueoTime.current = now;
+        
+        setMostrarBloqueo(true);
+        setCambiosRealizados(prev => prev + 1);
+    }
+
+    const regresarAPantallaCompleta = () => {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().then(() => {
+                setMostrarBloqueo(false);
+            }).catch(() => {
+                setModalMensaje('No se pudo entrar en pantalla completa. Inténtalo de nuevo.');
+            });
+        }
+    }
+
+    useEffect(() => {
+        const activeExam = currentItem?.id ? examenes[currentItem.id] : null;
+        if (!mostrarExamenActivo || !activeExam?.seguridad_aumentada) return;
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                activarBloqueo();
+            }
+        };
+
+        const handleFullscreenChange = () => {
+            if (!document.fullscreenElement) {
+                activarBloqueo();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        };
+    }, [mostrarExamenActivo, examenes, currentIndex, playlist]);
+
+    useEffect(() => {
+        const activeExam = currentItem?.id ? examenes[currentItem.id] : null;
+        if (mostrarExamenActivo && activeExam?.seguridad_aumentada && cambiosRealizados >= (activeExam.max_cambios_pantalla || 3)) {
+            if (enviandoRef.current) return;
+            enviandoRef.current = true;
+            
+            setModalMensaje('Has superado el límite de cambios de pantalla o pantalla completa. El examen se enviará automáticamente.');
+            submitExamenAutomated();
+        }
+    }, [cambiosRealizados, mostrarExamenActivo, examenes, currentIndex, playlist]);
+
+    const submitExamenAutomated = async () => {
+        const exam = currentItem?.id ? examenes[currentItem.id] : null;
+        if (!exam) return;
+
+        setGradingExamen(true);
+        setMostrarBloqueo(false);
+        try {
+            const { submitExamenModular } = await import('../examen/actions');
+            const res = await submitExamenModular(exam.id, respuestasExamen, explicacionesExamen, true);
+            
+            if (res.success) {
+                (res as any).bloqueado = true;
+                setResultadoExamen(res);
+                if (res.aprobado) {
+                    setExamenes(prev => ({
+                        ...prev,
+                        [currentItem.id]: {
+                            ...prev[currentItem.id],
+                            aprobado: true
+                        }
+                    }));
+                }
+            } else {
+                setResultadoExamen({
+                    success: false,
+                    error: res.error || 'Ocurrió un error al enviar el examen.'
+                });
+            }
+        } catch (err: any) {
+            setResultadoExamen({
+                success: false,
+                error: err.message || 'Error de red al enviar el examen.'
+            });
+        } finally {
+            setGradingExamen(false);
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+    }
+
     const handleGradingExamen = async (e: React.FormEvent) => {
         e.preventDefault()
         const exam = examenes[currentItem.id]
@@ -503,6 +626,9 @@ export default function PlaylistClient({
             })
         } finally {
             setGradingExamen(false)
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
         }
     }
 
@@ -595,14 +721,19 @@ export default function PlaylistClient({
                                                 <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                                                     <AlertCircle className="h-10 w-10 text-red-600" />
                                                 </div>
-                                                <h3 className="text-2xl font-extrabold text-gray-900">Calificación insuficiente</h3>
+                                                <h3 className="text-2xl font-extrabold text-gray-900">
+                                                    {resultadoExamen.bloqueado ? 'Examen Bloqueado' : 'Calificación insuficiente'}
+                                                </h3>
                                                 <div className="inline-block bg-red-50 border border-red-100 rounded-xl px-8 py-4">
                                                     <p className="text-sm text-red-600 font-medium">Calificación Obtenida</p>
                                                     <p className="text-5xl font-black text-red-500 mt-1">{resultadoExamen.calificacion}%</p>
                                                     <p className="text-xs text-gray-400 mt-2">Mínimo aprobatorio: {resultadoExamen.minAprobacion}%</p>
                                                 </div>
                                                 <p className="text-sm text-gray-600 max-w-md mx-auto">
-                                                    No te preocupes. Revisa el material de estudio e inténtalo de nuevo cuando estés listo. No hay límites de tiempo.
+                                                    {resultadoExamen.bloqueado 
+                                                        ? 'El examen se envió automáticamente porque excediste el límite de cambios de pantalla. Contacta a tu profesor para solicitar un reintento.'
+                                                        : 'No te preocupes. Revisa el material de estudio e inténtalo de nuevo cuando estés listo. No hay límites de tiempo.'
+                                                    }
                                                 </p>
                                                 <div className="pt-4 flex justify-center gap-4">
                                                     <button
@@ -611,16 +742,25 @@ export default function PlaylistClient({
                                                     >
                                                         Volver al Material
                                                     </button>
-                                                    <button
+                                                    {!resultadoExamen.bloqueado && (
+                                                        <button
                                                         onClick={() => {
                                                             setResultadoExamen(null)
                                                             setRespuestasExamen({})
                                                             setExplicacionesExamen({})
+                                                            setCambiosRealizados(0)
+                                                            enviandoRef.current = false
+                                                            if (activeExam?.seguridad_aumentada && document.documentElement.requestFullscreen) {
+                                                                document.documentElement.requestFullscreen().catch(() => {
+                                                                    setModalMensaje('Por favor activa la pantalla completa manualmente para continuar.');
+                                                                });
+                                                            }
                                                         }}
                                                         className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition"
                                                     >
                                                         Reintentar Examen
                                                     </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -714,6 +854,24 @@ export default function PlaylistClient({
                                         </div>
                                     </form>
                                 )}
+                                {mostrarBloqueo && activeExam && !gradingExamen && !resultadoExamen && (
+                                    <div className="fixed inset-0 bg-gray-900 bg-opacity-90 z-[60] flex flex-col items-center justify-center text-white p-6">
+                                        <Shield className="h-16 w-16 text-orange-500 mb-4" />
+                                        <h2 className="text-3xl font-bold mb-2">Pantalla Completa Requerida</h2>
+                                        <p className="text-gray-300 mb-6 text-center max-w-md">
+                                            Has salido del modo de pantalla completa o has cambiado de ventana. 
+                                            Para continuar con el examen, debes regresar a pantalla completa.
+                                            <br/>
+                                            <span className="text-orange-400 font-bold">Intento {cambiosRealizados} de {activeExam.max_cambios_pantalla || 3}</span>
+                                        </p>
+                                        <button
+                                            onClick={regresarAPantallaCompleta}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-bold transition-colors"
+                                        >
+                                            Regresar a Pantalla Completa
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             /* Normal module visual content view */
@@ -768,14 +926,35 @@ export default function PlaylistClient({
                                 )}
                                 
                                 <div id="examen-section" className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
-                                    {hasActiveExam && !activeExamPassed && (
+                                    {hasActiveExam && !activeExamPassed && !activeExam.bloqueado && (
                                         <button
-                                            onClick={() => setMostrarExamenActivo(true)}
+                                            onClick={() => {
+                                                const exam = examenes[currentItem.id];
+                                                if (exam?.seguridad_aumentada) {
+                                                    if (document.documentElement.requestFullscreen) {
+                                                        document.documentElement.requestFullscreen().catch(() => {
+                                                            setModalMensaje('Por favor activa la pantalla completa manualmente para continuar.');
+                                                        });
+                                                    }
+                                                }
+                                                setCambiosRealizados(0);
+                                                setMostrarBloqueo(false);
+                                                enviandoRef.current = false;
+                                                setMostrarExamenActivo(true);
+                                            }}
                                             className="flex items-center gap-2 px-6 py-3 rounded-full font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md transition-all duration-300"
                                         >
                                             <HelpCircle className="h-5 w-5" />
                                             Realizar Examen del Módulo
                                         </button>
+                                    )}
+
+                                    {hasActiveExam && !activeExamPassed && activeExam.bloqueado && (
+                                        <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-800 text-sm max-w-lg text-center shadow-sm">
+                                            <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-600" />
+                                            <p className="font-bold">Examen Bloqueado por Seguridad</p>
+                                            <p className="mt-1">Has alcanzado el límite de cambios de pantalla permitidos. Por favor contacta a tu profesor para solicitar una nueva oportunidad de realizar este examen.</p>
+                                        </div>
                                     )}
 
                                     <button

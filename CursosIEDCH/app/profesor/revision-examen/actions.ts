@@ -194,3 +194,28 @@ export async function guardarRevisionExamenProfesor(
     return { success: true }
 }
 
+export async function eliminarResultadoExamen(resultadoId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'No autorizado' }
+    }
+
+    const supabaseAdmin = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { error: deleteError } = await supabaseAdmin
+        .from('ie_resultados_examenes')
+        .delete()
+        .eq('id', resultadoId)
+
+    if (deleteError) {
+        return { error: 'Error al eliminar el resultado: ' + deleteError.message }
+    }
+
+    return { success: true }
+}
+

@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, User, CheckCircle, XCircle, AlertTriangle, MessageSquare } from 'lucide-react'
-import { getResultadosExamen, guardarRevisionExamenProfesor } from './actions'
+import { ArrowLeft, BookOpen, User, CheckCircle, XCircle, AlertTriangle, MessageSquare, Trash2 } from 'lucide-react'
+import { getResultadosExamen, guardarRevisionExamenProfesor, eliminarResultadoExamen } from './actions'
 
 // Helper function to match student's answer in respuestas_detalle even if the question ID has changed
 function obtenerDetalleRespuesta(p: any, index: number, respuestasDetalle: any, todasPreguntas: any[]) {
@@ -67,6 +67,7 @@ export default function RevisionExamenPage() {
     const [retroalimentacionGeneral, setRetroalimentacionGeneral] = useState('')
     const [calificacionesPreguntas, setCalificacionesPreguntas] = useState<Record<string, string>>({})
     const [guardandoRevision, setGuardandoRevision] = useState(false)
+    const [eliminandoResultado, setEliminandoResultado] = useState(false)
     const [mensajeRevision, setMensajeRevision] = useState('')
     const supabase = createClient()
 
@@ -183,6 +184,31 @@ export default function RevisionExamenPage() {
             setMensajeRevision('Error al guardar: ' + err.message)
         } finally {
             setGuardandoRevision(false)
+        }
+    }
+
+    const handleEliminarResultado = async () => {
+        if (!selectedResultado) return
+        if (!window.confirm('¿Estás seguro de que deseas eliminar este intento? Al hacerlo, el alumno podrá volver a presentar el examen. ¡Esta acción no se puede deshacer!')) {
+            return;
+        }
+
+        setEliminandoResultado(true)
+        setMensajeRevision('')
+        try {
+            const res = await eliminarResultadoExamen(selectedResultado.id)
+            if (res.success) {
+                setMensajeRevision('Resultado eliminado con éxito. El alumno puede volver a intentar.')
+                // Remove from local state
+                setResultados(prev => prev.filter(r => r.id !== selectedResultado.id))
+                setSelectedResultado(null)
+            } else {
+                setMensajeRevision('Error: ' + res.error)
+            }
+        } catch (err: any) {
+            setMensajeRevision('Error al eliminar: ' + err.message)
+        } finally {
+            setEliminandoResultado(false)
         }
     }
 
@@ -442,18 +468,41 @@ export default function RevisionExamenPage() {
                                         <p className="text-sm text-gray-500 mb-2">
                                             Fecha: {new Date(selectedResultado.created_at).toLocaleString()}
                                         </p>
-                                        <button
-                                            onClick={handleDownload}
-                                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                        >
-                                            Descargar Examen
-                                        </button>
+                                        <div className="flex gap-2 mt-2">
+                                            <button
+                                                onClick={handleDownload}
+                                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                            >
+                                                Descargar Examen
+                                            </button>
+                                            <button
+                                                onClick={handleEliminarResultado}
+                                                disabled={eliminandoResultado}
+                                                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-full shadow-sm text-red-600 bg-white hover:bg-red-50 focus:outline-none transition-colors"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                                {eliminandoResultado ? 'Borrando...' : 'Borrar Intento (Dar Oportunidad)'}
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className={`text-center px-4 py-2 rounded-xl ${selectedResultado.aprobado ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                                         <p className="text-3xl font-black">{selectedResultado.calificacion}%</p>
                                         <p className="text-xs font-semibold uppercase">{selectedResultado.aprobado ? 'Aprobado' : 'Reprobado'}</p>
                                     </div>
                                 </div>
+
+                                {selectedResultado.respuestas_detalle?._metadata?.bloqueado_seguridad && (
+                                    <div className="mb-6 p-5 bg-red-50 border border-red-200 text-red-900 rounded-xl flex items-start gap-3">
+                                        <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-sm text-red-900">Examen Bloqueado por Seguridad</p>
+                                            <p className="text-xs text-red-800 mt-1 leading-relaxed">
+                                                El sistema envió y bloqueó este examen automáticamente debido a que el alumno superó el límite de cambios de pantalla o cambios de pestaña durante su evaluación.
+                                                Si deseas darle una segunda oportunidad, puedes borrar este intento utilizando el botón <strong>"Borrar Intento"</strong> de la parte superior.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {(!selectedResultado.respuestas_detalle || Object.keys(selectedResultado.respuestas_detalle).length === 0) && (
                                     <div className="mb-6 p-5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl flex items-start gap-3">

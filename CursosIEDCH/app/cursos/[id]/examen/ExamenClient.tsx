@@ -48,6 +48,7 @@ export default function ExamenClient({
     const [explicaciones, setExplicaciones] = useState<Record<string, string>>({})
     const [mostrarBloqueo, setMostrarBloqueo] = useState(false)
     const [modalMensaje, setModalMensaje] = useState<string | null>(null)
+    const [examenBloqueadoHistorico, setExamenBloqueadoHistorico] = useState(false)
     const lastBloqueoTime = useRef(0)
     const enviandoRef = useRef(false)
 
@@ -67,12 +68,12 @@ export default function ExamenClient({
     }
 
     const handleSubmitAutomated = async () => {
-        await finalizarExamen();
+        await finalizarExamen(true);
     }
 
-    const finalizarExamen = async () => {
+    const finalizarExamen = async (esBloqueo: boolean = false) => {
         setLoading(true)
-        const res = await submitExamen(cursoId, respuestas, explicaciones) as any
+        const res = await submitExamen(cursoId, respuestas, explicaciones, esBloqueo) as any
         setResultado(res)
         setLoading(false)
         router.refresh()
@@ -159,9 +160,8 @@ export default function ExamenClient({
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
         };
-    }, [examenIniciado, seguridadAumentada, maxCambiosPantalla]);
+    }, [examenIniciado, seguridadAumentada]);
 
-    // Effect to handle automatic submission when limit is reached
     useEffect(() => {
         if (examenIniciado && seguridadAumentada && cambiosRealizados >= maxCambiosPantalla) {
             if (enviandoRef.current) return;
@@ -171,6 +171,25 @@ export default function ExamenClient({
             handleSubmitAutomated();
         }
     }, [cambiosRealizados, maxCambiosPantalla, examenIniciado, seguridadAumentada]);
+
+    if (examenBloqueadoHistorico) {
+        return (
+            <div className="max-w-3xl mx-auto px-4 py-12">
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-12 text-center">
+                    <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                        <AlertTriangle className="h-8 w-8 text-red-600" />
+                    </div>
+                    <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Examen Bloqueado</h2>
+                    <p className="text-lg text-gray-600 mb-8 max-w-lg mx-auto">
+                        Este examen fue bloqueado anteriormente por motivos de seguridad. Por favor contacta a tu profesor para solicitar una nueva oportunidad.
+                    </p>
+                    <Link href={`/cursos/${cursoId}/contenido`} className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                        Volver al Curso
+                    </Link>
+                </div>
+            </div>
+        )
+    }
 
     if ((seguridadAumentada || tiempoLimite) && !examenIniciado) {
         return (
@@ -209,27 +228,6 @@ export default function ExamenClient({
                         </Link>
                     </div>
                 </div>
-
-                {modalMensaje && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-zinc-100 transform scale-100 transition-all duration-300 animate-scaleUp">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 text-amber-500 mx-auto mb-4 border border-amber-200">
-                                <AlertCircle className="h-6 w-6" />
-                            </div>
-                            <h3 className="text-xl font-bold text-center text-gray-900 mb-2">Atención</h3>
-                            <p className="text-sm text-gray-600 text-center leading-relaxed mb-6">{modalMensaje}</p>
-                            <div className="flex justify-center">
-                                <button
-                                    type="button"
-                                    onClick={() => setModalMensaje(null)}
-                                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-colors"
-                                >
-                                    Entendido
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         )
     }
@@ -238,7 +236,7 @@ export default function ExamenClient({
         return (
             <div className="max-w-3xl mx-auto px-4 py-12">
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-8 text-center">
-                    {resultado.aprobado ? (
+                    {resultado.aprobado && !resultado.bloqueado ? (
                         <>
                             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
                                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -263,21 +261,28 @@ export default function ExamenClient({
                             <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
                                 <AlertTriangle className="h-8 w-8 text-red-600" />
                             </div>
-                            <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Puntuación insuficiente</h2>
-                            <p className="text-lg text-gray-600 mb-6">
-                                No alcanzaste el mínimo aprobatorio requerido para este curso.
+                            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
+                                {resultado.bloqueado ? 'Examen Bloqueado' : 'Puntuación insuficiente'}
+                            </h2>
+                            <p className="text-lg text-gray-600 mb-8 max-w-lg mx-auto">
+                                {resultado.bloqueado
+                                    ? 'El examen se envió automáticamente porque excediste el límite de cambios de pantalla. Has sido bloqueado por seguridad.'
+                                    : 'No alcanzaste el mínimo aprobatorio requerido para este curso.'
+                                }
                             </p>
-                            <div className="bg-gray-50 rounded-xl p-6 mb-8 inline-block shadow-inner border border-red-100">
+                            <div className="bg-red-50 rounded-xl p-6 mb-8 inline-block shadow-inner border border-red-100">
                                 <p className="text-sm text-gray-500 uppercase tracking-widest font-semibold mb-1">Calificación Obtenida</p>
                                 <p className="text-5xl font-black text-red-500">{resultado.calificacion}%</p>
                                 <p className="text-xs text-gray-400 mt-2">Puntuación mínima: {resultado.minAprobacion}%</p>
                             </div>
-                            <div>
-                                <button onClick={() => { setResultado(null); setRespuestas({}); }} className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                                    Reintentar Examen
-                                </button>
-                                <Link href={`/cursos/${cursoId}/contenido`} className="ml-4 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
-                                    Cancelar y Volver
+                            <div className="flex flex-col items-center gap-3">
+                                {!resultado.bloqueado && (
+                                    <button onClick={() => { setResultado(null); setRespuestas({}); }} className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                        Reintentar Examen
+                                    </button>
+                                )}
+                                <Link href={`/cursos/${cursoId}/contenido`} className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+                                    {resultado.bloqueado ? 'Volver al Curso' : 'Cancelar y Volver'}
                                 </Link>
                             </div>
                         </>
