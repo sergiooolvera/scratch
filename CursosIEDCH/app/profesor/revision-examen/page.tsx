@@ -69,6 +69,7 @@ export default function RevisionExamenPage() {
     const [guardandoRevision, setGuardandoRevision] = useState(false)
     const [eliminandoResultado, setEliminandoResultado] = useState(false)
     const [mensajeRevision, setMensajeRevision] = useState('')
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
     const supabase = createClient()
 
     useEffect(() => {
@@ -151,7 +152,7 @@ export default function RevisionExamenPage() {
             )
             
             if (res.success) {
-                setMensajeRevision('¡Revisión guardada con éxito!')
+                setShowSuccessModal(true)
                 
                 const updatedDetalle = {
                     ...(selectedResultado.respuestas_detalle || {}),
@@ -658,8 +659,8 @@ export default function RevisionExamenPage() {
                                         >
                                             {guardandoRevision ? 'Guardando...' : 'Guardar Calificación y Notas'}
                                         </button>
-                                        {mensajeRevision && (
-                                            <span className={`text-sm font-semibold ${mensajeRevision.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                                        {mensajeRevision && mensajeRevision.includes('Error') && (
+                                            <span className="text-sm font-semibold text-red-600">
                                                 {mensajeRevision}
                                             </span>
                                         )}
@@ -676,6 +677,25 @@ export default function RevisionExamenPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity">
+                    <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full mx-4 text-center transform scale-100 transition-transform">
+                        <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+                            <CheckCircle className="h-10 w-10 text-emerald-500" />
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-900 mb-2">¡Guardado!</h3>
+                        <p className="text-sm font-medium text-gray-500 mb-8 px-2">Las calificaciones han sido guardadas correctamente en el sistema.</p>
+                        <button 
+                            onClick={() => setShowSuccessModal(false)}
+                            className="w-full py-3.5 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        >
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

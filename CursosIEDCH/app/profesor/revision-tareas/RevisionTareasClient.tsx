@@ -29,6 +29,7 @@ export default function RevisionTareasClient({ entregas: initialEntregas, cursos
     const [retroalimentacion, setRetroalimentacion] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [mensaje, setMensaje] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
 
     // Courses list for filter dropdown
     // Si pasamos los cursos como prop, usamos esos, sino los inferimos de las entregas
@@ -71,7 +72,7 @@ export default function RevisionTareasClient({ entregas: initialEntregas, cursos
             })
             setEntregas(updated)
             setSelectedEntrega(prev => prev ? { ...prev, calificacion: Number(calificacion), retroalimentacion } : null)
-            setMensaje({ type: 'success', text: '¡Calificación guardada correctamente!' })
+            setShowSuccessModal(true)
         } catch (err: any) {
             setMensaje({ type: 'error', text: err.message || 'Error al guardar la calificación.' })
         } finally {
@@ -226,10 +227,8 @@ export default function RevisionTareasClient({ entregas: initialEntregas, cursos
                                 Calificar Proyecto
                             </h3>
 
-                            {mensaje && (
-                                <div className={`p-3.5 rounded-xl text-xs font-bold border ${
-                                    mensaje.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'
-                                }`}>
+                            {mensaje && mensaje.type === 'error' && (
+                                <div className="p-3.5 rounded-xl text-xs font-bold border bg-red-50 border-red-200 text-red-800">
                                     {mensaje.text}
                                 </div>
                             )}
@@ -275,6 +274,25 @@ export default function RevisionTareasClient({ entregas: initialEntregas, cursos
                     </div>
                 )}
             </div>
+
+            {/* Success Modal */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity">
+                    <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full mx-4 text-center transform scale-100 transition-transform">
+                        <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+                            <CheckCircle className="h-10 w-10 text-emerald-500" />
+                        </div>
+                        <h3 className="text-2xl font-black text-gray-900 mb-2">¡Guardado!</h3>
+                        <p className="text-sm font-medium text-gray-500 mb-8 px-2">La calificación ha sido guardada correctamente en el sistema.</p>
+                        <button 
+                            onClick={() => setShowSuccessModal(false)}
+                            className="w-full py-3.5 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-95"
+                        >
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
