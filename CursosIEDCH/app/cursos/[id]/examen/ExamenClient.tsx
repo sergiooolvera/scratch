@@ -40,6 +40,7 @@ export default function ExamenClient({
         aprobado?: boolean;
         minAprobacion?: number;
         error?: string;
+        bloqueado?: boolean;
     } | null>(null)
 
     const [tiempoRestante, setTiempoRestante] = useState<number | null>(null)

@@ -926,7 +926,7 @@ export default function PlaylistClient({
                                 )}
                                 
                                 <div id="examen-section" className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
-                                    {hasActiveExam && !activeExamPassed && !activeExam.bloqueado && (
+                                    {hasActiveExam && !activeExamPassed && !activeExam?.bloqueado && (
                                         <button
                                             onClick={() => {
                                                 const exam = examenes[currentItem.id];
@@ -949,7 +949,7 @@ export default function PlaylistClient({
                                         </button>
                                     )}
 
-                                    {hasActiveExam && !activeExamPassed && activeExam.bloqueado && (
+                                    {hasActiveExam && !activeExamPassed && activeExam?.bloqueado && (
                                         <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-800 text-sm max-w-lg text-center shadow-sm">
                                             <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-600" />
                                             <p className="font-bold">Examen Bloqueado por Seguridad</p>

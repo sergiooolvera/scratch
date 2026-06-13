@@ -1288,7 +1288,9 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 tareaInstrucciones: currentMod.tareaInstrucciones,
                 tareaPuntos: currentMod.tareaPuntos,
                 requiereCuestionario: currentMod.requiereCuestionario,
-                cuestionarioPreguntas: currentMod.cuestionarioPreguntas
+                cuestionarioPreguntas: currentMod.cuestionarioPreguntas,
+                seguridadAumentada: currentMod.seguridadAumentada,
+                maxCambiosPantalla: currentMod.maxCambiosPantalla
             });
         }
 
@@ -1342,6 +1344,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     })) || [],
                     examen: m.requiereExamen ? {
                         min_aprobacion: m.examenMinAprobacion,
+                        seguridadAumentada: m.seguridadAumentada,
+                        maxCambiosPantalla: m.maxCambiosPantalla,
                         preguntas: m.examenPreguntas.map((p, idx) => ({
                             pregunta: p.pregunta,
                             opcion_a: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_a,
