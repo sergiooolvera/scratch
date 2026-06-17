@@ -23,6 +23,7 @@ export default function RevisionTareasClient({ entregas: initialEntregas, cursos
     const [entregas, setEntregas] = useState<Entrega[]>(initialEntregas)
     const [selectedEntrega, setSelectedEntrega] = useState<Entrega | null>(null)
     const [selectedCurso, setSelectedCurso] = useState<string>('')
+    const [filtroEstado, setFiltroEstado] = useState<'pendientes' | 'evaluados' | 'todos'>('pendientes')
 
     // Form states
     const [calificacion, setCalificacion] = useState<number | ''>('')
@@ -82,7 +83,13 @@ export default function RevisionTareasClient({ entregas: initialEntregas, cursos
 
     // Entregas of selected course
     const entregasDelCurso = selectedCurso 
-        ? entregas.filter(e => e.curso_id === selectedCurso) 
+        ? entregas.filter(e => {
+            if (e.curso_id !== selectedCurso) return false;
+            const estaEvaluado = e.calificacion !== null;
+            if (filtroEstado === 'pendientes') return !estaEvaluado;
+            if (filtroEstado === 'evaluados') return estaEvaluado;
+            return true;
+        }) 
         : []
 
     // Group by module
@@ -112,7 +119,18 @@ export default function RevisionTareasClient({ entregas: initialEntregas, cursos
 
                 {selectedCurso && (
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h2 className="font-bold text-gray-900 mb-4">Tareas del curso</h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="font-bold text-gray-900">Tareas del curso</h2>
+                            <select
+                                value={filtroEstado}
+                                onChange={(e) => { setFiltroEstado(e.target.value as any); setSelectedEntrega(null); }}
+                                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-1.5 text-sm text-black bg-white"
+                            >
+                                <option value="pendientes">Pendientes</option>
+                                <option value="evaluados">Evaluados</option>
+                                <option value="todos">Todos</option>
+                            </select>
+                        </div>
                         {modulosDelCurso.length === 0 ? (
                             <p className="text-gray-500 text-sm">Este curso no tiene entregas de tareas todavía.</p>
                         ) : (

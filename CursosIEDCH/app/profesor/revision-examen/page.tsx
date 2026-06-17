@@ -59,6 +59,7 @@ function obtenerDetalleRespuesta(p: any, index: number, respuestasDetalle: any, 
 export default function RevisionExamenPage() {
     const [cursos, setCursos] = useState<any[]>([])
     const [selectedCurso, setSelectedCurso] = useState<string>('')
+    const [filtroEstado, setFiltroEstado] = useState<'pendientes' | 'evaluados' | 'todos'>('pendientes')
     const [resultados, setResultados] = useState<any[]>([])
     const [examenes, setExamenes] = useState<any[]>([])
     const [selectedResultado, setSelectedResultado] = useState<any>(null)
@@ -366,7 +367,15 @@ export default function RevisionExamenPage() {
         : []
     const examenesConResultados = examenes.map(examen => ({
         ...examen,
-        resultados: resultados.filter(r => r.examen_id === examen.id)
+        resultados: resultados.filter(r => {
+            if (r.examen_id !== examen.id) return false;
+            // Un examen se considera 'evaluado' si el profesor ya guardó retroalimentación o calificaciones abiertas
+            const estaEvaluado = !!r.respuestas_detalle?.retroalimentacion_profesor || 
+                Object.values(r.respuestas_detalle || {}).some((det: any) => det?.calificacion_abierta);
+            if (filtroEstado === 'pendientes') return !estaEvaluado;
+            if (filtroEstado === 'evaluados') return estaEvaluado;
+            return true;
+        })
     }))
 
     if (loading && cursos.length === 0) return (
@@ -411,7 +420,18 @@ export default function RevisionExamenPage() {
 
                         {selectedCurso && (
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                                <h2 className="font-bold text-gray-900 mb-4">Exámenes del curso</h2>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="font-bold text-gray-900">Exámenes del curso</h2>
+                                    <select
+                                        value={filtroEstado}
+                                        onChange={(e) => { setFiltroEstado(e.target.value as any); setSelectedResultado(null); }}
+                                        className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-1.5 text-sm text-black bg-white"
+                                    >
+                                        <option value="pendientes">Pendientes</option>
+                                        <option value="evaluados">Revisados</option>
+                                        <option value="todos">Todos</option>
+                                    </select>
+                                </div>
                                 {examenesConResultados.length === 0 ? (
                                     <p className="text-gray-500 text-sm">Este curso no tiene exámenes configurados.</p>
                                 ) : (
