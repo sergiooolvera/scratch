@@ -115,6 +115,7 @@ export default function SubirCursoPage() {
     const [collapsedModulos, setCollapsedModulos] = useState<Record<number, boolean>>({})
     const [collapsedExamenes, setCollapsedExamenes] = useState<Record<number, boolean>>({})
     const [collapsedTareas, setCollapsedTareas] = useState<Record<number, boolean>>({})
+    const [collapsedCuestionarios, setCollapsedCuestionarios] = useState<Record<number, boolean>>({})
 
     const toggleModuloCollapsed = (index: number) => {
         setCollapsedModulos(prev => ({
@@ -125,6 +126,13 @@ export default function SubirCursoPage() {
 
     const toggleExamenCollapsed = (index: number) => {
         setCollapsedExamenes(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }))
+    }
+
+    const toggleCuestionarioCollapsed = (index: number) => {
+        setCollapsedCuestionarios(prev => ({
             ...prev,
             [index]: !prev[index]
         }))
@@ -2284,12 +2292,13 @@ export default function SubirCursoPage() {
                                         </div>
 
                                         {/* Modular Questionnaire Box */}
-                                        <div className="mt-4 pt-4 border-t border-zinc-100">
+                                        <div className={`mt-4 pt-4 border-t border-zinc-100 ${collapsedModulos[index] ? 'hidden' : ''}`}>
                                             <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={!!modulo.requiereCuestionario}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!modulo.requiereCuestionario}
                                                         onChange={(e) => handleModuloChange(index, 'requiereCuestionario', e.target.checked)}
                                                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                                                     />
@@ -2298,9 +2307,15 @@ export default function SubirCursoPage() {
                                                         ¿Este módulo requiere un Cuestionario de preguntas abiertas?
                                                     </span>
                                                 </label>
+                                                    {modulo.requiereCuestionario && (
+                                                        <button type="button" onClick={() => toggleCuestionarioCollapsed(index)} className="p-1 rounded-md hover:bg-emerald-100 transition-colors text-emerald-600 hover:text-emerald-800">
+                                                            {collapsedCuestionarios[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+                                                        </button>
+                                                    )}
+                                                </div>
 
                                                 {modulo.requiereCuestionario && (
-                                                    <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-emerald-250 space-y-4">
+                                                    <div className={`mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-emerald-250 space-y-4 ${collapsedCuestionarios[index] ? 'hidden' : ''}`}>
                                                         <div className="flex justify-between items-center border-b border-emerald-100 pb-2">
                                                             <p className="text-xs text-emerald-800 font-semibold">Configura las preguntas que el alumno deberá responder con texto libre.</p>
                                                             <button
