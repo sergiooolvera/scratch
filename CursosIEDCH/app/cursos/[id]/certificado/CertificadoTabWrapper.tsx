@@ -55,7 +55,7 @@ export default function CertificadoTabWrapper({
     const fechaApAbrev = `${pad(dateObj.getDate())}/${pad(dateObj.getMonth() + 1)}/${dateObj.getFullYear()}`
     const fechaVigAbrev = `${pad(vigDateObj.getDate())}/${pad(vigDateObj.getMonth() + 1)}/${vigDateObj.getFullYear()}`
 
-    const qrValue = `https://cursos-iedch.vercel.app/validar?folio=${folio}`
+    const qrValue = `https://cursos.grupoegac.com/validar?folio=${folio}`
 
     const handleDownloadPDF = async () => {
         const element = constanciaRef.current;

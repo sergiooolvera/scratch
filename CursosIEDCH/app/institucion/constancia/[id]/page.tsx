@@ -105,7 +105,7 @@ export default function VerConstanciaInstitucional() {
     }
 
     // Datos mapeados para el componente
-    const baseHost = typeof window !== 'undefined' ? window.location.origin : 'https://iedch-2.vercel.app'
+    const baseHost = typeof window !== 'undefined' ? window.location.origin : 'https://cursos.grupoegac.com'
     const validacionUrl = `${baseHost}/validar?folio=${constanciaData.folio_constancia}`
 
     return (

@@ -391,7 +391,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                         const fechaApAbrev = `${pad(fechaEmision.getDate())}/${pad(fechaEmision.getMonth() + 1)}/${fechaEmision.getFullYear()}`
                         const fechaVigAbrev = `${pad(fechaVig.getDate())}/${pad(fechaVig.getMonth() + 1)}/${fechaVig.getFullYear()}`
                         
-                        const qrValue = `https://cursos-iedch.vercel.app/validar?folio=${examen?.id}`
+                        const qrValue = `https://cursos.grupoegac.com/validar?folio=${examen?.id}`
                         const alumnoNombreCompleto = profile ? `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || profile.email : 'Estudiante'
                         
                         return (

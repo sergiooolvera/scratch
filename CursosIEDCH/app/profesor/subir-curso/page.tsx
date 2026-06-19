@@ -1571,7 +1571,7 @@ export default function SubirCursoPage() {
                                                             fechaAprobacion: "24 de Noviembre de 2025",
                                                             folio: "FOLIO-DEMO-12345",
                                                             vigenciaStr: "24 de Noviembre de 2028 (3 años)",
-                                                            qrUrl: "https://cursos-iedch.vercel.app/",
+                                                            qrUrl: "https://cursos.grupoegac.com/",
                                                             calificacion: "9.5",
                                                             mostrarCalificacionConstancia: true,
                                                             logoUrl: logoPreviewUrl,
