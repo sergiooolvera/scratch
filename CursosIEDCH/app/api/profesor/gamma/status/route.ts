@@ -16,6 +16,7 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url)
         const generationId = searchParams.get('generationId')
         const prompt = searchParams.get('prompt') || ''
+        const titulo = searchParams.get('titulo') || ''
         const numSlides = Number(searchParams.get('numSlides')) || 10
         const formato = searchParams.get('formato') === 'pdf' ? 'pdf' : 'pptx'
         const cursoId = searchParams.get('cursoId') || null
@@ -83,6 +84,7 @@ export async function GET(request: Request) {
                         curso_id: cursoId === 'null' || !cursoId ? null : cursoId,
                         modulo_id: moduloId === 'null' || !moduloId ? null : moduloId,
                         prompt: prompt,
+                        titulo: titulo || null,
                         num_slides: numSlides,
                         formato: formato,
                         gamma_url: gammaUrl,

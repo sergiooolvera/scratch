@@ -795,8 +795,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setIsGeneratingGamma(false);
                 return;
             }
-
-            const generationId = data.generationId;
+const generationId = data.generationId;
             if (!generationId) {
                 setGammaError('No se recibió un ID de generación válido.');
                 setIsGeneratingGamma(false);
@@ -806,7 +805,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             const pollStatus = async () => {
                 try {
                     const statusRes = await fetch(
-                        `/api/profesor/gamma/status?generationId=${generationId}&prompt=${encodeURIComponent(gammaPrompt)}&numSlides=${gammaNumSlides}&formato=${gammaFormato}&cursoId=${id}&moduloId=${modulos[activeGammaModuloIdx]?.id || 'null'}`
+                        `/api/profesor/gamma/status?generationId=${generationId}&prompt=${encodeURIComponent(gammaPrompt)}&titulo=${encodeURIComponent(gammaTitleInput.trim())}&numSlides=${gammaNumSlides}&formato=${gammaFormato}&cursoId=${id}&moduloId=${modulos[activeGammaModuloIdx]?.id || 'null'}`
                     );
                     if (!statusRes.ok) {
                         setGammaError('Error al consultar el estado de la generación.');
@@ -835,6 +834,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         const newGen = {
                             id: statusData.id || generationId,
                             prompt: gammaPrompt,
+                            titulo: gammaTitleInput.trim() || `Presentación: ${gammaPrompt.substring(0, 40)}...`,
                             num_slides: gammaNumSlides,
                             formato: gammaFormato,
                             gamma_url: statusData.gammaUrl,
@@ -2372,6 +2372,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                                 setGammaError('');
                                                                 setGammaSuccessResult(null);
                                                                 setGammaPrompt('');
+                                                                setGammaTitleInput('');
                                                             }}
                                                             className="px-3 py-1.5 bg-gradient-to-r from-violet-500 to-indigo-600 hover:from-violet-600 hover:to-indigo-700 text-white rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 border border-indigo-200 shadow-sm cursor-pointer"
                                                         >
@@ -2396,16 +2397,16 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                             </div>
                                                             <div>
                                                                 <p className="text-xs font-bold">¡Presentación descargada sin utilizar!</p>
-                                                                <p className="text-[11px] text-amber-700 font-medium">Generaste y descargaste la presentación "{gen.prompt}" pero aún no la has agregado como recurso del módulo.</p>
+                                                                <p className="text-[11px] text-amber-700 font-medium">Generaste y descargaste la presentación "{gen.titulo || gen.prompt}" pero aún no la has agregado como recurso del módulo.</p>
                                                             </div>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
                                                                 const nuevosModulos = [...modulos];
-                                                                const truncatedPrompt = gen.prompt.length > 50 ? `${gen.prompt.substring(0, 50)}...` : gen.prompt;
+                                                                const displayTitle = gen.titulo ? gen.titulo : `Presentación: ${gen.prompt.length > 50 ? `${gen.prompt.substring(0, 50)}...` : gen.prompt}`;
                                                                 nuevosModulos[index].recursos.push({
-                                                                    titulo: `Presentación: ${truncatedPrompt}`,
+                                                                    titulo: displayTitle,
                                                                     tipo: gen.formato === 'pdf' ? 'pdf' : 'ppt',
                                                                     url_contenido: gen.export_url,
                                                                     archivoPdf: null,
