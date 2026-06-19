@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 export default function Navbar() {
@@ -120,6 +120,12 @@ export default function Navbar() {
                                                  </Link>
                                                  <Link href="/mis-cursos/revision-examenes" onClick={() => setIsEstudiosMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
                                                      <BadgeCheck className="h-4 w-4" /> Mis Exámenes
+                                                 </Link>
+                                                 <Link href="/mis-cursos/cuestionarios" onClick={() => setIsEstudiosMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                                                     <ClipboardList className="h-4 w-4" /> Mis Cuestionarios
+                                                 </Link>
+                                                 <Link href="/mis-cursos/tareas" onClick={() => setIsEstudiosMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
+                                                     <FileText className="h-4 w-4" /> Mis Tareas
                                                  </Link>
                                                  <Link href="/mis-cursos/expediente" onClick={() => setIsEstudiosMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700">
                                                      <FolderHeart className="h-4 w-4" /> Mi Expediente
@@ -302,6 +308,12 @@ export default function Navbar() {
                                         </Link>
                                         <Link href="/mis-cursos/revision-examenes" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
                                             <BadgeCheck className="h-5 w-5" /> <span>Mis Exámenes</span>
+                                        </Link>
+                                        <Link href="/mis-cursos/cuestionarios" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+                                            <ClipboardList className="h-5 w-5" /> <span>Mis Cuestionarios</span>
+                                        </Link>
+                                        <Link href="/mis-cursos/tareas" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+                                            <FileText className="h-5 w-5" /> <span>Mis Tareas</span>
                                         </Link>
                                         <Link href="/mis-cursos/expediente" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
                                             <FolderHeart className="h-5 w-5" /> <span>Mi Expediente</span>
