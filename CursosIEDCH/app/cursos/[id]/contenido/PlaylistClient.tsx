@@ -876,27 +876,7 @@ export default function PlaylistClient({
                         ) : (
                             /* Normal module visual content view */
                             <div className="w-full space-y-6">
-                                {currentItem.recursos && currentItem.recursos.length > 1 && (
-                                    <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-200">
-                                        {currentItem.recursos.map((rec, rIdx) => {
-                                            const isRecActive = rIdx === activeRecursoIndex;
-                                            return (
-                                                <button
-                                                    key={rec.id || rIdx}
-                                                    type="button"
-                                                    onClick={() => setActiveRecursoIndex(rIdx)}
-                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                                                        isRecActive
-                                                        ? 'bg-blue-600 text-white border-blue-600 shadow-md transform scale-[1.02]'
-                                                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                                                    }`}
-                                                >
-                                                    {rec.titulo}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                {/* Removed resource tabs as requested */}
 
                                 <div className="mb-2">
                                     <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
