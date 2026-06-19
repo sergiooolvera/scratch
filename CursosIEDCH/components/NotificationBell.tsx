@@ -16,7 +16,7 @@ interface Notification {
     created_at: string
 }
 
-export default function NotificationBell({ userId }: { userId: string }) {
+export default function NotificationBell({ userId, iconClassName }: { userId: string, iconClassName?: string }) {
     const supabase = createClient()
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [isOpen, setIsOpen] = useState(false)
@@ -27,16 +27,25 @@ export default function NotificationBell({ userId }: { userId: string }) {
         if (!userId) return
 
         const fetchNotifications = async () => {
-            const { data, error } = await supabase
-                .from('ie_notificaciones')
-                .select('*')
-                .eq('usuario_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(20)
+            const [notificationsResponse, countResponse] = await Promise.all([
+                supabase
+                    .from('ie_notificaciones')
+                    .select('*')
+                    .eq('usuario_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(20),
+                supabase
+                    .from('ie_notificaciones')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('usuario_id', userId)
+                    .eq('leida', false)
+            ])
 
-            if (data) {
-                setNotifications(data)
-                setUnreadCount(data.filter(n => !n.leida).length)
+            if (notificationsResponse.data) {
+                setNotifications(notificationsResponse.data)
+            }
+            if (countResponse.count !== null) {
+                setUnreadCount(countResponse.count)
             }
         }
 
@@ -144,12 +153,14 @@ export default function NotificationBell({ userId }: { userId: string }) {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors"
+                className={iconClassName || "relative p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-colors"}
                 title="Notificaciones"
             >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 flex items-center justify-center px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-[1.5px] border-white">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                 )}
             </button>
 
