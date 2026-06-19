@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
+import SimuladorIngresosModal from '@/components/SimuladorIngresosModal'
 
 type Recurso = {
     id?: string;
@@ -80,6 +81,8 @@ export default function SubirCursoPage() {
     // Exam state (Final exam)
     const [requiereExamen, setRequiereExamen] = useState(false)
     const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
+    const [aplicarIva, setAplicarIva] = useState(false)
+    const [isSimuladorOpen, setIsSimuladorOpen] = useState(false)
     const [bloquearAvance, setBloquearAvance] = useState(false)
     const [requiereTareasAvance, setRequiereTareasAvance] = useState(false)
     const [requiereExamenAvance, setRequiereExamenAvance] = useState(false)
@@ -301,6 +304,7 @@ export default function SubirCursoPage() {
             if (borrador.bloquearAvance !== undefined) setBloquearAvance(borrador.bloquearAvance);
             if (borrador.requiereTareasAvance !== undefined) setRequiereTareasAvance(borrador.requiereTareasAvance);
             if (borrador.requiereExamenAvance !== undefined) setRequiereExamenAvance(borrador.requiereExamenAvance);
+            if (borrador.aplicarIva !== undefined) setAplicarIva(borrador.aplicarIva);
             if (borrador.minAprobacion !== undefined) setMinAprobacion(borrador.minAprobacion);
             if (borrador.conTiempo !== undefined) setConTiempo(borrador.conTiempo);
             if (borrador.tiempoExamen !== undefined) setTiempoExamen(borrador.tiempoExamen);
@@ -1541,11 +1545,21 @@ export default function SubirCursoPage() {
                                     {profile?.rol !== 'capacitador' ? (
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">Precio de Venta (MXN)</label>
-                                            <div className="relative rounded-xl shadow-sm">
-                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                    <span className="text-gray-500">$</span>
+                                            <div className="flex gap-2 items-center">
+                                                <div className="relative rounded-xl shadow-sm flex-1">
+                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                        <span className="text-gray-500">$</span>
+                                                    </div>
+                                                    <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-8 w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="0.00" />
                                                 </div>
-                                                <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-8 w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="0.00" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsSimuladorOpen(true)}
+                                                    className="px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-2"
+                                                >
+                                                    <Calculator size={18} />
+                                                    Simulador
+                                                </button>
                                             </div>
                                         </div>
                                     ) : (
@@ -2873,6 +2887,16 @@ export default function SubirCursoPage() {
                         )}
                     </div>
                 </div>
+            )}
+            {isSimuladorOpen && (
+                <SimuladorIngresosModal
+                    isOpen={isSimuladorOpen}
+                    onClose={() => setIsSimuladorOpen(false)}
+                    precioBase={Number(formData.precio) || 0}
+                    aplicarIvaGlobal={aplicarIva}
+                    onChangePrecio={(p) => setFormData(prev => ({ ...prev, precio: p }))}
+                    onChangeAplicarIva={(a) => setAplicarIva(a)}
+                />
             )}
         </div>
     )

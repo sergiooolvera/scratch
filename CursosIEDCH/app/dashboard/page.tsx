@@ -5,6 +5,8 @@ import DashboardSearch from '@/components/DashboardSearch'
 import { BookMarked, User, Search } from 'lucide-react'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ q?: string; category?: string }> }) {
     const resolvedParams = await searchParams
     const query = resolvedParams.q?.toLowerCase() || ''
@@ -91,12 +93,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <div className="bg-white border-b border-gray-200 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
                     <div className="flex items-center space-x-4">
-                        <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shadow-inner">
-                            <User className="h-8 w-8" />
+                        <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shadow-inner overflow-hidden">
+                            {(profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture) ? (
+                                <img src={profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture} alt="Avatar" className="h-full w-full object-cover" />
+                            ) : (
+                                <User className="h-8 w-8" />
+                            )}
                         </div>
                         <div>
                             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                                ¡Hola de nuevo, {profile?.nombre || user.email}!
+                                ¡Hola de nuevo, {profile?.nombre || user.user_metadata?.full_name || user.email}!
                             </h1>
                             <p className="mt-1 text-lg text-gray-500">
                                 Rol actual: <span className="font-semibold capitalize text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">{profile?.rol || 'Alumno'}</span>

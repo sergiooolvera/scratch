@@ -219,8 +219,8 @@ export default function Navbar() {
                                     </div>
                                     <NotificationBell userId={user.id} />
                                     <Link href="/perfil" className="p-1 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 rounded-full transition-colors border border-transparent overflow-hidden flex items-center justify-center w-9 h-9" title="Mi Perfil">
-                                        {profile?.fotografia_perfil ? (
-                                            <img src={profile.fotografia_perfil} alt="Perfil" className="w-full h-full object-cover rounded-full" />
+                                        {(profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture) ? (
+                                            <img src={profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture} alt="Perfil" className="w-full h-full object-cover rounded-full" />
                                         ) : (
                                             <User className="h-5 w-5" />
                                         )}

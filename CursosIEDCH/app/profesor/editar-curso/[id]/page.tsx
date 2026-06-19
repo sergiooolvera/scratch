@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History, ArrowRight, ArrowUp, ArrowDown } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History, ArrowRight, ArrowUp, ArrowDown, Calculator } from 'lucide-react'
 import Link from 'next/link'
 import { moduloTieneExamenContestado } from './actions'
 import { notifyAdminsOnCourseEdit } from '@/app/actions/notifications'
@@ -11,6 +11,7 @@ import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
+import SimuladorIngresosModal from '@/components/SimuladorIngresosModal'
 
 type Recurso = {
     id?: string;
@@ -91,6 +92,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     // Exam state (Final exam)
     const [requiereExamen, setRequiereExamen] = useState(false)
     const [minAprobacion, setMinAprobacion] = useState<number | ''>(80)
+    const [aplicarIva, setAplicarIva] = useState(false)
+    const [isSimuladorOpen, setIsSimuladorOpen] = useState(false)
     const [conTiempo, setConTiempo] = useState(false)
     const [tiempoExamen, setTiempoExamen] = useState<number | ''>(60)
     const [seguridadAumentada, setSeguridadAumentada] = useState(false)
@@ -164,6 +167,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 bloquear_avance: bloquearAvance,
                 requiere_tareas_avance: requiereTareasAvance,
                 requiere_examen_avance: requiereExamenAvance,
+                aplicar_iva: aplicarIva,
                 mostrar_examen_final: mostrarExamenFinal,
                 mostrar_constancia: mostrarConstancia,
                 mostrar_calificacion_constancia: mostrarCalificacionConstancia,
@@ -297,6 +301,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             setBloquearAvance(curso.bloquear_avance || false)
             setRequiereTareasAvance(curso.requiere_tareas_avance || false)
             setRequiereExamenAvance(curso.requiere_examen_avance || false)
+            setAplicarIva(curso.aplicar_iva || false)
 
             // Cargar todos los exámenes de la DB por si acaso
             const { data: todosExm } = await supabase
@@ -1314,6 +1319,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 bloquear_avance: bloquearAvance,
                 requiere_tareas_avance: requiereTareasAvance,
                 requiere_examen_avance: requiereExamenAvance,
+                aplicar_iva: aplicarIva,
                 mostrar_examen_final: mostrarExamenFinal,
                 mostrar_constancia: mostrarConstancia,
                 mostrar_calificacion_constancia: mostrarCalificacionConstancia,
@@ -1411,7 +1417,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     bloquear_avance: bloquearAvance,
                     requiere_tareas_avance: requiereTareasAvance,
                     requiere_examen_avance: requiereExamenAvance,
-                    mostrar_examen_final: mostrarExamenFinal,
+                aplicar_iva: aplicarIva,
+                mostrar_examen_final: mostrarExamenFinal,
                     mostrar_constancia: mostrarConstancia,
                     mostrar_calificacion_constancia: mostrarCalificacionConstancia,
                     mostrar_revision_examen: mostrarRevisionExamen,
@@ -1937,11 +1944,21 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                     {profile?.rol !== 'capacitador' ? (
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">Precio de Venta (MXN)</label>
-                                            <div className="relative rounded-xl shadow-sm">
-                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                    <span className="text-gray-500">$</span>
+                                            <div className="flex gap-2 items-center">
+                                                <div className="relative rounded-xl shadow-sm flex-1">
+                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                        <span className="text-gray-500">$</span>
+                                                    </div>
+                                                    <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-8 w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
                                                 </div>
-                                                <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-8 w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsSimuladorOpen(true)}
+                                                    className="px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-2"
+                                                >
+                                                    <Calculator size={18} />
+                                                    Simulador
+                                                </button>
                                             </div>
                                         </div>
                                     ) : (
@@ -3469,6 +3486,16 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         )}
                     </div>
                 </div>
+            )}
+            {isSimuladorOpen && (
+                <SimuladorIngresosModal
+                    isOpen={isSimuladorOpen}
+                    onClose={() => setIsSimuladorOpen(false)}
+                    precioBase={Number(formData.precio) || 0}
+                    aplicarIvaGlobal={aplicarIva}
+                    onChangePrecio={(p) => setFormData(prev => ({ ...prev, precio: p }))}
+                    onChangeAplicarIva={(a) => setAplicarIva(a)}
+                />
             )}
         </div>
     )
