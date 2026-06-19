@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -112,6 +112,30 @@ export default function SubirCursoPage() {
     const [gammaTema, setGammaTema] = useState('')
     const [loading, setLoading] = useState(true)
     const [mensaje, setMensaje] = useState('')
+    const [collapsedModulos, setCollapsedModulos] = useState<Record<number, boolean>>({})
+    const [collapsedExamenes, setCollapsedExamenes] = useState<Record<number, boolean>>({})
+    const [collapsedTareas, setCollapsedTareas] = useState<Record<number, boolean>>({})
+
+    const toggleModuloCollapsed = (index: number) => {
+        setCollapsedModulos(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }))
+    }
+
+    const toggleExamenCollapsed = (index: number) => {
+        setCollapsedExamenes(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }))
+    }
+
+    const toggleTareaCollapsed = (index: number) => {
+        setCollapsedTareas(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }))
+    }
 
     const [profile, setProfile] = useState<any>(null)
     const maxGammaAttempts = profile?.limite_generaciones_gamma ?? 3;
@@ -1779,10 +1803,15 @@ export default function SubirCursoPage() {
                                 {modulos.map((modulo, index) => (
                                     <div key={index} className="bg-white border-2 border-zinc-150 p-6 rounded-2xl relative shadow-md hover:border-zinc-200 transition-all duration-300 ease-in-out">
                                         <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
-                                            <h3 className="text-md font-bold text-gray-800 flex items-center gap-2">
-                                                <span className="bg-blue-600 text-white text-xs h-6 w-6 rounded-full flex items-center justify-center font-black">{index + 1}</span>
-                                                Clase / Módulo de Aprendizaje
-                                            </h3>
+                                            <div className="flex items-center gap-2 cursor-pointer group" onClick={() => toggleModuloCollapsed(index)}>
+                                                <button type="button" className="p-1 rounded-md hover:bg-gray-100 transition-colors text-gray-500 group-hover:text-gray-800">
+                                                    {collapsedModulos[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+                                                </button>
+                                                <h3 className="text-md font-bold text-gray-800 flex items-center gap-2">
+                                                    <span className="bg-blue-600 text-white text-xs h-6 w-6 rounded-full flex items-center justify-center font-black">{index + 1}</span>
+                                                    Clase / Módulo de Aprendizaje
+                                                </h3>
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 {modulos.length > 1 && (
                                                     <div className="flex gap-1.5 mr-3 border-r border-gray-200 pr-4">
@@ -1814,7 +1843,7 @@ export default function SubirCursoPage() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-6">
+                                        <div className={`grid grid-cols-1 gap-6 ${collapsedModulos[index] ? 'hidden' : ''}`}>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Título del Módulo</label>
                                                 <input type="text" required placeholder="Ej. Introducción a la Fisiología" value={modulo.titulo} onChange={(e) => handleModuloChange(index, 'titulo', e.target.value)} className="w-full text-sm rounded-lg border-gray-300 p-2.5 border bg-white text-black font-semibold" />
@@ -2007,10 +2036,11 @@ export default function SubirCursoPage() {
                                         {/* Optional Modular Exam Box */}
                                         <div className="mt-6 pt-4 border-t border-zinc-100">
                                             <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={modulo.requiereExamen}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={modulo.requiereExamen}
                                                         onChange={(e) => handleModuloChange(index, 'requiereExamen', e.target.checked)}
                                                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                                     />
@@ -2019,9 +2049,15 @@ export default function SubirCursoPage() {
                                                         ¿Este módulo requiere un examen de comprensión?
                                                     </span>
                                                 </label>
+                                                    {modulo.requiereExamen && (
+                                                        <button type="button" onClick={() => toggleExamenCollapsed(index)} className="p-1 rounded-md hover:bg-indigo-100 transition-colors text-indigo-500 hover:text-indigo-800">
+                                                            {collapsedExamenes[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+                                                        </button>
+                                                    )}
+                                                </div>
 
                                                 {modulo.requiereExamen && (
-                                                    <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-indigo-200 space-y-4">
+                                                    <div className={`mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-indigo-200 space-y-4 ${collapsedExamenes[index] ? 'hidden' : ''}`}>
                                                         <div className="bg-amber-50 border border-amber-250 rounded-xl p-4 flex gap-2.5 items-start text-left shadow-sm">
                                                             <span className="text-amber-600 text-sm flex-shrink-0 mt-0.5">⚠️</span>
                                                             <div>
@@ -2198,10 +2234,11 @@ export default function SubirCursoPage() {
                                         {/* Modular Homework/Task Box */}
                                         <div className="mt-4 pt-4 border-t border-zinc-100">
                                             <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-100">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={!!modulo.requiereTarea}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!modulo.requiereTarea}
                                                         onChange={(e) => handleModuloChange(index, 'requiereTarea', e.target.checked)}
                                                         className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
                                                     />
@@ -2210,9 +2247,15 @@ export default function SubirCursoPage() {
                                                         ¿Este módulo requiere que el alumno entregue una tarea o práctica?
                                                     </span>
                                                 </label>
+                                                    {modulo.requiereTarea && (
+                                                        <button type="button" onClick={() => toggleTareaCollapsed(index)} className="p-1 rounded-md hover:bg-amber-100 transition-colors text-amber-600 hover:text-amber-800">
+                                                            {collapsedTareas[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+                                                        </button>
+                                                    )}
+                                                </div>
 
                                                 {modulo.requiereTarea && (
-                                                    <div className="mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-amber-250 space-y-4">
+                                                    <div className={`mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-amber-250 space-y-4 ${collapsedTareas[index] ? 'hidden' : ''}`}>
                                                         <div>
                                                             <label className="block text-xs font-bold text-gray-700 mb-1">Instrucciones de la Tarea:</label>
                                                             <textarea
