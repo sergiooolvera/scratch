@@ -31,7 +31,7 @@ export async function sendReunionNotification({ emails, cursoTitulo, reunionUrl,
   for (const email of emails) {
     try {
       await transporter.sendMail({
-        from: `"SECNA Portal" <${fromEmail}>`,
+        from: `"Grupo EGAC Portal" <${fromEmail}>`,
         to: email,
         subject: `AVISO: Clase en Vivo / Información de ${cursoTitulo}`,
         html: `
@@ -43,7 +43,7 @@ export async function sendReunionNotification({ emails, cursoTitulo, reunionUrl,
               </p>
               ${notaProfesor ? `<div style="background-color: #fffaf0; border-left: 4px solid #ed8936; padding: 15px; margin: 20px 0;"><strong>Nota del Profesor:</strong><p>${notaProfesor}</p></div>` : ''}
               ${reunionUrl ? `<div style="text-align: center; margin: 30px 0;"><a href="${reunionUrl}" target="_blank" style="background-color: #3182ce; color: #ffffff; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold;">Unirse a la Reunión</a></div>` : ''}
-              <p style="font-size: 12px; color: #a0aec0; text-align: center;">Este es un aviso automático de SECNA Portal.</p>
+              <p style="font-size: 12px; color: #a0aec0; text-align: center;">Este es un aviso automático de Grupo EGAC Portal.</p>
             </div>
           </div>
         `,
@@ -84,7 +84,7 @@ export async function sendCertificateNotification({ email, cursoTitulo, publicUr
   await transporter.verify();
 
   const info = await transporter.sendMail({
-    from: `"SECNA Portal" <${fromEmail}>`,
+    from: `"Grupo EGAC Portal" <${fromEmail}>`,
     to: email,
     subject: `Tu Constancia Oficial: ${cursoTitulo}`,
     html: `

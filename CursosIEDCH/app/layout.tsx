@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Portal Cursos SECNA',
+  title: 'Portal Cursos Grupo EGAC',
   description: 'Sistema Nacional de Evaluación y Registro Laboral',
 }
 

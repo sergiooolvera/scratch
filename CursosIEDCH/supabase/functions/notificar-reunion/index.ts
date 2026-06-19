@@ -69,7 +69,7 @@ serve(async (req) => {
     for (const email of emails) {
       try {
         const info = await transporter.sendMail({
-          from: `"SECNA Portal" <${user}>`,
+          from: `"Grupo EGAC Portal" <${user}>`,
           to: email,
           subject: `AVISO: Clase en Vivo / Información de ${cursoTitulo}`,
           html: `
@@ -98,7 +98,7 @@ serve(async (req) => {
 
                 <hr style="border: 0; border-top: 1px solid #edf2f7; margin: 30px 0;" />
                 <p style="font-size: 12px; color: #a0aec0; text-align: center;">
-                  Este es un aviso automático de SECNA Portal.<br/>
+                  Este es un aviso automático de Grupo EGAC Portal.<br/>
                   No respondas a este correo.
                 </p>
               </div>

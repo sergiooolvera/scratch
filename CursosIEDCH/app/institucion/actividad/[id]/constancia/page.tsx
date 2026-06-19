@@ -317,7 +317,7 @@ export default function CertificadoActividadPage() {
                             </p>
 
                             <img 
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${originUrl || 'https://plataforma.secna.mx'}/validar?folio=IEECDH-${actividad.id.split('-')[0].toUpperCase()}`} 
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${originUrl || 'https://plataforma.Grupo EGAC.mx'}/validar?folio=IEECDH-${actividad.id.split('-')[0].toUpperCase()}`} 
                                 alt="QR Code" 
                                 className="w-26 h-26 mb-3 border p-1"
                             />

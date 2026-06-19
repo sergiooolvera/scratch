@@ -212,7 +212,7 @@ function ValidacionContent() {
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-3">Validación de Constancias</h1>
                     <p className="text-gray-600 max-w-xl mx-auto">
-                        Verifica la autenticidad de una constancia o certificado emitido por el SECNA ingresando el número de Folio oficial.
+                        Verifica la autenticidad de una constancia o certificado emitido por el Grupo EGAC ingresando el número de Folio oficial.
                     </p>
                 </div>
 
