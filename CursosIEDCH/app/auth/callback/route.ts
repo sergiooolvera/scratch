@@ -4,10 +4,24 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const token_hash = searchParams.get('token_hash')
+  const type = searchParams.get('type')
   // El parámetro "next" se usa para redirigir después de iniciar sesión con éxito.
   const next = searchParams.get('next') ?? '/dashboard'
 
-  if (code) {
+  if (token_hash && type) {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.verifyOtp({
+      type: type as any,
+      token_hash,
+    })
+    
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`)
+    } else {
+      console.error('Error verifying OTP:', error)
+    }
+  } else if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
