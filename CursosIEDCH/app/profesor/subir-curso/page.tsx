@@ -400,6 +400,60 @@ export default function SubirCursoPage() {
         localStorage.removeItem('curso_nuevo_borrador');
         setTieneBorradorLocal(false);
         setBorradorInicializado(true);
+
+        // Reset all state variables to clear form data
+        setFormData({
+            titulo: '',
+            descripcion: '',
+            beneficios: '',
+            duracion: '',
+            precio: 0,
+            reunion_url: '',
+            nota_profesor: '',
+            categoria: 'desarrollo',
+            modalidad: 'abierta',
+            limite_inscripcion: '',
+        });
+        setVigenciaAnos(3);
+        setModulos([{
+            titulo: '',
+            recursos: [],
+            requiereExamen: false,
+            examenMinAprobacion: 80,
+            examenPreguntas: [],
+            requiereTarea: false,
+            tareaInstrucciones: '',
+            tareaPuntos: '',
+            requiereCuestionario: false,
+            cuestionarioPreguntas: [],
+            seguridadAumentada: false,
+            maxCambiosPantalla: 2,
+            conTiempo: false,
+            tiempoExamen: 20,
+            intentosPermitidos: 2
+        }]);
+        setRequiereExamen(false);
+        setRequierePagoCompleto(false);
+        setAplicarIva(false);
+        setBloquearAvance(false);
+        setRequiereTareasAvance(false);
+        setRequiereExamenAvance(false);
+        setMinAprobacion(80);
+        setConTiempo(false);
+        setTiempoExamen(60);
+        setSeguridadAumentada(false);
+        setMaxCambios(3);
+        setIntentosPermitidos(3);
+        setArchivoExamen(null);
+        setPreguntasExtraidas([]);
+        setMostrarExamenFinal(true);
+        setMostrarConstancia(true);
+        setMostrarCalificacionConstancia(true);
+        setMostrarRevisionExamen(false);
+        setMostrarLogoConstancia(false);
+        setPlantillaConstancia('modelo1');
+        setArchivoLogo(null);
+        setLogoPreviewUrl(null);
     }
 
     useEffect(() => {
