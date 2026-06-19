@@ -104,3 +104,14 @@ firebase_service_account.json
 .supabase/
 .sqlite
 *.db
+
+.vercel
+
+# Ignore local scratch/temporary script files in CursosIEDCH
+CursosIEDCH/*.js
+CursosIEDCH/*.ts
+CursosIEDCH/*.sql
+CursosIEDCH/*.txt
+CursosIEDCH/*.backup
+CursosIEDCH/scratch/
+
