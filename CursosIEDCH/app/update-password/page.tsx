@@ -61,10 +61,6 @@ export default function UpdatePasswordPage() {
             <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
                 <div className="mx-auto w-full max-w-sm lg:w-96">
                     <div>
-                        <Link href="/" className="flex items-center space-x-2 text-blue-700 font-bold text-2xl mb-8">
-                            <GraduationCap className="h-8 w-8" />
-                            <span>IEDCH</span>
-                        </Link>
                         <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                             Actualiza tu contraseña
                         </h2>
