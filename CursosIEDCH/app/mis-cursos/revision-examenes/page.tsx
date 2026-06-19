@@ -74,8 +74,10 @@ export default function AlumnoRevisionExamenesPage() {
     const [resultados, setResultados] = useState<any[]>([])
     const [enrolledCourses, setEnrolledCourses] = useState<any[]>([])
     const [selectedCourse, setSelectedCourse] = useState<any>(null)
+    const [selectedModulo, setSelectedModulo] = useState<any>(null) // selected module ID or 'final'
     const [selectedResultado, setSelectedResultado] = useState<any>(null)
     const [preguntas, setPreguntas] = useState<any[]>([])
+    const [modulos, setModulos] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [activeFilter, setActiveFilter] = useState<'all' | 'correct' | 'incorrect'>('all')
     const supabase = createClient()
@@ -151,9 +153,10 @@ export default function AlumnoRevisionExamenesPage() {
                 const { data: modulosData } = moduloIds.length > 0
                     ? await supabase
                         .from('ie_curso_modulos')
-                        .select('id, titulo, orden')
+                        .select('id, titulo, curso_id, orden')
                         .in('id', moduloIds)
                     : { data: [] }
+                setModulos(modulosData || [])
 
                 // 5. Format results
                 const resultadosFormateados = resData.map(r => {
@@ -210,10 +213,34 @@ export default function AlumnoRevisionExamenesPage() {
         }
     })
 
-    // Selected course's attempts
+    // Selected course attempts
     const courseAttempts = selectedCourse
         ? resultados.filter(r => r.ie_examenes?.curso_id === selectedCourse.id)
         : []
+
+    // Active modulos for selected course that have exam attempts
+    const courseModuloIdsWithAttempts = Array.from(new Set(
+        courseAttempts.map(r => r.ie_examenes?.modulo_id).filter(Boolean)
+    ))
+    
+    const activeCourseModulos = modulos
+        .filter(m => m.curso_id === selectedCourse?.id && courseModuloIdsWithAttempts.includes(m.id))
+        .sort((a, b) => (a.orden || 0) - (b.orden || 0))
+
+    const hasFinalAttempts = courseAttempts.some(r => !r.ie_examenes?.modulo_id)
+    const finalAttemptsCount = courseAttempts.filter(r => !r.ie_examenes?.modulo_id).length
+
+    // Attempts for selected course and module
+    const moduleAttempts = selectedCourse && selectedModulo
+        ? courseAttempts.filter(r => (r.ie_examenes?.modulo_id || 'final') === selectedModulo)
+        : []
+
+    // Get selected module title
+    const selectedModuloTitle = selectedModulo === 'final'
+        ? 'Examen final'
+        : modulos.find(m => m.id === selectedModulo)?.titulo 
+            ? `Módulo ${modulos.find(m => m.id === selectedModulo)?.orden || ''}: ${modulos.find(m => m.id === selectedModulo)?.titulo}`.trim()
+            : 'Módulo'
 
     // Questions of the selected attempt
     const preguntasResultadoSeleccionado = selectedResultado
@@ -304,10 +331,12 @@ export default function AlumnoRevisionExamenesPage() {
                                 const val = e.target.value
                                 if (!val) {
                                     setSelectedCourse(null)
+                                    setSelectedModulo(null)
                                     setSelectedResultado(null)
                                 } else {
                                     const found = allCourses.find(c => c.id === val)
                                     setSelectedCourse(found || null)
+                                    setSelectedModulo(null)
                                     setSelectedResultado(null)
                                 }
                                 setActiveFilter('all')
@@ -387,25 +416,21 @@ export default function AlumnoRevisionExamenesPage() {
                             </div>
                         </div>
                     </div>
-                ) : selectedResultado === null ? (
-                    /* VIEW 2: COURSE ATTEMPTS LIST */
+                ) : selectedModulo === null ? (
+                    /* VIEW 2: COURSE MODULES GRID */
                     <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-150 animate-in fade-in duration-300">
-                        {/* Course attempts title and count */}
+                        {/* Course header */}
                         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-100 pb-4">
                             <div>
-                                <h2 className="text-xl sm:text-2xl font-extrabold text-gray-950 uppercase tracking-wide flex items-center gap-2">
+                                <h2 className="text-xl sm:text-2xl font-extrabold text-gray-955 uppercase tracking-wide flex items-center gap-2">
                                     <BookOpen className="h-6 w-6 text-blue-600" />
                                     {selectedCourse.titulo}
                                 </h2>
-                                <p className="text-xs text-gray-550 mt-1.5 font-medium">Evaluaciones contestadas por el alumno para este curso</p>
+                                <p className="text-xs text-gray-550 mt-1.5 font-medium">Selecciona un módulo para ver los intentos de examen:</p>
                             </div>
-                            <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full whitespace-nowrap self-start sm:self-auto">
-                                {courseAttempts.length} {courseAttempts.length === 1 ? 'Intento registrado' : 'Intentos registrados'}
-                            </span>
                         </div>
 
-                        {/* List of attempts */}
-                        {courseAttempts.length === 0 ? (
+                        {activeCourseModulos.length === 0 && !hasFinalAttempts ? (
                             <div className="text-center py-16 bg-zinc-50 border border-dashed border-zinc-200 rounded-2xl">
                                 <FileQuestion className="h-14 w-14 text-zinc-300 mx-auto mb-4" />
                                 <h3 className="text-lg font-bold text-zinc-800">Sin exámenes contestados</h3>
@@ -414,52 +439,125 @@ export default function AlumnoRevisionExamenesPage() {
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Selecciona una evaluación para ver tu reporte detallado:</p>
-                                {courseAttempts.map((r: any) => {
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {activeCourseModulos.map((m: any) => {
+                                    const count = courseAttempts.filter(r => r.ie_examenes?.modulo_id === m.id).length
                                     return (
                                         <div
-                                            key={r.id}
-                                            onClick={() => {
-                                                setSelectedResultado(r)
-                                                setActiveFilter('all')
-                                            }}
+                                            key={m.id}
+                                            onClick={() => setSelectedModulo(m.id)}
                                             className="p-4 rounded-xl border border-zinc-150 hover:border-blue-300 hover:bg-blue-50/20 bg-white transition-all cursor-pointer shadow-sm flex items-center justify-between gap-4 group"
                                         >
                                             <div className="min-w-0">
                                                 <span className="inline-block text-[9px] font-black bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded uppercase tracking-wider mb-1 border border-blue-100">
-                                                    {r.tipoExamen === 'final' ? 'Examen Final' : 'Examen Modular'}
+                                                    Módulo {m.orden || ''}
                                                 </span>
-                                                <h3 className="font-extrabold text-gray-900 text-sm sm:text-base group-hover:text-blue-700 transition">
-                                                    {r.examenTitulo}
+                                                <h3 className="font-extrabold text-gray-900 text-sm group-hover:text-blue-700 transition truncate pr-2">
+                                                    {m.titulo}
                                                 </h3>
-                                                <p className="text-xs text-gray-450 mt-1 flex items-center gap-1 font-medium">
-                                                    <Clock className="h-3 w-3" />
-                                                    Presentado el: {new Date(r.created_at).toLocaleString()}
-                                                </p>
                                             </div>
-
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-right">
-                                                    <span className={`text-sm sm:text-base font-black px-3 py-1 rounded-xl whitespace-nowrap inline-block ${
-                                                        r.aprobado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                                    }`}>
-                                                        {r.calificacion}%
-                                                    </span>
-                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                                                        {r.aprobado ? 'Aprobado' : 'Reprobado'}
-                                                    </p>
-                                                </div>
-                                                <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 transition group-hover:translate-x-1" />
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <span className="text-[10px] font-bold text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-full whitespace-nowrap">
+                                                    {count} {count === 1 ? 'intento' : 'intentos'}
+                                                </span>
+                                                <ChevronRight className="h-4.5 w-4.5 text-gray-300 group-hover:text-blue-500 transition group-hover:translate-x-0.5" />
                                             </div>
                                         </div>
                                     )
                                 })}
+
+                                {hasFinalAttempts && (
+                                    <div
+                                        onClick={() => setSelectedModulo('final')}
+                                        className="p-4 rounded-xl border border-zinc-150 hover:border-blue-300 hover:bg-blue-50/20 bg-white transition-all cursor-pointer shadow-sm flex items-center justify-between gap-4 group"
+                                    >
+                                        <div className="min-w-0">
+                                            <span className="inline-block text-[9px] font-black bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded uppercase tracking-wider mb-1 border border-blue-100">
+                                                Examen Final
+                                            </span>
+                                            <h3 className="font-extrabold text-gray-900 text-sm group-hover:text-blue-700 transition">
+                                                Examen de conocimiento general
+                                            </h3>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <span className="text-[10px] font-bold text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-full whitespace-nowrap">
+                                                {finalAttemptsCount} {finalAttemptsCount === 1 ? 'intento' : 'intentos'}
+                                            </span>
+                                            <ChevronRight className="h-4.5 w-4.5 text-gray-300 group-hover:text-blue-500 transition group-hover:translate-x-0.5" />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
+                ) : selectedResultado === null ? (
+                    /* VIEW 3: MODULE ATTEMPTS LIST */
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-150 animate-in fade-in duration-300">
+                        {/* Header and Back button */}
+                        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-100 pb-4">
+                            <div>
+                                <button 
+                                    onClick={() => setSelectedModulo(null)} 
+                                    className="text-xs font-bold text-gray-500 hover:text-gray-900 flex items-center gap-1 transition cursor-pointer mb-2"
+                                >
+                                    <ArrowLeft className="h-3.5 w-3.5" /> Volver a los módulos del curso
+                                </button>
+                                <h2 className="text-xl sm:text-2xl font-extrabold text-gray-950 uppercase tracking-wide flex items-center gap-2">
+                                    <BookOpen className="h-6 w-6 text-blue-600" />
+                                    {selectedModuloTitle}
+                                </h2>
+                                <p className="text-xs text-gray-550 mt-1.5 font-medium">Intentos de examen registrados para esta evaluación</p>
+                            </div>
+                            <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full whitespace-nowrap self-start sm:self-auto">
+                                {moduleAttempts.length} {moduleAttempts.length === 1 ? 'Intento' : 'Intentos'}
+                            </span>
+                        </div>
+
+                        {/* List of attempts for this module */}
+                        <div className="space-y-3">
+                            {moduleAttempts.map((r: any, idx: number) => {
+                                return (
+                                    <div
+                                        key={r.id}
+                                        onClick={() => {
+                                            setSelectedResultado(r)
+                                            setActiveFilter('all')
+                                        }}
+                                        className="p-4 rounded-xl border border-zinc-150 hover:border-blue-300 hover:bg-blue-50/20 bg-white transition-all cursor-pointer shadow-sm flex items-center justify-between gap-4 group"
+                                    >
+                                        <div className="min-w-0">
+                                            <span className="inline-block text-[9px] font-black bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded uppercase tracking-wider mb-1 border border-blue-100">
+                                                Intento #{moduleAttempts.length - idx}
+                                            </span>
+                                            <h3 className="font-extrabold text-gray-900 text-sm sm:text-base group-hover:text-blue-700 transition">
+                                                {r.examenTitulo}
+                                            </h3>
+                                            <p className="text-xs text-gray-450 mt-1 flex items-center gap-1 font-medium">
+                                                <Clock className="h-3 w-3" />
+                                                Presentado el: {new Date(r.created_at).toLocaleString()}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                                <span className={`text-sm sm:text-base font-black px-3 py-1 rounded-xl whitespace-nowrap inline-block ${
+                                                    r.aprobado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                    {r.calificacion}%
+                                                </span>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                                                    {r.aprobado ? 'Aprobado' : 'Reprobado'}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 transition group-hover:translate-x-1" />
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
                 ) : (
-                    /* VIEW 3: DETAILED ATTEMPT REPORT */
+                    /* VIEW 4: DETAILED ATTEMPT REPORT */
                     <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-150 animate-in fade-in duration-300">
                         
                         {/* Navigation back button */}
@@ -468,9 +566,9 @@ export default function AlumnoRevisionExamenesPage() {
                                 setSelectedResultado(null);
                                 setActiveFilter('all');
                             }}
-                            className="text-xs font-bold text-gray-550 hover:text-gray-900 flex items-center gap-1 transition cursor-pointer mb-5"
+                            className="text-xs font-bold text-gray-555 hover:text-gray-900 flex items-center gap-1 transition cursor-pointer mb-5"
                         >
-                            <ArrowLeft className="h-3.5 w-3.5" /> Volver a los intentos de {selectedCourse.titulo}
+                            <ArrowLeft className="h-3.5 w-3.5" /> Volver a los intentos de {selectedModuloTitle}
                         </button>
 
                         {/* Exam header and score badge */}
@@ -482,7 +580,7 @@ export default function AlumnoRevisionExamenesPage() {
                                 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 leading-tight">
                                     {selectedResultado.curso?.titulo}
                                 </h2>
-                                <p className="text-sm font-semibold text-zinc-500 mt-1">
+                                <p className="text-sm font-semibold text-zinc-550 mt-1">
                                     {selectedResultado.examenTitulo}
                                 </p>
                                 <p className="text-xs text-gray-455 mt-2 flex items-center gap-1">
@@ -657,7 +755,7 @@ export default function AlumnoRevisionExamenesPage() {
                                                 </div>
                                             ) : (
                                                 <div className="bg-white p-4 rounded-xl border border-gray-200 mb-3 mt-4 space-y-2">
-                                                    <p className="text-xs font-bold text-gray-550 uppercase tracking-wider">Tu respuesta escrita:</p>
+                                                    <p className="text-xs font-bold text-gray-555 uppercase tracking-wider">Tu respuesta escrita:</p>
                                                     <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-200 text-sm text-gray-900 leading-relaxed whitespace-pre-wrap font-medium">
                                                         {detalle?.respuesta_texto || 'No respondida'}
                                                     </div>

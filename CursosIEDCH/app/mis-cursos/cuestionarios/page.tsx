@@ -309,7 +309,7 @@ export default function AlumnoRevisionCuestionariosPage() {
                         </div>
                     </div>
                 ) : selectedModulo === null ? (
-                    /* VIEW 2: MODULES LIST FOR SELECTED COURSE */
+                    /* VIEW 2: COURSE MODULES GRID */
                     <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-150 animate-in fade-in duration-300">
                         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-100 pb-4">
                             <div>
@@ -317,7 +317,7 @@ export default function AlumnoRevisionCuestionariosPage() {
                                     <BookOpen className="h-6 w-6 text-blue-600" />
                                     {selectedCourse.titulo}
                                 </h2>
-                                <p className="text-xs text-gray-550 mt-1.5 font-medium">Cuestionarios modulares contestados</p>
+                                <p className="text-xs text-gray-550 mt-1.5 font-medium">Selecciona un módulo para revisar tus cuestionarios:</p>
                             </div>
                             <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full whitespace-nowrap self-start sm:self-auto">
                                 {activeModulos.length} {activeModulos.length === 1 ? 'Cuestionario' : 'Cuestionarios'}
@@ -333,8 +333,7 @@ export default function AlumnoRevisionCuestionariosPage() {
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Selecciona un cuestionario para ver tus respuestas y retroalimentaciones:</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {activeModulos.map((m: any) => {
                                     const moduloRespuestas = respuestas.filter(r => {
                                         const q = preguntasCuestionarios.find(p => p.id === r.pregunta_id)
@@ -352,26 +351,24 @@ export default function AlumnoRevisionCuestionariosPage() {
                                                 <span className="inline-block text-[9px] font-black bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded uppercase tracking-wider mb-1 border border-blue-100">
                                                     Módulo {m.orden || ''}
                                                 </span>
-                                                <h3 className="font-extrabold text-gray-900 text-sm sm:text-base group-hover:text-blue-700 transition">
-                                                    Cuestionario: {m.titulo}
+                                                <h3 className="font-extrabold text-gray-900 text-sm group-hover:text-blue-700 transition truncate pr-2">
+                                                    {m.titulo}
                                                 </h3>
-                                                <p className="text-xs text-gray-450 mt-1 flex items-center gap-1 font-medium">
+                                                <p className="text-[10px] text-gray-455 mt-1 flex items-center gap-1 font-medium">
                                                     <Clock className="h-3 w-3" />
-                                                    {moduloRespuestas.length} preguntas contestadas
+                                                    {moduloRespuestas.length} respuestas
                                                 </p>
                                             </div>
 
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-right">
-                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full whitespace-nowrap inline-block border ${
-                                                        sinCalificar 
-                                                            ? 'bg-amber-50 text-amber-700 border-amber-200' 
-                                                            : 'bg-green-50 text-green-700 border-green-200'
-                                                    }`}>
-                                                        {sinCalificar ? 'Pendiente Calificar' : 'Calificado'}
-                                                    </span>
-                                                </div>
-                                                <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 transition group-hover:translate-x-1" />
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap inline-block ${
+                                                    sinCalificar 
+                                                        ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                                                        : 'bg-green-50 text-green-700 border-green-200'
+                                                }`}>
+                                                    {sinCalificar ? 'Pendiente' : 'Calificado'}
+                                                </span>
+                                                <ChevronRight className="h-4.5 w-4.5 text-gray-300 group-hover:text-blue-500 transition group-hover:translate-x-0.5" />
                                             </div>
                                         </div>
                                     )

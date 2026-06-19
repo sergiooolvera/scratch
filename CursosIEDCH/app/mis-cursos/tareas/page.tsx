@@ -180,6 +180,13 @@ export default function AlumnoRevisionTareasPage() {
         })
         : []
 
+    // Active modulos for selected course that have task submissions
+    const activeCourseModulos = selectedCourse
+        ? modulos
+            .filter(m => m.curso_id === selectedCourse.id)
+            .sort((a, b) => (a.orden || 0) - (b.orden || 0))
+        : []
+
     // Selected submission details
     const selectedSubmissionData = selectedEntrega
         ? entregas.find(e => e.id === selectedEntrega)
@@ -314,7 +321,7 @@ export default function AlumnoRevisionTareasPage() {
                         </div>
                     </div>
                 ) : selectedEntrega === null ? (
-                    /* VIEW 2: COURSE SUBMISSIONS LIST */
+                    /* VIEW 2: COURSE MODULES GRID */
                     <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-150 animate-in fade-in duration-300">
                         {/* Course Header */}
                         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-100 pb-4">
@@ -323,15 +330,15 @@ export default function AlumnoRevisionTareasPage() {
                                     <BookOpen className="h-6 w-6 text-blue-600" />
                                     {selectedCourse.titulo}
                                 </h2>
-                                <p className="text-xs text-gray-550 mt-1.5 font-medium">Tareas y proyectos modulares enviados</p>
+                                <p className="text-xs text-gray-550 mt-1.5 font-medium">Selecciona un módulo para ver el detalle de tu tarea entregada:</p>
                             </div>
                             <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full whitespace-nowrap self-start sm:self-auto">
-                                {courseEntregas.length} {courseEntregas.length === 1 ? 'Tarea entregada' : 'Tareas entregadas'}
+                                {activeCourseModulos.length} {activeCourseModulos.length === 1 ? 'Tarea entregada' : 'Tareas entregadas'}
                             </span>
                         </div>
 
-                        {/* List of submissions */}
-                        {courseEntregas.length === 0 ? (
+                        {/* Grid of modules */}
+                        {activeCourseModulos.length === 0 ? (
                             <div className="text-center py-16 bg-zinc-50 border border-dashed border-zinc-200 rounded-2xl">
                                 <FileQuestion className="h-14 w-14 text-zinc-300 mx-auto mb-4" />
                                 <h3 className="text-lg font-bold text-zinc-800">Sin entregables registrados</h3>
@@ -340,50 +347,46 @@ export default function AlumnoRevisionTareasPage() {
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Selecciona una entrega para ver la calificación y comentarios del docente:</p>
-                                {courseEntregas.map((e: any) => {
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {activeCourseModulos.map((m: any) => {
+                                    const e = entregas.find(ent => ent.modulo_id === m.id && ent.curso_id === selectedCourse.id)
+                                    if (!e) return null
                                     const calificada = e.calificacion !== undefined && e.calificacion !== null
 
                                     return (
                                         <div
-                                            key={e.id}
+                                            key={m.id}
                                             onClick={() => setSelectedEntrega(e.id)}
                                             className="p-4 rounded-xl border border-zinc-150 hover:border-blue-300 hover:bg-blue-50/20 bg-white transition-all cursor-pointer shadow-sm flex items-center justify-between gap-4 group"
                                         >
                                             <div className="min-w-0">
                                                 <span className="inline-block text-[9px] font-black bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded uppercase tracking-wider mb-1 border border-blue-100">
-                                                    Tarea Modular
+                                                    Módulo {m.orden || ''}
                                                 </span>
-                                                <h3 className="font-extrabold text-gray-900 text-sm sm:text-base group-hover:text-blue-700 transition">
-                                                    {e.moduloTitulo}
+                                                <h3 className="font-extrabold text-gray-900 text-sm group-hover:text-blue-700 transition truncate pr-2">
+                                                    {m.titulo}
                                                 </h3>
-                                                <p className="text-xs text-gray-450 mt-1 flex items-center gap-1 font-medium">
+                                                <p className="text-[10px] text-gray-455 mt-1 flex items-center gap-1 font-medium">
                                                     <Clock className="h-3 w-3" />
-                                                    Entregado el: {new Date(e.created_at).toLocaleString()}
+                                                    Entregado el: {new Date(e.created_at).toLocaleDateString()}
                                                 </p>
                                             </div>
 
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-right">
-                                                    {calificada ? (
-                                                        <>
-                                                            <span className={`text-sm sm:text-base font-black px-3 py-1 rounded-xl whitespace-nowrap inline-block ${
-                                                                e.calificacion >= 70 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                                            }`}>
-                                                                {e.calificacion}/100
-                                                            </span>
-                                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
-                                                                {e.calificacion >= 70 ? 'Aprobada' : 'Reprobada'}
-                                                            </p>
-                                                        </>
-                                                    ) : (
-                                                        <span className="text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full whitespace-nowrap inline-block">
-                                                            Pendiente Calificar
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 transition group-hover:translate-x-1" />
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                {calificada ? (
+                                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap inline-block ${
+                                                        e.calificacion >= 70 
+                                                            ? 'bg-green-50 text-green-700 border-green-200' 
+                                                            : 'bg-red-50 text-red-700 border-red-200'
+                                                    }`}>
+                                                        {e.calificacion}/100
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap inline-block bg-amber-50 text-amber-700 border-amber-200">
+                                                        Pendiente
+                                                    </span>
+                                                )}
+                                                <ChevronRight className="h-4.5 w-4.5 text-gray-300 group-hover:text-blue-500 transition group-hover:translate-x-0.5" />
                                             </div>
                                         </div>
                                     )
