@@ -231,6 +231,10 @@ export default function AdminCursosPage() {
         })),
         examen: m?.examen ? {
             min_aprobacion: m.examen.min_aprobacion ?? 80,
+            tiempo_limite: m.examen.tiempo_limite ?? null,
+            seguridad_aumentada: !!m.examen.seguridad_aumentada,
+            max_cambios_pantalla: m.examen.max_cambios_pantalla !== undefined ? m.examen.max_cambios_pantalla : 2,
+            intentos_permitidos: m.examen.intentos_permitidos !== undefined ? m.examen.intentos_permitidos : 2,
             preguntas: (m.examen.preguntas || []).map(normalizePregunta)
         } : null,
         requiereTarea: !!m?.requiereTarea,
@@ -464,7 +468,15 @@ export default function AdminCursosPage() {
                     <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Examen del módulo</p>
                     {mod.examen ? (
                         <div className="space-y-2">
-                            <p className="text-xs text-gray-700">Mínimo: {mod.examen.min_aprobacion}%</p>
+                            <p className="text-xs text-gray-700">
+                                Mínimo: {mod.examen.min_aprobacion}% · 
+                                Tiempo: {mod.examen.tiempo_limite ? `${mod.examen.tiempo_limite} min` : 'Sin límite'} · 
+                                Intentos: {mod.examen.intentos_permitidos !== undefined ? mod.examen.intentos_permitidos : 2}
+                            </p>
+                            <p className="text-xs text-gray-700">
+                                Seguridad aumentada: {mod.examen.seguridad_aumentada ? 'Sí' : 'No'}
+                                {mod.examen.seguridad_aumentada && ` · Pestañas permitidas: ${mod.examen.max_cambios_pantalla !== undefined ? mod.examen.max_cambios_pantalla : 2}`}
+                            </p>
                             {renderQuestionList(mod.examen.preguntas || [])}
                         </div>
                     ) : <p className="text-xs text-gray-500 italic">Sin examen modular</p>}

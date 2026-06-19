@@ -166,10 +166,10 @@ export async function POST(req: Request) {
                             curso_id: cursoId,
                             modulo_id: moduloId,
                             min_aprobacion: m.examen.min_aprobacion,
-                            tiempo_limite: null,
+                            tiempo_limite: m.examen.tiempo_limite,
                             seguridad_aumentada: m.examen.seguridad_aumentada || false,
                             max_cambios_pantalla: m.examen.seguridad_aumentada ? (m.examen.max_cambios_pantalla === '' || m.examen.max_cambios_pantalla === undefined ? 3 : m.examen.max_cambios_pantalla) : 3,
-                            intentos_permitidos: 3
+                            intentos_permitidos: m.examen.intentos_permitidos !== undefined ? m.examen.intentos_permitidos : 2
                         }
 
                         let examenId = exmExistente?.id;

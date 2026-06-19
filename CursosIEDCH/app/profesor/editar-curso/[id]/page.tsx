@@ -37,6 +37,9 @@ type Modulo = {
     cuestionarioPreguntas?: { id?: string; pregunta: string; orden?: number }[];
     seguridadAumentada?: boolean;
     maxCambiosPantalla?: number | '';
+    conTiempo?: boolean;
+    tiempoExamen?: number | '';
+    intentosPermitidos?: number | '';
 }
 
 type PreguntaParsed = {
@@ -230,8 +233,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     })),
                     examen: m.requiereExamen ? {
                         min_aprobacion: m.examenMinAprobacion,
-                        seguridad_aumentada: m.seguridadAumentada,
+                        tiempo_limite: m.conTiempo ? (m.tiempoExamen === '' || m.tiempoExamen === undefined ? 20 : m.tiempoExamen) : null,
+                        seguridad_aumentada: m.seguridadAumentada || false,
                         max_cambios_pantalla: m.maxCambiosPantalla,
+                        intentos_permitidos: m.intentosPermitidos === '' || m.intentosPermitidos === undefined ? 2 : m.intentosPermitidos,
                         preguntas: m.examenPreguntas.map((p, pIdx) => ({
                             id: p.id,
                             pregunta: p.pregunta,
@@ -442,7 +447,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             requiereExamen: !!m.examen,
                             examenMinAprobacion: m.examen?.min_aprobacion || 80,
                             seguridadAumentada: m.examen?.seguridad_aumentada || false,
-                            maxCambiosPantalla: m.examen?.max_cambios_pantalla || 3,
+                            maxCambiosPantalla: m.examen?.max_cambios_pantalla || 2,
+                            conTiempo: !!m.examen?.tiempo_limite,
+                            tiempoExamen: m.examen?.tiempo_limite || 20,
+                            intentosPermitidos: m.examen?.intentos_permitidos || 2,
                             examenPreguntas: (m.examen?.preguntas || []).map((p: any) => ({
                                 id: p.id,
                                 pregunta: p.pregunta,
@@ -615,7 +623,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         requiereExamen: !!exmMod,
                         examenMinAprobacion: exmMod?.min_aprobacion || 80,
                         seguridadAumentada: exmMod?.seguridad_aumentada || false,
-                        maxCambiosPantalla: exmMod?.max_cambios_pantalla || 3,
+                        maxCambiosPantalla: exmMod?.max_cambios_pantalla || 2,
+                        conTiempo: !!exmMod?.tiempo_limite,
+                        tiempoExamen: exmMod?.tiempo_limite || 20,
+                        intentosPermitidos: exmMod?.intentos_permitidos || 2,
                         examenPreguntas: pregsMod.map(p => ({
                             id: p.id,
                             pregunta: p.pregunta,
@@ -1327,7 +1338,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 requiereCuestionario: currentMod.requiereCuestionario,
                 cuestionarioPreguntas: currentMod.cuestionarioPreguntas,
                 seguridadAumentada: currentMod.seguridadAumentada,
-                maxCambiosPantalla: currentMod.maxCambiosPantalla
+                maxCambiosPantalla: currentMod.maxCambiosPantalla,
+                conTiempo: currentMod.conTiempo,
+                tiempoExamen: currentMod.tiempoExamen,
+                intentosPermitidos: currentMod.intentosPermitidos
             });
         }
 
@@ -1382,8 +1396,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     })) || [],
                     examen: m.requiereExamen ? {
                         min_aprobacion: m.examenMinAprobacion,
-                        seguridadAumentada: m.seguridadAumentada,
-                        maxCambiosPantalla: m.maxCambiosPantalla,
+                        tiempo_limite: m.conTiempo ? (m.tiempoExamen === '' || m.tiempoExamen === undefined ? 20 : m.tiempoExamen) : null,
+                        seguridad_aumentada: m.seguridadAumentada || false,
+                        max_cambios_pantalla: m.maxCambiosPantalla,
+                        intentos_permitidos: m.intentosPermitidos === '' || m.intentosPermitidos === undefined ? 2 : m.intentosPermitidos,
                         preguntas: m.examenPreguntas.map((p, idx) => ({
                             pregunta: p.pregunta,
                             opcion_a: p.tipo_pregunta === 'respuesta_libre' ? '' : p.opcion_a,
@@ -1565,10 +1581,10 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             curso_id: id,
                             modulo_id: moduloId,
                             min_aprobacion: mod.examenMinAprobacion,
-                            tiempo_limite: null,
+                            tiempo_limite: mod.conTiempo ? (mod.tiempoExamen === '' || mod.tiempoExamen === undefined ? 20 : mod.tiempoExamen) : null,
                             seguridad_aumentada: mod.seguridadAumentada || false,
                             max_cambios_pantalla: mod.seguridadAumentada ? (mod.maxCambiosPantalla === '' || mod.maxCambiosPantalla === undefined ? 3 : mod.maxCambiosPantalla) : 3,
-                            intentos_permitidos: 3
+                            intentos_permitidos: mod.intentosPermitidos === '' || mod.intentosPermitidos === undefined ? 2 : mod.intentosPermitidos
                         };
 
                         if (!exm) {
@@ -2613,32 +2629,73 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-indigo-100/50">
-                                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={modulo.seguridadAumentada || false}
-                                                                    onChange={(e) => handleModuloChange(index, 'seguridadAumentada', e.target.checked)}
-                                                                    className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                                                                />
-                                                                <span className="text-sm font-semibold text-gray-750">
-                                                                    🛡️ Seguridad Aumentada (Pantalla Completa Obligatoria)
-                                                                </span>
-                                                            </label>
-                                                            {modulo.seguridadAumentada && (
-                                                                <div className="ml-6 flex items-center gap-2">
-                                                                    <label className="text-xs font-semibold text-gray-600">Cambios de pantalla permitidos (abandonos):</label>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-indigo-100/50">
+                                                            <div>
+                                                                <label className="flex items-center gap-2 cursor-pointer">
                                                                     <input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        max="20"
-                                                                        value={modulo.maxCambiosPantalla === undefined ? 3 : modulo.maxCambiosPantalla}
-                                                                        onChange={(e) => handleModuloChange(index, 'maxCambiosPantalla', e.target.value === '' ? '' : Number(e.target.value))}
-                                                                        className="w-16 rounded border-gray-300 p-1 border bg-white text-black text-xs"
+                                                                        type="checkbox"
+                                                                        checked={modulo.conTiempo || false}
+                                                                        onChange={(e) => handleModuloChange(index, 'conTiempo', e.target.checked)}
+                                                                        className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                                                                     />
-                                                                    <span className="text-[10px] text-gray-500 italic">Si el alumno cambia de pestaña más veces, el examen se suspenderá.</span>
-                                                                </div>
-                                                            )}
+                                                                    <span className="text-sm font-semibold text-gray-750">
+                                                                        Activar límite de tiempo para responder
+                                                                    </span>
+                                                                </label>
+                                                                {modulo.conTiempo && (
+                                                                    <div className="mt-2 ml-6 flex items-center gap-2">
+                                                                        <input
+                                                                            type="number"
+                                                                            min="2"
+                                                                            max="300"
+                                                                            value={modulo.tiempoExamen === undefined ? 20 : modulo.tiempoExamen}
+                                                                            onChange={(e) => handleModuloChange(index, 'tiempoExamen', e.target.value === '' ? '' : Number(e.target.value))}
+                                                                            className="w-20 rounded border-gray-300 p-1 border bg-white text-black text-xs"
+                                                                        />
+                                                                        <span className="text-xs text-gray-505">minutos (Máx. 300)</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={modulo.seguridadAumentada || false}
+                                                                        onChange={(e) => handleModuloChange(index, 'seguridadAumentada', e.target.checked)}
+                                                                        className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                                                    />
+                                                                    <span className="text-sm font-semibold text-gray-750">
+                                                                        🛡️ Seguridad Aumentada (Pantalla Completa Obligatoria)
+                                                                    </span>
+                                                                </label>
+                                                                {modulo.seguridadAumentada && (
+                                                                    <div className="mt-2 ml-6 flex items-center gap-2">
+                                                                        <span className="text-xs text-gray-650">Pestañas permitidas:</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="1"
+                                                                            max="20"
+                                                                            value={modulo.maxCambiosPantalla === undefined ? 2 : modulo.maxCambiosPantalla}
+                                                                            onChange={(e) => handleModuloChange(index, 'maxCambiosPantalla', e.target.value === '' ? '' : Number(e.target.value))}
+                                                                            className="w-16 rounded border-gray-300 p-1 border bg-white text-black text-xs"
+                                                                        />
+                                                                        <span className="text-xs text-gray-500 font-medium">intentos máximos antes del auto-reprobado.</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-indigo-100/50">
+                                                            <label className="text-sm font-semibold text-gray-755">Intentos permitidos para el examen:</label>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max="50"
+                                                                value={modulo.intentosPermitidos === undefined ? 2 : modulo.intentosPermitidos}
+                                                                onChange={(e) => handleModuloChange(index, 'intentosPermitidos', e.target.value === '' ? '' : Number(e.target.value))}
+                                                                className="w-20 rounded border-gray-300 p-1 border bg-white text-black text-xs"
+                                                            />
                                                         </div>
 
                                                         <div className="flex justify-between items-center mt-4">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock } from 'lucide-react'
 import { notifyProfesorTaskSubmission } from '@/app/actions/taskNotifications'
 import { createClient } from '@/lib/supabase/client'
 
@@ -42,6 +42,9 @@ type ExamenModular = {
     seguridad_aumentada?: boolean;
     max_cambios_pantalla?: number;
     bloqueado?: boolean;
+    tiempo_limite?: number | null;
+    intentos_permitidos?: number | null;
+    intentos_usados?: number;
 }
 
 export default function PlaylistClient({
@@ -121,11 +124,20 @@ export default function PlaylistClient({
     const [mostrarBloqueo, setMostrarBloqueo] = useState(false)
     const lastBloqueoTime = useRef(0)
     const enviandoRef = useRef(false)
+    const [tiempoRestante, setTiempoRestante] = useState<number | null>(null)
 
     // Tasks and submissions state
     const [tareasDef, setTareasDef] = useState<Record<string, { instrucciones: string, puntos: string }>>({})
     const [entregas, setEntregas] = useState<Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }>>({})
     const [cargandoTareas, setCargandoTareas] = useState(true)
+
+    const currentItem = playlist[currentIndex] || { id: '', titulo: '', recursos: [] }
+    const isSingleItem = playlist.length === 1
+
+    // Checks for active modular exam
+    const hasActiveExam = !!(currentItem.id && examenes[currentItem.id])
+    const activeExam = currentItem.id ? examenes[currentItem.id] : null
+    const activeExamPassed = activeExam ? activeExam.aprobado : false
 
     useEffect(() => {
         fetchProgreso()
@@ -362,7 +374,7 @@ export default function PlaylistClient({
             // Fetch exams linked to modules of this course
             const { data: exams } = await supabase
                 .from('ie_examenes')
-                .select('id, modulo_id, min_aprobacion, seguridad_aumentada, max_cambios_pantalla')
+                .select('id, modulo_id, min_aprobacion, seguridad_aumentada, max_cambios_pantalla, tiempo_limite, intentos_permitidos')
                 .eq('curso_id', cursoId)
                 .not('modulo_id', 'is', null)
 
@@ -396,8 +408,10 @@ export default function PlaylistClient({
 
                 const passedExams = new Set<string>()
                 const blockedExams = new Set<string>()
+                const attemptsCountByExam: Record<string, number> = {}
                 if (resultsData) {
                     resultsData.forEach(r => {
+                        attemptsCountByExam[r.examen_id] = (attemptsCountByExam[r.examen_id] || 0) + 1
                         if (r.aprobado) {
                             passedExams.add(r.examen_id)
                         }
@@ -421,9 +435,12 @@ export default function PlaylistClient({
                         min_aprobacion: e.min_aprobacion,
                         seguridad_aumentada: e.seguridad_aumentada,
                         max_cambios_pantalla: e.max_cambios_pantalla || 3,
+                        tiempo_limite: e.tiempo_limite,
+                        intentos_permitidos: e.intentos_permitidos || 2,
                         preguntas: questionsByExam[e.id] || [],
                         aprobado: passedExams.has(e.id),
-                        bloqueado: blockedExams.has(e.id)
+                        bloqueado: blockedExams.has(e.id),
+                        intentos_usados: attemptsCountByExam[e.id] || 0
                     }
                 })
 
@@ -489,6 +506,31 @@ export default function PlaylistClient({
         setRespuestasExamen(prev => ({ ...prev, [preguntaId]: opcionTexto }))
     }
 
+    const cerrarExamenActivo = () => {
+        setMostrarExamenActivo(false)
+        setTiempoRestante(null)
+    }
+
+    const iniciarExamenActivo = (exam: ExamenModular | undefined | null) => {
+        if (!exam) return
+        if (exam.seguridad_aumentada) {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {
+                    setModalMensaje('Por favor activa la pantalla completa manualmente para continuar.')
+                })
+            }
+        }
+        if (exam.tiempo_limite) {
+            setTiempoRestante(exam.tiempo_limite * 60)
+        } else {
+            setTiempoRestante(null)
+        }
+        setCambiosRealizados(0)
+        setMostrarBloqueo(false)
+        enviandoRef.current = false
+        setMostrarExamenActivo(true)
+    }
+
     const activarBloqueo = () => {
         const now = Date.now();
         if (now - lastBloqueoTime.current < 1000) {
@@ -511,7 +553,6 @@ export default function PlaylistClient({
     }
 
     useEffect(() => {
-        const activeExam = currentItem?.id ? examenes[currentItem.id] : null;
         if (!mostrarExamenActivo || !activeExam?.seguridad_aumentada) return;
 
         const handleVisibilityChange = () => {
@@ -536,7 +577,77 @@ export default function PlaylistClient({
     }, [mostrarExamenActivo, examenes, currentIndex, playlist]);
 
     useEffect(() => {
-        const activeExam = currentItem?.id ? examenes[currentItem.id] : null;
+        if (!mostrarExamenActivo || !activeExam) return;
+
+        let interval: NodeJS.Timeout | null = null;
+        if (tiempoRestante !== null && tiempoRestante > 0) {
+            interval = setInterval(() => {
+                setTiempoRestante(prev => {
+                    if (prev !== null && prev <= 1) {
+                        clearInterval(interval!);
+                        setModalMensaje('¡El tiempo se ha agotado! El examen se enviará automáticamente.');
+                        submitExamenTimeout();
+                        return 0;
+                    }
+                    return prev !== null ? prev - 1 : null;
+                });
+            }, 1000);
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [mostrarExamenActivo, activeExam, tiempoRestante]);
+
+    const submitExamenTimeout = async () => {
+        const exam = currentItem?.id ? examenes[currentItem.id] : null;
+        if (!exam) return;
+
+        setGradingExamen(true);
+        setMostrarBloqueo(false);
+        try {
+            const { submitExamenModular } = await import('../examen/actions');
+            const res = await submitExamenModular(exam.id, respuestasExamen, explicacionesExamen, false);
+            
+            if (res.success) {
+                setResultadoExamen(res);
+                if (res.aprobado) {
+                    setExamenes(prev => ({
+                        ...prev,
+                        [currentItem.id]: {
+                            ...prev[currentItem.id],
+                            aprobado: true
+                        }
+                    }));
+                } else {
+                    setExamenes(prev => ({
+                        ...prev,
+                        [currentItem.id]: {
+                            ...prev[currentItem.id],
+                            intentos_usados: (prev[currentItem.id].intentos_usados || 0) + 1
+                        }
+                    }));
+                }
+            } else {
+                setResultadoExamen({
+                    success: false,
+                    error: res.error || 'Ocurrió un error al enviar el examen.'
+                });
+            }
+        } catch (err: any) {
+            setResultadoExamen({
+                success: false,
+                error: err.message || 'Error de red al enviar el examen.'
+            });
+        } finally {
+            setGradingExamen(false);
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+    }
+
+    useEffect(() => {
         if (mostrarExamenActivo && activeExam?.seguridad_aumentada && cambiosRealizados >= (activeExam.max_cambios_pantalla || 3)) {
             if (enviandoRef.current) return;
             enviandoRef.current = true;
@@ -612,6 +723,14 @@ export default function PlaylistClient({
                             aprobado: true
                         }
                     }))
+                } else {
+                    setExamenes(prev => ({
+                        ...prev,
+                        [currentItem.id]: {
+                            ...prev[currentItem.id],
+                            intentos_usados: (prev[currentItem.id].intentos_usados || 0) + 1
+                        }
+                    }))
                 }
             } else {
                 setResultadoExamen({
@@ -641,14 +760,6 @@ export default function PlaylistClient({
             </div>
         )
     }
-
-    const currentItem = playlist[currentIndex]
-    const isSingleItem = playlist.length === 1
-
-    // Checks for active modular exam
-    const hasActiveExam = !!(currentItem.id && examenes[currentItem.id])
-    const activeExam = currentItem.id ? examenes[currentItem.id] : null
-    const activeExamPassed = activeExam ? activeExam.aprobado : false
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 w-full">
@@ -700,14 +811,14 @@ export default function PlaylistClient({
                                                 </p>
                                                 <div className="pt-4 flex justify-center gap-4">
                                                     <button
-                                                        onClick={() => setMostrarExamenActivo(false)}
+                                                        onClick={() => cerrarExamenActivo()}
                                                         className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition"
                                                     >
                                                         Ver Material de Estudio
                                                     </button>
                                                     <button
                                                         onClick={() => {
-                                                            setMostrarExamenActivo(false)
+                                                            cerrarExamenActivo()
                                                             marcarComoVisto()
                                                         }}
                                                         className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-md transition"
@@ -732,17 +843,19 @@ export default function PlaylistClient({
                                                 <p className="text-sm text-gray-600 max-w-md mx-auto">
                                                     {resultadoExamen.bloqueado 
                                                         ? 'El examen se envió automáticamente porque excediste el límite de cambios de pantalla. Contacta a tu profesor para solicitar un reintento.'
-                                                        : 'No te preocupes. Revisa el material de estudio e inténtalo de nuevo cuando estés listo. No hay límites de tiempo.'
+                                                        : activeExam && (activeExam.intentos_usados || 0) >= (activeExam.intentos_permitidos || 2)
+                                                            ? `Has alcanzado el límite máximo de intentos permitidos (${activeExam.intentos_permitidos || 2}) para realizar este examen. Por favor contacta a tu profesor para solicitar una nueva oportunidad.`
+                                                            : 'No te preocupes. Revisa el material de estudio e inténtalo de nuevo cuando estés listo.'
                                                     }
                                                 </p>
                                                 <div className="pt-4 flex justify-center gap-4">
                                                     <button
-                                                        onClick={() => setMostrarExamenActivo(false)}
+                                                        onClick={() => cerrarExamenActivo()}
                                                         className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition"
                                                     >
                                                         Volver al Material
                                                     </button>
-                                                    {!resultadoExamen.bloqueado && (
+                                                    {!resultadoExamen.bloqueado && activeExam && (activeExam.intentos_usados || 0) < (activeExam.intentos_permitidos || 2) && (
                                                         <button
                                                         onClick={() => {
                                                             setResultadoExamen(null)
@@ -750,6 +863,11 @@ export default function PlaylistClient({
                                                             setExplicacionesExamen({})
                                                             setCambiosRealizados(0)
                                                             enviandoRef.current = false
+                                                            if (activeExam?.tiempo_limite) {
+                                                                setTiempoRestante(activeExam.tiempo_limite * 60)
+                                                            } else {
+                                                                setTiempoRestante(null)
+                                                            }
                                                             if (activeExam?.seguridad_aumentada && document.documentElement.requestFullscreen) {
                                                                 document.documentElement.requestFullscreen().catch(() => {
                                                                     setModalMensaje('Por favor activa la pantalla completa manualmente para continuar.');
@@ -767,11 +885,19 @@ export default function PlaylistClient({
                                     </div>
                                 ) : (
                                     <form onSubmit={handleGradingExamen} className="space-y-6">
-                                        <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-                                            <h3 className="text-lg font-bold text-gray-900">Examen de Comprensión</h3>
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-4 gap-2.5">
+                                            <div className="flex flex-wrap items-center gap-3">
+                                                <h3 className="text-lg font-bold text-gray-900">Examen de Comprensión</h3>
+                                                {tiempoRestante !== null && (
+                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                                                        <Clock className="h-3.5 w-3.5" />
+                                                        <span>Tiempo restante: <strong>{Math.floor(tiempoRestante / 60)}:{(tiempoRestante % 60).toString().padStart(2, '0')}</strong></span>
+                                                    </div>
+                                                )}
+                                            </div>
                                             <button
                                                 type="button"
-                                                onClick={() => setMostrarExamenActivo(false)}
+                                                onClick={() => cerrarExamenActivo()}
                                                 className="text-sm font-semibold text-blue-600 hover:underline"
                                             >
                                                 Volver al material
@@ -906,22 +1032,9 @@ export default function PlaylistClient({
                                 )}
                                 
                                 <div id="examen-section" className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 w-full">
-                                    {hasActiveExam && !activeExamPassed && !activeExam?.bloqueado && (
+                                    {hasActiveExam && !activeExamPassed && !activeExam?.bloqueado && activeExam && (activeExam.intentos_usados || 0) < (activeExam.intentos_permitidos || 2) && (
                                         <button
-                                            onClick={() => {
-                                                const exam = examenes[currentItem.id];
-                                                if (exam?.seguridad_aumentada) {
-                                                    if (document.documentElement.requestFullscreen) {
-                                                        document.documentElement.requestFullscreen().catch(() => {
-                                                            setModalMensaje('Por favor activa la pantalla completa manualmente para continuar.');
-                                                        });
-                                                    }
-                                                }
-                                                setCambiosRealizados(0);
-                                                setMostrarBloqueo(false);
-                                                enviandoRef.current = false;
-                                                setMostrarExamenActivo(true);
-                                            }}
+                                            onClick={() => iniciarExamenActivo(activeExam)}
                                             className="flex items-center gap-2 px-6 py-3 rounded-full font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md transition-all duration-300"
                                         >
                                             <HelpCircle className="h-5 w-5" />
@@ -929,11 +1042,19 @@ export default function PlaylistClient({
                                         </button>
                                     )}
 
+                                    {hasActiveExam && !activeExamPassed && !activeExam?.bloqueado && activeExam && (activeExam.intentos_usados || 0) >= (activeExam.intentos_permitidos || 2) && (
+                                        <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-800 text-sm max-w-lg text-center shadow-sm">
+                                            <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-650" />
+                                            <p className="font-bold">Límite de intentos superado</p>
+                                            <p className="mt-1 font-semibold">Has alcanzado el límite máximo de intentos permitidos ({activeExam.intentos_permitidos || 2}) para realizar esta evaluación modular.</p>
+                                        </div>
+                                    )}
+
                                     {hasActiveExam && !activeExamPassed && activeExam?.bloqueado && (
                                         <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-800 text-sm max-w-lg text-center shadow-sm">
                                             <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-600" />
                                             <p className="font-bold">Examen Bloqueado por Seguridad</p>
-                                            <p className="mt-1">Has alcanzado el límite de cambios de pantalla permitidos. Por favor contacta a tu profesor para solicitar una nueva oportunidad de realizar este examen.</p>
+                                            <p className="mt-1 font-semibold">Has alcanzado el límite de cambios de pantalla permitidos. Por favor contacta a tu profesor para solicitar una nueva oportunidad de realizar este examen.</p>
                                         </div>
                                     )}
 
@@ -1359,14 +1480,14 @@ export default function PlaylistClient({
                                                                 setCurrentIndex(index);
                                                                 setActiveRecursoIndex(0);
                                                                 if (!isExamPassed) {
-                                                                    setMostrarExamenActivo(true);
+                                                                    iniciarExamenActivo(item.id ? examenes[item.id] : null);
                                                                     setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
                                                                 } else {
                                                                     setTimeout(() => document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
                                                                 }
                                                             } else {
                                                                 if (!isExamPassed) {
-                                                                    setMostrarExamenActivo(true);
+                                                                    iniciarExamenActivo(item.id ? examenes[item.id] : null);
                                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                                 } else {
                                                                     document.getElementById('examen-section')?.scrollIntoView({ behavior: 'smooth' });
