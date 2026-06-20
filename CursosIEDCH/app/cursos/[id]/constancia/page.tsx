@@ -28,6 +28,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
     const constanciaRef = useRef<HTMLDivElement>(null)
     const microcredencialRef = useRef<HTMLDivElement>(null)
     const [activeTab, setActiveTab] = useState<'constancia' | 'microcredencial'>('constancia')
+    const [creadorEsInstitucion, setCreadorEsInstitucion] = useState(false)
     const router = useRouter()
     const supabase = createClient()
 
@@ -57,6 +58,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
             }
 
             let esCreadoPorInstructor = false
+            let esCreadoPorInstitucion = false
             if (cur?.creado_por) {
                 const { data: creatorProfile } = await supabase
                     .from('ie_profiles')
@@ -64,7 +66,9 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                     .eq('id', cur.creado_por)
                     .single()
                 esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
+                esCreadoPorInstitucion = creatorProfile?.rol === 'institucion'
             }
+            setCreadorEsInstitucion(esCreadoPorInstitucion)
 
             // Solo bloquear si el CURSO requiere pago completo O es de un instructor Y el alumno no lo pagó completo
             const cursoPagoRequerido = (cur?.requiere_pago_completo || false) || esCreadoPorInstructor
@@ -412,7 +416,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                                             calificacion: examen?.calificacion !== undefined && examen?.calificacion !== null ? (Number(examen.calificacion) / 10).toFixed(1) : '',
                                             mostrarCalificacionConstancia: curso?.mostrar_calificacion_constancia,
                                             logoUrl: curso?.logo_url,
-                                            mostrarLogoConstancia: curso?.mostrar_logo_constancia,
+                                            mostrarLogoConstancia: (curso?.mostrar_logo_constancia || false) && creadorEsInstitucion,
                                             documentRef: constanciaRef as any
                                         };
                                         if (curso?.plantilla_constancia === 'modelo2') {

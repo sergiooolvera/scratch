@@ -47,32 +47,11 @@ export default function CertificadoDocument({
             }}
         >
             {/* Left Sidebar */}
-            <div className="w-[280px] bg-[#0B1A3F] h-full flex flex-col items-center justify-between py-16 shrink-0 relative z-30">
-                {/* Globe Logo */}
-                <div className="w-[140px] flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="130" height="130" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="0.75" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        {/* Longitudes */}
-                        <ellipse cx="12" cy="12" rx="3.33" ry="10" />
-                        <ellipse cx="12" cy="12" rx="6.66" ry="10" />
-                        <line x1="12" y1="2" x2="12" y2="22" />
-                        {/* Latitudes */}
-                        <line x1="2" y1="12" x2="22" y2="12" />
-                        <line x1="2.32" y1="9.5" x2="21.68" y2="9.5" />
-                        <line x1="3.34" y1="7" x2="20.66" y2="7" />
-                        <line x1="5.39" y1="4.5" x2="18.61" y2="4.5" />
-                        <line x1="2.32" y1="14.5" x2="21.68" y2="14.5" />
-                        <line x1="3.34" y1="17" x2="20.66" y2="17" />
-                        <line x1="5.39" y1="19.5" x2="18.61" y2="19.5" />
-                    </svg>
+            <div className="w-[224px] bg-[#0B1A3F] h-full flex flex-col items-center justify-between py-16 shrink-0 relative z-30">
+                {/* Logo Grupo EGAC */}
+                <div className="w-[150px] h-[85px] flex items-center justify-center overflow-hidden bg-white rounded-xl p-2 shadow-sm border border-white/20">
+                    <img src="/logoegac.jpg" alt="Logo Grupo EGAC" className="max-w-full max-h-full object-contain" />
                 </div>
-                
-                {/* Institution Custom Logo */}
-                {mostrarLogoConstancia && logoUrl && (
-                    <div className="w-[140px] h-[80px] flex items-center justify-center overflow-hidden my-4 bg-white rounded-xl p-2 shadow-sm border border-white/20">
-                        <img src={logoUrl} alt="Logo Institución" className="max-w-full max-h-full object-contain" />
-                    </div>
-                )}
                 
                 {/* QR Code Block */}
                 <div className="bg-white p-3 flex flex-col items-center rounded-sm">
@@ -103,7 +82,13 @@ export default function CertificadoDocument({
                         a través del Ecosistema Global de Acreditación y Certificación.
                     </p>
                     <div className="flex items-center">
-                        <img src="/logoegac.jpg" alt="EGAC Logo" className="h-[110px] object-contain" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                        {mostrarLogoConstancia ? (
+                            logoUrl ? (
+                                <img src={logoUrl} alt="Logo Institución" className="h-[90px] object-contain" />
+                            ) : (
+                                <img src="/logo.jpg" alt="Logo Institución" className="h-[90px] object-contain" />
+                            )
+                        ) : null}
                     </div>
                 </div>
 
@@ -119,14 +104,13 @@ export default function CertificadoDocument({
                     
                     {/* Alumno Name */}
                     <h2 
-                        className={`text-[#0B1A3F] mt-2 font-normal leading-none whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[700px] text-center ${alumnoNombre.length > 30 ? 'text-[50px]' : alumnoNombre.length > 22 ? 'text-[60px]' : 'text-[70px]'}`}
-                        style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive, serif" }}
+                        className={`text-[#0B1A3F] mt-2 pb-2 font-serif font-normal leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[700px] text-center ${alumnoNombre.length > 30 ? 'text-[46px]' : alumnoNombre.length > 22 ? 'text-[54px]' : 'text-[64px]'}`}
                     >
                         {alumnoNombre}
                     </h2>
                     
                     {/* Name Underline */}
-                    <div className="w-[85%] border-b border-black mt-2"></div>
+                    <div className="w-[85%] border-b border-black mt-1"></div>
 
                     {/* Course Section */}
                     <p className="text-[14px] text-black font-sans mt-6">

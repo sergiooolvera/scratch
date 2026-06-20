@@ -1630,7 +1630,7 @@ export default function SubirCursoPage() {
                                                             calificacion: "9.5",
                                                             mostrarCalificacionConstancia: true,
                                                             logoUrl: logoPreviewUrl,
-                                                            mostrarLogoConstancia: mostrarLogoConstancia
+                                                             mostrarLogoConstancia: mostrarLogoConstancia && profile?.rol === 'institucion'
                                                         };
                                                         if (plantillaConstancia === 'modelo2') {
                                                             return <CertificadoModelo2 {...props} />

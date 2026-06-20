@@ -23,8 +23,9 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
         redirect(`/cursos/${id}/contenido`)
     }
 
-    // Verificar si el creador es instructor
+    // Verificar si el creador es instructor o institucion
     let esCreadoPorInstructor = false
+    let esCreadoPorInstitucion = false
     if (curso?.creado_por) {
         const { data: creatorProfile } = await supabase
             .from('ie_profiles')
@@ -32,6 +33,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
             .eq('id', curso.creado_por)
             .single()
         esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
+        esCreadoPorInstitucion = creatorProfile?.rol === 'institucion'
     }
 
     // Verificar si el pago es completo para desbloquear la constancia
@@ -168,7 +170,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                         calificacion={calificacionFinal}
                         mostrarCalificacionConstancia={curso.mostrar_calificacion_constancia}
                         logoUrl={curso.logo_url}
-                        mostrarLogoConstancia={curso.mostrar_logo_constancia}
+                        mostrarLogoConstancia={curso.mostrar_logo_constancia && esCreadoPorInstitucion}
                         plantillaConstancia={curso.plantilla_constancia || 'modelo1'}
                     />
                 )}

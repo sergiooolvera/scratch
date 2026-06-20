@@ -2143,7 +2143,7 @@ const generationId = data.generationId;
                                                                 calificacion: "9.5",
                                                                 mostrarCalificacionConstancia: true,
                                                                 logoUrl: logoPreviewUrl || logoUrl,
-                                                                mostrarLogoConstancia: mostrarLogoConstancia
+                                                                 mostrarLogoConstancia: mostrarLogoConstancia && profile?.rol === 'institucion'
                                                             };
                                                             if (plantillaConstancia === 'modelo2') {
                                                                 return <CertificadoModelo2 {...props} />
