@@ -9,7 +9,7 @@ const supabase = createClient(
 
 async function resetExam() {
   const email = 'sergio.olver@gmail.com';
-  const courseTitle = 'Historia Mexicana';
+  const courseTitle = 'biomecanica';
 
   console.log(`Buscando usuario por email: ${email}`);
   

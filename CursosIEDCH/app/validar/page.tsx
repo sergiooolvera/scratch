@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Search, BadgeCheck, FileText, Calendar, User, ShieldCheck, AlertCircle, Clock } from 'lucide-react'
+import { Search, BadgeCheck, FileText, Calendar, User, ShieldCheck, AlertCircle, Clock, Award } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 
 function ValidacionContent() {
@@ -56,7 +56,7 @@ function ValidacionContent() {
                 if (ceError) {
                     cursoInfoData = { titulo: `Error Examen: ${ceError.message}`, vigencia_anos: 3 }
                 } else if (cursoExamenData?.curso_id) {
-                    const { data: cursoData, error: cError } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion').eq('id', cursoExamenData.curso_id).single()
+                    const { data: cursoData, error: cError } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion, competencias').eq('id', cursoExamenData.curso_id).single()
                     if (cError) {
                         cursoInfoData = { titulo: `Error Curso: ${cError.message}`, vigencia_anos: 3 }
                     } else {
@@ -82,7 +82,7 @@ function ValidacionContent() {
                         calificacion: constanciaData.calificacion,
                         tipo: 'curso'
                     }
-                    const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion').eq('id', constanciaData.curso_id).single()
+                    const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion, competencias').eq('id', constanciaData.curso_id).single()
                     cursoInfoData = cursoData
 
                     const { data: uData } = await supabase.from('ie_profiles').select('nombre').eq('id', constanciaData.user_id).single()
@@ -135,7 +135,7 @@ function ValidacionContent() {
                         calificacion: 'Acreditado / Inscrito',
                         tipo: 'curso'
                     }
-                    const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion').eq('id', compraData.curso_id).single()
+                    const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion, competencias').eq('id', compraData.curso_id).single()
                     cursoInfoData = cursoData
 
                     const { data: uData } = await supabase.from('ie_profiles').select('nombre').eq('id', compraData.user_id).single()
@@ -187,7 +187,8 @@ function ValidacionContent() {
                 vigencia_anos: cursoInfoData?.vigencia_anos || 3,
                 duracion: cursoInfoData?.duracion || '40 horas',
                 tipo: (matchData as any).tipo || 'curso',
-                institucion: (matchData as any).institucion || null
+                institucion: (matchData as any).institucion || null,
+                competencias: cursoInfoData?.competencias || null
             })
 
         } catch (err: any) {
@@ -202,23 +203,52 @@ function ValidacionContent() {
         buscarFolio(folio)
     }
 
+    const handleClear = () => {
+        setFolio('')
+        setResultado(null)
+        setError('')
+        setSearched(false)
+    }
+
+    const hasResult = searched && (resultado || error)
+
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col pt-12">
+        <div className="min-h-screen bg-gray-50 flex flex-col pt-12 pb-16">
             <div className="max-w-3xl w-full mx-auto px-4 sm:px-6">
 
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center bg-blue-100 p-4 rounded-full mb-4">
-                        <ShieldCheck className="w-10 h-10 text-blue-700" />
+                {/* Contenedor del encabezado y la búsqueda */}
+                <div className={`transition-all duration-500 ease-in-out ${
+                    hasResult 
+                    ? 'flex flex-col sm:flex-row justify-between items-center sm:items-end mb-8 gap-4 border-b border-gray-200 pb-6' 
+                    : 'flex flex-col items-center text-center mb-10'
+                }`}>
+                    
+                    {/* Título y descripción */}
+                    <div className={`transition-all duration-500 ${hasResult ? 'text-center sm:text-left' : 'text-center'}`}>
+                        <div className={`transition-all duration-500 ${
+                            hasResult ? 'hidden' : 'inline-flex items-center justify-center bg-blue-100 p-4 rounded-full mb-4'
+                        }`}>
+                            <ShieldCheck className="w-10 h-10 text-blue-700" />
+                        </div>
+                        <h1 className={`font-bold text-gray-900 transition-all duration-500 ${
+                            hasResult ? 'text-2xl' : 'text-3xl mb-3'
+                        }`}>
+                            Validación de Constancias
+                        </h1>
+                        <p className={`text-gray-600 max-w-xl text-sm transition-all duration-500 ${
+                            hasResult ? 'hidden' : 'block'
+                        }`}>
+                            Verifica la autenticidad de una constancia o certificado emitido por el Grupo EGAC ingresando el número de Folio oficial.
+                        </p>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-3">Validación de Constancias</h1>
-                    <p className="text-gray-600 max-w-xl mx-auto">
-                        Verifica la autenticidad de una constancia o certificado emitido por el Grupo EGAC ingresando el número de Folio oficial.
-                    </p>
-                </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-                    <div className="p-6 sm:p-8">
-                        <form onSubmit={handleSearch} className="flex max-w-xl mx-auto relative">
+                    {/* Formulario de búsqueda */}
+                    <div className={`w-full transition-all duration-500 ease-in-out ${
+                        hasResult 
+                        ? 'max-w-md' 
+                        : 'max-w-xl mx-auto bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-200'
+                    }`}>
+                        <form onSubmit={handleSearch} className="flex gap-2 relative">
                             <div className="relative flex-grow">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <Search className="h-5 w-5 text-gray-400" />
@@ -228,121 +258,155 @@ function ValidacionContent() {
                                     value={folio}
                                     onChange={(e) => setFolio(e.target.value)}
                                     placeholder="Ingresa el Folio (ej. xxxxxxxx-xxxx-...)"
-                                    className="block w-full pl-11 pr-4 py-4 sm:text-lg border-2 border-gray-200 rounded-l-xl focus:ring-0 focus:border-blue-500 bg-gray-50 transition-colors"
+                                    className={`block w-full pl-11 pr-4 border-2 border-gray-200 focus:ring-0 focus:border-blue-500 bg-gray-50 transition-all ${
+                                        hasResult 
+                                        ? 'py-2 text-sm rounded-l-lg border-r-0' 
+                                        : 'py-4 sm:text-lg rounded-l-xl'
+                                    }`}
                                     required
                                 />
                             </div>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-4 px-6 sm:px-8 rounded-r-xl transition-colors disabled:opacity-70 flex items-center"
+                                className={`bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all disabled:opacity-70 flex items-center justify-center ${
+                                    hasResult 
+                                    ? 'px-4 py-2 text-sm rounded-r-lg' 
+                                    : 'py-4 px-6 sm:px-8 rounded-r-xl'
+                                }`}
                             >
-                                {loading ? 'Buscando...' : 'Validar'}
+                                {loading ? '...' : 'Validar'}
                             </button>
+
+                            {hasResult && (
+                                <button
+                                    type="button"
+                                    onClick={handleClear}
+                                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-4 py-2 text-sm rounded-lg transition-all flex items-center justify-center"
+                                >
+                                    Limpiar
+                                </button>
+                            )}
                         </form>
-
-                        {searched && error && (
-                            <div className="mt-8 bg-red-50 border border-red-100 rounded-xl p-5 flex items-start mx-auto max-w-xl">
-                                <AlertCircle className="w-6 h-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <h3 className="text-red-800 font-medium">Constancia no válida</h3>
-                                    <p className="text-red-600 text-sm mt-1">{error}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {searched && resultado && (
-                            <div className="mt-10 mx-auto max-w-2xl bg-white border-2 border-green-100 rounded-xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                                <div className="bg-green-50 px-6 py-4 border-b border-green-100 flex items-center">
-                                    <div className="bg-green-100 p-2 rounded-full mr-3">
-                                        <BadgeCheck className="w-6 h-6 text-green-600" />
-                                    </div>
-                                    <h3 className="text-green-800 font-bold text-lg">Constancia Válida y Oficial</h3>
-                                </div>
-
-                                <div className="p-6">
-                                    <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                                        <div className="sm:col-span-2">
-                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <User className="w-4 h-4 mr-1.5" /> 
-                                                {resultado.tipo === 'registro_actividad' ? 'Institución / Organizador' : 'Alumno Acreditado'}
-                                            </dt>
-                                            <dd className="text-xl font-bold text-gray-900 border-b pb-4">
-                                                {resultado.alumno}
-                                            </dd>
-                                        </div>
-
-                                        <div className="sm:col-span-2">
-                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <FileText className="w-4 h-4 mr-1.5" /> 
-                                                {resultado.tipo === 'curso' ? 'Nombre del Curso' : 'Nombre de la Actividad'}
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-800 border-b pb-4">
-                                                {resultado.curso}
-                                            </dd>
-                                        </div>
-
-                                        {resultado.institucion && (
-                                            <div className="sm:col-span-2">
-                                                <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                    <ShieldCheck className="w-4 h-4 mr-1.5" /> 
-                                                    Institución
-                                                </dt>
-                                                <dd className="text-lg font-medium text-gray-800 border-b pb-4">
-                                                    {resultado.institucion}
-                                                </dd>
-                                            </div>
-                                        )}
-
-                                        <div className="sm:col-span-1">
-                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <Calendar className="w-4 h-4 mr-1.5" /> Fecha de Emisión
-                                            </dt>
-                                            <dd className="text-base text-gray-900 font-medium">
-                                                {new Date(resultado.fecha).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                            </dd>
-                                        </div>
-
-                                        <div className="sm:col-span-1">
-                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <Clock className="w-4 h-4 mr-1.5" /> Valor Curricular
-                                            </dt>
-                                            <dd className="text-base text-gray-900 font-medium border-b pb-4 sm:border-b-0 sm:pb-0">
-                                                {resultado.duracion}
-                                            </dd>
-                                        </div>
-
-                                        <div className="sm:col-span-1">
-                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <ShieldCheck className="w-4 h-4 mr-1.5" /> Número de Folio
-                                            </dt>
-                                            <dd className="text-xs font-mono text-gray-600 font-medium bg-gray-50 p-1.5 rounded inline-block">
-                                                {resultado.folio}
-                                            </dd>
-                                        </div>
-
-                                        <div className="sm:col-span-2">
-                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <Calendar className="w-4 h-4 mr-1.5" /> Vigente Hasta
-                                            </dt>
-                                            <dd className="text-base font-semibold text-green-700">
-                                                {(() => {
-                                                    const d = new Date(resultado.fecha)
-                                                    d.setFullYear(d.getFullYear() + (resultado.vigencia_anos || 3))
-                                                    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
-                                                })()}
-                                                <span className="ml-2 text-xs text-gray-400 font-normal">({resultado.vigencia_anos || 3} {resultado.vigencia_anos === 1 ? 'año' : 'años'} de vigencia)</span>
-                                            </dd>
-                                        </div>
-                                    </dl>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 
-                <p className="text-center text-gray-500 text-sm mb-12">
-                    El Servicio Nacional de Evaluación y Registro Laboral avala la autenticidad de los datos mostrados en esta plataforma oficial.
+                {/* Contenido de Resultados */}
+                <div className="transition-all duration-500 ease-in-out">
+                    {searched && error && (
+                        <div className="mt-4 bg-red-50 border border-red-100 rounded-xl p-5 flex items-start mx-auto max-w-2xl">
+                            <AlertCircle className="w-6 h-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <h3 className="text-red-800 font-medium">Constancia no válida</h3>
+                                <p className="text-red-600 text-sm mt-1">{error}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {searched && resultado && (
+                        <div className="mt-4 mx-auto max-w-2xl bg-white border-2 border-green-100 rounded-xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                            <div className="bg-green-50 px-6 py-4 border-b border-green-100 flex items-center">
+                                <div className="bg-green-100 p-2 rounded-full mr-3">
+                                    <BadgeCheck className="w-6 h-6 text-green-600" />
+                                </div>
+                                <h3 className="text-green-800 font-bold text-lg">Constancia Válida y Oficial</h3>
+                            </div>
+
+                            <div className="p-6 sm:p-8">
+                                <dl className="grid grid-cols-1 gap-y-6">
+                                    <div className="col-span-1">
+                                        <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                            <User className="w-4 h-4 mr-1.5" /> 
+                                            {resultado.tipo === 'registro_actividad' ? 'Institución / Organizador' : 'Titular'}
+                                        </dt>
+                                        <dd className="text-xl font-bold text-gray-900 border-b pb-4">
+                                            {resultado.alumno}
+                                        </dd>
+                                    </div>
+
+                                    <div className="col-span-1">
+                                        <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                            <FileText className="w-4 h-4 mr-1.5" /> 
+                                            {resultado.tipo === 'curso' ? 'Nombre del Curso' : 'Nombre de la Actividad'}
+                                        </dt>
+                                        <dd className="text-lg font-medium text-gray-800 border-b pb-4">
+                                            {resultado.curso}
+                                        </dd>
+                                    </div>
+
+                                    {resultado.competencias && (
+                                        <div className="col-span-1">
+                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                                <Award className="w-4 h-4 mr-1.5" /> Competencia
+                                            </dt>
+                                            <dd className="text-lg font-medium text-gray-800 border-b pb-4 whitespace-pre-wrap">
+                                                {resultado.competencias}
+                                            </dd>
+                                        </div>
+                                    )}
+
+                                    {resultado.institucion && (
+                                        <div className="col-span-1">
+                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                                <ShieldCheck className="w-4 h-4 mr-1.5" /> 
+                                                Institución
+                                            </dt>
+                                            <dd className="text-lg font-medium text-gray-800 border-b pb-4">
+                                                {resultado.institucion}
+                                            </dd>
+                                        </div>
+                                    )}
+
+                                    <div className="col-span-1">
+                                        <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                            <Clock className="w-4 h-4 mr-1.5" /> Valor Curricular
+                                        </dt>
+                                        <dd className="text-base text-gray-900 font-medium border-b pb-4">
+                                            {resultado.duracion}
+                                        </dd>
+                                    </div>
+
+                                    <div className="col-span-1">
+                                        <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                            <ShieldCheck className="w-4 h-4 mr-1.5" /> Número de Folio
+                                        </dt>
+                                        <dd className="border-b pb-4">
+                                            <span className="text-xs font-mono text-gray-600 font-medium bg-gray-50 p-1.5 rounded inline-block select-all">
+                                                {resultado.folio}
+                                            </span>
+                                        </dd>
+                                    </div>
+
+                                    <div className="col-span-1">
+                                        <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                            <Calendar className="w-4 h-4 mr-1.5" /> Fecha de Emisión
+                                        </dt>
+                                        <dd className="text-base text-gray-900 font-medium border-b pb-4">
+                                            {new Date(resultado.fecha).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </dd>
+                                    </div>
+
+                                    <div className="col-span-1">
+                                        <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                                            <Calendar className="w-4 h-4 mr-1.5" /> Vigencia
+                                        </dt>
+                                        <dd className="text-base font-semibold text-green-700">
+                                            {(() => {
+                                                const d = new Date(resultado.fecha)
+                                                d.setFullYear(d.getFullYear() + (resultado.vigencia_anos || 3))
+                                                return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+                                            })()}
+                                            <span className="ml-2 text-xs text-gray-400 font-normal">({resultado.vigencia_anos || 3} {resultado.vigencia_anos === 1 ? 'año' : 'años'} de vigencia)</span>
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <p className="text-center text-gray-500 text-sm mt-12 mb-12">
+                    El Ecosistema Global de Acreditación y Certificación avala la autenticidad de los datos mostrados en esta plataforma oficial.
                 </p>
             </div>
         </div>

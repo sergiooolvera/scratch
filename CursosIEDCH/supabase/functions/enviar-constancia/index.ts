@@ -54,7 +54,7 @@ serve(async (req) => {
             </div>
             <p style="font-size: 13px; color: #abb2b9; text-align: center;">
               Folio de validación: ${folio}<br/>
-              Servicio Nacional de Evaluación y Registro Laboral
+              El Ecosistema Global de Acreditación y Certificación
             </p>
           </div>
         </div>
