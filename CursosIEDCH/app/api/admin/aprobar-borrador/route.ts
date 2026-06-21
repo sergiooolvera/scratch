@@ -223,7 +223,12 @@ export async function POST(req: Request) {
                         const definitionKey = `TAREA_DEFINICION:${moduloId}`;
                         const definitionPayload = JSON.stringify({
                             instrucciones: m.tareaInstrucciones || '',
-                            puntos: m.tareaPuntos || ''
+                            puntos: m.tareaPuntos || '',
+                            tipo: m.tareaTipo || 'convencional',
+                            puzzleTipo: m.tareaPuzzleTipo || 'anagrama',
+                            puzzlePregunta: m.tareaPuzzlePregunta || '',
+                            puzzleRespuesta: m.tareaPuzzleRespuesta || '',
+                            puzzles: m.tareaPuzzles || []
                         });
 
                         const { data: existingDef } = await supabaseAdmin
