@@ -65,17 +65,35 @@ export async function POST(req: Request) {
         .eq('id', update.matchId)
     ));
 
-    // 4. Fetch all user predictions for THESE matches
-    const { data: allPredictions, error: predsError } = await supabaseAdmin
-      .from('qui_predictions')
-      .select('*')
-      .in('match_id', matchIds);
+    // 4. Fetch all user predictions for THESE matches (paging to bypass 1000 limit)
+    let allPredictions: any[] = [];
+    let pagePreds = 0;
+    const pageSize = 1000;
+    let hasMorePreds = true;
 
-    if (predsError) throw predsError;
+    while (hasMorePreds) {
+      const { data, error: predsError } = await supabaseAdmin
+        .from('qui_predictions')
+        .select('*')
+        .in('match_id', matchIds)
+        .range(pagePreds * pageSize, (pagePreds + 1) * pageSize - 1);
+
+      if (predsError) throw predsError;
+      if (!data || data.length === 0) {
+        hasMorePreds = false;
+      } else {
+        allPredictions = allPredictions.concat(data);
+        if (data.length < pageSize) {
+          hasMorePreds = false;
+        } else {
+          pagePreds++;
+        }
+      }
+    }
 
     // 5. Evaluate points for each prediction and save them
     if (allPredictions && allPredictions.length > 0) {
-      const predictionsToUpdate = allPredictions.map(pred => {
+      const predictionsToUpdate = allPredictions.map((pred: any) => {
         const matchUpdate = updates.find(u => u.matchId === pred.match_id);
         if (!matchUpdate) return null;
 
@@ -128,24 +146,42 @@ export async function POST(req: Request) {
 
     if (profilesError) throw profilesError;
 
-    const { data: finishedPreds, error: finishedPredsError } = await supabaseAdmin
-      .from('qui_predictions')
-      .select(`
-        user_id,
-        points_earned,
-        is_exact,
-        home_prediction,
-        away_prediction,
-        match_id,
-        qui_matches!inner(home_score, away_score, status)
-      `)
-      .eq('qui_matches.status', 'finished');
+    let finishedPreds: any[] = [];
+    let pageFinished = 0;
+    const pageSizeFinished = 1000;
+    let hasMoreFinished = true;
 
-    if (finishedPredsError) throw finishedPredsError;
+    while (hasMoreFinished) {
+      const { data, error: finishedPredsError } = await supabaseAdmin
+        .from('qui_predictions')
+        .select(`
+          user_id,
+          points_earned,
+          is_exact,
+          home_prediction,
+          away_prediction,
+          match_id,
+          qui_matches!inner(home_score, away_score, status)
+        `)
+        .eq('qui_matches.status', 'finished')
+        .range(pageFinished * pageSizeFinished, (pageFinished + 1) * pageSizeFinished - 1);
+
+      if (finishedPredsError) throw finishedPredsError;
+      if (!data || data.length === 0) {
+        hasMoreFinished = false;
+      } else {
+        finishedPreds = finishedPreds.concat(data);
+        if (data.length < pageSizeFinished) {
+          hasMoreFinished = false;
+        } else {
+          pageFinished++;
+        }
+      }
+    }
 
     // Group predictions by user
     const userStats: Record<string, any> = {};
-    profiles.forEach(p => {
+    profiles.forEach((p: any) => {
       userStats[p.id] = { totalPoints: 0, exactCount: 0, totalPredGoals: 0, totalRealGoals: 0 };
     });
 
@@ -161,7 +197,7 @@ export async function POST(req: Request) {
     });
 
     // Prepare profile updates
-    const profilesToUpdate = Object.keys(userStats).map(userId => {
+    const profilesToUpdate = Object.keys(userStats).map((userId: string) => {
       const stats = userStats[userId];
       return {
         id: userId,
@@ -175,7 +211,7 @@ export async function POST(req: Request) {
     const profChunkSize = 50;
     for (let i = 0; i < profilesToUpdate.length; i += profChunkSize) {
       const chunk = profilesToUpdate.slice(i, i + profChunkSize);
-      await Promise.all(chunk.map(prof => 
+      await Promise.all(chunk.map((prof: any) => 
         supabaseAdmin.from('qui_profiles').update({
           points: prof.points,
           exact_scores: prof.exact_scores,
@@ -191,7 +227,7 @@ export async function POST(req: Request) {
       .in('id', matchIds);
 
     const matchMap: Record<string, any> = {};
-    matchDetails?.forEach(m => matchMap[m.id] = m);
+    matchDetails?.forEach((m: any) => matchMap[m.id] = m);
 
     // Fetch final rankings
     const { data: updatedRankings } = await supabaseAdmin
@@ -215,9 +251,9 @@ export async function POST(req: Request) {
         const homeTeamName = matchData.home_team || 'Local';
         const awayTeamName = matchData.away_team || 'Visitante';
 
-        const matchPreds = allPredictions.filter(p => p.match_id === mId);
+        const matchPreds = allPredictions.filter((p: any) => p.match_id === mId);
         const predictionMap = new Map();
-        matchPreds.forEach(p => predictionMap.set(p.user_id, p));
+        matchPreds.forEach((p: any) => predictionMap.set(p.user_id, p));
 
         for (let i = 0; i < updatedRankings.length; i++) {
           const prof = updatedRankings[i];
