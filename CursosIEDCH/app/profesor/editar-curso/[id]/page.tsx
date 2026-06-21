@@ -197,7 +197,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 competencias: formData.competencias,
                 beneficios: formData.beneficios,
                 duracion: formData.duracion,
-                precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio),
+                precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio) * 1.16,
                 instructor: formData.instructor,
                 vigencia_anos: vigenciaAnos,
                 requiere_pago_completo: requierePagoCompleto,
@@ -394,7 +394,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     competencias: borrador.competencias || curso.competencias || '',
                     beneficios: borrador.beneficios || curso.beneficios,
                     duracion: borrador.duracion || curso.duracion,
-                    precio: borrador.precio || curso.precio,
+                    precio: (borrador.precio || curso.precio) ? Number(((borrador.precio || curso.precio) / 1.16).toFixed(2)) : 0,
                     instructor: borrador.instructor || curso.instructor,
                     reunion_url: borrador.reunion_url || curso.reunion_url || '',
                     nota_profesor: borrador.nota_profesor || curso.nota_profesor || '',
@@ -551,7 +551,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 competencias: curso.competencias || '',
                 beneficios: curso.beneficios,
                 duracion: curso.duracion,
-                precio: curso.precio,
+                precio: curso.precio ? Number((curso.precio / 1.16).toFixed(2)) : 0,
                 instructor: curso.instructor,
                 reunion_url: curso.reunion_url || '',
                 nota_profesor: curso.nota_profesor || '',
@@ -1411,7 +1411,7 @@ const generationId = data.generationId;
                 competencias: formData.competencias,
                 beneficios: formData.beneficios,
                 duracion: formData.duracion,
-                precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio),
+                precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio) * 1.16,
                 instructor: formData.instructor,
                 vigencia_anos: vigenciaAnos,
                 requiere_pago_completo: requierePagoCompleto,
@@ -1516,7 +1516,7 @@ const generationId = data.generationId;
                     competencias: formData.competencias,
                     beneficios: formData.beneficios,
                     duracion: formData.duracion,
-                    precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio),
+                    precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio) * 1.16,
                     instructor: formData.instructor,
                     vigencia_anos: vigenciaAnos,
                     requiere_pago_completo: requierePagoCompleto,
@@ -2064,7 +2064,7 @@ const generationId = data.generationId;
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
                                     {profile?.rol !== 'capacitador' ? (
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Precio de Venta (MXN)</label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Precio Base del Curso (MXN)</label>
                                             <div className="flex gap-2 items-center">
                                                 <div className="relative rounded-xl shadow-sm flex-1">
                                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -2078,9 +2078,21 @@ const generationId = data.generationId;
                                                     className="px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-2"
                                                 >
                                                     <Calculator size={18} />
-                                                    Simulador
+                                                    Simular ventas
                                                 </button>
                                             </div>
+                                            {Number(formData.precio) > 0 && (
+                                                <div className="mt-2 p-3 bg-blue-50/50 border border-blue-100/50 rounded-xl text-xs flex gap-4 text-gray-700">
+                                                    <div>
+                                                        <span className="text-gray-500 font-medium">IVA (16%):</span>{' '}
+                                                        <span className="font-semibold text-gray-900">${(Number(formData.precio) * 0.16).toFixed(2)} MXN</span>
+                                                    </div>
+                                                    <div className="border-l border-gray-200 pl-4">
+                                                        <span className="text-gray-500 font-medium">Precio al público:</span>{' '}
+                                                        <span className="font-bold text-blue-600">${(Number(formData.precio) * 1.16).toFixed(2)} MXN</span>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="bg-gray-50 rounded-xl p-4 flex items-center">

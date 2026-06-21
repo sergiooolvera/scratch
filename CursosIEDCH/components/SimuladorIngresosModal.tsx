@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Calculator, Info } from 'lucide-react'
+import { X, Calculator, Info, Landmark, HelpCircle, CheckCircle } from 'lucide-react'
 
 type SimuladorIngresosModalProps = {
   isOpen: boolean;
@@ -10,223 +10,313 @@ type SimuladorIngresosModalProps = {
   onChangeAplicarIva?: (aplica: boolean) => void;
 }
 
-export default function SimuladorIngresosModal({ isOpen, onClose, precioBase, aplicarIvaGlobal, onChangePrecio, onChangeAplicarIva }: SimuladorIngresosModalProps) {
+type RegimenType = 'RESICO' | 'ACTIVIDAD_PROFESIONAL' | 'ASIMILADOS' | 'PERSONA_MORAL';
+
+export default function SimuladorIngresosModal({ 
+  isOpen, 
+  onClose, 
+  precioBase, 
+  aplicarIvaGlobal, 
+  onChangePrecio, 
+  onChangeAplicarIva 
+}: SimuladorIngresosModalProps) {
   const [precio, setPrecio] = useState(precioBase)
   const [alumnos, setAlumnos] = useState(20)
-  const [regimen, setRegimen] = useState<'RESICO' | 'PF' | 'PM'>('RESICO')
-  const [aplicarIva, setAplicarIva] = useState(aplicarIvaGlobal)
+  const [regimen, setRegimen] = useState<RegimenType>('RESICO')
 
-  // Sync with props if they change while open
+  // Sincronizar precio base cuando se abra el modal
   useEffect(() => {
-    setPrecio(precioBase)
-  }, [precioBase])
-  
-  useEffect(() => {
-    setAplicarIva(aplicarIvaGlobal)
-  }, [aplicarIvaGlobal])
+    if (isOpen) {
+      setPrecio(precioBase)
+    }
+  }, [isOpen, precioBase])
 
   if (!isOpen) return null
 
-  // Cálculos basados en el Excel
-  const ingresoBrutoTotal = precio * alumnos
-  // Nota: Asumimos que si aplica IVA, el precio ya lo incluye (Subtotal = Precio / 1.16). 
-  // Si no aplica, el subtotal es el precio completo.
-  const subtotalVenta = aplicarIva ? (ingresoBrutoTotal / 1.16) : ingresoBrutoTotal
-  const ivaCobrado = aplicarIva ? (subtotalVenta * 0.16) : 0
+  // --- CÁLCULOS ACTUALIZADOS: INGRESO BRUTO SOBRE PRECIO AL PÚBLICO (CON IVA) ---
   
-  const comisionStripe = ingresoBrutoTotal * 0.0348
-  const comisionStripeFija = ingresoBrutoTotal * 0.00348
-  
-  // Si aplica IVA, el Total Libre en Banco debe restar el IVA que le pertenece al SAT
-  const totalLibreBanco = subtotalVenta - comisionStripe - comisionStripeFija
+  // Precio al público = precio * 1.16
+  const precioAlPublico = precio * 1.16
+
+  // 1. Ingreso Bruto Total = Precio al público * Alumnos
+  const ingresoBrutoTotal = precioAlPublico * alumnos
+
+  // 2. (-) Comisión Stripe Variable = Ingreso Bruto * 3.6% * 1.16
+  const comisionStripeVariable = ingresoBrutoTotal * 0.036 * 1.16
+
+  // 3. (-) Comisión Stripe Fija = Alumnos * $3.00 * 1.16
+  const comisionStripeFija = alumnos * 3.0 * 1.16
+
+  // 4. Total Libre en Banco (Neto) = Ingreso Bruto - Comisión Stripe Variable - Comisión Stripe Fija
+  const totalLibreBanco = ingresoBrutoTotal - comisionStripeVariable - comisionStripeFija
+
+  // 5. Comisión para el Instructor (50%) = Total Libre en Banco * 50%
   const comisionInstructor = totalLibreBanco * 0.50
-  
-  // IVA del instructor (Asimilados a salarios "PM" es exento)
-  const ivaInstructor = regimen === 'PM' ? 0 : comisionInstructor * 0.16
-  const totalBrutoInstructor = comisionInstructor + ivaInstructor
-  
-  // Retenciones
+
+  // 6. Cálculos Fiscales según Régimen
+  let subtotalNeto = 0
+  let ivaTrasladado = 0
+  let totalBruto = 0
   let retencionISR = 0
   let retencionIVA = 0
-  
-  if (regimen === 'PM') {
-    retencionISR = comisionInstructor * 0.075
-    retencionIVA = 0
-  } else if (regimen === 'PF') {
-    retencionISR = comisionInstructor * 0.10
-    retencionIVA = comisionInstructor * 0.106667
-  } else if (regimen === 'RESICO') {
-    retencionISR = comisionInstructor * 0.0125
-    retencionIVA = comisionInstructor * 0.106667
-  }
-  
-  const totalRetenciones = retencionISR + retencionIVA
-  const pagoNeto = totalBrutoInstructor - totalRetenciones
 
-  const formatter = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
+  if (regimen === 'RESICO') {
+    subtotalNeto = comisionInstructor / 1.16
+    ivaTrasladado = subtotalNeto * 0.16
+    totalBruto = subtotalNeto + ivaTrasladado // que es igual a comisionInstructor
+    retencionISR = subtotalNeto * 0.0125      // 1.25% de retención de ISR en RESICO
+    retencionIVA = 0
+  } else if (regimen === 'ACTIVIDAD_PROFESIONAL') {
+    subtotalNeto = comisionInstructor / 1.16
+    ivaTrasladado = subtotalNeto * 0.16
+    totalBruto = subtotalNeto + ivaTrasladado // que es igual a comisionInstructor
+    retencionISR = subtotalNeto * 0.10        // 10% de retención de ISR en Actividad Profesional
+    retencionIVA = 0
+  } else if (regimen === 'ASIMILADOS') {
+    subtotalNeto = comisionInstructor         // No traslada IVA
+    ivaTrasladado = 0
+    totalBruto = comisionInstructor
+    retencionISR = subtotalNeto * 0.0615      // 6.15% de retención de ISR en Asimilados
+    retencionIVA = 0
+  } else if (regimen === 'PERSONA_MORAL') {
+    subtotalNeto = comisionInstructor / 1.16
+    ivaTrasladado = subtotalNeto * 0.16
+    totalBruto = subtotalNeto + ivaTrasladado // que es igual a comisionInstructor
+    retencionISR = 0                          // Persona Moral no sufre retención de ISR de sí misma aquí
+    retencionIVA = 0
+  }
+
+  const totalRetenciones = retencionISR + retencionIVA
+  const pagoNeto = totalBruto - totalRetenciones
+
+  const formatter = new Intl.NumberFormat('es-MX', { 
+    style: 'currency', 
+    currency: 'MXN',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 
   const handleGuardar = () => {
     if (onChangePrecio) onChangePrecio(precio)
-    if (onChangeAplicarIva) onChangeAplicarIva(aplicarIva)
+    // El IVA global en el curso ahora siempre se activa si el precio es mayor a 0, 
+    // pero para compatibilidad con el resto del flujo, pasamos true
+    if (onChangeAplicarIva) onChangeAplicarIva(true)
     onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh] border border-gray-100">
+        
+        {/* Cabecera del Modal */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/20">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-md shadow-blue-200">
               <Calculator size={24} />
             </div>
-            <h2 className="text-xl font-bold text-gray-800">Simulador de Ingresos</h2>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">Simulador de Ventas e Ingresos SIAI</h2>
+              <p className="text-xs text-gray-500">Calcula tus ganancias estimadas de acuerdo con tu régimen fiscal.</p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors">
+          <button 
+            onClick={onClose} 
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200"
+          >
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Cuerpo del Modal */}
+        <div className="p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
           
-          {/* Controles */}
-          <div className="space-y-6">
+          {/* Columna Izquierda: Variables de Entrada (2/5 partes) */}
+          <div className="lg:col-span-2 space-y-6">
+            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+              Variables de Entrada
+            </h3>
+
             <div className="space-y-4">
+              {/* Costo del curso */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Precio del Curso</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Precio Base del Curso (MXN)</label>
+                <div className="relative rounded-2xl shadow-sm">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
                   <input 
                     type="number" 
-                    value={precio} 
-                    onChange={(e) => setPrecio(Number(e.target.value))}
-                    className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    value={precio || ''} 
+                    onChange={(e) => setPrecio(Math.max(0, Number(e.target.value)))}
+                    className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-black bg-white font-medium"
+                    placeholder="0.00"
+                    min="0"
                   />
                 </div>
+                {precio > 0 && (
+                  <div className="mt-2 p-2 bg-blue-50 rounded-xl border border-blue-100/50 text-xs text-blue-700 font-medium flex items-center gap-1.5 animate-fade-in">
+                    <Info size={14} className="shrink-0" />
+                    <span>Precio al público (+16% IVA): <strong className="font-bold">{formatter.format(precio * 1.16)}</strong></span>
+                  </div>
+                )}
               </div>
 
+              {/* Número de alumnos */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estimado de Alumnos</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Número Estimado de Alumnos</label>
                 <input 
                   type="number" 
-                  value={alumnos} 
-                  onChange={(e) => setAlumnos(Number(e.target.value))}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  value={alumnos || ''} 
+                  onChange={(e) => setAlumnos(Math.max(1, Number(e.target.value)))}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-black bg-white font-medium"
+                  placeholder="20"
+                  min="1"
                 />
               </div>
 
+              {/* Régimen Fiscal */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tu Régimen Fiscal</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Régimen Fiscal del Instructor</label>
                 <select 
                   value={regimen} 
-                  onChange={(e) => setRegimen(e.target.value as any)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  onChange={(e) => setRegimen(e.target.value as RegimenType)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-black bg-white font-medium cursor-pointer"
                 >
-                  <option value="RESICO">RESICO</option>
-                  <option value="PF">Persona Física (Actividad E y P)</option>
-                  <option value="PM">Persona Moral (Asimilados)</option>
+                  <option value="RESICO">RESICO (P. Física)</option>
+                  <option value="ACTIVIDAD_PROFESIONAL">Actividad Profesional (Honorarios)</option>
+                  <option value="ASIMILADOS">Asimilados a Salarios</option>
+                  <option value="PERSONA_MORAL">Persona Moral (S.A. / S.C.)</option>
                 </select>
               </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <input 
-                  type="checkbox" 
-                  id="sim_iva" 
-                  checked={aplicarIva} 
-                  onChange={(e) => setAplicarIva(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <label htmlFor="sim_iva" className="text-sm font-medium text-gray-700 cursor-pointer">
-                  Aplicar IVA al curso
-                </label>
-              </div>
             </div>
 
-            <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 text-sm text-blue-800 space-y-2">
-              <div className="flex gap-2">
-                <Info size={16} className="shrink-0 mt-0.5 text-blue-600" />
-                <p><strong>Nota importante:</strong> El precio del curso debe incluir IVA. Este cálculo asume que el precio ingresado ya es el final para el estudiante.</p>
-              </div>
-              <div className="flex gap-2">
-                <Info size={16} className="shrink-0 mt-0.5 text-blue-600" />
-                <p>Esta calculadora es <strong>solo un simulador</strong> y los valores finales pueden variar ligeramente.</p>
-              </div>
+            {/* Tarjeta del Régimen Seleccionado */}
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-2">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Landmark size={12} />
+                Detalles del régimen
+              </span>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                {regimen === 'RESICO' && 'Régimen Simplificado de Confianza: Se aplica una tasa mínima de retención de ISR fija del 1.25% sobre el subtotal neto. Excelente para personas físicas con ingresos menores a 3.5 MDP.'}
+                {regimen === 'ACTIVIDAD_PROFESIONAL' && 'Persona Física con Actividad Profesional (Honorarios): Se aplica una retención de ISR del 10% sobre el subtotal neto. Apto para profesionistas independientes tradicionales.'}
+                {regimen === 'ASIMILADOS' && 'Asimilados a Salarios: No traslada IVA (tasa exenta/no objeto). Se calcula una retención estimada del 6.15% sobre la comisión base.'}
+                {regimen === 'PERSONA_MORAL' && 'Persona Moral (S.A. / S.C.): No se aplican retenciones automáticas de ISR ni de IVA por parte de la plataforma en la simulación base. El IVA del 16% se traslada completo y el instructor gestiona sus impuestos internamente.'}
+              </p>
             </div>
           </div>
 
-          {/* Resultados */}
-          <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 space-y-6">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Proyección de Ventas</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Ingreso Bruto Total:</span>
-                  <span className="font-medium text-gray-900">{formatter.format(ingresoBrutoTotal)}</span>
-                </div>
-                {aplicarIva && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal (Sin IVA):</span>
-                      <span className="font-medium text-gray-900">{formatter.format(subtotalVenta)}</span>
-                    </div>
-                    <div className="flex justify-between text-red-600">
-                      <span>IVA Cobrado (16%):</span>
-                      <span>-{formatter.format(ivaCobrado)}</span>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-between text-red-600">
-                  <span>Comisión Stripe (Procesador):</span>
-                  <span>-{formatter.format(comisionStripe + comisionStripeFija)}</span>
-                </div>
-                <div className="flex justify-between font-medium pt-2 border-t border-gray-200">
-                  <span className="text-gray-800">Total Libre en Banco:</span>
-                  <span className="text-gray-900">{formatter.format(totalLibreBanco)}</span>
-                </div>
-              </div>
+          {/* Columna Derecha: Proyección Financiera (3/5 partes) */}
+          <div className="lg:col-span-3 space-y-6">
+            <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-emerald-500 rounded-full"></span>
+              Proyección y Distribución Financiera
+            </h3>
+
+            {/* Tabla de Conceptos */}
+            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold">
+                    <th className="p-3.5 pl-4">Concepto / Rubro</th>
+                    <th className="p-3.5 pr-4 text-right">Monto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50 text-gray-700">
+                  <tr>
+                    <td className="p-3 pl-4 font-medium">Ingreso Bruto Total <span className="text-[10px] text-gray-400">(Precio al público {precio > 0 ? formatter.format(precio * 1.16) : '$0.00'} × {alumnos} alumnos)</span></td>
+                    <td className="p-3 pr-4 text-right font-semibold text-gray-900">{formatter.format(ingresoBrutoTotal)}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 pl-4 text-gray-500">(-) Comisión Stripe Variable <span className="text-[10px] text-gray-400">(3.6% + IVA)</span></td>
+                    <td className="p-3 pr-4 text-right text-red-500">-{formatter.format(comisionStripeVariable)}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 pl-4 text-gray-500">(-) Comisión Stripe Fija <span className="text-[10px] text-gray-400">($3.00 MXN + IVA por alumno)</span></td>
+                    <td className="p-3 pr-4 text-right text-red-500">-{formatter.format(comisionStripeFija)}</td>
+                  </tr>
+                  <tr className="bg-blue-50/30">
+                    <td className="p-3 pl-4 font-semibold text-blue-900">Total Libre en Banco (Neto)</td>
+                    <td className="p-3 pr-4 text-right font-bold text-blue-900">{formatter.format(totalLibreBanco)}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 pl-4 font-medium text-indigo-900">Comisión para el Instructor (50%)</td>
+                    <td className="p-3 pr-4 text-right font-bold text-indigo-900">{formatter.format(comisionInstructor)}</td>
+                  </tr>
+                  <tr className="bg-gray-50/50">
+                    <td className="p-3 pl-4 text-gray-500 pl-6">Subtotal Neto (Antes de IVA)</td>
+                    <td className="p-3 pr-4 text-right text-gray-800">{formatter.format(subtotalNeto)}</td>
+                  </tr>
+                  <tr className="bg-gray-50/50">
+                    <td className="p-3 pl-4 text-gray-500 pl-6">(+) IVA Trasladado (16%)</td>
+                    <td className="p-3 pr-4 text-right text-gray-800">
+                      {ivaTrasladado > 0 ? `+${formatter.format(ivaTrasladado)}` : '—'}
+                    </td>
+                  </tr>
+                  <tr className="bg-gray-50/50 font-medium">
+                    <td className="p-3 pl-4 text-gray-700 pl-6">Total Bruto (Subtotal + IVA)</td>
+                    <td className="p-3 pr-4 text-right text-gray-900">{formatter.format(totalBruto)}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 pl-4 text-gray-500 pl-6">(-) Retención de ISR</td>
+                    <td className="p-3 pr-4 text-right text-red-500">
+                      {retencionISR > 0 ? `-${formatter.format(retencionISR)}` : '—'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 pl-4 text-gray-500 pl-6">(-) Retención de IVA</td>
+                    <td className="p-3 pr-4 text-right text-red-500">
+                      {retencionIVA > 0 ? `-${formatter.format(retencionIVA)}` : '—'}
+                    </td>
+                  </tr>
+                  <tr className="bg-red-50/20">
+                    <td className="p-3 pl-4 text-red-700 pl-6 font-medium">Total de Retenciones</td>
+                    <td className="p-3 pr-4 text-right text-red-600 font-semibold">
+                      {totalRetenciones > 0 ? `-${formatter.format(totalRetenciones)}` : '—'}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Tus Ingresos (50%)</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Comisión Base:</span>
-                  <span className="font-medium text-gray-900">{formatter.format(comisionInstructor)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">IVA (16%):</span>
-                  <span className="font-medium text-gray-900">{formatter.format(ivaInstructor)}</span>
-                </div>
-                <div className="flex justify-between text-red-600 pt-2 border-t border-gray-200">
-                  <span>Retención ISR:</span>
-                  <span>-{formatter.format(retencionISR)}</span>
-                </div>
-                <div className="flex justify-between text-red-600">
-                  <span>Retención IVA:</span>
-                  <span>-{formatter.format(retencionIVA)}</span>
-                </div>
+            {/* Gran Total a Recibir */}
+            <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-0.5">
+                  Pago Neto Estimado a Depositar
+                </span>
+                <span className="text-xs text-emerald-700/80 block leading-tight">
+                  Tus ganancias estimadas después de retenciones fiscales y comisiones de Stripe.
+                </span>
               </div>
-            </div>
-
-            <div className="pt-4 border-t-2 border-gray-200">
-              <div className="flex justify-between items-center">
-                <span className="text-base font-bold text-gray-800">Pago Neto a Depositar:</span>
-                <span className="text-2xl font-bold text-green-600">{formatter.format(pagoNeto)}</span>
+              <div className="text-right">
+                <span className="text-2xl font-black text-emerald-600 font-sans block tracking-tight">
+                  {formatter.format(pagoNeto)}
+                </span>
               </div>
             </div>
           </div>
-
         </div>
 
-        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+        {/* Leyenda y Descargo de Responsabilidad */}
+        <div className="px-6 py-4 bg-amber-50/50 border-t border-b border-amber-100 flex gap-3 text-amber-800">
+          <Info size={18} className="shrink-0 mt-0.5 text-amber-600" />
+          <p className="text-[11px] leading-relaxed text-amber-800/90 font-medium">
+            <strong>Leyenda del Simulador de Ventas:</strong> Esto solo es un simulador de ventas. Los valores finales pueden cambiar según el régimen fiscal aplicable, cupones adquiridos por los estudiantes, alumnos o aprendices inscritos por vendedores externos (cuyas comisiones de afiliación aplican de manera independiente) o por la mercadotecnia de la plataforma.
+          </p>
+        </div>
+
+        {/* Botones de Acción */}
+        <div className="p-6 bg-gray-50 flex justify-end gap-3">
           <button 
+            type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 rounded-2xl font-semibold text-xs text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 shadow-sm hover:shadow transition-all duration-200 cursor-pointer"
           >
             Cancelar
           </button>
           <button 
+            type="button"
             onClick={handleGuardar}
-            className="px-6 py-2.5 rounded-xl font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors"
+            className="px-6 py-3 rounded-2xl font-semibold text-xs text-white bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-md shadow-blue-50 transition-all duration-200 cursor-pointer"
           >
             Aplicar Precio al Curso
           </button>
