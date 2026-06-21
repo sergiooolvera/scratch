@@ -678,6 +678,7 @@ export default function AdminCursosPage() {
                                         </div>
                                         {renderFieldCompare('Título', 'titulo')}
                                         {renderFieldCompare('Descripción', 'descripcion')}
+                                        {renderFieldCompare('Competencias', 'competencias')}
                                         {renderFieldCompare('Beneficios', 'beneficios')}
                                         {renderFieldCompare('Duración', 'duracion')}
                                         {renderFieldCompare('Precio', 'precio')}

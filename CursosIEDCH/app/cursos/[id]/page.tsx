@@ -96,6 +96,12 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                         <h3 className="text-sm font-medium text-gray-500">Beneficios</h3>
                         <p className="mt-1 text-sm text-gray-900">{curso.beneficios}</p>
                     </div>
+                    {curso.competencias && (
+                        <div className="col-span-2">
+                            <h3 className="text-sm font-medium text-gray-500">Competencias</h3>
+                            <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{curso.competencias}</p>
+                        </div>
+                    )}
                     {!isPagado && (
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Precio</h3>

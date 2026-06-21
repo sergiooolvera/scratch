@@ -53,6 +53,7 @@ export default function SubirCursoPage() {
     const [formData, setFormData] = useState({
         titulo: '',
         descripcion: '',
+        competencias: '',
         beneficios: '',
         duracion: '',
         precio: 0,
@@ -412,6 +413,7 @@ export default function SubirCursoPage() {
         setFormData({
             titulo: '',
             descripcion: '',
+            competencias: '',
             beneficios: '',
             duracion: '',
             precio: 0,
@@ -895,6 +897,15 @@ export default function SubirCursoPage() {
             setModalMessage({
                 title: 'Faltan Campos',
                 content: 'Error: Por favor escribe la descripción del curso.',
+                type: 'error'
+            });
+            setLoading(false)
+            return
+        }
+        if (!formData.competencias?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor escribe las competencias del curso.',
                 type: 'error'
             });
             setLoading(false)
@@ -1491,6 +1502,10 @@ export default function SubirCursoPage() {
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
                                     <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Describe los temas que cubre el curso..." />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Competencias del Curso</label>
+                                    <textarea name="competencias" required value={formData.competencias} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Describe las competencias que desarrollará el alumno..." />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Beneficios / ¿Qué aprenderá el alumno?</label>

@@ -59,6 +59,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [formData, setFormData] = useState({
         titulo: '',
         descripcion: '',
+        competencias: '',
         beneficios: '',
         duracion: '',
         precio: 0,
@@ -188,6 +189,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             const borrador = {
                 titulo: formData.titulo,
                 descripcion: formData.descripcion,
+                competencias: formData.competencias,
                 beneficios: formData.beneficios,
                 duracion: formData.duracion,
                 precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio),
@@ -384,6 +386,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setFormData({
                     titulo: borrador.titulo || curso.titulo,
                     descripcion: borrador.descripcion || curso.descripcion,
+                    competencias: borrador.competencias || curso.competencias || '',
                     beneficios: borrador.beneficios || curso.beneficios,
                     duracion: borrador.duracion || curso.duracion,
                     precio: borrador.precio || curso.precio,
@@ -523,6 +526,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             setFormData({
                 titulo: curso.titulo,
                 descripcion: curso.descripcion,
+                competencias: curso.competencias || '',
                 beneficios: curso.beneficios,
                 duracion: curso.duracion,
                 precio: curso.precio,
@@ -1103,6 +1107,15 @@ const generationId = data.generationId;
             setSaving(false)
             return
         }
+        if (!formData.competencias?.trim()) {
+            setModalMessage({
+                title: 'Faltan Campos',
+                content: 'Error: Por favor escribe las competencias del curso.',
+                type: 'error'
+            });
+            setSaving(false)
+            return
+        }
         if (!formData.beneficios?.trim()) {
             setModalMessage({
                 title: 'Faltan Campos',
@@ -1351,6 +1364,7 @@ const generationId = data.generationId;
             const borrador = {
                 titulo: formData.titulo,
                 descripcion: formData.descripcion,
+                competencias: formData.competencias,
                 beneficios: formData.beneficios,
                 duracion: formData.duracion,
                 precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio),
@@ -1450,6 +1464,7 @@ const generationId = data.generationId;
                 .update({
                     titulo: formData.titulo,
                     descripcion: formData.descripcion,
+                    competencias: formData.competencias,
                     beneficios: formData.beneficios,
                     duracion: formData.duracion,
                     precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio),
@@ -1871,6 +1886,10 @@ const generationId = data.generationId;
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
                                     <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Competencias del Curso</label>
+                                    <textarea name="competencias" required value={formData.competencias} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Beneficios / ¿Qué aprenderá el alumno?</label>
