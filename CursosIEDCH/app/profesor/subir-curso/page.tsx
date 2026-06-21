@@ -105,6 +105,7 @@ export default function SubirCursoPage() {
 
     // Gamma API integration states
     const [gammaGenerations, setGammaGenerations] = useState<any[]>([])
+    const [sessionGeneratedIds, setSessionGeneratedIds] = useState<string[]>([])
     const [activeGammaModuloIdx, setActiveGammaModuloIdx] = useState<number | null>(null)
     const [gammaPrompt, setGammaPrompt] = useState('')
     const [gammaNumSlides, setGammaNumSlides] = useState(10)
@@ -223,6 +224,7 @@ export default function SubirCursoPage() {
             mostrarRevisionExamen,
             mostrarLogoConstancia,
             plantillaConstancia,
+            sessionGeneratedIds,
             modulos: modulos.map(m => ({
                 titulo: m.titulo,
                 requiereExamen: m.requiereExamen,
@@ -270,8 +272,10 @@ export default function SubirCursoPage() {
         mostrarExamenFinal,
         mostrarConstancia,
         mostrarCalificacionConstancia,
+        mostrarRevisionExamen,
         mostrarLogoConstancia,
         plantillaConstancia,
+        sessionGeneratedIds,
         modulos
     ]);
 
@@ -298,6 +302,7 @@ export default function SubirCursoPage() {
                 mostrarRevisionExamen,
                 mostrarLogoConstancia,
                 plantillaConstancia,
+                sessionGeneratedIds,
                 modulos: modulos.map(m => ({
                     titulo: m.titulo,
                     requiereExamen: m.requiereExamen,
@@ -362,6 +367,7 @@ export default function SubirCursoPage() {
             if (borrador.mostrarRevisionExamen !== undefined) setMostrarRevisionExamen(borrador.mostrarRevisionExamen);
             if (borrador.mostrarLogoConstancia !== undefined) setMostrarLogoConstancia(borrador.mostrarLogoConstancia);
             if (borrador.plantillaConstancia !== undefined) setPlantillaConstancia(borrador.plantillaConstancia);
+            if (borrador.sessionGeneratedIds !== undefined) setSessionGeneratedIds(borrador.sessionGeneratedIds);
             if (borrador.modulos !== undefined) {
                 setModulos(borrador.modulos.map((m: any) => ({
                     titulo: m.titulo || '',
@@ -400,6 +406,7 @@ export default function SubirCursoPage() {
         localStorage.removeItem('curso_nuevo_borrador');
         setTieneBorradorLocal(false);
         setBorradorInicializado(true);
+        setSessionGeneratedIds([]);
 
         // Reset all state variables to clear form data
         setFormData({
@@ -540,7 +547,8 @@ export default function SubirCursoPage() {
         const modulo = modulos[moduloIdx];
         return gammaGenerations.filter(gen => {
             const isUsedInModule = modulo.recursos.some(r => r.url_contenido === gen.export_url);
-            return gen.descargado && !isUsedInModule && !gen.utilizado && !gen.curso_id;
+            const isCreatedInSession = sessionGeneratedIds.includes(gen.id);
+            return gen.descargado && !isUsedInModule && !gen.utilizado && !gen.curso_id && isCreatedInSession;
         });
     }
 
@@ -644,6 +652,7 @@ export default function SubirCursoPage() {
                             }
                             return [...prev, newGen];
                         });
+                        setSessionGeneratedIds(prev => [...prev, statusData.id || generationId]);
 
                         setIsGeneratingGamma(false);
                         return;
