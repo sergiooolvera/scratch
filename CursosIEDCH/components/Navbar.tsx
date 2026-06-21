@@ -88,7 +88,7 @@ export default function Navbar() {
                 <div className="flex justify-between h-16">
                     <div className="flex">
                         <div className="flex-shrink-0 flex items-center">
-                             <a href="https://cursos.grupoegac.com" className="flex items-center space-x-2">
+                             <a href="https://grupoegac.com" className="flex items-center space-x-2">
                                 <img src="/logoegac.jpg" alt="Logo" className="h-14 w-auto object-contain" />
                                 <span className="hidden sm:inline-block h-8 w-[1px] bg-gray-200 mx-2"></span>
                                 <span className="hidden lg:inline text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Portal</span>
