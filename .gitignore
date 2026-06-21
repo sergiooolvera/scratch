@@ -5,12 +5,6 @@
 !.gitignore
 # But DO NOT ignore the CursosIEDCH folder and all its contents
 !/CursosIEDCH/
-# But DO NOT ignore the peluches folder and all its contents
-!/peluches/
-# But DO NOT ignore flutter and automatizacionProgramas
-!/flutter/
-!/automatizacionProgramas/
-!/quinielaMundialista/
 
 
 
