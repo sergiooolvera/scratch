@@ -138,13 +138,30 @@ export async function POST(req: Request) {
       }
     }
 
-    // 6. Recalculate total points, exact scores, and goal difference for ALL profiles
-    // We fetch ALL users and ALL their predictions for FINISHED matches
-    const { data: profiles, error: profilesError } = await supabaseAdmin
-      .from('qui_profiles')
-      .select('id');
+    // 6. Recalculate total points, exact scores, and goal difference for ALL profiles (paging to bypass 1000 limit)
+    let profiles: any[] = [];
+    let pageProfiles = 0;
+    const pageSizeProfiles = 1000;
+    let hasMoreProfiles = true;
 
-    if (profilesError) throw profilesError;
+    while (hasMoreProfiles) {
+      const { data, error: profilesError } = await supabaseAdmin
+        .from('qui_profiles')
+        .select('id')
+        .range(pageProfiles * pageSizeProfiles, (pageProfiles + 1) * pageSizeProfiles - 1);
+
+      if (profilesError) throw profilesError;
+      if (!data || data.length === 0) {
+        hasMoreProfiles = false;
+      } else {
+        profiles = profiles.concat(data);
+        if (data.length < pageSizeProfiles) {
+          hasMoreProfiles = false;
+        } else {
+          pageProfiles++;
+        }
+      }
+    }
 
     let finishedPreds: any[] = [];
     let pageFinished = 0;
@@ -229,13 +246,33 @@ export async function POST(req: Request) {
     const matchMap: Record<string, any> = {};
     matchDetails?.forEach((m: any) => matchMap[m.id] = m);
 
-    // Fetch final rankings
-    const { data: updatedRankings } = await supabaseAdmin
-      .from('qui_profiles')
-      .select('id, points')
-      .order('points', { ascending: false })
-      .order('exact_scores', { ascending: false })
-      .order('goal_difference', { ascending: true });
+    // Fetch final rankings (paging to bypass 1000 limit)
+    let updatedRankings: any[] = [];
+    let pageRankings = 0;
+    const pageSizeRankings = 1000;
+    let hasMoreRankings = true;
+
+    while (hasMoreRankings) {
+      const { data, error: rankingsError } = await supabaseAdmin
+        .from('qui_profiles')
+        .select('id, points')
+        .order('points', { ascending: false })
+        .order('exact_scores', { ascending: false })
+        .order('goal_difference', { ascending: true })
+        .range(pageRankings * pageSizeRankings, (pageRankings + 1) * pageSizeRankings - 1);
+
+      if (rankingsError) throw rankingsError;
+      if (!data || data.length === 0) {
+        hasMoreRankings = false;
+      } else {
+        updatedRankings = updatedRankings.concat(data);
+        if (data.length < pageSizeRankings) {
+          hasMoreRankings = false;
+        } else {
+          pageRankings++;
+        }
+      }
+    }
 
     const notificationsToInsert: any[] = [];
 

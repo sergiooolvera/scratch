@@ -148,12 +148,30 @@ export async function POST(req: Request) {
       ));
     }
 
-    // Fetch all profiles
-    const { data: profiles, error: profilesError } = await supabaseAdmin
-      .from('qui_profiles')
-      .select('id');
+    // Fetch all profiles (paging to bypass 1000 limit)
+    let profiles: any[] = [];
+    let pageProfiles = 0;
+    const pageSizeProfiles = 1000;
+    let hasMoreProfiles = true;
 
-    if (profilesError) throw profilesError;
+    while (hasMoreProfiles) {
+      const { data, error: profilesError } = await supabaseAdmin
+        .from('qui_profiles')
+        .select('id')
+        .range(pageProfiles * pageSizeProfiles, (pageProfiles + 1) * pageSizeProfiles - 1);
+
+      if (profilesError) throw profilesError;
+      if (!data || data.length === 0) {
+        hasMoreProfiles = false;
+      } else {
+        profiles = profiles.concat(data);
+        if (data.length < pageSizeProfiles) {
+          hasMoreProfiles = false;
+        } else {
+          pageProfiles++;
+        }
+      }
+    }
 
     // Recalculate stats for all profiles
     const userStats: Record<string, any> = {};
