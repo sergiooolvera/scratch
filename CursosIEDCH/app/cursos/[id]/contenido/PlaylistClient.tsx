@@ -2103,72 +2103,6 @@ export default function PlaylistClient({
 
                                         {((item.id && (tareasDef[item.id] || puzzlesDef[item.id])) || (item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) || hasExam) && (
                                             <div className={`pl-12 pr-4 pb-3 pt-1 flex flex-col items-start gap-1.5 ${isActive ? 'bg-blue-50/75' : 'bg-white'}`}>
-                                                {(item.id && tareasDef[item.id]) && (
-                                                    <span 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (locked) return;
-                                                            if (index !== currentIndex) {
-                                                                setCurrentIndex(index);
-                                                                setActiveRecursoIndex(0);
-                                                                setTimeout(() => document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
-                                                            } else {
-                                                                document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' });
-                                                            }
-                                                        }}
-                                                        className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
-                                                        entregas[item.id]
-                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                                        : 'bg-purple-50 text-purple-600 border border-purple-200'
-                                                    }`}>
-                                                        <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                                        {entregas[item.id] ? 'Tarea Enviada' : 'Tiene Tarea'}
-                                                    </span>
-                                                )}
-                                                {(item.id && puzzlesDef[item.id]) && (
-                                                    <span 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (locked) return;
-                                                            if (index !== currentIndex) {
-                                                                setCurrentIndex(index);
-                                                                setActiveRecursoIndex(0);
-                                                                setTimeout(() => document.getElementById('puzzle-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
-                                                            } else {
-                                                                document.getElementById('puzzle-section')?.scrollIntoView({ behavior: 'smooth' });
-                                                            }
-                                                        }}
-                                                        className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
-                                                        puzzleEntregas[item.id]
-                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                                        : 'bg-orange-50 text-orange-600 border border-orange-200'
-                                                    }`}>
-                                                        <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                                        {puzzleEntregas[item.id] ? 'Puzle Completado' : 'Tiene Puzle'}
-                                                    </span>
-                                                )}
-                                                {(item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) && (
-                                                    <span 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (locked) return;
-                                                            if (index !== currentIndex) {
-                                                                setCurrentIndex(index);
-                                                                setActiveRecursoIndex(0);
-                                                                setTimeout(() => document.getElementById('cuestionario-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
-                                                            } else {
-                                                                document.getElementById('cuestionario-section')?.scrollIntoView({ behavior: 'smooth' });
-                                                            }
-                                                        }}
-                                                        className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
-                                                        (item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0)
-                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                                                        : 'bg-blue-50 text-blue-600 border border-blue-200'
-                                                    }`}>
-                                                        <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                                        {(item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0) ? 'Cuestionario Enviado' : 'Tiene Cuestionario'}
-                                                    </span>
-                                                )}
                                                 {hasExam && (
                                                     <span 
                                                         onClick={(e) => {
@@ -2199,6 +2133,72 @@ export default function PlaylistClient({
                                                     }`}>
                                                         <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                                         {isExamPassed ? 'Examen listo' : 'Tiene Examen'}
+                                                    </span>
+                                                )}
+                                                {(item.id && tareasDef[item.id]) && (
+                                                    <span 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (locked) return;
+                                                            if (index !== currentIndex) {
+                                                                setCurrentIndex(index);
+                                                                setActiveRecursoIndex(0);
+                                                                setTimeout(() => document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                            } else {
+                                                                document.getElementById('tarea-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                            }
+                                                        }}
+                                                        className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                                        entregas[item.id]
+                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                        : 'bg-purple-50 text-purple-600 border border-purple-200'
+                                                    }`}>
+                                                        <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                        {entregas[item.id] ? 'Tarea Enviada' : 'Tiene Tarea'}
+                                                    </span>
+                                                )}
+                                                {(item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) && (
+                                                    <span 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (locked) return;
+                                                            if (index !== currentIndex) {
+                                                                setCurrentIndex(index);
+                                                                setActiveRecursoIndex(0);
+                                                                setTimeout(() => document.getElementById('cuestionario-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                            } else {
+                                                                document.getElementById('cuestionario-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                            }
+                                                        }}
+                                                        className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                                        (item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0)
+                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                        : 'bg-blue-50 text-blue-600 border border-blue-200'
+                                                    }`}>
+                                                        <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                        {(item.cuestionarioRespuestas && item.cuestionarioRespuestas.length > 0) ? 'Cuestionario Enviado' : 'Tiene Cuestionario'}
+                                                    </span>
+                                                )}
+                                                {(item.id && puzzlesDef[item.id]) && (
+                                                    <span 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (locked) return;
+                                                            if (index !== currentIndex) {
+                                                                setCurrentIndex(index);
+                                                                setActiveRecursoIndex(0);
+                                                                setTimeout(() => document.getElementById('puzzle-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                            } else {
+                                                                document.getElementById('puzzle-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                            }
+                                                        }}
+                                                        className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                                        puzzleEntregas[item.id]
+                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                        : 'bg-orange-50 text-orange-600 border border-orange-200'
+                                                    }`}>
+                                                        <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                        {puzzleEntregas[item.id] ? 'Puzle Completado' : 'Tiene Puzle'}
                                                     </span>
                                                 )}
                                             </div>

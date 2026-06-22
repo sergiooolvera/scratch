@@ -23,7 +23,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
     }
 
     const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
-    const allowedEmails = ['soporte@grupoegac.com', 'sergio.olvera@bracer.biz'];
+    const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com'];
     const userEmail = user?.email?.toLowerCase();
 
     if (curso.creado_por === maestroId) {

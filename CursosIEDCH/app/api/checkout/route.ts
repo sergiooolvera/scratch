@@ -30,6 +30,16 @@ export async function POST(req: Request) {
             return new NextResponse('Course not found', { status: 404 })
         }
 
+        const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+        const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com'];
+        const userEmail = user?.email?.toLowerCase();
+
+        if (curso.creado_por === maestroId) {
+            if (!userEmail || !allowedEmails.includes(userEmail)) {
+                return new NextResponse('Course not found', { status: 404 })
+            }
+        }
+
         // Validate modality and registration deadline
         if (curso.modalidad === 'cerrada' && curso.limite_inscripcion) {
             const now = new Date()

@@ -15,6 +15,7 @@ export default function AdminCuponesPage() {
     const [cupones, setCupones] = useState<any[]>([])
     const [cursos, setCursos] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [userEmail, setUserEmail] = useState<string | null>(null)
 
     // Form states
     const [codigo, setCodigo] = useState('')
@@ -28,12 +29,19 @@ export default function AdminCuponesPage() {
     const [filtroTexto, setFiltroTexto] = useState('')
 
     useEffect(() => {
+        const loadUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                setUserEmail(user.email?.toLowerCase() || null)
+            }
+        }
+        loadUser()
         fetchCursos()
         fetchCupones()
     }, [])
 
     const fetchCursos = async () => {
-        const { data, error } = await supabase.from('ie_cursos').select('id, titulo')
+        const { data, error } = await supabase.from('ie_cursos').select('id, titulo, creado_por')
         if (!error && data) {
             setCursos(data)
         }
@@ -166,7 +174,14 @@ export default function AdminCuponesPage() {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                             >
                                 <option value="">Todos los cursos (Sitio entero)</option>
-                                {cursos.map(c => (
+                                {cursos.filter(c => {
+                                    const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+                                    const allowedEmails = ['sergio.olver@gmail.com'];
+                                    if (c.creado_por === maestroId) {
+                                        return userEmail && allowedEmails.includes(userEmail);
+                                    }
+                                    return true;
+                                }).map(c => (
                                     <option key={c.id} value={c.id}>{c.titulo}</option>
                                 ))}
                             </select>

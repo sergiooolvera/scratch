@@ -44,6 +44,19 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
             const { data: prof } = await supabase.from('ie_profiles').select('*').eq('id', user.id).single()
             const { data: cur } = await supabase.from('ie_cursos').select('*').eq('id', id).single()
 
+            if (cur) {
+                const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+                const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com'];
+                const userEmail = user?.email?.toLowerCase();
+
+                if (cur.creado_por === maestroId) {
+                    if (!userEmail || !allowedEmails.includes(userEmail)) {
+                        router.push('/dashboard');
+                        return;
+                    }
+                }
+            }
+
             const { data: compra } = await supabase
                 .from('ie_compras')
                 .select('*')

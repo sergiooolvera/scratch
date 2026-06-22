@@ -134,6 +134,16 @@ export default async function ExamenContenidoPage({ params }: { params: Promise<
         notFound()
     }
 
+    const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+    const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com'];
+    const userEmail = user?.email?.toLowerCase();
+
+    if (curso.creado_por === maestroId) {
+        if (!userEmail || !allowedEmails.includes(userEmail)) {
+            notFound();
+        }
+    }
+
     if (curso.mostrar_examen_final === false) {
         return (
             <StatusModal

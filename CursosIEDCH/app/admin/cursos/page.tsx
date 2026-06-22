@@ -11,6 +11,7 @@ export default function AdminCursosPage() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [procesandoAccion, setProcesandoAccion] = useState<string | null>(null)
+    const [userEmail, setUserEmail] = useState<string | null>(null)
 
     // Preview Modal state
     const [previewCurso, setPreviewCurso] = useState<Curso | null>(null)
@@ -26,6 +27,13 @@ export default function AdminCursosPage() {
     const supabase = createClient()
 
     useEffect(() => {
+        const loadUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                setUserEmail(user.email?.toLowerCase() || null)
+            }
+        }
+        loadUser()
         fetchCursos()
     }, [])
 
@@ -814,7 +822,14 @@ export default function AdminCursosPage() {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {cursos.filter(c =>
+                        {cursos.filter(c => {
+                            const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+                            const allowedEmails = ['sergio.olver@gmail.com'];
+                            if (c.creado_por === maestroId) {
+                                return userEmail && allowedEmails.includes(userEmail);
+                            }
+                            return true;
+                        }).filter(c =>
                             c.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             c.instructor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             c.creador?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())

@@ -2502,6 +2502,76 @@ export default function SubirCursoPage() {
                                             </div>
                                         </div>
 
+                                        {/* Modular Questionnaire Box */}
+                                        <div className={`mt-4 pt-4 border-t border-zinc-100 ${collapsedModulos[index] ? 'hidden' : ''}`}>
+                                            <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!modulo.requiereCuestionario}
+                                                            onChange={(e) => handleModuloChange(index, 'requiereCuestionario', e.target.checked)}
+                                                            className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                                        />
+                                                        <span className="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
+                                                            <MessageSquare className="h-4 w-4 text-emerald-700" />
+                                                            ¿Este módulo requiere un Cuestionario de preguntas abiertas?
+                                                        </span>
+                                                    </label>
+                                                    {modulo.requiereCuestionario && (
+                                                        <button type="button" onClick={() => toggleCuestionarioCollapsed(index)} className="p-1 rounded-md hover:bg-emerald-100 transition-colors text-emerald-600 hover:text-emerald-800">
+                                                            {collapsedCuestionarios[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {modulo.requiereCuestionario && (
+                                                    <div className={`mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-emerald-250 space-y-4 ${collapsedCuestionarios[index] ? 'hidden' : ''}`}>
+                                                        <div className="flex justify-between items-center border-b border-emerald-100 pb-2">
+                                                            <p className="text-xs text-emerald-800 font-semibold">Configura las preguntas que el alumno deberá responder con texto libre.</p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleAgregarPreguntaCuestionario(index)}
+                                                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                                            >
+                                                                <Plus className="h-3.5 w-3.5" /> Agregar Pregunta
+                                                            </button>
+                                                        </div>
+
+                                                        {!modulo.cuestionarioPreguntas || modulo.cuestionarioPreguntas.length === 0 ? (
+                                                            <p className="text-xs text-emerald-600/80 italic text-center py-4 bg-white/40 border border-dashed border-emerald-200 rounded-lg">No hay preguntas en el cuestionario. Haz clic en "Agregar Pregunta" para iniciar.</p>
+                                                        ) : (
+                                                            <div className="space-y-3">
+                                                                {modulo.cuestionarioPreguntas.map((pregunta, pIdx) => (
+                                                                    <div key={pIdx} className="bg-white p-3 rounded-lg border border-emerald-200 relative shadow-sm flex items-start gap-3">
+                                                                        <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-1 rounded">#{pIdx + 1}</span>
+                                                                        <div className="flex-1">
+                                                                            <textarea
+                                                                                required
+                                                                                rows={2}
+                                                                                placeholder="Escribe la pregunta abierta aquí..."
+                                                                                value={pregunta.pregunta || ''}
+                                                                                onChange={(e) => handlePreguntaCuestionarioChange(index, pIdx, e.target.value)}
+                                                                                className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black font-medium resize-y"
+                                                                            />
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleEliminarPreguntaCuestionario(index, pIdx)}
+                                                                            className="text-zinc-300 hover:text-red-500 transition mt-1"
+                                                                            title="Eliminar pregunta"
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         {/* Modular Puzzle/Game Box */}
                                         <div className="mt-4 pt-4 border-t border-zinc-100">
                                             <div className="bg-orange-50/50 rounded-xl p-4 border border-orange-100">
@@ -2645,76 +2715,6 @@ export default function SubirCursoPage() {
                                                                 required
                                                             />
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Modular Questionnaire Box */}
-                                        <div className={`mt-4 pt-4 border-t border-zinc-100 ${collapsedModulos[index] ? 'hidden' : ''}`}>
-                                            <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <label className="flex items-center gap-2 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={!!modulo.requiereCuestionario}
-                                                        onChange={(e) => handleModuloChange(index, 'requiereCuestionario', e.target.checked)}
-                                                        className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                                                    />
-                                                    <span className="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
-                                                        <MessageSquare className="h-4 w-4 text-emerald-700" />
-                                                        ¿Este módulo requiere un Cuestionario de preguntas abiertas?
-                                                    </span>
-                                                </label>
-                                                    {modulo.requiereCuestionario && (
-                                                        <button type="button" onClick={() => toggleCuestionarioCollapsed(index)} className="p-1 rounded-md hover:bg-emerald-100 transition-colors text-emerald-600 hover:text-emerald-800">
-                                                            {collapsedCuestionarios[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {modulo.requiereCuestionario && (
-                                                    <div className={`mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-emerald-250 space-y-4 ${collapsedCuestionarios[index] ? 'hidden' : ''}`}>
-                                                        <div className="flex justify-between items-center border-b border-emerald-100 pb-2">
-                                                            <p className="text-xs text-emerald-800 font-semibold">Configura las preguntas que el alumno deberá responder con texto libre.</p>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleAgregarPreguntaCuestionario(index)}
-                                                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition flex items-center gap-1 shadow-sm"
-                                                            >
-                                                                <Plus className="h-3.5 w-3.5" /> Agregar Pregunta
-                                                            </button>
-                                                        </div>
-
-                                                        {!modulo.cuestionarioPreguntas || modulo.cuestionarioPreguntas.length === 0 ? (
-                                                            <p className="text-xs text-emerald-600/80 italic text-center py-4 bg-white/40 border border-dashed border-emerald-200 rounded-lg">No hay preguntas en el cuestionario. Haz clic en "Agregar Pregunta" para iniciar.</p>
-                                                        ) : (
-                                                            <div className="space-y-3">
-                                                                {modulo.cuestionarioPreguntas.map((pregunta, pIdx) => (
-                                                                    <div key={pIdx} className="bg-white p-3 rounded-lg border border-emerald-200 relative shadow-sm flex items-start gap-3">
-                                                                        <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-1 rounded">#{pIdx + 1}</span>
-                                                                        <div className="flex-1">
-                                                                            <textarea
-                                                                                required
-                                                                                rows={2}
-                                                                                placeholder="Escribe la pregunta abierta aquí..."
-                                                                                value={pregunta.pregunta || ''}
-                                                                                onChange={(e) => handlePreguntaCuestionarioChange(index, pIdx, e.target.value)}
-                                                                                className="w-full text-xs rounded border-gray-200 p-2 border bg-white text-black font-medium resize-y"
-                                                                            />
-                                                                        </div>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleEliminarPreguntaCuestionario(index, pIdx)}
-                                                                            className="text-zinc-300 hover:text-red-500 transition mt-1"
-                                                                            title="Eliminar pregunta"
-                                                                        >
-                                                                            <Trash2 className="h-4 w-4" />
-                                                                        </button>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 )}
                                             </div>
