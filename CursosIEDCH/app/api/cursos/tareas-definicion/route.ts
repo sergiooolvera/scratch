@@ -19,7 +19,7 @@ export async function GET(request: Request) {
             .from('ie_preguntas_respuestas')
             .select('pregunta')
             .eq('curso_id', cursoId)
-            .like('pregunta', 'TAREA_DEFINICION:%')
+            .or('pregunta.like.TAREA_DEFINICION:%,pregunta.like.PUZZLE_DEFINICION:%')
 
         if (error) throw error
 

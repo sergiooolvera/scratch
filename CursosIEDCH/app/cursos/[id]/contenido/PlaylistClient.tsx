@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock, Maximize2, Minimize2 } from 'lucide-react'
 import { notifyProfesorTaskSubmission } from '@/app/actions/taskNotifications'
 import { createClient } from '@/lib/supabase/client'
+import confetti from 'canvas-confetti'
 
 type Recurso = {
     id: string;
@@ -51,6 +52,14 @@ type TareaDef = {
     instrucciones: string;
     puntos: string;
     tipo?: 'convencional' | 'puzzle';
+    puzzleTipo?: 'anagrama' | 'ahorcado' | 'sopa';
+    puzzlePregunta?: string;
+    puzzleRespuesta?: string;
+    puzzles?: { pregunta: string; respuesta: string; tipo?: 'anagrama' | 'ahorcado' | 'sopa' }[];
+}
+
+type PuzzleDef = {
+    puntos: string;
     puzzleTipo?: 'anagrama' | 'ahorcado' | 'sopa';
     puzzlePregunta?: string;
     puzzleRespuesta?: string;
@@ -138,7 +147,9 @@ export default function PlaylistClient({
 
     // Tasks and submissions state
     const [tareasDef, setTareasDef] = useState<Record<string, TareaDef>>({})
+    const [puzzlesDef, setPuzzlesDef] = useState<Record<string, PuzzleDef>>({})
     const [entregas, setEntregas] = useState<Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }>>({})
+    const [puzzleEntregas, setPuzzleEntregas] = useState<Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }>>({})
     const [cargandoTareas, setCargandoTareas] = useState(true)
 
     // Puzzle States
@@ -152,24 +163,27 @@ export default function PlaylistClient({
     const [puzzleSuccess, setPuzzleSuccess] = useState<boolean>(false)
     const [puzzleErrorMsg, setPuzzleErrorMsg] = useState<string | null>(null)
     const [puzzleSilabasSeleccionadas, setPuzzleSilabasSeleccionadas] = useState<{ id: string, char: string }[]>([])
+    const [puzzleExpanded, setPuzzleExpanded] = useState<boolean>(false)
 
     const currentItem = playlist[currentIndex] || { id: '', titulo: '', recursos: [] }
     const isSingleItem = playlist.length === 1
 
     const taskDef = currentItem.id ? tareasDef[currentItem.id] : null;
-    const puzzles = taskDef?.puzzles || [];
-    const totalPuzzles = puzzles.length > 0 ? puzzles.length : (taskDef?.puzzleRespuesta ? 1 : 0);
-    let currentPuzzle = taskDef ? puzzles[activePuzzleIndex] : null;
+    const puzzleDef = currentItem.id ? puzzlesDef[currentItem.id] : null;
+    
+    const puzzles = puzzleDef?.puzzles || [];
+    const totalPuzzles = puzzles.length > 0 ? puzzles.length : (puzzleDef?.puzzleRespuesta ? 1 : 0);
+    let currentPuzzle = puzzleDef ? puzzles[activePuzzleIndex] : null;
 
-    if (!currentPuzzle && activePuzzleIndex === 0 && taskDef?.puzzleRespuesta) {
+    if (!currentPuzzle && activePuzzleIndex === 0 && puzzleDef?.puzzleRespuesta) {
         currentPuzzle = {
-            pregunta: taskDef.puzzlePregunta || '',
-            respuesta: taskDef.puzzleRespuesta || '',
-            tipo: taskDef.puzzleTipo || 'anagrama'
+            pregunta: puzzleDef.puzzlePregunta || '',
+            respuesta: puzzleDef.puzzleRespuesta || '',
+            tipo: puzzleDef.puzzleTipo || 'anagrama'
         };
     }
 
-    const activePuzzleTipo = currentPuzzle?.tipo || taskDef?.puzzleTipo || 'anagrama';
+    const activePuzzleTipo = currentPuzzle?.tipo || puzzleDef?.puzzleTipo || 'anagrama';
 
     // Checks for active modular exam
     const hasActiveExam = !!(currentItem.id && examenes[currentItem.id])
@@ -189,45 +203,87 @@ export default function PlaylistClient({
             const tasksData = defRes.ok ? await defRes.json() : [];
 
             const defMap: Record<string, TareaDef> = {}
+            const puzzleDefMap: Record<string, PuzzleDef> = {}
             tasksData?.forEach((t: any) => {
                 const parts = t.pregunta.split('::')
                 const header = parts[0]
-                const modId = header.replace('TAREA_DEFINICION:', '').replace('[', '').replace(']', '')
                 try {
                     const payload = JSON.parse(parts.slice(1).join('::'))
-                    defMap[modId] = payload
+                    if (header.startsWith('TAREA_DEFINICION:')) {
+                        const modId = header.replace('TAREA_DEFINICION:', '').replace('[', '').replace(']', '')
+                        // Retrocompatibilidad: si la tarea vieja era de tipo puzzle, se trata como puzle
+                        if (payload.tipo === 'puzzle') {
+                            puzzleDefMap[modId] = {
+                                puntos: payload.puntos || '',
+                                puzzleTipo: payload.puzzleTipo || 'anagrama',
+                                puzzlePregunta: payload.puzzlePregunta || '',
+                                puzzleRespuesta: payload.puzzleRespuesta || '',
+                                puzzles: payload.puzzles || []
+                            }
+                        } else {
+                            defMap[modId] = payload
+                        }
+                    } else if (header.startsWith('PUZZLE_DEFINICION:')) {
+                        const modId = header.replace('PUZZLE_DEFINICION:', '').replace('[', '').replace(']', '')
+                        puzzleDefMap[modId] = payload
+                    }
                 } catch (e) {
                     console.error('Error parsing task payload', e)
                 }
             })
             setTareasDef(defMap)
+            setPuzzlesDef(puzzleDefMap)
 
             const { data: submissionsData } = await supabase
                 .from('ie_preguntas_respuestas')
                 .select('*')
                 .eq('curso_id', cursoId)
                 .eq('user_id', userId)
-                .like('pregunta', 'TAREA_ENTREGA:%');
+                .or('pregunta.like.TAREA_ENTREGA:%,pregunta.like.PUZZLE_ENTREGA:%');
 
             const subMap: Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }> = {}
+            const puzzleSubMap: Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }> = {}
             submissionsData?.forEach(s => {
                 const parts = s.pregunta.split('::')
                 const header = parts[0]
-                const modId = header.replace('TAREA_ENTREGA:', '').replace('[', '').replace(']', '')
                 try {
                     const payload = JSON.parse(parts.slice(1).join('::'))
-                    subMap[modId] = {
-                        id: s.id,
-                        explicacion: payload.explicacion,
-                        archivos: payload.archivos || [],
-                        calificacion: payload.calificacion,
-                        retroalimentacion: payload.retroalimentacion
+                    if (header.startsWith('TAREA_ENTREGA:')) {
+                        const modId = header.replace('TAREA_ENTREGA:', '').replace('[', '').replace(']', '')
+                        // Retrocompatibilidad: si la entrega pertenece a un módulo con puzle y sin tarea convencional, se asocia al puzle
+                        if (puzzleDefMap[modId] && !defMap[modId]) {
+                            puzzleSubMap[modId] = {
+                                id: s.id,
+                                explicacion: payload.explicacion,
+                                archivos: payload.archivos || [],
+                                calificacion: payload.calificacion,
+                                retroalimentacion: payload.retroalimentacion
+                            }
+                        } else {
+                            subMap[modId] = {
+                                id: s.id,
+                                explicacion: payload.explicacion,
+                                archivos: payload.archivos || [],
+                                calificacion: payload.calificacion,
+                                retroalimentacion: payload.retroalimentacion
+                            }
+                        }
+                    } else if (header.startsWith('PUZZLE_ENTREGA:')) {
+                        const modId = header.replace('PUZZLE_ENTREGA:', '').replace('[', '').replace(']', '')
+                        puzzleSubMap[modId] = {
+                            id: s.id,
+                            explicacion: payload.explicacion,
+                            archivos: payload.archivos || [],
+                            calificacion: payload.calificacion,
+                            retroalimentacion: payload.retroalimentacion
+                        }
                     }
                 } catch (e) {
                     console.error('Error parsing submission payload', e)
                 }
             })
             setEntregas(subMap)
+            setPuzzleEntregas(puzzleSubMap)
         } catch (e) {
             console.error('Error cargando tareas modulares:', e)
         } finally {
@@ -236,11 +292,12 @@ export default function PlaylistClient({
     }
 
     useEffect(() => {
-        if (currentItem.id && tareasDef[currentItem.id]?.tipo === 'puzzle') {
+        setPuzzleExpanded(false)
+        if (currentItem.id && puzzlesDef[currentItem.id]) {
             setActivePuzzleIndex(0)
             inicializarPuzzle(0)
         }
-    }, [currentItem.id, tareasDef])
+    }, [currentItem.id, puzzlesDef])
 
     const dividirEnSilabas = (palabra: string): string[] => {
         const silabas: string[] = [];
@@ -294,10 +351,10 @@ export default function PlaylistClient({
     }
 
     useEffect(() => {
-        if (currentItem.id && tareasDef[currentItem.id]?.tipo === 'puzzle') {
+        if (currentItem.id && puzzlesDef[currentItem.id]) {
             inicializarPuzzle(activePuzzleIndex)
         }
-    }, [activePuzzleIndex])
+    }, [activePuzzleIndex, puzzlesDef])
 
     const sanitizarTexto = (texto: string): string => {
         return (texto || '')
@@ -308,25 +365,25 @@ export default function PlaylistClient({
     }
 
     const inicializarPuzzle = (idx: number = activePuzzleIndex) => {
-        const taskDef = tareasDef[currentItem.id]
-        if (!taskDef) return;
+        const puzzleDef = puzzlesDef[currentItem.id]
+        if (!puzzleDef) return;
 
-        const puzzles = taskDef.puzzles || []
+        const puzzles = puzzleDef.puzzles || []
         let targetPuzzle = puzzles[idx]
 
         // Fallback de retrocompatibilidad
-        if (!targetPuzzle && idx === 0 && taskDef.puzzleRespuesta) {
+        if (!targetPuzzle && idx === 0 && puzzleDef.puzzleRespuesta) {
             targetPuzzle = {
-                pregunta: taskDef.puzzlePregunta || '',
-                respuesta: taskDef.puzzleRespuesta || '',
-                tipo: taskDef.puzzleTipo || 'anagrama'
+                pregunta: puzzleDef.puzzlePregunta || '',
+                respuesta: puzzleDef.puzzleRespuesta || '',
+                tipo: puzzleDef.puzzleTipo || 'anagrama'
             }
         }
 
         if (!targetPuzzle || !targetPuzzle.respuesta) return;
 
         const respuesta = sanitizarTexto(targetPuzzle.respuesta);
-        const puzzleTipo = targetPuzzle.tipo || taskDef.puzzleTipo || 'anagrama';
+        const puzzleTipo = targetPuzzle.tipo || puzzleDef.puzzleTipo || 'anagrama';
 
         setPuzzleInput('');
         setPuzzleVidas(6);
@@ -364,11 +421,11 @@ export default function PlaylistClient({
     }
 
     const handleExitoPuzzle = async () => {
-        const taskDef = tareasDef[currentItem.id]
-        if (!taskDef) return;
+        const puzzleDef = puzzlesDef[currentItem.id]
+        if (!puzzleDef) return;
 
-        const puzzles = taskDef.puzzles || []
-        const totalPuzzles = puzzles.length > 0 ? puzzles.length : (taskDef.puzzleRespuesta ? 1 : 0);
+        const puzzles = puzzleDef.puzzles || []
+        const totalPuzzles = puzzles.length > 0 ? puzzles.length : (puzzleDef.puzzleRespuesta ? 1 : 0);
 
         if (activePuzzleIndex < totalPuzzles - 1) {
             setPuzzleSuccess(true)
@@ -379,7 +436,7 @@ export default function PlaylistClient({
             setPuzzleSuccess(true)
             setEnviandoTarea(true)
             
-            const puntos = Number(taskDef?.puntos) || 10
+            const puntos = Number(puzzleDef?.puntos) || 10
             
             try {
                 const submissionPayload = JSON.stringify({
@@ -389,7 +446,7 @@ export default function PlaylistClient({
                     retroalimentacion: 'Calificación automática por resolución de puzle.'
                 })
 
-                const definitionKey = `TAREA_ENTREGA:${currentItem.id}`;
+                const definitionKey = `PUZZLE_ENTREGA:${currentItem.id}`;
 
                 const { data: insertedData, error: insertError } = await supabase
                     .from('ie_preguntas_respuestas')
@@ -397,7 +454,7 @@ export default function PlaylistClient({
                         curso_id: cursoId,
                         user_id: userId,
                         pregunta: `${definitionKey}::${submissionPayload}`,
-                        respuesta: 'TAREA_ENTREGA'
+                        respuesta: 'PUZZLE_ENTREGA'
                     })
                     .select()
                     
@@ -405,7 +462,7 @@ export default function PlaylistClient({
                     throw insertError
                 }
 
-                setEntregas(prev => ({
+                setPuzzleEntregas(prev => ({
                     ...prev,
                     [currentItem.id]: {
                         id: insertedData?.[0]?.id || `entrega-puzzle-${currentItem.id}`,
@@ -417,9 +474,40 @@ export default function PlaylistClient({
                 }))
                 
                 try {
-                    await notifyProfesorTaskSubmission(cursoId, userId, 'Un alumno', currentItem.titulo || 'Módulo')
+                    await notifyProfesorTaskSubmission(cursoId, userId, 'Un alumno', `${currentItem.titulo} (Puzle)` || 'Módulo (Puzle)')
                 } catch (e) {
                     console.error('Error enviando notificación al profesor:', e)
+                }
+
+                // Efecto visual premium de fuegos artificiales de confeti
+                try {
+                    confetti({
+                        particleCount: 120,
+                        spread: 80,
+                        origin: { y: 0.5 }
+                    });
+                    
+                    // Ráfaga izquierda
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 60,
+                            angle: 60,
+                            spread: 60,
+                            origin: { x: 0, y: 0.6 }
+                        });
+                    }, 200);
+
+                    // Ráfaga derecha
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 60,
+                            angle: 120,
+                            spread: 60,
+                            origin: { x: 1, y: 0.6 }
+                        });
+                    }, 350);
+                } catch (confettiErr) {
+                    console.error('Confetti error:', confettiErr);
                 }
 
                 setModalMensaje('¡Felicidades! Has resuelto todos los puzles correctamente. Tu entrega ha sido registrada con la puntuación máxima.')
@@ -1317,7 +1405,7 @@ export default function PlaylistClient({
                                     </button>
                                 </div>
 
-                                {/* Tarea / Entregable Modular */}
+                                {/* Tarea Práctica Convencional */}
                                 {currentItem.id && tareasDef[currentItem.id] && (
                                     <div id="tarea-section" className="mt-12 bg-zinc-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6">
                                         <div className="flex items-center gap-3 border-2 border-amber-400 bg-amber-50/80 rounded-xl p-4 shadow-sm">
@@ -1353,7 +1441,6 @@ export default function PlaylistClient({
                                             </div>
 
                                             {entregas[currentItem.id] ? (
-                                                /* Ya entregada */
                                                 <div className="bg-emerald-50/50 border border-emerald-250 rounded-xl p-5 sm:p-6 space-y-4">
                                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                                         <div className="flex items-center gap-2">
@@ -1401,7 +1488,7 @@ export default function PlaylistClient({
                                                     </div>
 
                                                     {entregas[currentItem.id].calificacion !== null && (
-                                                        <div className="bg-emerald-100/50 border border-emerald-200/80 rounded-lg p-4 space-y-1">
+                                                        <div className="bg-emerald-100/50 border border-emerald-250/80 rounded-lg p-4 space-y-1">
                                                             <h5 className="text-xs font-bold text-emerald-900">Retroalimentación del Instructor:</h5>
                                                             <p className="text-sm text-emerald-800 italic">
                                                                 {entregas[currentItem.id].retroalimentacion || 'Sin comentarios adicionales.'}
@@ -1409,291 +1496,7 @@ export default function PlaylistClient({
                                                         </div>
                                                     )}
                                                 </div>
-                                            ) : tareasDef[currentItem.id].tipo === 'puzzle' ? (
-                                                /* Interfaz del Puzle */
-                                                <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 space-y-4 shadow-sm">
-                                                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-                                                        <div className="bg-amber-500 text-white p-2 rounded-lg shadow-sm">
-                                                            <Sparkles className="h-5 w-5 animate-pulse" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                                                <h4 className="text-sm font-bold text-amber-900 uppercase tracking-wide">Puzle Interactivo</h4>
-                                                                {totalPuzzles > 1 && (
-                                                                    <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-extrabold">
-                                                                        Pregunta {activePuzzleIndex + 1} de {totalPuzzles}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <p className="text-[11px] text-amber-700 font-medium">Resuelve este juego para completar la tarea y obtener tus puntos de forma automática.</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="bg-zinc-50 border border-zinc-150 rounded-xl p-4 sm:p-5">
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Pregunta / Pista:</span>
-                                                        <p className="text-sm sm:text-base font-extrabold text-gray-800 leading-snug">
-                                                            {currentPuzzle?.pregunta}
-                                                        </p>
-                                                    </div>
-
-                                                    {puzzleErrorMsg && (
-                                                        <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-lg flex items-center gap-2">
-                                                            <AlertCircle className="h-4 w-4" />
-                                                            {puzzleErrorMsg}
-                                                        </div>
-                                                    )}
-
-                                                    {/* RENDERIZADO DEL JUEGO: ANAGRAMA */}
-                                                    {activePuzzleTipo === 'anagrama' && (
-                                                        <div className="space-y-6 py-4 flex flex-col items-center">
-                                                            {/* Respuesta construida */}
-                                                            <div className="flex flex-wrap gap-2 justify-center min-h-[48px] p-2.5 bg-zinc-100 rounded-xl border border-zinc-200 w-full max-w-md">
-                                                                {puzzleInput.split('').map((char, idx) => (
-                                                                    <div key={idx} className="h-10 w-10 flex items-center justify-center bg-white border-2 border-zinc-300 rounded-lg text-lg font-extrabold text-zinc-800 shadow-sm animate-bounce">
-                                                                        {char}
-                                                                    </div>
-                                                                ))}
-                                                                {puzzleInput.length === 0 && (
-                                                                    <span className="text-xs text-gray-400 self-center font-bold italic">Selecciona las letras de abajo para formar la palabra...</span>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Botones de control */}
-                                                            <div className="flex gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        if (puzzleInput.length > 0) {
-                                                                            const lastChar = puzzleInput[puzzleInput.length - 1];
-                                                                            setPuzzleInput(prev => prev.slice(0, -1));
-                                                                            const newScrambled = [...puzzleScrambledLetters];
-                                                                            const indexToRestore = newScrambled.findLastIndex(l => l.char === lastChar && l.used);
-                                                                            if (indexToRestore !== -1) {
-                                                                                newScrambled[indexToRestore].used = false;
-                                                                                setPuzzleScrambledLetters(newScrambled);
-                                                                            }
-                                                                        }
-                                                                    }}
-                                                                    className="px-3.5 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold rounded-lg text-xs transition"
-                                                                >
-                                                                    Borrar letra
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setPuzzleInput('');
-                                                                        setPuzzleScrambledLetters(prev => prev.map(l => ({ ...l, used: false })));
-                                                                    }}
-                                                                    className="px-3.5 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 font-bold rounded-lg text-xs transition"
-                                                                >
-                                                                    Limpiar
-                                                                </button>
-                                                            </div>
-
-                                                            {/* Letras para seleccionar */}
-                                                            <div className="flex flex-wrap gap-2.5 justify-center max-w-md">
-                                                                {puzzleScrambledLetters.map((item) => (
-                                                                    <button
-                                                                        key={item.id}
-                                                                        type="button"
-                                                                        disabled={item.used || enviandoTarea}
-                                                                        onClick={() => {
-                                                                            const newScrambled = [...puzzleScrambledLetters];
-                                                                            const target = newScrambled.find(l => l.id === item.id);
-                                                                            if (target) {
-                                                                                target.used = true;
-                                                                                setPuzzleScrambledLetters(newScrambled);
-                                                                                const newInput = puzzleInput + item.char;
-                                                                                setPuzzleInput(newInput);
-                                                                                
-                                                                                const correcta = sanitizarTexto(currentPuzzle?.respuesta || '');
-                                                                                if (newInput === correcta) {
-                                                                                    handleExitoPuzzle();
-                                                                                }
-                                                                            }
-                                                                        }}
-                                                                        className={`h-11 w-11 flex items-center justify-center text-lg font-bold rounded-xl shadow-sm transition border ${item.used ? 'bg-zinc-200 text-zinc-400 border-zinc-200 cursor-not-allowed' : 'bg-white hover:bg-zinc-50 border-zinc-300 text-black hover:border-amber-400 active:scale-95'}`}
-                                                                    >
-                                                                        {item.char}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* RENDERIZADO DEL JUEGO: AHORCADO */}
-                                                    {activePuzzleTipo === 'ahorcado' && (
-                                                        <div className="space-y-6 py-4 flex flex-col items-center">
-                                                            {/* Vidas restantes */}
-                                                            <div className="flex items-center gap-1 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1 text-amber-700 font-bold text-xs">
-                                                                <span>Intentos fallidos restantes:</span>
-                                                                <div className="flex gap-0.5 ml-1">
-                                                                    {Array(6).fill(null).map((_, i) => (
-                                                                        <span key={i} className={`text-sm ${i < puzzleVidas ? 'opacity-100' : 'opacity-20'}`}>
-                                                                            ❤️
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Respuesta en guiones */}
-                                                            <div className="flex flex-wrap gap-2.5 justify-center py-2">
-                                                                {sanitizarTexto(currentPuzzle?.respuesta || '').split('').map((char, idx) => {
-                                                                    const adivinada = puzzleLetrasAdivinadas.includes(char);
-                                                                    return (
-                                                                        <div key={idx} className="h-11 w-11 flex items-center justify-center border-b-4 border-zinc-450 text-2xl font-extrabold text-zinc-800">
-                                                                            {adivinada ? char : '_'}
-                                                                        </div>
-                                                                    )
-                                                                })}
-                                                            </div>
-
-                                                            {/* Condición de Derrota */}
-                                                            {puzzleVidas <= 0 ? (
-                                                                <div className="text-center space-y-3">
-                                                                    <p className="text-sm font-bold text-red-600">¡Has agotado tus intentos!</p>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => inicializarPuzzle(activePuzzleIndex)}
-                                                                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-md transition"
-                                                                    >
-                                                                        Volver a jugar (Reiniciar)
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                /* Teclado interactivo */
-                                                                <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-                                                                    {'ABCDEFGHIJKLMOPQRSTUVWXYZ'.split('').map((char) => {
-                                                                        const usada = puzzleLetrasAdivinadas.includes(char);
-                                                                        const correcta = sanitizarTexto(currentPuzzle?.respuesta || '').includes(char);
-                                                                        const clickHandler = () => {
-                                                                            if (usada || enviandoTarea) return;
-                                                                            
-                                                                            const nuevasAdivinadas = [...puzzleLetrasAdivinadas, char];
-                                                                            setPuzzleLetrasAdivinadas(nuevasAdivinadas);
-                                                                            
-                                                                            if (!correcta) {
-                                                                                setPuzzleVidas(prev => prev - 1);
-                                                                            } else {
-                                                                                const palabraCorrecta = sanitizarTexto(currentPuzzle?.respuesta || '');
-                                                                                const ganaste = palabraCorrecta.split('').every(letra => nuevasAdivinadas.includes(letra));
-                                                                                if (ganaste) {
-                                                                                    handleExitoPuzzle();
-                                                                                }
-                                                                            }
-                                                                        };
-
-                                                                        return (
-                                                                            <button
-                                                                                key={char}
-                                                                                type="button"
-                                                                                disabled={usada || enviandoTarea}
-                                                                                onClick={clickHandler}
-                                                                                className={`h-10 w-10 flex items-center justify-center font-bold text-xs rounded-lg transition border shadow-sm ${usada ? (correcta ? 'bg-green-100 text-green-700 border-green-200 font-extrabold' : 'bg-red-50 text-red-400 border-red-100 cursor-not-allowed') : 'bg-white border-zinc-200 hover:bg-zinc-50 hover:border-zinc-400 text-black active:scale-95'}`}
-                                                                            >
-                                                                                {char}
-                                                                            </button>
-                                                                        )
-                                                                    })}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    {/* RENDERIZADO DEL JUEGO: ORDENAR SÍLABAS */}
-                                                    {activePuzzleTipo === 'sopa' && (
-                                                        <div className="space-y-6 py-4 flex flex-col items-center w-full">
-                                                            {/* Sílabas seleccionadas (construyendo la palabra) */}
-                                                            <div className="flex flex-col items-center gap-2 w-full max-w-md">
-                                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Palabra construida:</span>
-                                                                <div className="flex flex-wrap gap-2 justify-center items-center min-h-[58px] p-3.5 bg-zinc-100 rounded-xl border border-zinc-200 w-full shadow-inner">
-                                                                    {puzzleSilabasSeleccionadas.map((item, idx) => (
-                                                                        <div key={idx} className="px-3.5 py-2 flex items-center justify-center bg-gradient-to-r from-amber-400 to-amber-500 border border-amber-300 rounded-lg text-sm font-extrabold text-amber-950 shadow-md animate-bounce">
-                                                                            {item.char}
-                                                                        </div>
-                                                                    ))}
-                                                                    {puzzleSilabasSeleccionadas.length === 0 && (
-                                                                        <span className="text-xs text-gray-400 font-bold italic">Selecciona las sílabas de abajo para formar la palabra...</span>
-                                                                    )}
-                                                                </div>
-                                                                
-                                                                {/* Botones de control */}
-                                                                <div className="flex gap-2.5 mt-1.5">
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={enviandoTarea}
-                                                                        onClick={() => {
-                                                                            if (puzzleSilabasSeleccionadas.length > 0) {
-                                                                                const last = puzzleSilabasSeleccionadas[puzzleSilabasSeleccionadas.length - 1];
-                                                                                setPuzzleSilabasSeleccionadas(prev => prev.slice(0, -1));
-                                                                                const newScrambled = [...puzzleScrambledLetters];
-                                                                                const target = newScrambled.find(l => l.id === last.id);
-                                                                                if (target) target.used = false;
-                                                                                setPuzzleScrambledLetters(newScrambled);
-                                                                                setPuzzleErrorMsg(null);
-                                                                            }
-                                                                        }}
-                                                                        className="px-4 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-extrabold rounded-lg text-xs transition animate-pulse"
-                                                                    >
-                                                                        Deshacer sílaba
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        disabled={enviandoTarea}
-                                                                        onClick={() => {
-                                                                            setPuzzleSilabasSeleccionadas([]);
-                                                                            setPuzzleScrambledLetters(prev => prev.map(l => ({ ...l, used: false })));
-                                                                            setPuzzleErrorMsg(null);
-                                                                        }}
-                                                                        className="px-4 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-extrabold rounded-lg text-xs transition"
-                                                                    >
-                                                                        Limpiar todo
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Sílabas para seleccionar (las mezcladas) */}
-                                                            <div className="flex flex-wrap gap-3 justify-center max-w-md pt-4">
-                                                                {puzzleScrambledLetters.map((item) => (
-                                                                    <button
-                                                                        key={item.id}
-                                                                        type="button"
-                                                                        disabled={item.used || enviandoTarea}
-                                                                        onClick={() => {
-                                                                            const newScrambled = [...puzzleScrambledLetters];
-                                                                            const target = newScrambled.find(l => l.id === item.id);
-                                                                            if (target) {
-                                                                                target.used = true;
-                                                                                setPuzzleScrambledLetters(newScrambled);
-                                                                                
-                                                                                const nuevosSeleccionados = [...puzzleSilabasSeleccionadas, { id: item.id, char: item.char }];
-                                                                                setPuzzleSilabasSeleccionadas(nuevosSeleccionados);
-                                                                                
-                                                                                const palabraDeletreada = nuevosSeleccionados.map(s => s.char).join('');
-                                                                                const palabraCorrecta = sanitizarTexto(currentPuzzle?.respuesta || '');
-                                                                                
-                                                                                if (palabraDeletreada === palabraCorrecta) {
-                                                                                    handleExitoPuzzle();
-                                                                                } else if (palabraDeletreada.length >= palabraCorrecta.length) {
-                                                                                    setPuzzleErrorMsg("La palabra construida no es correcta. ¡Inténtalo de nuevo!");
-                                                                                }
-                                                                            }
-                                                                        }}
-                                                                        className={`px-5 py-3 flex items-center justify-center text-sm font-extrabold rounded-xl shadow-md transition-all border ${
-                                                                            item.used 
-                                                                                ? 'bg-zinc-200 text-zinc-400 border-zinc-200 cursor-not-allowed scale-95 opacity-50' 
-                                                                                : 'bg-gradient-to-br from-white to-zinc-50 hover:from-white hover:to-amber-50/50 border-zinc-250 text-zinc-800 hover:border-amber-400 hover:text-amber-800 active:scale-95 shadow-sm hover:shadow'
-                                                                        }`}
-                                                                    >
-                                                                        {item.char}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
                                             ) : (
-                                                /* Formulario de Entrega */
                                                 <form onSubmit={handleEnviarTarea} className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 space-y-4">
                                                     <div className="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 shadow-sm flex items-center gap-3">
                                                         <div className="bg-blue-500 text-white p-2 rounded-lg shadow-sm">
@@ -1743,7 +1546,7 @@ export default function PlaylistClient({
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => handleRemoveFile(fIdx)}
-                                                                                    className="text-red-500 hover:text-red-700 font-bold transition ml-2"
+                                                                                    className="text-red-550 hover:text-red-700 font-bold transition ml-2"
                                                                                 >
                                                                                     Eliminar
                                                                                 </button>
@@ -1766,6 +1569,361 @@ export default function PlaylistClient({
                                                     </div>
                                                 </form>
                                             )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Puzle o Juego Interactivo */}
+                                {currentItem.id && puzzlesDef[currentItem.id] && (
+                                    <div id="puzzle-section" className={
+                                        puzzleExpanded
+                                        ? "fixed inset-0 z-[99] bg-zinc-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 overflow-y-auto"
+                                        : "mt-12 bg-zinc-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6"
+                                    }>
+                                        <div className={
+                                            puzzleExpanded
+                                            ? "bg-zinc-50 border border-gray-200 rounded-3xl p-6 sm:p-8 space-y-6 w-full max-w-4xl shadow-2xl max-h-[95vh] overflow-y-auto relative animate-scaleUp flex flex-col justify-start"
+                                            : "space-y-6 w-full"
+                                        }>
+                                            {puzzleExpanded && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPuzzleExpanded(false)}
+                                                    className="absolute top-4 right-4 p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition shadow-sm z-10"
+                                                    aria-label="Cerrar pantalla completa"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            )}
+
+                                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-2 border-orange-400 bg-orange-50/80 rounded-xl p-4 shadow-sm w-full">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2.5 bg-orange-500 text-white rounded-xl shadow-sm">
+                                                        <Sparkles className="h-5 w-5 animate-pulse" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-lg font-bold text-orange-900">Puzle o Juego Interactivo</h3>
+                                                        <p className="text-xs text-orange-700/80">Resuelve el juego interactivo para completar esta sección.</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPuzzleExpanded(!puzzleExpanded)}
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl shadow-sm transition"
+                                                >
+                                                    {puzzleExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                                                    <span>{puzzleExpanded ? 'Salir Pantalla Completa' : 'Pantalla Completa'}</span>
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-4 w-full">
+                                            {puzzleEntregas[currentItem.id] ? (
+                                                <div className="bg-emerald-50/50 border border-emerald-250 rounded-xl p-5 sm:p-6 space-y-4">
+                                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <CheckCircle className="h-5 w-5 text-emerald-600" />
+                                                            <span className="font-bold text-emerald-900 text-sm">Puzle Completado con Éxito</span>
+                                                        </div>
+                                                        <div>
+                                                            {puzzleEntregas[currentItem.id].calificacion !== null ? (
+                                                                <span className="px-4 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-full shadow-sm">
+                                                                    Calificación: {puzzleEntregas[currentItem.id].calificacion}/{puzzlesDef[currentItem.id].puntos || '10'}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-4 py-1.5 bg-amber-500 text-white text-xs font-bold rounded-full shadow-sm">
+                                                                    Completado
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-white rounded-lg border border-emerald-100 p-4 space-y-3">
+                                                        <div>
+                                                            <h5 className="text-xs font-bold text-gray-400">Estado:</h5>
+                                                            <p className="text-sm text-gray-700 mt-1">{puzzleEntregas[currentItem.id].explicacion}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {puzzleEntregas[currentItem.id].calificacion !== null && (
+                                                        <div className="bg-emerald-100/50 border border-emerald-250/80 rounded-lg p-4 space-y-1">
+                                                            <h5 className="text-xs font-bold text-emerald-900">Retroalimentación Automática:</h5>
+                                                            <p className="text-sm text-emerald-800 italic">
+                                                                {puzzleEntregas[currentItem.id].retroalimentacion || 'Puzle resuelto correctamente en la plataforma.'}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 space-y-4 shadow-sm">
+                                                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+                                                        <div className="bg-amber-500 text-white p-2 rounded-lg shadow-sm">
+                                                            <Sparkles className="h-5 w-5 animate-pulse" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                <h4 className="text-sm font-bold text-amber-900 uppercase tracking-wide">Puzle Interactivo</h4>
+                                                                {totalPuzzles > 1 && (
+                                                                    <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-extrabold">
+                                                                        Pregunta {activePuzzleIndex + 1} de {totalPuzzles}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-[11px] text-amber-700 font-medium">Resuelve este juego para completar la tarea y obtener tus puntos de forma automática.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-zinc-50 border border-zinc-150 rounded-xl p-4 sm:p-5">
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Pregunta / Pista:</span>
+                                                        <p className="text-sm sm:text-base font-extrabold text-gray-800 leading-snug">
+                                                            {currentPuzzle?.pregunta}
+                                                        </p>
+                                                    </div>
+
+                                                    {puzzleErrorMsg && (
+                                                        <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-lg flex items-center gap-2">
+                                                            <AlertCircle className="h-4 w-4" />
+                                                            {puzzleErrorMsg}
+                                                        </div>
+                                                    )}
+
+                                                    {activePuzzleTipo === 'anagrama' && (
+                                                        <div className="space-y-6 py-4 flex flex-col items-center">
+                                                            <div className="flex flex-wrap gap-2 justify-center min-h-[48px] p-2.5 bg-zinc-100 rounded-xl border border-zinc-200 w-full max-w-md">
+                                                                {puzzleInput.split('').map((char, idx) => (
+                                                                    <div key={idx} className="h-10 w-10 flex items-center justify-center bg-white border-2 border-zinc-300 rounded-lg text-lg font-extrabold text-zinc-800 shadow-sm animate-bounce">
+                                                                        {char}
+                                                                    </div>
+                                                                ))}
+                                                                {puzzleInput.length === 0 && (
+                                                                    <span className="text-xs text-gray-400 self-center font-bold italic">Selecciona las letras de abajo para formar la palabra...</span>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (puzzleInput.length > 0) {
+                                                                            const lastChar = puzzleInput[puzzleInput.length - 1];
+                                                                            setPuzzleInput(prev => prev.slice(0, -1));
+                                                                            const newScrambled = [...puzzleScrambledLetters];
+                                                                            const indexToRestore = newScrambled.findLastIndex(l => l.char === lastChar && l.used);
+                                                                            if (indexToRestore !== -1) {
+                                                                                newScrambled[indexToRestore].used = false;
+                                                                                setPuzzleScrambledLetters(newScrambled);
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className="px-3.5 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold rounded-lg text-xs transition"
+                                                                >
+                                                                    Borrar letra
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setPuzzleInput('');
+                                                                        setPuzzleScrambledLetters(prev => prev.map(l => ({ ...l, used: false })));
+                                                                    }}
+                                                                    className="px-3.5 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 font-bold rounded-lg text-xs transition"
+                                                                >
+                                                                    Limpiar
+                                                                </button>
+                                                            </div>
+
+                                                            <div className="flex flex-wrap gap-2.5 justify-center max-w-md">
+                                                                {puzzleScrambledLetters.map((item) => (
+                                                                    <button
+                                                                        key={item.id}
+                                                                        type="button"
+                                                                        disabled={item.used || enviandoTarea}
+                                                                        onClick={() => {
+                                                                            const newScrambled = [...puzzleScrambledLetters];
+                                                                            const target = newScrambled.find(l => l.id === item.id);
+                                                                            if (target) {
+                                                                                target.used = true;
+                                                                                setPuzzleScrambledLetters(newScrambled);
+                                                                                const newInput = puzzleInput + item.char;
+                                                                                setPuzzleInput(newInput);
+                                                                                
+                                                                                const correcta = sanitizarTexto(currentPuzzle?.respuesta || '');
+                                                                                if (newInput === correcta) {
+                                                                                    handleExitoPuzzle();
+                                                                                }
+                                                                            }
+                                                                        }}
+                                                                        className={`h-11 w-11 flex items-center justify-center text-lg font-bold rounded-xl shadow-sm transition border ${item.used ? 'bg-zinc-200 text-zinc-400 border-zinc-200 cursor-not-allowed' : 'bg-white hover:bg-zinc-50 border-zinc-300 text-black hover:border-amber-400 active:scale-95'}`}
+                                                                    >
+                                                                        {item.char}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {activePuzzleTipo === 'ahorcado' && (
+                                                        <div className="space-y-6 py-4 flex flex-col items-center">
+                                                            <div className="flex items-center gap-1 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1 text-amber-700 font-bold text-xs">
+                                                                <span>Intentos fallidos restantes:</span>
+                                                                <div className="flex gap-0.5 ml-1">
+                                                                    {Array(6).fill(null).map((_, i) => (
+                                                                        <span key={i} className={`text-sm ${i < puzzleVidas ? 'opacity-100' : 'opacity-20'}`}>
+                                                                            ❤️
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex flex-wrap gap-2.5 justify-center py-2">
+                                                                {sanitizarTexto(currentPuzzle?.respuesta || '').split('').map((char, idx) => {
+                                                                    const adivinada = puzzleLetrasAdivinadas.includes(char);
+                                                                    return (
+                                                                        <div key={idx} className="h-11 w-11 flex items-center justify-center border-b-4 border-zinc-450 text-2xl font-extrabold text-zinc-800">
+                                                                            {adivinada ? char : '_'}
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+
+                                                            {puzzleVidas <= 0 ? (
+                                                                <div className="text-center space-y-3">
+                                                                    <p className="text-sm font-bold text-red-650">¡Has agotado tus intentos!</p>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => inicializarPuzzle(activePuzzleIndex)}
+                                                                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shadow-md transition"
+                                                                    >
+                                                                        Volver a jugar (Reiniciar)
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex flex-wrap gap-2 justify-center max-w-lg">
+                                                                    {'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('').map((char) => {
+                                                                        const usada = puzzleLetrasAdivinadas.includes(char);
+                                                                        const correcta = sanitizarTexto(currentPuzzle?.respuesta || '').includes(char);
+                                                                        const clickHandler = () => {
+                                                                            if (usada || enviandoTarea) return;
+                                                                            
+                                                                            const nuevasAdivinadas = [...puzzleLetrasAdivinadas, char];
+                                                                            setPuzzleLetrasAdivinadas(nuevasAdivinadas);
+                                                                            
+                                                                            if (!correcta) {
+                                                                                setPuzzleVidas(prev => prev - 1);
+                                                                            } else {
+                                                                                const palabraCorrecta = sanitizarTexto(currentPuzzle?.respuesta || '');
+                                                                                const ganaste = palabraCorrecta.split('').every(letra => nuevasAdivinadas.includes(letra));
+                                                                                if (ganaste) {
+                                                                                    handleExitoPuzzle();
+                                                                                }
+                                                                            }
+                                                                        };
+
+                                                                        return (
+                                                                            <button
+                                                                                key={char}
+                                                                                type="button"
+                                                                                disabled={usada || enviandoTarea}
+                                                                                onClick={clickHandler}
+                                                                                className={`h-10 w-10 flex items-center justify-center font-bold text-xs rounded-lg transition border shadow-sm ${usada ? (correcta ? 'bg-green-100 text-green-700 border-green-200 font-extrabold' : 'bg-red-50 text-red-400 border-red-100 cursor-not-allowed') : 'bg-white border-zinc-200 hover:bg-zinc-50 hover:border-zinc-400 text-black active:scale-95'}`}
+                                                                            >
+                                                                                {char}
+                                                                            </button>
+                                                                        )
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {activePuzzleTipo === 'sopa' && (
+                                                        <div className="space-y-6 py-4 flex flex-col items-center w-full">
+                                                            <div className="flex flex-col items-center gap-2 w-full max-w-md">
+                                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Palabra construida:</span>
+                                                                <div className="flex flex-wrap gap-2 justify-center items-center min-h-[58px] p-3.5 bg-zinc-100 rounded-xl border border-zinc-200 w-full shadow-inner">
+                                                                    {puzzleSilabasSeleccionadas.map((item, idx) => (
+                                                                        <div key={idx} className="px-3.5 py-2 flex items-center justify-center bg-gradient-to-r from-amber-400 to-amber-500 border border-amber-300 rounded-lg text-sm font-extrabold text-amber-950 shadow-md animate-bounce">
+                                                                            {item.char}
+                                                                        </div>
+                                                                    ))}
+                                                                    {puzzleSilabasSeleccionadas.length === 0 && (
+                                                                        <span className="text-xs text-gray-400 font-bold italic">Selecciona las sílabas de abajo para formar la palabra...</span>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="flex gap-2.5 mt-1.5">
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={enviandoTarea}
+                                                                        onClick={() => {
+                                                                            if (puzzleSilabasSeleccionadas.length > 0) {
+                                                                                const last = puzzleSilabasSeleccionadas[puzzleSilabasSeleccionadas.length - 1];
+                                                                                setPuzzleSilabasSeleccionadas(prev => prev.slice(0, -1));
+                                                                                const newScrambled = [...puzzleScrambledLetters];
+                                                                                const target = newScrambled.find(l => l.id === last.id);
+                                                                                if (target) target.used = false;
+                                                                                setPuzzleScrambledLetters(newScrambled);
+                                                                                setPuzzleErrorMsg(null);
+                                                                            }
+                                                                        }}
+                                                                        className="px-4 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-extrabold rounded-lg text-xs transition animate-pulse"
+                                                                    >
+                                                                        Deshacer sílaba
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={enviandoTarea}
+                                                                        onClick={() => {
+                                                                            setPuzzleSilabasSeleccionadas([]);
+                                                                            setPuzzleScrambledLetters(prev => prev.map(l => ({ ...l, used: false })));
+                                                                            setPuzzleErrorMsg(null);
+                                                                        }}
+                                                                        className="px-4 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-extrabold rounded-lg text-xs transition"
+                                                                    >
+                                                                        Limpiar todo
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex flex-wrap gap-3 justify-center max-w-md pt-4">
+                                                                {puzzleScrambledLetters.map((item) => (
+                                                                    <button
+                                                                        key={item.id}
+                                                                        type="button"
+                                                                        disabled={item.used || enviandoTarea}
+                                                                        onClick={() => {
+                                                                            const newScrambled = [...puzzleScrambledLetters];
+                                                                            const target = newScrambled.find(l => l.id === item.id);
+                                                                            if (target) {
+                                                                                target.used = true;
+                                                                                setPuzzleScrambledLetters(newScrambled);
+                                                                                
+                                                                                const nuevosSeleccionados = [...puzzleSilabasSeleccionadas, { id: item.id, char: item.char }];
+                                                                                setPuzzleSilabasSeleccionadas(nuevosSeleccionados);
+                                                                                
+                                                                                const palabraDeletreada = nuevosSeleccionados.map(s => s.char).join('');
+                                                                                const palabraCorrecta = sanitizarTexto(currentPuzzle?.respuesta || '');
+                                                                                
+                                                                                if (palabraDeletreada === palabraCorrecta) {
+                                                                                    handleExitoPuzzle();
+                                                                                } else if (palabraDeletreada.length >= palabraCorrecta.length) {
+                                                                                    setPuzzleErrorMsg("La palabra construida no es correcta. ¡Inténtalo de nuevo!");
+                                                                                }
+                                                                            }
+                                                                        }}
+                                                                        className={`px-5 py-3 flex items-center justify-center text-sm font-extrabold rounded-xl shadow-md transition-all border ${
+                                                                            item.used 
+                                                                                ? 'bg-zinc-200 text-zinc-400 border-zinc-200 cursor-not-allowed scale-95 opacity-50' 
+                                                                                : 'bg-gradient-to-br from-white to-zinc-50 hover:from-white hover:to-amber-50/50 border-zinc-250 text-zinc-800 hover:border-amber-400 hover:text-amber-800 active:scale-95 shadow-sm hover:shadow'
+                                                                        }`}
+                                                                    >
+                                                                        {item.char}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -1943,7 +2101,7 @@ export default function PlaylistClient({
                                             </div>
                                         )}
 
-                                        {((item.id && tareasDef[item.id]) || (item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) || hasExam) && (
+                                        {((item.id && (tareasDef[item.id] || puzzlesDef[item.id])) || (item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) || hasExam) && (
                                             <div className={`pl-12 pr-4 pb-3 pt-1 flex flex-col items-start gap-1.5 ${isActive ? 'bg-blue-50/75' : 'bg-white'}`}>
                                                 {(item.id && tareasDef[item.id]) && (
                                                     <span 
@@ -1965,6 +2123,28 @@ export default function PlaylistClient({
                                                     }`}>
                                                         <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                                         {entregas[item.id] ? 'Tarea Enviada' : 'Tiene Tarea'}
+                                                    </span>
+                                                )}
+                                                {(item.id && puzzlesDef[item.id]) && (
+                                                    <span 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (locked) return;
+                                                            if (index !== currentIndex) {
+                                                                setCurrentIndex(index);
+                                                                setActiveRecursoIndex(0);
+                                                                setTimeout(() => document.getElementById('puzzle-section')?.scrollIntoView({ behavior: 'smooth' }), 300);
+                                                            } else {
+                                                                document.getElementById('puzzle-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                            }
+                                                        }}
+                                                        className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                                        puzzleEntregas[item.id]
+                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                        : 'bg-orange-50 text-orange-600 border border-orange-200'
+                                                    }`}>
+                                                        <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                        {puzzleEntregas[item.id] ? 'Puzle Completado' : 'Tiene Puzle'}
                                                     </span>
                                                 )}
                                                 {(item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) && (

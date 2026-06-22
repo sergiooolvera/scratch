@@ -18,7 +18,7 @@ type Recurso = {
     titulo: string;
     tipo: 'video' | 'pdf' | 'html' | 'ppt';
     url_contenido: string;
-    archivoPdf: File | null;
+    archivoPdf?: File | null;
     descargable?: boolean;
     isPersisted?: boolean;
 }
@@ -26,6 +26,7 @@ type Recurso = {
 type Modulo = {
     id?: string;
     titulo: string;
+    orden?: number;
     recursos: Recurso[];
     requiereExamen: boolean;
     examenMinAprobacion: number;
@@ -38,6 +39,12 @@ type Modulo = {
     tareaPuzzlePregunta?: string;
     tareaPuzzleRespuesta?: string;
     tareaPuzzles?: { pregunta: string; respuesta: string; tipo?: 'anagrama' | 'ahorcado' | 'sopa' }[];
+    requierePuzzle?: boolean;
+    puzzlePuntos?: string;
+    puzzleTipo?: 'anagrama' | 'ahorcado' | 'sopa';
+    puzzlePregunta?: string;
+    puzzleRespuesta?: string;
+    puzzlePuzzles?: { pregunta: string; respuesta: string; tipo?: 'anagrama' | 'ahorcado' | 'sopa' }[];
     requiereCuestionario?: boolean;
     cuestionarioPreguntas?: { id?: string; pregunta: string; orden?: number }[];
     seguridadAumentada?: boolean;
@@ -135,6 +142,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [collapsedModulos, setCollapsedModulos] = useState<Record<number, boolean>>({})
     const [collapsedExamenes, setCollapsedExamenes] = useState<Record<number, boolean>>({})
     const [collapsedTareas, setCollapsedTareas] = useState<Record<number, boolean>>({})
+    const [collapsedPuzzles, setCollapsedPuzzles] = useState<Record<number, boolean>>({})
     const [collapsedCuestionarios, setCollapsedCuestionarios] = useState<Record<number, boolean>>({})
 
     const toggleModuloCollapsed = (index: number) => {
@@ -160,6 +168,13 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
     const toggleTareaCollapsed = (index: number) => {
         setCollapsedTareas(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }))
+    }
+
+    const togglePuzzleCollapsed = (index: number) => {
+        setCollapsedPuzzles(prev => ({
             ...prev,
             [index]: !prev[index]
         }))
@@ -232,6 +247,12 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     requiereTarea: m.requiereTarea,
                     tareaInstrucciones: m.tareaInstrucciones,
                     tareaPuntos: m.tareaPuntos,
+                    requierePuzzle: m.requierePuzzle,
+                    puzzlePuntos: m.puzzlePuntos,
+                    puzzleTipo: m.puzzleTipo,
+                    puzzlePregunta: m.puzzlePregunta,
+                    puzzleRespuesta: m.puzzleRespuesta,
+                    puzzlePuzzles: m.puzzlePuzzles || [],
                     requiereCuestionario: m.requiereCuestionario,
                     cuestionarioPreguntas: m.cuestionarioPreguntas?.map((p: any, pIdx: number) => ({
                         id: p.id,
@@ -364,21 +385,38 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 if (pregs) todasPregs = pregs;
             }
 
-            // Cargar definiciones de tareas
+            // Cargar definiciones de tareas y puzles
             const { data: todosTsk } = await supabase
                 .from('ie_preguntas_respuestas')
                 .select('*')
                 .eq('curso_id', id)
-                .like('pregunta', 'TAREA_DEFINICION:%');
+                .or('pregunta.like.TAREA_DEFINICION:%,pregunta.like.PUZZLE_DEFINICION:%');
 
-            const tasksMap: Record<string, { instrucciones: string, puntos: string, tipo?: string, puzzleTipo?: string, puzzlePregunta?: string, puzzleRespuesta?: string, puzzles?: { pregunta: string, respuesta: string }[] }> = {}
+            const tasksMap: Record<string, any> = {}
+            const puzzlesMap: Record<string, any> = {}
             todosTsk?.forEach(t => {
                 const parts = t.pregunta.split('::')
                 const header = parts[0]
-                const modId = header.replace('TAREA_DEFINICION:', '').replace('[', '').replace(']', '')
                 try {
                     const payload = JSON.parse(parts.slice(1).join('::'))
-                    tasksMap[modId] = payload
+                    if (header.startsWith('TAREA_DEFINICION:')) {
+                        const modId = header.replace('TAREA_DEFINICION:', '').replace('[', '').replace(']', '')
+                        // Retrocompatibilidad: si la tarea vieja era de tipo puzzle, la mapeamos como puzle
+                        if (payload.tipo === 'puzzle') {
+                            puzzlesMap[modId] = {
+                                puntos: payload.puntos || '',
+                                puzzleTipo: payload.puzzleTipo || 'anagrama',
+                                puzzlePregunta: payload.puzzlePregunta || '',
+                                puzzleRespuesta: payload.puzzleRespuesta || '',
+                                puzzles: payload.puzzles || []
+                            }
+                        } else {
+                            tasksMap[modId] = payload
+                        }
+                    } else if (header.startsWith('PUZZLE_DEFINICION:')) {
+                        const modId = header.replace('PUZZLE_DEFINICION:', '').replace('[', '').replace(']', '')
+                        puzzlesMap[modId] = payload
+                    }
                 } catch (e) {
                     console.error('Error parsing task payload', e)
                 }
@@ -447,48 +485,53 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             });
                         }
 
-                        const taskDef = tasksMap[m.id] || m; // If it's already in draft
-                        return {
-                            id: m.id,
-                            titulo: m.titulo,
-                            recursos,
-                            requiereExamen: !!m.examen,
-                            examenMinAprobacion: m.examen?.min_aprobacion || 80,
-                            seguridadAumentada: m.examen?.seguridad_aumentada || false,
-                            maxCambiosPantalla: m.examen?.max_cambios_pantalla || 2,
-                            conTiempo: !!m.examen?.tiempo_limite,
-                            tiempoExamen: m.examen?.tiempo_limite || 20,
-                            intentosPermitidos: m.examen?.intentos_permitidos || 2,
-                            examenPreguntas: (m.examen?.preguntas || []).map((p: any) => ({
-                                id: p.id,
-                                pregunta: p.pregunta,
-                                opcion_a: p.opcion_a,
-                                opcion_b: p.opcion_b,
-                                opcion_c: p.opcion_c,
-                                opcion_d: p.opcion_d,
-                                respuesta_correcta: p.respuesta_correcta,
-                                tipo_pregunta: p.tipo_pregunta || 'opcion_multiple'
-                            })),
-                            requiereTarea: m.requiereTarea !== undefined ? m.requiereTarea : !!taskDef,
-                            tareaInstrucciones: m.tareaInstrucciones || taskDef?.instrucciones || '',
-                            tareaPuntos: m.tareaPuntos || taskDef?.puntos || '',
-                            tareaTipo: m.tareaTipo || taskDef?.tipo || 'convencional',
-                            tareaPuzzleTipo: m.tareaPuzzleTipo || taskDef?.puzzleTipo || 'anagrama',
-                            tareaPuzzlePregunta: m.tareaPuzzlePregunta || taskDef?.puzzlePregunta || '',
-                            tareaPuzzleRespuesta: m.tareaPuzzleRespuesta || taskDef?.puzzleRespuesta || '',
-                            tareaPuzzles: (m.tareaPuzzles || taskDef?.puzzles || (
-                                (m.tareaPuzzlePregunta || taskDef?.puzzlePregunta) ? [
-                                    {
-                                        pregunta: m.tareaPuzzlePregunta || taskDef?.puzzlePregunta || '',
-                                        respuesta: m.tareaPuzzleRespuesta || taskDef?.puzzleRespuesta || '',
-                                        tipo: m.tareaPuzzleTipo || taskDef?.puzzleTipo || 'anagrama'
-                                    }
-                                ] : [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]
-                            )).map((p: any) => ({
-                                pregunta: p.pregunta || '',
-                                respuesta: p.respuesta || '',
-                                tipo: p.tipo || m.tareaPuzzleTipo || taskDef?.puzzleTipo || 'anagrama'
-                            })),
+                         const taskDef = tasksMap[m.id];
+                         const puzzleDef = puzzlesMap[m.id];
+                         return {
+                             id: m.id,
+                             titulo: m.titulo,
+                             recursos,
+                             requiereExamen: !!m.examen,
+                             examenMinAprobacion: m.examen?.min_aprobacion || 80,
+                             seguridadAumentada: m.examen?.seguridad_aumentada || false,
+                             maxCambiosPantalla: m.examen?.max_cambios_pantalla || 2,
+                             conTiempo: !!m.examen?.tiempo_limite,
+                             tiempoExamen: m.examen?.tiempo_limite || 20,
+                             intentosPermitidos: m.examen?.intentos_permitidos || 2,
+                             examenPreguntas: (m.examen?.preguntas || []).map((p: any) => ({
+                                 id: p.id,
+                                 pregunta: p.pregunta,
+                                 opcion_a: p.opcion_a,
+                                 opcion_b: p.opcion_b,
+                                 opcion_c: p.opcion_c,
+                                 opcion_d: p.opcion_d,
+                                 respuesta_correcta: p.respuesta_correcta,
+                                 tipo_pregunta: p.tipo_pregunta || 'opcion_multiple'
+                             })),
+                             // Tarea Convencional
+                             requiereTarea: m.requiereTarea !== undefined ? m.requiereTarea : (!!taskDef || (m.requiereTarea && m.tareaTipo !== 'puzzle')),
+                             tareaInstrucciones: m.tareaInstrucciones || taskDef?.instrucciones || (m.tareaTipo !== 'puzzle' ? m.tareaInstrucciones : '') || '',
+                             tareaPuntos: m.tareaPuntos || taskDef?.puntos || (m.tareaTipo !== 'puzzle' ? m.tareaPuntos : '') || '',
+                             
+                             // Puzle (Juego Interactivo)
+                             requierePuzzle: m.requierePuzzle !== undefined ? m.requierePuzzle : (!!puzzleDef || (m.requiereTarea && m.tareaTipo === 'puzzle') || !!m.requierePuzzle),
+                             puzzlePuntos: m.puzzlePuntos || puzzleDef?.puntos || (m.tareaTipo === 'puzzle' ? m.tareaPuntos : '') || m.puzzlePuntos || '',
+                             puzzleTipo: m.puzzleTipo || puzzleDef?.puzzleTipo || m.tareaPuzzleTipo || m.puzzleTipo || 'anagrama',
+                             puzzlePregunta: m.puzzlePregunta || puzzleDef?.puzzlePregunta || m.tareaPuzzlePregunta || m.puzzlePregunta || '',
+                             puzzleRespuesta: m.puzzleRespuesta || puzzleDef?.puzzleRespuesta || m.tareaPuzzleRespuesta || m.puzzleRespuesta || '',
+                             puzzlePuzzles: (m.puzzlePuzzles || puzzleDef?.puzzles || m.tareaPuzzles || (
+                                 (m.puzzlePregunta || puzzleDef?.puzzlePregunta || m.tareaPuzzlePregunta) ? [
+                                     {
+                                         pregunta: m.puzzlePregunta || puzzleDef?.puzzlePregunta || m.tareaPuzzlePregunta || '',
+                                         respuesta: m.puzzleRespuesta || puzzleDef?.puzzleRespuesta || m.tareaPuzzleRespuesta || '',
+                                         tipo: m.puzzleTipo || puzzleDef?.puzzleTipo || m.tareaPuzzleTipo || 'anagrama'
+                                     }
+                                 ] : [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]
+                             )).map((p: any) => ({
+                                 pregunta: p.pregunta || '',
+                                 respuesta: p.respuesta || '',
+                                 tipo: p.tipo || m.puzzleTipo || puzzleDef?.puzzleTipo || m.tareaPuzzleTipo || 'anagrama'
+                             })),
                             requiereCuestionario: m.requiereCuestionario || false,
                             cuestionarioPreguntas: m.cuestionarioPreguntas || []
                         }
@@ -641,6 +684,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                     }
 
                     const taskDef = tasksMap[m.id];
+                    const puzzleDef = puzzlesMap[m.id];
                     const cuestionarioPreguntas = todosCuestionarios.filter(q => q.modulo_id === m.id);
                     return {
                         id: m.id,
@@ -663,25 +707,29 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                             respuesta_correcta: p.respuesta_correcta,
                             tipo_pregunta: p.tipo_pregunta || 'opcion_multiple'
                         })),
+                        // Tarea Convencional
                         requiereTarea: !!taskDef,
                         tareaInstrucciones: taskDef?.instrucciones || '',
                         tareaPuntos: taskDef?.puntos || '',
-                        tareaTipo: (taskDef?.tipo as 'convencional' | 'puzzle') || 'convencional',
-                        tareaPuzzleTipo: (taskDef?.puzzleTipo as 'anagrama' | 'ahorcado' | 'sopa') || 'anagrama',
-                        tareaPuzzlePregunta: taskDef?.puzzlePregunta || '',
-                        tareaPuzzleRespuesta: taskDef?.puzzleRespuesta || '',
-                        tareaPuzzles: (taskDef?.puzzles || (
-                            taskDef?.puzzlePregunta ? [
+                        
+                        // Puzle (Juego Interactivo)
+                        requierePuzzle: !!puzzleDef,
+                        puzzlePuntos: puzzleDef?.puntos || '',
+                        puzzleTipo: puzzleDef?.puzzleTipo || 'anagrama',
+                        puzzlePregunta: puzzleDef?.puzzlePregunta || '',
+                        puzzleRespuesta: puzzleDef?.puzzleRespuesta || '',
+                        puzzlePuzzles: (puzzleDef?.puzzles || (
+                            puzzleDef?.puzzlePregunta ? [
                                 {
-                                    pregunta: taskDef.puzzlePregunta || '',
-                                    respuesta: taskDef.puzzleRespuesta || '',
-                                    tipo: (taskDef.puzzleTipo as 'anagrama' | 'ahorcado' | 'sopa') || 'anagrama'
+                                    pregunta: puzzleDef.puzzlePregunta || '',
+                                    respuesta: puzzleDef.puzzleRespuesta || '',
+                                    tipo: puzzleDef.puzzleTipo || 'anagrama'
                                 }
                             ] : [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]
                         )).map((p: any) => ({
                             pregunta: p.pregunta || '',
                             respuesta: p.respuesta || '',
-                            tipo: p.tipo || (taskDef?.puzzleTipo as 'anagrama' | 'ahorcado' | 'sopa') || 'anagrama'
+                            tipo: p.tipo || puzzleDef?.puzzleTipo || 'anagrama'
                         })),
                         requiereCuestionario: cuestionarioPreguntas.length > 0,
                         cuestionarioPreguntas: cuestionarioPreguntas.map(p => ({
@@ -1325,7 +1373,7 @@ const generationId = data.generationId;
 
         // 1. Subir archivos de módulos (si los hay)
         setMensaje('Guardando archivos de contenido nuevos...')
-        const modulosFinales = []
+        const modulosFinales: Modulo[] = []
         for (let i = 0; i < modulos.length; i++) {
             const currentMod = modulos[i];
             setMensaje(`Guardando Módulo ${i + 1} de ${modulos.length}: "${currentMod.titulo || 'Sin título'}"... Subiendo lecturas e infografías...`)
@@ -1392,6 +1440,12 @@ const generationId = data.generationId;
                 tareaPuzzlePregunta: currentMod.tareaPuzzlePregunta,
                 tareaPuzzleRespuesta: currentMod.tareaPuzzleRespuesta,
                 tareaPuzzles: currentMod.tareaPuzzles,
+                requierePuzzle: currentMod.requierePuzzle,
+                puzzlePuntos: currentMod.puzzlePuntos,
+                puzzleTipo: currentMod.puzzleTipo,
+                puzzlePregunta: currentMod.puzzlePregunta,
+                puzzleRespuesta: currentMod.puzzleRespuesta,
+                puzzlePuzzles: currentMod.puzzlePuzzles,
                 requiereCuestionario: currentMod.requiereCuestionario,
                 cuestionarioPreguntas: currentMod.cuestionarioPreguntas,
                 seguridadAumentada: currentMod.seguridadAumentada,
@@ -1451,6 +1505,12 @@ const generationId = data.generationId;
                     tareaPuzzlePregunta: m.tareaPuzzlePregunta,
                     tareaPuzzleRespuesta: m.tareaPuzzleRespuesta,
                     tareaPuzzles: m.tareaPuzzles || [],
+                    requierePuzzle: m.requierePuzzle,
+                    puzzlePuntos: m.puzzlePuntos,
+                    puzzleTipo: m.puzzleTipo,
+                    puzzlePregunta: m.puzzlePregunta,
+                    puzzleRespuesta: m.puzzleRespuesta,
+                    puzzlePuzzles: m.puzzlePuzzles || [],
                     requiereCuestionario: !!m.requiereCuestionario,
                     cuestionarioPreguntas: m.cuestionarioPreguntas?.map((p, idx) => ({
                         id: p.id,
@@ -1717,12 +1777,7 @@ const generationId = data.generationId;
                         const definitionKey = `TAREA_DEFINICION:${moduloId}`;
                         const definitionPayload = JSON.stringify({
                             instrucciones: mod.tareaInstrucciones || '',
-                            puntos: mod.tareaPuntos || '',
-                            tipo: mod.tareaTipo || 'convencional',
-                            puzzleTipo: mod.tareaPuzzleTipo || 'anagrama',
-                            puzzlePregunta: mod.tareaPuzzlePregunta || '',
-                            puzzleRespuesta: mod.tareaPuzzleRespuesta || '',
-                            puzzles: mod.tareaPuzzles || []
+                            puntos: mod.tareaPuntos || ''
                         });
 
                         const { data: existingDef } = await supabase
@@ -1755,6 +1810,49 @@ const generationId = data.generationId;
                             .eq('curso_id', id)
                             .eq('respuesta', 'TAREA_DEFINICION')
                             .like('pregunta', `TAREA_DEFINICION:${moduloId}%`);
+                    }
+
+                    // Save or update puzzle definition inside ie_preguntas_respuestas
+                    if (mod.requierePuzzle) {
+                        const definitionKey = `PUZZLE_DEFINICION:${moduloId}`;
+                        const definitionPayload = JSON.stringify({
+                            puntos: mod.puzzlePuntos || '',
+                            puzzleTipo: mod.puzzleTipo || 'anagrama',
+                            puzzlePregunta: mod.puzzlePregunta || '',
+                            puzzleRespuesta: mod.puzzleRespuesta || '',
+                            puzzles: mod.puzzlePuzzles || []
+                        });
+
+                        const { data: existingPuzzleDef } = await supabase
+                            .from('ie_preguntas_respuestas')
+                            .select('id')
+                            .eq('curso_id', id)
+                            .eq('respuesta', 'PUZZLE_DEFINICION')
+                            .like('pregunta', `PUZZLE_DEFINICION:${moduloId}%`)
+                            .single();
+                        
+                        if (existingPuzzleDef) {
+                            await supabase
+                                .from('ie_preguntas_respuestas')
+                                .update({ pregunta: `${definitionKey}::${definitionPayload}` })
+                                .eq('id', existingPuzzleDef.id);
+                        } else {
+                            await supabase
+                                .from('ie_preguntas_respuestas')
+                                .insert({
+                                    curso_id: id,
+                                    user_id: user.id,
+                                    pregunta: `${definitionKey}::${definitionPayload}`,
+                                    respuesta: 'PUZZLE_DEFINICION'
+                                });
+                        }
+                    } else {
+                        await supabase
+                            .from('ie_preguntas_respuestas')
+                            .delete()
+                            .eq('curso_id', id)
+                            .eq('respuesta', 'PUZZLE_DEFINICION')
+                            .like('pregunta', `PUZZLE_DEFINICION:${moduloId}%`);
                     }
                 }
             }
@@ -2895,14 +2993,14 @@ const generationId = data.generationId;
                                                         <input
                                                             type="checkbox"
                                                             checked={!!modulo.requiereTarea}
-                                                        onChange={(e) => handleModuloChange(index, 'requiereTarea', e.target.checked)}
-                                                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
-                                                    />
-                                                    <span className="text-sm font-bold text-amber-900 flex items-center gap-1.5">
-                                                        <FileText className="h-4 w-4 text-amber-700" />
-                                                        ¿Este módulo requiere que el alumno entregue una tarea o práctica?
-                                                    </span>
-                                                </label>
+                                                            onChange={(e) => handleModuloChange(index, 'requiereTarea', e.target.checked)}
+                                                            className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+                                                        />
+                                                        <span className="text-sm font-bold text-amber-900 flex items-center gap-1.5">
+                                                            <FileText className="h-4 w-4 text-amber-700" />
+                                                            ¿Este módulo requiere que el alumno entregue una tarea o práctica convencional?
+                                                        </span>
+                                                    </label>
                                                     {modulo.requiereTarea && (
                                                         <button type="button" onClick={() => toggleTareaCollapsed(index)} className="p-1 rounded-md hover:bg-amber-100 transition-colors text-amber-600 hover:text-amber-800">
                                                             {collapsedTareas[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
@@ -2913,164 +3011,175 @@ const generationId = data.generationId;
                                                 {modulo.requiereTarea && (
                                                     <div className={`mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-amber-250 space-y-4 ${collapsedTareas[index] ? 'hidden' : ''}`}>
                                                         <div>
-                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Tipo de Tarea:</label>
-                                                            <select
-                                                                value={modulo.tareaTipo || 'convencional'}
-                                                                onChange={(e) => handleModuloChange(index, 'tareaTipo', e.target.value)}
-                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold"
-                                                            >
-                                                                <option value="convencional">Tarea Convencional (Subir Archivo/Texto)</option>
-                                                                <option value="puzzle">Tarea de Puzle (Juego Interactivo)</option>
-                                                            </select>
+                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Instrucciones de la Tarea:</label>
+                                                            <textarea
+                                                                rows={3}
+                                                                placeholder="Escribe detalladamente las instrucciones de lo que el alumno debe realizar y entregar..."
+                                                                value={modulo.tareaInstrucciones || ''}
+                                                                onChange={(e) => handleModuloChange(index, 'tareaInstrucciones', e.target.value)}
+                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-amber-400"
+                                                                required
+                                                            />
                                                         </div>
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Puntos a evaluar (separados por coma o lista):</label>
+                                                            <textarea
+                                                                rows={2}
+                                                                placeholder="Ej. Claridad en la explicación, Capturas de pantalla adjuntas, Código fuente funcional"
+                                                                value={modulo.tareaPuntos || ''}
+                                                                onChange={(e) => handleModuloChange(index, 'tareaPuntos', e.target.value)}
+                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold resize-y shadow-inner focus:border-amber-400"
+                                                                required
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
 
-                                                        {modulo.tareaTipo === 'puzzle' ? (
-                                                            <>
-                                                                {/* Lista dinámica de preguntas y respuestas */}
-                                                                <div className="space-y-4 pt-2">
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-xs font-bold text-gray-700">Preguntas de la secuencia del Puzle:</span>
-                                                                        {(modulo.tareaPuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).length < 5 && (
+                                        {/* Modular Puzzle/Game Box */}
+                                        <div className="mt-4 pt-4 border-t border-zinc-100">
+                                            <div className="bg-orange-50/50 rounded-xl p-4 border border-orange-100">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!modulo.requierePuzzle}
+                                                            onChange={(e) => handleModuloChange(index, 'requierePuzzle', e.target.checked)}
+                                                            className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                                        />
+                                                        <span className="text-sm font-bold text-orange-900 flex items-center gap-1.5">
+                                                            <Sparkles className="h-4 w-4 text-orange-700" />
+                                                            ¿Este módulo requiere un Puzle (Juego Interactivo)?
+                                                        </span>
+                                                    </label>
+                                                    {modulo.requierePuzzle && (
+                                                        <button type="button" onClick={() => togglePuzzleCollapsed(index)} className="p-1 rounded-md hover:bg-orange-100 transition-colors text-orange-600 hover:text-orange-800">
+                                                            {collapsedPuzzles[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {modulo.requierePuzzle && (
+                                                    <div className={`mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-orange-250 space-y-4 ${collapsedPuzzles[index] ? 'hidden' : ''}`}>
+                                                        {/* Lista dinámica de preguntas y respuestas del Puzle */}
+                                                        <div className="space-y-4 pt-2">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-xs font-bold text-gray-700">Preguntas de la secuencia del Puzle:</span>
+                                                                {(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).length < 5 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                            const lastType = newPuzzles[newPuzzles.length - 1]?.tipo || 'anagrama';
+                                                                            newPuzzles.push({ pregunta: '', respuesta: '', tipo: lastType });
+                                                                            handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                        }}
+                                                                        className="px-2.5 py-1 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold rounded shadow-sm transition"
+                                                                    >
+                                                                        + Agregar Pregunta
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).map((pItem, pIdx) => (
+                                                                <div key={pIdx} className="bg-orange-50/20 p-4 border border-orange-100 rounded-xl space-y-3.5 relative shadow-sm">
+                                                                    <div className="flex flex-wrap items-center justify-between gap-3 bg-orange-500/5 p-2 rounded-lg border border-orange-500/10">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className="text-xs font-black text-orange-900 bg-orange-250 px-2.5 py-1 rounded">Pregunta #{pIdx + 1}</span>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <label className="text-[10px] font-black text-orange-900 uppercase">Tipo:</label>
+                                                                                <select
+                                                                                    value={pItem.tipo || 'anagrama'}
+                                                                                    onChange={(e) => {
+                                                                                        const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                                        newPuzzles[pIdx].tipo = e.target.value as 'anagrama' | 'ahorcado' | 'sopa';
+                                                                                        handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                                        if (pIdx === 0) handleModuloChange(index, 'puzzleTipo', e.target.value);
+                                                                                    }}
+                                                                                    className="text-xs rounded border-gray-300 py-1 px-2 border bg-white text-black font-semibold shadow-sm focus:border-orange-400"
+                                                                                >
+                                                                                    <option value="anagrama">Anagrama</option>
+                                                                                    <option value="ahorcado">Ahorcado</option>
+                                                                                    <option value="sopa">Ordenar Sílabas</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                        {(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).length > 1 && (
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={() => {
-                                                                                    const newPuzzles = [...(modulo.tareaPuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
-                                                                                    const lastType = newPuzzles[newPuzzles.length - 1]?.tipo || 'anagrama';
-                                                                                    newPuzzles.push({ pregunta: '', respuesta: '', tipo: lastType });
-                                                                                    handleModuloChange(index, 'tareaPuzzles', newPuzzles);
+                                                                                    const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                                    newPuzzles.splice(pIdx, 1);
+                                                                                    handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                                    handleModuloChange(index, 'puzzlePregunta', newPuzzles[0].pregunta);
+                                                                                    handleModuloChange(index, 'puzzleRespuesta', newPuzzles[0].respuesta);
+                                                                                    handleModuloChange(index, 'puzzleTipo', newPuzzles[0].tipo || 'anagrama');
                                                                                 }}
-                                                                                className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold rounded shadow-sm transition"
+                                                                                className="text-red-550 hover:text-red-700 text-[10px] font-bold transition"
                                                                             >
-                                                                                + Agregar Pregunta
+                                                                                Eliminar
                                                                             </button>
                                                                         )}
                                                                     </div>
-
-                                                                    {(modulo.tareaPuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).map((pItem, pIdx) => (
-                                                                        <div key={pIdx} className="bg-amber-50/20 p-4 border border-amber-100 rounded-xl space-y-3.5 relative shadow-sm">
-                                                                            <div className="flex flex-wrap items-center justify-between gap-3 bg-amber-500/5 p-2 rounded-lg border border-amber-500/10">
-                                                                                <div className="flex items-center gap-3">
-                                                                                    <span className="text-xs font-black text-amber-900 bg-amber-250 px-2.5 py-1 rounded">Pregunta #{pIdx + 1}</span>
-                                                                                    <div className="flex items-center gap-1.5">
-                                                                                        <label className="text-[10px] font-black text-amber-900 uppercase">Tipo:</label>
-                                                                                        <select
-                                                                                            value={pItem.tipo || 'anagrama'}
-                                                                                            onChange={(e) => {
-                                                                                                const newPuzzles = [...(modulo.tareaPuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
-                                                                                                newPuzzles[pIdx].tipo = e.target.value as 'anagrama' | 'ahorcado' | 'sopa';
-                                                                                                handleModuloChange(index, 'tareaPuzzles', newPuzzles);
-                                                                                                if (pIdx === 0) handleModuloChange(index, 'tareaPuzzleTipo', e.target.value);
-                                                                                            }}
-                                                                                            className="text-xs rounded border-gray-300 py-1 px-2 border bg-white text-black font-semibold shadow-sm focus:border-amber-400"
-                                                                                        >
-                                                                                            <option value="anagrama">Anagrama</option>
-                                                                                            <option value="ahorcado">Ahorcado</option>
-                                                                                            <option value="sopa">Ordenar Sílabas</option>
-                                                                                        </select>
-                                                                                    </div>
-                                                                                </div>
-                                                                                {(modulo.tareaPuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).length > 1 && (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => {
-                                                                                            const newPuzzles = [...(modulo.tareaPuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
-                                                                                            newPuzzles.splice(pIdx, 1);
-                                                                                            handleModuloChange(index, 'tareaPuzzles', newPuzzles);
-                                                                                            handleModuloChange(index, 'tareaPuzzlePregunta', newPuzzles[0].pregunta);
-                                                                                            handleModuloChange(index, 'tareaPuzzleRespuesta', newPuzzles[0].respuesta);
-                                                                                            handleModuloChange(index, 'tareaPuzzleTipo', newPuzzles[0].tipo || 'anagrama');
-                                                                                        }}
-                                                                                        className="text-red-550 hover:text-red-700 text-[10px] font-bold transition"
-                                                                                    >
-                                                                                        Eliminar
-                                                                                    </button>
-                                                                                )}
-                                                                            </div>
-                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                                                <div>
-                                                                                    <label className="block text-[10px] font-bold text-gray-600 mb-1 uppercase tracking-wider">Pregunta o Pista:</label>
-                                                                                    <textarea
-                                                                                        rows={3}
-                                                                                        placeholder="Escribe aquí la pregunta o pista que verá el alumno..."
-                                                                                        value={pItem.pregunta || ''}
-                                                                                        onChange={(e) => {
-                                                                                            const newPuzzles = [...(modulo.tareaPuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
-                                                                                            newPuzzles[pIdx].pregunta = e.target.value;
-                                                                                            handleModuloChange(index, 'tareaPuzzles', newPuzzles);
-                                                                                            if (pIdx === 0) handleModuloChange(index, 'tareaPuzzlePregunta', e.target.value);
-                                                                                        }}
-                                                                                        className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-amber-400"
-                                                                                        required
-                                                                                    />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <label className="block text-[10px] font-bold text-gray-600 mb-1 uppercase tracking-wider">Respuesta (Palabra única):</label>
-                                                                                    <textarea
-                                                                                        rows={3}
-                                                                                        placeholder="Escribe la palabra exacta que resolverá el puzle..."
-                                                                                        value={pItem.respuesta || ''}
-                                                                                        onChange={(e) => {
-                                                                                            const val = e.target.value
-                                                                                                .toUpperCase()
-                                                                                                .replace(/\s+/g, '') // Quitar espacios
-                                                                                                .normalize("NFD")
-                                                                                                .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
-                                                                                                .replace(/[^A-Z0-9]/g, ""); // Solo dejar letras y números
-
-                                                                                            const newPuzzles = [...(modulo.tareaPuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
-                                                                                            newPuzzles[pIdx].respuesta = val;
-                                                                                            handleModuloChange(index, 'tareaPuzzles', newPuzzles);
-                                                                                            if (pIdx === 0) handleModuloChange(index, 'tareaPuzzleRespuesta', val);
-                                                                                        }}
-                                                                                        className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-amber-400"
-                                                                                        required
-                                                                                    />
-                                                                                </div>
-                                                                            </div>
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <label className="block text-[10px] font-bold text-gray-600 mb-1 uppercase tracking-wider">Pregunta o Pista:</label>
+                                                                            <textarea
+                                                                                rows={3}
+                                                                                placeholder="Escribe aquí la pregunta o pista que verá el alumno..."
+                                                                                value={pItem.pregunta || ''}
+                                                                                onChange={(e) => {
+                                                                                    const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                                    newPuzzles[pIdx].pregunta = e.target.value;
+                                                                                    handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                                    if (pIdx === 0) handleModuloChange(index, 'puzzlePregunta', e.target.value);
+                                                                                }}
+                                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-orange-400"
+                                                                                required
+                                                                            />
                                                                         </div>
-                                                                    ))}
-                                                                </div>
+                                                                        <div>
+                                                                            <label className="block text-[10px] font-bold text-gray-600 mb-1 uppercase tracking-wider">Respuesta (Palabra única):</label>
+                                                                            <textarea
+                                                                                rows={3}
+                                                                                placeholder="Escribe la palabra exacta que resolverá el puzle..."
+                                                                                value={pItem.respuesta || ''}
+                                                                                onChange={(e) => {
+                                                                                    const val = e.target.value
+                                                                                        .toUpperCase()
+                                                                                        .replace(/\s+/g, '') // Quitar espacios
+                                                                                        .normalize("NFD")
+                                                                                        .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+                                                                                        .replace(/[^A-Z0-9]/g, ""); // Solo dejar letras y números
 
-                                                                <div>
-                                                                    <label className="block text-xs font-bold text-gray-700 mb-1">Puntos de la Tarea:</label>
-                                                                    <input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        max="100"
-                                                                        placeholder="Ej. 10"
-                                                                        value={modulo.tareaPuntos || ''}
-                                                                        onChange={(e) => handleModuloChange(index, 'tareaPuntos', e.target.value)}
-                                                                        className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold"
-                                                                        required
-                                                                    />
+                                                                                    const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                                    newPuzzles[pIdx].respuesta = val;
+                                                                                    handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                                    if (pIdx === 0) handleModuloChange(index, 'puzzleRespuesta', val);
+                                                                                }}
+                                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-orange-400"
+                                                                                required
+                                                                            />
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <div>
-                                                                    <label className="block text-xs font-bold text-gray-700 mb-1">Instrucciones de la Tarea:</label>
-                                                                    <textarea
-                                                                        rows={3}
-                                                                        placeholder="Escribe detalladamente las instrucciones de lo que el alumno debe realizar y entregar..."
-                                                                        value={modulo.tareaInstrucciones || ''}
-                                                                        onChange={(e) => handleModuloChange(index, 'tareaInstrucciones', e.target.value)}
-                                                                        className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold"
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs font-bold text-gray-700 mb-1">Puntos a evaluar (separados por coma o lista):</label>
-                                                                    <textarea
-                                                                        rows={2}
-                                                                        placeholder="Ej. Claridad en la explicación, Capturas de pantalla adjuntas, Código fuente funcional"
-                                                                        value={modulo.tareaPuntos || ''}
-                                                                        onChange={(e) => handleModuloChange(index, 'tareaPuntos', e.target.value)}
-                                                                        className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold resize-y"
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                            </>
-                                                        )}
+                                                            ))}
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Puntos del Puzle:</label>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max="100"
+                                                                placeholder="Ej. 10"
+                                                                value={modulo.puzzlePuntos || ''}
+                                                                onChange={(e) => handleModuloChange(index, 'puzzlePuntos', e.target.value)}
+                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-orange-400"
+                                                                required
+                                                            />
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>

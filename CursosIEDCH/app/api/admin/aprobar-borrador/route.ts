@@ -223,12 +223,7 @@ export async function POST(req: Request) {
                         const definitionKey = `TAREA_DEFINICION:${moduloId}`;
                         const definitionPayload = JSON.stringify({
                             instrucciones: m.tareaInstrucciones || '',
-                            puntos: m.tareaPuntos || '',
-                            tipo: m.tareaTipo || 'convencional',
-                            puzzleTipo: m.tareaPuzzleTipo || 'anagrama',
-                            puzzlePregunta: m.tareaPuzzlePregunta || '',
-                            puzzleRespuesta: m.tareaPuzzleRespuesta || '',
-                            puzzles: m.tareaPuzzles || []
+                            puntos: m.tareaPuntos || ''
                         });
 
                         const { data: existingDef } = await supabaseAdmin
@@ -261,6 +256,49 @@ export async function POST(req: Request) {
                             .eq('curso_id', cursoId)
                             .eq('respuesta', 'TAREA_DEFINICION')
                             .like('pregunta', `TAREA_DEFINICION:${moduloId}%`);
+                    }
+
+                    // Sincronizar Definiciones de Puzles
+                    if (m.requierePuzzle) {
+                        const definitionKey = `PUZZLE_DEFINICION:${moduloId}`;
+                        const definitionPayload = JSON.stringify({
+                            puntos: m.puzzlePuntos || '',
+                            puzzleTipo: m.puzzleTipo || 'anagrama',
+                            puzzlePregunta: m.puzzlePregunta || '',
+                            puzzleRespuesta: m.puzzleRespuesta || '',
+                            puzzles: m.puzzlePuzzles || []
+                        });
+
+                        const { data: existingDef } = await supabaseAdmin
+                            .from('ie_preguntas_respuestas')
+                            .select('id')
+                            .eq('curso_id', cursoId)
+                            .eq('respuesta', 'PUZZLE_DEFINICION')
+                            .like('pregunta', `PUZZLE_DEFINICION:${moduloId}%`)
+                            .maybeSingle();
+                        
+                        if (existingDef) {
+                            await supabaseAdmin
+                                .from('ie_preguntas_respuestas')
+                                .update({ pregunta: `${definitionKey}::${definitionPayload}` })
+                                .eq('id', existingDef.id);
+                        } else if (profesorId) {
+                            await supabaseAdmin
+                                .from('ie_preguntas_respuestas')
+                                .insert({
+                                    curso_id: cursoId,
+                                    user_id: profesorId,
+                                    pregunta: `${definitionKey}::${definitionPayload}`,
+                                    respuesta: 'PUZZLE_DEFINICION'
+                                });
+                        }
+                    } else {
+                        await supabaseAdmin
+                            .from('ie_preguntas_respuestas')
+                            .delete()
+                            .eq('curso_id', cursoId)
+                            .eq('respuesta', 'PUZZLE_DEFINICION')
+                            .like('pregunta', `PUZZLE_DEFINICION:${moduloId}%`);
                     }
 
                     // Sincronizar Cuestionarios Abiertos

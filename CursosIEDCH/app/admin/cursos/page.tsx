@@ -237,14 +237,20 @@ export default function AdminCursosPage() {
             intentos_permitidos: m.examen.intentos_permitidos !== undefined ? m.examen.intentos_permitidos : 2,
             preguntas: (m.examen.preguntas || []).map(normalizePregunta)
         } : null,
-        requiereTarea: !!m?.requiereTarea,
-        tareaInstrucciones: m?.tareaInstrucciones || '',
-        tareaPuntos: m?.tareaPuntos || '',
+        requiereTarea: !!m?.requiereTarea && m?.tareaTipo !== 'puzzle',
+        tareaInstrucciones: m?.tareaTipo !== 'puzzle' ? (m?.tareaInstrucciones || '') : '',
+        tareaPuntos: m?.tareaTipo !== 'puzzle' ? (m?.tareaPuntos || '') : '',
         tareaTipo: m?.tareaTipo || 'convencional',
         tareaPuzzleTipo: m?.tareaPuzzleTipo || 'anagrama',
         tareaPuzzlePregunta: m?.tareaPuzzlePregunta || '',
         tareaPuzzleRespuesta: m?.tareaPuzzleRespuesta || '',
         tareaPuzzles: m?.tareaPuzzles || [],
+        requierePuzzle: !!m?.requierePuzzle || (!!m?.requiereTarea && m?.tareaTipo === 'puzzle'),
+        puzzlePuntos: m?.puzzlePuntos || (m?.tareaTipo === 'puzzle' ? m?.tareaPuntos : '') || '',
+        puzzleTipo: m?.puzzleTipo || (m?.tareaTipo === 'puzzle' ? m?.tareaPuzzleTipo : 'anagrama') || 'anagrama',
+        puzzlePregunta: m?.puzzlePregunta || (m?.tareaTipo === 'puzzle' ? m?.tareaPuzzlePregunta : '') || '',
+        puzzleRespuesta: m?.puzzleRespuesta || (m?.tareaTipo === 'puzzle' ? m?.tareaPuzzleRespuesta : '') || '',
+        puzzlePuzzles: m?.puzzlePuzzles || (m?.tareaTipo === 'puzzle' ? m?.tareaPuzzles : null) || [],
         requiereCuestionario: !!m?.requiereCuestionario,
         cuestionarioPreguntas: m?.cuestionarioPreguntas || []
     })
@@ -284,7 +290,7 @@ export default function AdminCursosPage() {
                 .from('ie_preguntas_respuestas')
                 .select('pregunta')
                 .eq('curso_id', curso.id)
-                .eq('respuesta', 'TAREA_DEFINICION')
+                .in('respuesta', ['TAREA_DEFINICION', 'PUZZLE_DEFINICION'])
         ])
 
         const moduloIds = (modulos || []).map((m: any) => m.id)
@@ -320,27 +326,48 @@ export default function AdminCursosPage() {
             const moduloPreguntas = moduloExam ? (preguntas || []).filter((p: any) => p.examen_id === moduloExam.id) : []
 
             const tareaDefData = (respuestas || []).find((r: any) => r.pregunta.startsWith(`TAREA_DEFINICION:${m.id}::`));
+            const puzzleDefData = (respuestas || []).find((r: any) => r.pregunta.startsWith(`PUZZLE_DEFINICION:${m.id}::`));
+            
             let requiereTarea = false;
             let tareaInstrucciones = '';
             let tareaPuntos = '';
-            let tareaTipo = 'convencional';
-            let tareaPuzzleTipo = 'anagrama';
-            let tareaPuzzlePregunta = '';
-            let tareaPuzzleRespuesta = '';
-            let tareaPuzzles: any[] = [];
+
+            let requierePuzzle = false;
+            let puzzlePuntos = '';
+            let puzzleTipo = 'anagrama';
+            let puzzlePregunta = '';
+            let puzzleRespuesta = '';
+            let puzzlePuzzles: any[] = [];
             
             if (tareaDefData) {
-                requiereTarea = true;
                 const parts = tareaDefData.pregunta.split('::');
                 try {
                     const payload = JSON.parse(parts.slice(1).join('::'));
-                    tareaInstrucciones = payload.instrucciones || '';
-                    tareaPuntos = payload.puntos || '';
-                    tareaTipo = payload.tipo || 'convencional';
-                    tareaPuzzleTipo = payload.puzzleTipo || 'anagrama';
-                    tareaPuzzlePregunta = payload.puzzlePregunta || '';
-                    tareaPuzzleRespuesta = payload.puzzleRespuesta || '';
-                    tareaPuzzles = payload.puzzles || [];
+                    if (payload.tipo === 'puzzle') {
+                        requierePuzzle = true;
+                        puzzlePuntos = payload.puntos || '';
+                        puzzleTipo = payload.puzzleTipo || 'anagrama';
+                        puzzlePregunta = payload.puzzlePregunta || '';
+                        puzzleRespuesta = payload.puzzleRespuesta || '';
+                        puzzlePuzzles = payload.puzzles || [];
+                    } else {
+                        requiereTarea = true;
+                        tareaInstrucciones = payload.instrucciones || '';
+                        tareaPuntos = payload.puntos || '';
+                    }
+                } catch (e) {}
+            }
+
+            if (puzzleDefData) {
+                requierePuzzle = true;
+                const parts = puzzleDefData.pregunta.split('::');
+                try {
+                    const payload = JSON.parse(parts.slice(1).join('::'));
+                    puzzlePuntos = payload.puntos || '';
+                    puzzleTipo = payload.puzzleTipo || 'anagrama';
+                    puzzlePregunta = payload.puzzlePregunta || '';
+                    puzzleRespuesta = payload.puzzleRespuesta || '';
+                    puzzlePuzzles = payload.puzzles || [];
                 } catch (e) {}
             }
 
@@ -358,11 +385,12 @@ export default function AdminCursosPage() {
                 requiereTarea,
                 tareaInstrucciones,
                 tareaPuntos,
-                tareaTipo,
-                tareaPuzzleTipo,
-                tareaPuzzlePregunta,
-                tareaPuzzleRespuesta,
-                tareaPuzzles,
+                requierePuzzle,
+                puzzlePuntos,
+                puzzleTipo,
+                puzzlePregunta,
+                puzzleRespuesta,
+                puzzlePuzzles,
                 requiereCuestionario: (cuestionarios || []).filter((q: any) => q.modulo_id === m.id).length > 0,
                 cuestionarioPreguntas: (cuestionarios || []).filter((q: any) => q.modulo_id === m.id).map((q: any) => ({
                     id: q.id,
@@ -475,36 +503,38 @@ export default function AdminCursosPage() {
                     ) : <p className="text-xs text-gray-500 italic">Sin recursos</p>}
                 </div>
                 <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Tarea del módulo</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Tarea Convencional</p>
                     {mod.requiereTarea ? (
-                        mod.tareaTipo === 'puzzle' ? (
-                            <div className="space-y-2 bg-amber-50 p-3 rounded-md border border-amber-200 shadow-sm">
-                                <p className="text-xs font-black text-amber-950 flex items-center gap-1 uppercase tracking-wide">
-                                    🧩 Tarea de Puzle (Juego)
-                                </p>
-                                <div className="space-y-1.5 mt-1.5">
-                                    {(mod.tareaPuzzles || (
-                                        (mod.tareaPuzzlePregunta) ? [
-                                            { pregunta: mod.tareaPuzzlePregunta, respuesta: mod.tareaPuzzleRespuesta, tipo: mod.tareaPuzzleTipo || 'anagrama' }
-                                        ] : []
-                                    )).map((p: any, pIdx: number) => (
-                                        <div key={pIdx} className="p-2 bg-white rounded border border-amber-100/80 text-xs shadow-inner">
-                                            <p className="font-extrabold text-amber-900">Pregunta #{pIdx + 1} ({p.tipo === 'sopa' ? 'ordenar sílabas' : (p.tipo || 'anagrama')})</p>
-                                            <p className="text-gray-700 mt-0.5"><span className="font-semibold text-gray-400">Pista:</span> {p.pregunta}</p>
-                                            <p className="text-gray-700"><span className="font-semibold text-gray-400">Respuesta:</span> <code className="bg-zinc-100 px-1 py-0.5 rounded font-black text-amber-800 uppercase text-[10px]">{p.respuesta}</code></p>
-                                        </div>
-                                    ))}
-                                </div>
-                                {mod.tareaPuntos && <p className="text-xs text-amber-950 mt-1 font-bold">Valor: {mod.tareaPuntos} pts</p>}
+                        <div className="space-y-1 bg-amber-50 p-2.5 rounded-md border border-amber-200">
+                            <p className="text-xs font-semibold text-amber-900">Instrucciones:</p>
+                            <p className="text-xs text-amber-800 whitespace-pre-wrap">{mod.tareaInstrucciones || 'Sin instrucciones'}</p>
+                            {mod.tareaPuntos && <p className="text-xs text-amber-950 mt-1 font-bold">Valor: {mod.tareaPuntos} pts</p>}
+                        </div>
+                    ) : <p className="text-xs text-gray-500 italic">No requiere tarea convencional</p>}
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Puzle / Juego Interactivo</p>
+                    {mod.requierePuzzle ? (
+                        <div className="space-y-2 bg-orange-50 p-2.5 rounded-md border border-orange-200 shadow-sm">
+                            <p className="text-xs font-black text-orange-950 flex items-center gap-1 uppercase tracking-wide">
+                                🧩 Puzle Interactivo
+                            </p>
+                            <div className="space-y-1.5 mt-1.5">
+                                {(mod.puzzlePuzzles || (
+                                    (mod.puzzlePregunta) ? [
+                                        { pregunta: mod.puzzlePregunta, respuesta: mod.puzzleRespuesta, tipo: mod.puzzleTipo || 'anagrama' }
+                                    ] : []
+                                )).map((p: any, pIdx: number) => (
+                                    <div key={pIdx} className="p-2 bg-white rounded border border-orange-100 text-xs shadow-inner">
+                                        <p className="font-extrabold text-orange-900">Pregunta #{pIdx + 1} ({p.tipo === 'sopa' ? 'ordenar sílabas' : (p.tipo || 'anagrama')})</p>
+                                        <p className="text-gray-700 mt-0.5"><span className="font-semibold text-gray-400">Pista:</span> {p.pregunta}</p>
+                                        <p className="text-gray-700"><span className="font-semibold text-gray-400">Respuesta:</span> <code className="bg-zinc-100 px-1 py-0.5 rounded font-black text-orange-800 uppercase text-[10px]">{p.respuesta}</code></p>
+                                    </div>
+                                ))}
                             </div>
-                        ) : (
-                            <div className="space-y-1 bg-blue-50 p-2 rounded-md border border-blue-100">
-                                <p className="text-xs font-semibold text-blue-900">Instrucciones:</p>
-                                <p className="text-xs text-blue-800 whitespace-pre-wrap">{mod.tareaInstrucciones || 'Sin instrucciones'}</p>
-                                {mod.tareaPuntos && <p className="text-xs text-blue-800 mt-1 font-semibold">Valor: {mod.tareaPuntos} pts</p>}
-                            </div>
-                        )
-                    ) : <p className="text-xs text-gray-500 italic">No requiere tarea</p>}
+                            {mod.puzzlePuntos && <p className="text-xs text-orange-950 mt-1 font-bold">Valor: {mod.puzzlePuntos} pts</p>}
+                        </div>
+                    ) : <p className="text-xs text-gray-500 italic">No requiere puzle interactivo</p>}
                 </div>
                 <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Examen del módulo</p>

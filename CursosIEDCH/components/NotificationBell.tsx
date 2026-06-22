@@ -51,8 +51,20 @@ export default function NotificationBell({ userId, iconClassName }: { userId: st
 
         fetchNotifications()
 
-        // Suscribirse a cambios en tiempo real
-        const channel = supabase.channel('notificaciones-channel')
+        // Suscribirse a cambios en tiempo real con un canal único y aleatorio para evitar colisiones en React Strict Mode y Fast Refresh
+        const channelId = `notificaciones:${userId}:${Math.random().toString(36).substring(2, 15)}`
+        
+        // Limpiar canales antiguos del usuario para evitar colisiones y fugas de memoria
+        try {
+            (supabase.getChannels() as any[]).forEach((ch) => {
+                const name = ch.name || ch.topic || ''
+                if (name.includes(`notificaciones:${userId}`)) {
+                    supabase.removeChannel(ch)
+                }
+            })
+        } catch (e) {}
+
+        const channel = supabase.channel(channelId)
             .on(
                 'postgres_changes',
                 {
@@ -61,7 +73,7 @@ export default function NotificationBell({ userId, iconClassName }: { userId: st
                     table: 'ie_notificaciones',
                     filter: `usuario_id=eq.${userId}`
                 },
-                (payload) => {
+                () => {
                     fetchNotifications() // Recargar para mantener el orden correcto
                 }
             )
