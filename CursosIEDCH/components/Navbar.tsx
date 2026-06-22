@@ -331,18 +331,20 @@ export default function Navbar() {
                 {/* Mobile Menu Content (flotante, absoluto, de ancho completo) */}
                 {isMenuOpen && (
                     <div className={`absolute top-16 left-0 right-0 w-full md:hidden rounded-2xl ${navBorderClass} bg-white/95 backdrop-blur-md shadow-xl z-50 overflow-hidden pointer-events-auto`}>
-                        {/* Contenedor de Ondas con overflow-hidden para no sobresalir de las esquinas redondeadas */}
-                        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none z-0">
-                            {/* Onda 1 */}
-                            <svg className="absolute -bottom-4 -left-10 w-[120%] h-10 opacity-15 text-blue-200 fill-current" viewBox="0 0 1440 74" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M0 24C120 24 240 48 360 48C480 48 600 24 720 24C840 24 960 48 1080 48C1200 48 1320 24 1440 24V74H0V24Z" />
-                            </svg>
-                            {/* Onda 2 */}
-                            <svg className="absolute -bottom-2 -right-10 w-[130%] h-12 opacity-10 text-indigo-200 fill-current" viewBox="0 0 1440 74" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M0 48C120 48 240 24 360 24C480 24 600 48 720 48C840 48 960 24 1080 24C1200 24 1320 48 1440 48V74H0V48Z" />
-                            </svg>
-                        </div>
-                        <div className="relative z-10 px-2 pt-2 pb-3 space-y-1">
+                        {/* Contenedor Scrollable Interno para evitar recortes en pantallas pequeñas */}
+                        <div className="max-h-[calc(100vh-5.5rem)] overflow-y-auto w-full relative">
+                            {/* Contenedor de Ondas con overflow-hidden para no sobresalir de las esquinas redondeadas */}
+                            <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none z-0">
+                                {/* Onda 1 */}
+                                <svg className="absolute -bottom-4 -left-10 w-[120%] h-10 opacity-15 text-blue-200 fill-current" viewBox="0 0 1440 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M0 24C120 24 240 48 360 48C480 48 600 24 720 24C840 24 960 48 1080 48C1200 48 1320 24 1440 24V74H0V24Z" />
+                                </svg>
+                                {/* Onda 2 */}
+                                <svg className="absolute -bottom-2 -right-10 w-[130%] h-12 opacity-10 text-indigo-200 fill-current" viewBox="0 0 1440 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M0 48C120 48 240 24 360 24C480 24 600 48 720 48C840 48 960 24 1080 24C1200 24 1320 48 1440 48V74H0V48Z" />
+                                </svg>
+                            </div>
+                            <div className="relative z-10 px-2 pt-2 pb-3 space-y-1">
                         {user ? (
                             <>
                                 <div className="px-4 py-3 border-b border-gray-100/60 mb-2 flex items-center space-x-3">
@@ -456,6 +458,7 @@ export default function Navbar() {
                                 </Link>
                             </div>
                         )}
+                    </div>
                     </div>
                 </div>
             )}
