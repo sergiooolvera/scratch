@@ -34,18 +34,24 @@ export default function CourseQA({ cursoId, userId, userName }: { cursoId: strin
             .eq('user_id', userId)
             .not('pregunta', 'like', 'TAREA_DEFINICION:%')
             .not('pregunta', 'like', 'TAREA_ENTREGA:%')
+            .not('pregunta', 'like', 'PUZZLE_DEFINICION:%')
+            .not('pregunta', 'like', 'PUZZLE_ENTREGA:%')
             .order('created_at', { ascending: false })
 
         if (error) {
             console.error('Error fetching questions:', JSON.stringify(error, null, 2), error.message)
         } else {
             // Filtrar de forma infalible del lado del cliente para evitar que se muestren 
-            // tareas entregadas/definidas (incluso si están calificadas)
+            // tareas/puzles entregadas/definidas (incluso si están calificadas)
             const filtered = (data || []).filter((p: Pregunta) => 
                 !p.pregunta.startsWith('TAREA_DEFINICION') && 
                 !p.pregunta.startsWith('TAREA_ENTREGA') &&
+                !p.pregunta.startsWith('PUZZLE_DEFINICION') && 
+                !p.pregunta.startsWith('PUZZLE_ENTREGA') &&
                 !p.pregunta.toLowerCase().startsWith('tarea_definicion') && 
-                !p.pregunta.toLowerCase().startsWith('tarea_entrega')
+                !p.pregunta.toLowerCase().startsWith('tarea_entrega') &&
+                !p.pregunta.toLowerCase().startsWith('puzzle_definicion') && 
+                !p.pregunta.toLowerCase().startsWith('puzzle_entrega')
             )
             setPreguntas(filtered)
         }

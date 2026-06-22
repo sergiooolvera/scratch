@@ -72,6 +72,19 @@ export default async function PreguntasPage() {
     if (todasPreguntas && todosCursos) {
         preguntasFormateadas = todasPreguntas
             .filter(p => {
+                // Excluir definiciones y entregas de tareas/puzles que usan esta misma tabla
+                const esTareaOPuzzle = 
+                    p.pregunta?.startsWith('TAREA_DEFINICION:') ||
+                    p.pregunta?.startsWith('TAREA_ENTREGA:') ||
+                    p.pregunta?.startsWith('PUZZLE_DEFINICION:') ||
+                    p.pregunta?.startsWith('PUZZLE_ENTREGA:') ||
+                    p.respuesta === 'TAREA_DEFINICION' ||
+                    p.respuesta === 'TAREA_ENTREGA' ||
+                    p.respuesta === 'PUZZLE_DEFINICION' ||
+                    p.respuesta === 'PUZZLE_ENTREGA'
+
+                if (esTareaOPuzzle) return false
+
                 if (profile?.rol === 'admin') return true
                 const cursoDelProf = cursosMap[p.curso_id]
                 return cursoDelProf?.creado_por === user!.id
