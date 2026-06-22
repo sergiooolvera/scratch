@@ -31,7 +31,7 @@ export default function BotonDescarga() {
             });
 
             pdf.addImage(dataUrl, 'PNG', 0, 0, element.offsetWidth, element.offsetHeight);
-            pdf.save('Constancia_IEDCH.pdf');
+            pdf.save('Constancia_Grupo_Egac.pdf');
         } catch (error: any) {
             console.error('Error generando PDF:', error);
             alert('Hubo un error al generar el PDF: ' + (error?.message || String(error)));

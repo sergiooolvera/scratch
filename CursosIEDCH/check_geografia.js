@@ -30,9 +30,9 @@ async function checkGeografia() {
     console.log(`Total Alumnos: ${compras?.length || 0}`);
     console.log(`Pagados (true): ${compras?.filter(c => c.pagado === true).length || 0}`);
 
-    // Verificar si el usuario 'sergio.olver@gmail.com' es uno de ellos
+    // Verificar si el usuario 'soporte@grupoegac.com' es uno de ellos
     const { data: { users: allUsers } } = await supabase.auth.admin.listUsers();
-    const sergio = allUsers.find(u => u.email === 'sergio.olver@gmail.com');
+    const sergio = allUsers.find(u => u.email === 'soporte@grupoegac.com');
     if (sergio) {
       const isSergioEnrolled = compras?.some(c => c.user_id === sergio.id && c.pagado === true);
       console.log(`¿Sergio Olvera está inscrito y pagado?: ${isSergioEnrolled ? 'SÍ' : 'NO'}`);

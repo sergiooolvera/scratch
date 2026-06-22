@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 async function run() {
-    console.log('Iniciando borrado de datos para sergio.olver@gmail.com en el curso Matemáticas 2...');
+    console.log('Iniciando borrado de datos para soporte@grupoegac.com en el curso Matemáticas 2...');
 
     // 1. Find course "Matemáticas 2" or similar
     const { data: cursos, error: cursosError } = await supabase
@@ -33,7 +33,7 @@ async function run() {
     let userId = null;
     try {
         const { data: users } = await supabase.auth.admin.listUsers();
-        const sergio = users?.users.find(u => u.email === 'sergio.olver@gmail.com');
+        const sergio = users?.users.find(u => u.email === 'soporte@grupoegac.com');
         if (sergio) {
             userId = sergio.id;
             console.log('Usuario encontrado en Auth:', userId);

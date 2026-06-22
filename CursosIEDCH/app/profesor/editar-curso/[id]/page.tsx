@@ -101,6 +101,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [logoUrl, setLogoUrl] = useState<string | null>(null)
     const [mostrarLogoConstancia, setMostrarLogoConstancia] = useState(false)
     const [plantillaConstancia, setPlantillaConstancia] = useState('modelo1')
+    const [modificarConstancia, setModificarConstancia] = useState(false)
     
     // Modules state
     const [modulos, setModulos] = useState<Modulo[]>([])
@@ -454,7 +455,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setLogoUrl(lUrl)
                 setLogoPreviewUrl(lUrl)
                 setMostrarLogoConstancia(borrador.mostrar_logo_constancia !== undefined ? borrador.mostrar_logo_constancia : (curso.mostrar_logo_constancia !== undefined ? curso.mostrar_logo_constancia : false))
-                setPlantillaConstancia(borrador.plantilla_constancia !== undefined ? borrador.plantilla_constancia : (curso.plantilla_constancia !== undefined ? curso.plantilla_constancia : 'modelo1'))
+                setPlantillaConstancia('modelo1')
                 
                 if (borrador.modulos) {
                     setModulos(borrador.modulos.map((m: any) => {
@@ -614,7 +615,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             setLogoUrl(curso.logo_url)
             setLogoPreviewUrl(curso.logo_url)
             setMostrarLogoConstancia(curso.mostrar_logo_constancia !== undefined ? curso.mostrar_logo_constancia : false)
-            setPlantillaConstancia(curso.plantilla_constancia !== undefined ? curso.plantilla_constancia : 'modelo1')
+            setPlantillaConstancia('modelo1')
 
             // Módulos
             const { data: mods } = await supabase
@@ -2295,52 +2296,61 @@ const generationId = data.generationId;
                                         </div>
                                     )}
 
-                                    <div className="col-span-full pt-4 border-t border-gray-100 space-y-4">
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                            <div className="flex flex-col justify-start">
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Plantilla de Constancia</label>
-                                                <select
-                                                    value={plantillaConstancia}
-                                                    onChange={(e) => setPlantillaConstancia(e.target.value)}
-                                                    className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white mb-2"
-                                                >
-                                                    <option value="modelo1">Plantilla 1: Lateral Azul Marino (Actual)</option>
-                                                    <option value="modelo2">Plantilla 2: Encabezado y Círculos (Tradicional)</option>
-                                                    <option value="modelo3">Plantilla 3: Centralizada y Bordes Elegantes (Nueva)</option>
-                                                </select>
-                                                <p className="text-[10px] text-gray-500 italic mb-4">Elige el estilo visual con el que se generará el certificado de los alumnos al acreditar el curso.</p>
-                                            </div>
-                                            <div className="flex flex-col items-center justify-start bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
-                                                <span className="text-xs font-bold text-gray-500 mb-2">Vista Previa de la Plantilla</span>
-                                                <div className="w-full max-w-[480px] border border-gray-300 rounded-lg overflow-hidden bg-white shadow-md relative scale-95 origin-top">
-                                                    <ResponsiveCertificateWrapper width={1056} height={816}>
-                                                        {(() => {
-                                                            const props = {
-                                                                alumnoNombre: "JUAN PÉREZ LÓPEZ",
-                                                                cursoTitulo: formData.titulo || "TÍTULO DEL CURSO DE EJEMPLO",
-                                                                cursoDuracion: formData.duracion || "40 Horas",
-                                                                fechaAprobacion: "24 de Noviembre de 2025",
-                                                                folio: "FOLIO-DEMO-12345",
-                                                                vigenciaStr: "24 de Noviembre de 2028 (3 años)",
-                                                                qrUrl: "https://cursos.grupoegac.com/",
-                                                                calificacion: "9.5",
-                                                                mostrarCalificacionConstancia: true,
-                                                                logoUrl: logoPreviewUrl || logoUrl,
-                                                                 mostrarLogoConstancia: mostrarLogoConstancia && profile?.rol === 'institucion'
-                                                            };
-                                                            if (plantillaConstancia === 'modelo2') {
-                                                                return <CertificadoModelo2 {...props} />
-                                                            }
-                                                            if (plantillaConstancia === 'modelo3') {
-                                                                return <CertificadoModelo3 {...props} />
-                                                            }
-                                                            return <CertificadoDocument {...props} />
-                                                        })()}
-                                                    </ResponsiveCertificateWrapper>
+                                    <div className="col-span-full pt-4 border-t border-gray-100">
+                                        <label className="flex items-center gap-2 cursor-not-allowed opacity-50">
+                                            <input
+                                                type="checkbox"
+                                                checked={modificarConstancia}
+                                                disabled={true}
+                                                onChange={(e) => setModificarConstancia(e.target.checked)}
+                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            />
+                                            <span className="text-sm font-semibold text-gray-700">Modificar Constancia</span>
+                                        </label>
+                                    </div>
+
+                                    {modificarConstancia && (
+                                        <div className="col-span-full pt-4 border-t border-gray-100 space-y-4">
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                <div className="flex flex-col justify-start">
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Plantilla de Constancia</label>
+                                                    <div className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-black font-semibold text-sm">
+                                                        Plantilla 1: Lateral Azul Marino (Predeterminada)
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-500 italic mt-2">Esta es la plantilla oficial utilizada para todos los cursos del portal y no se puede modificar.</p>
+                                                </div>
+                                                <div className="flex flex-col items-center justify-start bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
+                                                    <span className="text-xs font-bold text-gray-500 mb-2">Vista Previa de la Plantilla</span>
+                                                    <div className="w-full max-w-[480px] border border-gray-300 rounded-lg overflow-hidden bg-white shadow-md relative scale-95 origin-top">
+                                                        <ResponsiveCertificateWrapper width={1056} height={816}>
+                                                            {(() => {
+                                                                const props = {
+                                                                    alumnoNombre: "JUAN PÉREZ LÓPEZ",
+                                                                    cursoTitulo: formData.titulo || "TÍTULO DEL CURSO DE EJEMPLO",
+                                                                    cursoDuracion: formData.duracion || "40 Horas",
+                                                                    fechaAprobacion: "24 de Noviembre de 2025",
+                                                                    folio: "FOLIO-DEMO-12345",
+                                                                    vigenciaStr: "24 de Noviembre de 2028 (3 años)",
+                                                                    qrUrl: "https://cursos.grupoegac.com/",
+                                                                    calificacion: "9.5",
+                                                                    mostrarCalificacionConstancia: true,
+                                                                    logoUrl: logoPreviewUrl || logoUrl,
+                                                                    mostrarLogoConstancia: mostrarLogoConstancia && profile?.rol === 'institucion'
+                                                                };
+                                                                if (plantillaConstancia === 'modelo2') {
+                                                                    return <CertificadoModelo2 {...props} />
+                                                                }
+                                                                if (plantillaConstancia === 'modelo3') {
+                                                                    return <CertificadoModelo3 {...props} />
+                                                                }
+                                                                return <CertificadoDocument {...props} />
+                                                            })()}
+                                                        </ResponsiveCertificateWrapper>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
                                         <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Reglas de Avance del Curso</h3>
@@ -3299,7 +3309,7 @@ const generationId = data.generationId;
                         <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">3. Configuración del Examen Final del Curso</h2>
-                                <p className="text-gray-500 text-xs mt-0.5">El examen final habilitará la generación de constancias premium de la IEDCH para los alumnos inscritos.</p>
+                                <p className="text-gray-500 text-xs mt-0.5">El examen final habilitará la generación de constancias premium de Grupo Egac para los alumnos inscritos.</p>
                             </div>
 
                             <div className="bg-green-55/40 border border-green-200 rounded-2xl p-6 shadow-md">

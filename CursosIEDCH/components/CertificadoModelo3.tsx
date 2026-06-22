@@ -69,9 +69,9 @@ export default function CertificadoModelo3({
 
             {/* Header logos and emitter row */}
             <div className="relative z-30 flex justify-between items-center w-full px-20 pt-16">
-                {/* Left: IEDCH Logo */}
+                {/* Left: Logo */}
                 <div className="w-[140px] flex items-center justify-start">
-                    <img src="/logo.jpg" alt="IEDCH Logo" className="h-[75px] object-contain rounded" />
+                    <img src="/logo.jpg" alt="Logo" className="h-[75px] object-contain rounded" />
                 </div>
                 
                 {/* Center: Emitter Details */}

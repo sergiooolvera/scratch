@@ -18,7 +18,7 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
         .eq('estado', 'aprobado')
 
     const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
-    const allowedEmails = ['sergio.olver@gmail.com', 'sergio.olvera@bracer.biz'];
+    const allowedEmails = ['soporte@grupoegac.com', 'sergio.olvera@bracer.biz'];
     const userEmail = user?.email?.toLowerCase();
 
     // Filter courses created by maestro to only be visible to allowed emails

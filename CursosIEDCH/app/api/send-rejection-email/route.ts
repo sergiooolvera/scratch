@@ -30,7 +30,7 @@ export async function POST(request: Request) {
           </blockquote>
           <p>Por favor, revisa estas observaciones, realiza las correcciones necesarias y vuelve a enviar tu curso para su revisión.</p>
           <br>
-          <p>Atentamente,<br><strong>El equipo de IEDCH</strong></p>
+          <p>Atentamente,<br><strong>El equipo de Grupo Egac</strong></p>
         </div>
       `,
         });

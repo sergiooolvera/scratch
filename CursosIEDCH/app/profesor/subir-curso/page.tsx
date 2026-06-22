@@ -29,6 +29,12 @@ type Modulo = {
     requiereTarea?: boolean;
     tareaInstrucciones?: string;
     tareaPuntos?: string;
+    requierePuzzle?: boolean;
+    puzzlePuntos?: string;
+    puzzleTipo?: 'anagrama' | 'ahorcado' | 'sopa';
+    puzzlePregunta?: string;
+    puzzleRespuesta?: string;
+    puzzlePuzzles?: { pregunta: string; respuesta: string; tipo?: 'anagrama' | 'ahorcado' | 'sopa' }[];
     requiereCuestionario?: boolean;
     cuestionarioPreguntas?: { id?: string; pregunta: string; orden?: number }[];
     seguridadAumentada?: boolean;
@@ -76,6 +82,12 @@ export default function SubirCursoPage() {
         requiereTarea: false,
         tareaInstrucciones: '',
         tareaPuntos: '',
+        requierePuzzle: false,
+        puzzlePuntos: '',
+        puzzleTipo: 'anagrama',
+        puzzlePregunta: '',
+        puzzleRespuesta: '',
+        puzzlePuzzles: [{ pregunta: '', respuesta: '', tipo: 'anagrama' }],
         requiereCuestionario: false,
         cuestionarioPreguntas: [],
         seguridadAumentada: false,
@@ -123,6 +135,7 @@ export default function SubirCursoPage() {
     const [collapsedModulos, setCollapsedModulos] = useState<Record<number, boolean>>({})
     const [collapsedExamenes, setCollapsedExamenes] = useState<Record<number, boolean>>({})
     const [collapsedTareas, setCollapsedTareas] = useState<Record<number, boolean>>({})
+    const [collapsedPuzzles, setCollapsedPuzzles] = useState<Record<number, boolean>>({})
     const [collapsedCuestionarios, setCollapsedCuestionarios] = useState<Record<number, boolean>>({})
 
     const toggleModuloCollapsed = (index: number) => {
@@ -141,6 +154,13 @@ export default function SubirCursoPage() {
 
     const toggleCuestionarioCollapsed = (index: number) => {
         setCollapsedCuestionarios(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }))
+    }
+
+    const togglePuzzleCollapsed = (index: number) => {
+        setCollapsedPuzzles(prev => ({
             ...prev,
             [index]: !prev[index]
         }))
@@ -189,6 +209,7 @@ export default function SubirCursoPage() {
     const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
     const [mostrarLogoConstancia, setMostrarLogoConstancia] = useState(false)
     const [plantillaConstancia, setPlantillaConstancia] = useState('modelo1')
+    const [modificarConstancia, setModificarConstancia] = useState(false)
 
     // Check for draft on mount
     useEffect(() => {
@@ -234,6 +255,12 @@ export default function SubirCursoPage() {
                 requiereTarea: m.requiereTarea,
                 tareaInstrucciones: m.tareaInstrucciones,
                 tareaPuntos: m.tareaPuntos,
+                requierePuzzle: m.requierePuzzle,
+                puzzlePuntos: m.puzzlePuntos,
+                puzzleTipo: m.puzzleTipo,
+                puzzlePregunta: m.puzzlePregunta,
+                puzzleRespuesta: m.puzzleRespuesta,
+                puzzlePuzzles: m.puzzlePuzzles,
                 requiereCuestionario: m.requiereCuestionario,
                 cuestionarioPreguntas: m.cuestionarioPreguntas,
                 seguridadAumentada: m.seguridadAumentada,
@@ -312,6 +339,12 @@ export default function SubirCursoPage() {
                     requiereTarea: m.requiereTarea,
                     tareaInstrucciones: m.tareaInstrucciones,
                     tareaPuntos: m.tareaPuntos,
+                    requierePuzzle: m.requierePuzzle,
+                    puzzlePuntos: m.puzzlePuntos,
+                    puzzleTipo: m.puzzleTipo,
+                    puzzlePregunta: m.puzzlePregunta,
+                    puzzleRespuesta: m.puzzleRespuesta,
+                    puzzlePuzzles: m.puzzlePuzzles,
                     requiereCuestionario: m.requiereCuestionario,
                     cuestionarioPreguntas: m.cuestionarioPreguntas,
                     seguridadAumentada: m.seguridadAumentada,
@@ -378,6 +411,24 @@ export default function SubirCursoPage() {
                     requiereTarea: !!m.requiereTarea,
                     tareaInstrucciones: m.tareaInstrucciones || '',
                     tareaPuntos: m.tareaPuntos || '',
+                    requierePuzzle: !!m.requierePuzzle,
+                    puzzlePuntos: m.puzzlePuntos || '',
+                    puzzleTipo: m.puzzleTipo || 'anagrama',
+                    puzzlePregunta: m.puzzlePregunta || '',
+                    puzzleRespuesta: m.puzzleRespuesta || '',
+                    puzzlePuzzles: (m.puzzlePuzzles || (
+                        m.puzzlePregunta ? [
+                            {
+                                pregunta: m.puzzlePregunta,
+                                respuesta: m.puzzleRespuesta || '',
+                                tipo: m.puzzleTipo || 'anagrama'
+                            }
+                        ] : [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]
+                    )).map((p: any) => ({
+                        pregunta: p.pregunta || '',
+                        respuesta: p.respuesta || '',
+                        tipo: p.tipo || m.puzzleTipo || 'anagrama'
+                    })),
                     requiereCuestionario: !!m.requiereCuestionario,
                     cuestionarioPreguntas: m.cuestionarioPreguntas || [],
                     seguridadAumentada: !!m.seguridadAumentada,
@@ -1623,52 +1674,61 @@ export default function SubirCursoPage() {
                                     )}
                                 </div>
 
-                                <div className="col-span-full pt-4 border-t border-gray-100 space-y-4">
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div className="flex flex-col justify-start">
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Plantilla de Constancia</label>
-                                            <select
-                                                value={plantillaConstancia}
-                                                onChange={(e) => setPlantillaConstancia(e.target.value)}
-                                                className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white mb-2"
-                                            >
-                                                <option value="modelo1">Plantilla 1: Lateral Azul Marino (Actual)</option>
-                                                <option value="modelo2">Plantilla 2: Encabezado y Círculos (Tradicional)</option>
-                                                <option value="modelo3">Plantilla 3: Centralizada y Bordes Elegantes (Nueva)</option>
-                                            </select>
-                                            <p className="text-[10px] text-gray-500 italic mb-4">Elige el estilo visual con el que se generará el certificado de los alumnos al acreditar el curso.</p>
-                                        </div>
-                                        <div className="flex flex-col items-center justify-start bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
-                                            <span className="text-xs font-bold text-gray-500 mb-2">Vista Previa de la Plantilla</span>
-                                            <div className="w-full max-w-[480px] border border-gray-300 rounded-lg overflow-hidden bg-white shadow-md relative scale-95 origin-top">
-                                                <ResponsiveCertificateWrapper width={1056} height={816}>
-                                                    {(() => {
-                                                        const props = {
-                                                            alumnoNombre: "JUAN PÉREZ LÓPEZ",
-                                                            cursoTitulo: formData.titulo || "TÍTULO DEL CURSO DE EJEMPLO",
-                                                            cursoDuracion: formData.duracion || "40 Horas",
-                                                            fechaAprobacion: "24 de Noviembre de 2025",
-                                                            folio: "FOLIO-DEMO-12345",
-                                                            vigenciaStr: "24 de Noviembre de 2028 (3 años)",
-                                                            qrUrl: "https://cursos.grupoegac.com/",
-                                                            calificacion: "9.5",
-                                                            mostrarCalificacionConstancia: true,
-                                                            logoUrl: logoPreviewUrl,
-                                                             mostrarLogoConstancia: mostrarLogoConstancia && profile?.rol === 'institucion'
-                                                        };
-                                                        if (plantillaConstancia === 'modelo2') {
-                                                            return <CertificadoModelo2 {...props} />
-                                                        }
-                                                        if (plantillaConstancia === 'modelo3') {
-                                                            return <CertificadoModelo3 {...props} />
-                                                        }
-                                                        return <CertificadoDocument {...props} />
-                                                    })()}
-                                                </ResponsiveCertificateWrapper>
+                                <div className="col-span-full pt-4 border-t border-gray-100">
+                                    <label className="flex items-center gap-2 cursor-not-allowed opacity-50">
+                                        <input
+                                            type="checkbox"
+                                            checked={modificarConstancia}
+                                            disabled={true}
+                                            onChange={(e) => setModificarConstancia(e.target.checked)}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        />
+                                        <span className="text-sm font-semibold text-gray-700">Modificar Constancia</span>
+                                    </label>
+                                </div>
+
+                                {modificarConstancia && (
+                                    <div className="col-span-full pt-4 border-t border-gray-100 space-y-4">
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <div className="flex flex-col justify-start">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Plantilla de Constancia</label>
+                                                <div className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-black font-semibold text-sm">
+                                                    Plantilla 1: Lateral Azul Marino (Predeterminada)
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 italic mt-2">Esta es la plantilla oficial utilizada para todos los cursos del portal y no se puede modificar.</p>
+                                            </div>
+                                            <div className="flex flex-col items-center justify-start bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
+                                                <span className="text-xs font-bold text-gray-500 mb-2">Vista Previa de la Plantilla</span>
+                                                <div className="w-full max-w-[480px] border border-gray-300 rounded-lg overflow-hidden bg-white shadow-md relative scale-95 origin-top">
+                                                    <ResponsiveCertificateWrapper width={1056} height={816}>
+                                                        {(() => {
+                                                            const props = {
+                                                                alumnoNombre: "JUAN PÉREZ LÓPEZ",
+                                                                cursoTitulo: formData.titulo || "TÍTULO DEL CURSO DE EJEMPLO",
+                                                                cursoDuracion: formData.duracion || "40 Horas",
+                                                                fechaAprobacion: "24 de Noviembre de 2025",
+                                                                folio: "FOLIO-DEMO-12345",
+                                                                vigenciaStr: "24 de Noviembre de 2028 (3 años)",
+                                                                qrUrl: "https://cursos.grupoegac.com/",
+                                                                calificacion: "9.5",
+                                                                mostrarCalificacionConstancia: true,
+                                                                logoUrl: logoPreviewUrl,
+                                                                mostrarLogoConstancia: mostrarLogoConstancia && profile?.rol === 'institucion'
+                                                            };
+                                                            if (plantillaConstancia === 'modelo2') {
+                                                                return <CertificadoModelo2 {...props} />
+                                                            }
+                                                            if (plantillaConstancia === 'modelo3') {
+                                                                return <CertificadoModelo3 {...props} />
+                                                            }
+                                                            return <CertificadoDocument {...props} />
+                                                        })()}
+                                                    </ResponsiveCertificateWrapper>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
                                     {profile?.rol !== 'capacitador' ? (
@@ -2434,6 +2494,154 @@ export default function SubirCursoPage() {
                                                                 value={modulo.tareaPuntos || ''}
                                                                 onChange={(e) => handleModuloChange(index, 'tareaPuntos', e.target.value)}
                                                                 className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold resize-y"
+                                                                required
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Modular Puzzle/Game Box */}
+                                        <div className="mt-4 pt-4 border-t border-zinc-100">
+                                            <div className="bg-orange-50/50 rounded-xl p-4 border border-orange-100">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!modulo.requierePuzzle}
+                                                            onChange={(e) => handleModuloChange(index, 'requierePuzzle', e.target.checked)}
+                                                            className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                                                        />
+                                                        <span className="text-sm font-bold text-orange-900 flex items-center gap-1.5">
+                                                            <Sparkles className="h-4 w-4 text-orange-700" />
+                                                            ¿Este módulo requiere un Puzle (Juego Interactivo)?
+                                                        </span>
+                                                    </label>
+                                                    {modulo.requierePuzzle && (
+                                                        <button type="button" onClick={() => togglePuzzleCollapsed(index)} className="p-1 rounded-md hover:bg-orange-100 transition-colors text-orange-600 hover:text-orange-800">
+                                                            {collapsedPuzzles[index] ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {modulo.requierePuzzle && (
+                                                    <div className={`mt-4 pl-0 sm:pl-6 border-l-0 sm:border-l-2 border-orange-250 space-y-4 ${collapsedPuzzles[index] ? 'hidden' : ''}`}>
+                                                        {/* Lista dinámica de preguntas y respuestas del Puzle */}
+                                                        <div className="space-y-4 pt-2">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-xs font-bold text-gray-700">Preguntas de la secuencia del Puzle:</span>
+                                                                {(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).length < 5 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                            const lastType = newPuzzles[newPuzzles.length - 1]?.tipo || 'anagrama';
+                                                                            newPuzzles.push({ pregunta: '', respuesta: '', tipo: lastType });
+                                                                            handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                        }}
+                                                                        className="px-2.5 py-1 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold rounded shadow-sm transition"
+                                                                    >
+                                                                        + Agregar Pregunta
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).map((pItem, pIdx) => (
+                                                                <div key={pIdx} className="bg-orange-50/20 p-4 border border-orange-100 rounded-xl space-y-3.5 relative shadow-sm">
+                                                                    <div className="flex flex-wrap items-center justify-between gap-3 bg-orange-500/5 p-2 rounded-lg border border-orange-500/10">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className="text-xs font-black text-orange-900 bg-orange-250 px-2.5 py-1 rounded">Pregunta #{pIdx + 1}</span>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <label className="text-[10px] font-black text-orange-900 uppercase">Tipo:</label>
+                                                                                <select
+                                                                                    value={pItem.tipo || 'anagrama'}
+                                                                                    onChange={(e) => {
+                                                                                        const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                                        newPuzzles[pIdx].tipo = e.target.value as 'anagrama' | 'ahorcado' | 'sopa';
+                                                                                        handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                                        if (pIdx === 0) handleModuloChange(index, 'puzzleTipo', e.target.value);
+                                                                                    }}
+                                                                                    className="text-xs rounded border-gray-300 py-1 px-2 border bg-white text-black font-semibold shadow-sm focus:border-orange-400"
+                                                                                >
+                                                                                    <option value="anagrama">Anagrama</option>
+                                                                                    <option value="ahorcado">Ahorcado</option>
+                                                                                    <option value="sopa">Ordenar Sílabas</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                        {(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).length > 1 && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                                    newPuzzles.splice(pIdx, 1);
+                                                                                    handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                                    handleModuloChange(index, 'puzzlePregunta', newPuzzles[0].pregunta);
+                                                                                    handleModuloChange(index, 'puzzleRespuesta', newPuzzles[0].respuesta);
+                                                                                    handleModuloChange(index, 'puzzleTipo', newPuzzles[0].tipo || 'anagrama');
+                                                                                }}
+                                                                                className="text-red-550 hover:text-red-700 text-[10px] font-bold transition"
+                                                                            >
+                                                                                Eliminar
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <label className="block text-[10px] font-bold text-gray-600 mb-1 uppercase tracking-wider">Pregunta o Pista:</label>
+                                                                            <textarea
+                                                                                rows={3}
+                                                                                placeholder="Escribe aquí la pregunta o pista que verá el alumno..."
+                                                                                value={pItem.pregunta || ''}
+                                                                                onChange={(e) => {
+                                                                                    const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                                    newPuzzles[pIdx].pregunta = e.target.value;
+                                                                                    handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                                    if (pIdx === 0) handleModuloChange(index, 'puzzlePregunta', e.target.value);
+                                                                                }}
+                                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-orange-400"
+                                                                                required
+                                                                            />
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block text-[10px] font-bold text-gray-600 mb-1 uppercase tracking-wider">Respuesta (Palabra única):</label>
+                                                                            <textarea
+                                                                                rows={3}
+                                                                                placeholder="Escribe la palabra exacta que resolverá el puzle..."
+                                                                                value={pItem.respuesta || ''}
+                                                                                onChange={(e) => {
+                                                                                    const val = e.target.value
+                                                                                        .toUpperCase()
+                                                                                        .replace(/\s+/g, '') // Quitar espacios
+                                                                                        .normalize("NFD")
+                                                                                        .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+                                                                                        .replace(/[^A-Z0-9]/g, ""); // Solo dejar letras y números
+
+                                                                                    const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
+                                                                                    newPuzzles[pIdx].respuesta = val;
+                                                                                    handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
+                                                                                    if (pIdx === 0) handleModuloChange(index, 'puzzleRespuesta', val);
+                                                                                }}
+                                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-orange-400"
+                                                                                required
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-gray-700 mb-1">Puntos del Puzle:</label>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max="100"
+                                                                placeholder="Ej. 10"
+                                                                value={modulo.puzzlePuntos || ''}
+                                                                onChange={(e) => handleModuloChange(index, 'puzzlePuntos', e.target.value)}
+                                                                className="w-full text-xs rounded border-gray-300 p-2.5 border bg-white text-black font-semibold shadow-inner focus:border-orange-400"
                                                                 required
                                                             />
                                                         </div>

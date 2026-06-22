@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 async function resetExam() {
-  const email = 'sergio.olver@gmail.com';
+  const email = 'soporte@grupoegac.com';
   const courseTitle = 'biomecanica';
 
   console.log(`Buscando usuario por email: ${email}`);

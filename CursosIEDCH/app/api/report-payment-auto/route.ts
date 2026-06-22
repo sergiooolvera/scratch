@@ -22,9 +22,9 @@ export async function POST(req: Request) {
             process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         )
 
-        // 1.5. Validar comprobante (excepto si el usuario es sergio.olver@gmail.com)
+        // 1.5. Validar comprobante (excepto si el usuario es soporte@grupoegac.com)
         const userEmail = user.email || ''
-        const isSergio = userEmail.toLowerCase() === 'sergio.olver@gmail.com'
+        const isSergio = userEmail.toLowerCase() === 'soporte@grupoegac.com'
 
         if (!isSergio) {
             if (!filePath) {

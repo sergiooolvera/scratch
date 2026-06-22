@@ -54,7 +54,7 @@ export async function POST(req: Request) {
             if (resendApiKey && userEmail && resend) {
                 try {
                     await resend.emails.send({
-                        from: 'IEDCH <sistema@tusistema.com>', // Cambia esto por tu dominio verificado en Resend
+                        from: 'Grupo Egac <sistema@tusistema.com>', // Cambia esto por tu dominio verificado en Resend
                         to: userEmail,
                         subject: `¡Pago Aprobado! Ya tienes acceso a: ${cursoTitulo}`,
                         html: `
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
                                 <p>Ya tienes acceso completo al curso: <strong>${cursoTitulo}</strong>.</p>
                                 <br/>
                                 <p>Entra a la plataforma y dirígete al curso para empezar a aprender.</p>
-                                <p>Saludos,<br/>El equipo de IEDCH</p>
+                                <p>Saludos,<br/>El equipo de Grupo Egac</p>
                             </div>
                         `
                     })
@@ -147,7 +147,7 @@ export async function POST(req: Request) {
             if (resendApiKey && userEmail && resend) {
                 try {
                     await resend.emails.send({
-                        from: 'IEDCH <sistema@tusistema.com>', // Cambia esto
+                        from: 'Grupo Egac <sistema@tusistema.com>', // Cambia esto
                         to: userEmail,
                         subject: `Aviso sobre tu pago del curso: ${cursoTitulo}`,
                         html: `
@@ -157,7 +157,7 @@ export async function POST(req: Request) {
                                 ${notas ? `<p><strong>Motivo / Nota del administrador:</strong> ${notas}</p>` : ''}
                                 <br/>
                                 <p>Por favor, vuelve a intentar subir un comprobante válido en la página del curso o contáctanos para mayor asistencia.</p>
-                                <p>Saludos,<br/>El equipo de IEDCH</p>
+                                <p>Saludos,<br/>El equipo de Grupo Egac</p>
                             </div>
                         `
                     })

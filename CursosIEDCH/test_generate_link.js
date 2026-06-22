@@ -19,7 +19,7 @@ const supabaseAdmin = createClient(
 async function testLink() {
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
-        email: 'sergio.olver@gmail.com', // use an existing user email
+        email: 'soporte@grupoegac.com', // use an existing user email
     });
     console.log("Link data:", data);
     console.log("Error:", error);

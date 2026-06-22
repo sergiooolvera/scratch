@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 async function checkCompras() {
-  const emails = ['sergio.olver@gmail.com', 'sanchezjahir740@gmail.com', 'esmecflores_267@hotmail.com'];
+  const emails = ['soporte@grupoegac.com', 'sanchezjahir740@gmail.com', 'esmecflores_267@hotmail.com'];
   
   // Obtener IDs de perfiles por nombre (ya que no hay email en ie_profiles)
   // O mejor, buscamos en ie_compras y filtramos por los nombres conocidos

@@ -182,7 +182,7 @@ function ValidacionContent() {
                 folio: matchData.id,
                 fecha: matchData.created_at,
                 calificacion: matchData.calificacion,
-                alumno: userData?.nombre || 'Alumno IEDCH',
+                alumno: userData?.nombre || 'Alumno Grupo Egac',
                 curso: cursoInfoData?.titulo || 'Curso no encontrado',
                 vigencia_anos: cursoInfoData?.vigencia_anos || 3,
                 duracion: cursoInfoData?.duracion || '40 horas',

@@ -36,7 +36,7 @@ serve(async (req) => {
     });
 
     await client.send({
-      from: `IEDCH <${SMTP_FROM}>`,
+      from: `Grupo Egac <${SMTP_FROM}>`,
       to: email,
       subject: `Tu Constancia Oficial: ${cursoTitulo}`,
       content: `Hola, hemos generado tu constancia oficial del curso: ${cursoTitulo}. Puedes verla aquí: ${publicUrl}. Folio: ${folio}`,

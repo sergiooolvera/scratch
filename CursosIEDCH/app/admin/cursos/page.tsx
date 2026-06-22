@@ -73,7 +73,7 @@ export default function AdminCursosPage() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            to: 'sergio.olver@gmail.com',
+                            to: 'soporte@grupoegac.com',
                             courseTitle: cursoRechazado?.titulo || 'Desconocido',
                             instructorName: cursoRechazado?.creador?.nombre || cursoRechazado?.instructor || 'Instructor',
                             reason: razon
@@ -81,7 +81,7 @@ export default function AdminCursosPage() {
                     });
 
                     if (response.ok) {
-                        alert(`El curso fue rechazado y se ha enviado un correo a sergio.olver@gmail.com con el motivo.`);
+                        alert(`El curso fue rechazado y se ha enviado un correo a soporte@grupoegac.com con el motivo.`);
                     } else {
                         const data = await response.json();
                         console.error('API Error:', data.error);
