@@ -427,10 +427,9 @@ export default function RegistrarActividadPage() {
                                 <div className="mt-2 p-4 bg-gray-50 border border-gray-200 rounded-lg animate-in fade-in slide-in-from-top-2">
                                     <h3 className="text-sm font-bold text-gray-900 mb-2">Datos para Transferencia:</h3>
                                     <ul className="list-none space-y-1 font-mono bg-white p-3 rounded border border-gray-200 text-sm mb-4">
-                                        <li><strong>Banco:</strong> BBVA Bancomer</li>
-                                        <li><strong>Cuenta:</strong> 047 011 9024</li>
-                                        <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
-                                        <li><strong>Titular:</strong> Sergio Olvera</li>
+                                        <li><strong>Banco:</strong> Santander</li>
+                                        <li><strong>CLABE:</strong> 014427220010568729</li>
+                                        <li><strong>Titular:</strong> Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C</li>
                                     </ul>
                                     <form onSubmit={(e) => handleSubirPago(e, 'transferencia')} className="flex flex-col gap-3">
                                         <input

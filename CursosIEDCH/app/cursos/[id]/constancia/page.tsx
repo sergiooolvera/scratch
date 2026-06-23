@@ -306,10 +306,9 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                         <p className="font-bold text-sm text-gray-800 mb-2">Datos para Transferencia:</p>
                         <ul className="list-none space-y-1 font-mono bg-white p-3 rounded border border-gray-200 text-sm mb-3">
-                            <li><strong>Banco:</strong> BBVA Bancomer</li>
-                            <li><strong>Cuenta:</strong> 0123456789</li>
-                            <li><strong>CLABE:</strong> 012345678901234567</li>
-                            <li><strong>Titular:</strong> Instituto Educativo S.C.</li>
+                            <li><strong>Banco:</strong> Santander</li>
+                            <li><strong>CLABE:</strong> 014427220010568729</li>
+                            <li><strong>Titular:</strong> Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C</li>
                             {precioCurso && <li className="font-bold text-blue-700 mt-1"><strong>Monto:</strong> ${precioCurso} MXN</li>}
                         </ul>
                         <form onSubmit={handleSubirComprobanteConstancia} className="flex flex-col gap-3">

@@ -446,10 +446,9 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                             <p className="mb-2 font-bold">Instrucciones de Pago:</p>
                             <p>Realiza un depósito bancario o transferencia interbancaria a la siguiente cuenta:</p>
                             <ul className="mt-2 list-none space-y-1 font-mono bg-white p-3 rounded border">
-                                <li><strong>Banco:</strong> BBVA Bancomer</li>
-                                <li><strong>Cuenta:</strong> 047 011 9024</li>
-                                <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
-                                <li><strong>Titular:</strong> Sergio Olvera</li>
+                                <li><strong>Banco:</strong> Santander</li>
+                                <li><strong>CLABE:</strong> 014427220010568729</li>
+                                <li><strong>Titular:</strong> Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C</li>
                             </ul>
                             <p className="mt-3 text-xs text-gray-500">Una vez realizado el pago, toma una foto del ticket o guarda el comprobante de transferencia y súbelo aquí.</p>
                         </div>
@@ -656,10 +655,9 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                         <div id="constancia-efectivo-section" className="bg-white p-4 rounded-lg border border-amber-200 text-sm text-gray-700 mb-4 animate-in fade-in slide-in-from-top-2">
                             <p className="mb-2 font-bold text-gray-800">Datos para Transferencia:</p>
                             <ul className="list-none space-y-1 font-mono bg-gray-50 p-3 rounded border border-gray-200">
-                                <li><strong>Banco:</strong> BBVA Bancomer</li>
-                                <li><strong>Cuenta:</strong> 047 011 9024</li>
-                                <li><strong>CLABE:</strong> 012 180 00470119024 6</li>
-                                <li><strong>Titular:</strong> Sergio Olvera</li>
+                                <li><strong>Banco:</strong> Santander</li>
+                                <li><strong>CLABE:</strong> 014427220010568729</li>
+                                <li><strong>Titular:</strong> Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C</li>
                                 <li className="font-bold text-blue-700 mt-1"><strong>Monto a pagar:</strong> ${esCreadoPorInstructor && precioCurso === 0 ? 199 : Math.max(0, (precioCurso || 0) - (montoPagado || 0))} MXN</li>
                             </ul>
 
