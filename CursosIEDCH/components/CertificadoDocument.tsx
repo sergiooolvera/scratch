@@ -82,14 +82,15 @@ export default function CertificadoDocument({
                         a través del Ecosistema Global de Acreditación y Certificación.
                     </p>
                     <div className="flex items-center gap-4">
-                        <img src="/mundo.jpeg" alt="Mundo" className="h-[110px] w-[110px] object-contain rounded" />
                         {mostrarLogoConstancia ? (
                             logoUrl ? (
                                 <img src={logoUrl} alt="Logo Institución" className="h-[90px] object-contain" />
                             ) : (
                                 <img src="/logo.jpg" alt="Logo Institución" className="h-[90px] object-contain" />
                             )
-                        ) : null}
+                        ) : (
+                            <img src="/mundo.jpeg" alt="Mundo" className="h-[110px] w-[110px] object-contain rounded" />
+                        )}
                     </div>
                 </div>
 
