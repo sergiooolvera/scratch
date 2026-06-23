@@ -194,7 +194,7 @@ export default function MicrocredencialDocument({
                             <img
                                 src="/firma.png"
                                 alt="Firma Director General"
-                                className="h-[52px] object-contain opacity-95"
+                                className="h-[52px] object-contain opacity-95 -translate-y-3"
                             />
                         </div>
                         <div className="border-t border-black w-full pt-1.5 mt-1">
