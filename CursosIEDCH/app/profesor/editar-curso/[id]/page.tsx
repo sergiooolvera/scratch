@@ -1167,6 +1167,10 @@ const generationId = data.generationId;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        await guardarCurso(false)
+    }
+
+    const guardarCurso = async (esBorrador: boolean) => {
         setSaving(true)
         setMensaje('')
 
@@ -1186,125 +1190,173 @@ const generationId = data.generationId;
             setSaving(false)
             return
         }
-        if (!formData.descripcion?.trim()) {
-            setModalMessage({
-                title: 'Faltan Campos',
-                content: 'Error: Por favor escribe la descripción del curso.',
-                type: 'error'
-            });
-            setSaving(false)
-            return
-        }
-        if (!formData.competencias?.trim()) {
-            setModalMessage({
-                title: 'Faltan Campos',
-                content: 'Error: Por favor escribe las competencias del curso.',
-                type: 'error'
-            });
-            setSaving(false)
-            return
-        }
-        if (!formData.beneficios?.trim()) {
-            setModalMessage({
-                title: 'Faltan Campos',
-                content: 'Error: Por favor especifica los beneficios del curso.',
-                type: 'error'
-            });
-            setSaving(false)
-            return
-        }
-        if (!formData.duracion?.trim()) {
-            setModalMessage({
-                title: 'Faltan Campos',
-                content: 'Error: Por favor especifica la duración del curso.',
-                type: 'error'
-            });
-            setSaving(false)
-            return
-        }
 
-        // Validaciones
-        if (modulos.length === 0) {
-            setModalMessage({
-                title: 'Faltan Módulos',
-                content: 'Error: Agrega al menos un módulo al curso.',
-                type: 'error'
-            });
-            setSaving(false)
-            return
-        }
-
-        for (let i = 0; i < modulos.length; i++) {
-            const m = modulos[i];
-            if (!m.titulo) {
+        if (!esBorrador) {
+            if (!formData.descripcion?.trim()) {
                 setModalMessage({
                     title: 'Faltan Campos',
-                    content: `Error: Por favor especifica el título del módulo ${i + 1}.`,
+                    content: 'Error: Por favor escribe la descripción del curso.',
+                    type: 'error'
+                });
+                setSaving(false)
+                return
+            }
+            if (!formData.competencias?.trim()) {
+                setModalMessage({
+                    title: 'Faltan Campos',
+                    content: 'Error: Por favor escribe las competencias del curso.',
+                    type: 'error'
+                });
+                setSaving(false)
+                return
+            }
+            if (!formData.beneficios?.trim()) {
+                setModalMessage({
+                    title: 'Faltan Campos',
+                    content: 'Error: Por favor especifica los beneficios del curso.',
+                    type: 'error'
+                });
+                setSaving(false)
+                return
+            }
+            if (!formData.duracion?.trim()) {
+                setModalMessage({
+                    title: 'Faltan Campos',
+                    content: 'Error: Por favor especifica la duración del curso.',
                     type: 'error'
                 });
                 setSaving(false)
                 return
             }
 
-            // Check resources
-            for (let rIdx = 0; rIdx < m.recursos.length; rIdx++) {
-                const rec = m.recursos[rIdx];
-                if (!rec.titulo) {
+            // Validaciones
+            if (modulos.length === 0) {
+                setModalMessage({
+                    title: 'Faltan Módulos',
+                    content: 'Error: Agrega al menos un módulo al curso.',
+                    type: 'error'
+                });
+                setSaving(false)
+                return
+            }
+
+            for (let i = 0; i < modulos.length; i++) {
+                const m = modulos[i];
+                if (!m.titulo) {
                     setModalMessage({
-                        title: 'Título de Recurso Obligatorio',
-                        content: `Error: Por favor escribe un título para el recurso ${rIdx + 1} del módulo "${m.titulo}".`,
+                        title: 'Faltan Campos',
+                        content: `Error: Por favor especifica el título del módulo ${i + 1}.`,
                         type: 'error'
                     });
                     setSaving(false)
                     return
                 }
-                if (rec.tipo === 'video' && !rec.url_contenido) {
-                    setModalMessage({
-                        title: 'Enlace Obligatorio',
-                        content: `Error: Por favor escribe el enlace de video para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
-                        type: 'error'
-                    });
-                    setSaving(false)
-                    return
+
+                // Check resources
+                for (let rIdx = 0; rIdx < m.recursos.length; rIdx++) {
+                    const rec = m.recursos[rIdx];
+                    if (!rec.titulo) {
+                        setModalMessage({
+                            title: 'Título de Recurso Obligatorio',
+                            content: `Error: Por favor escribe un título para el recurso ${rIdx + 1} del módulo "${m.titulo}".`,
+                            type: 'error'
+                        });
+                        setSaving(false)
+                        return
+                    }
+                    if (rec.tipo === 'video' && !rec.url_contenido) {
+                        setModalMessage({
+                            title: 'Enlace Obligatorio',
+                            content: `Error: Por favor escribe el enlace de video para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
+                            type: 'error'
+                        });
+                        setSaving(false)
+                        return
+                    }
+                    if (rec.tipo !== 'video' && !rec.url_contenido && !rec.archivoPdf) {
+                        setModalMessage({
+                            title: 'Archivo Obligatorio',
+                            content: `Error: Por favor sube un archivo (PDF/PPT/HTML) para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
+                            type: 'error'
+                        });
+                        setSaving(false)
+                        return
+                    }
                 }
-                if (rec.tipo !== 'video' && !rec.url_contenido && !rec.archivoPdf) {
-                    setModalMessage({
-                        title: 'Archivo Obligatorio',
-                        content: `Error: Por favor sube un archivo (PDF/PPT/HTML) para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
-                        type: 'error'
-                    });
-                    setSaving(false)
-                    return
+
+                // If module requires exam, validate questions
+                if (m.requiereExamen) {
+                    if (m.examenPreguntas.length === 0) {
+                        setModalMessage({
+                            title: 'Examen Vacío',
+                            content: `Error: El módulo "${m.titulo}" requiere examen pero no tiene preguntas.`,
+                            type: 'error'
+                        });
+                        setSaving(false)
+                        return
+                    }
+                    const tieneOpcionMultiple = m.examenPreguntas.some(p => p.tipo_pregunta !== 'respuesta_libre');
+                    if (!tieneOpcionMultiple) {
+                        setModalMessage({
+                            title: 'Falta Pregunta de Opción Múltiple',
+                            content: `Error: El examen del módulo "${m.titulo}" debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.`,
+                            type: 'error'
+                        });
+                        setSaving(false)
+                        return
+                    }
+                    for (let pIdx = 0; pIdx < m.examenPreguntas.length; pIdx++) {
+                        const p = m.examenPreguntas[pIdx];
+                        if (!p.pregunta) {
+                            setModalMessage({
+                                title: 'Pregunta Incompleta',
+                                content: `Error: Completa la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                                type: 'error'
+                            });
+                            setSaving(false)
+                            return
+                        }
+                        if (p.tipo_pregunta !== 'respuesta_libre') {
+                            if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
+                                setModalMessage({
+                                    title: 'Opciones Incompletas',
+                                    content: `Error: Completa al menos las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                                    type: 'error'
+                                });
+                                setSaving(false)
+                                return
+                            }
+                        }
+                    }
                 }
             }
 
-            // If module requires exam, validate questions
-            if (m.requiereExamen) {
-                if (m.examenPreguntas.length === 0) {
+            if (requiereExamen) {
+                if (preguntasExtraidas.length === 0) {
                     setModalMessage({
-                        title: 'Examen Vacío',
-                        content: `Error: El módulo "${m.titulo}" requiere examen pero no tiene preguntas.`,
+                        title: 'Cuestionario Vacío',
+                        content: 'Error: Has marcado que el curso requiere examen final, por favor añade al menos una pregunta.',
                         type: 'error'
                     });
                     setSaving(false)
                     return
                 }
-                const tieneOpcionMultiple = m.examenPreguntas.some(p => p.tipo_pregunta !== 'respuesta_libre');
-                if (!tieneOpcionMultiple) {
+                const tieneOpcionMultipleFinal = preguntasExtraidas.some(p => p.tipo_pregunta !== 'respuesta_libre');
+                if (!tieneOpcionMultipleFinal) {
                     setModalMessage({
                         title: 'Falta Pregunta de Opción Múltiple',
-                        content: `Error: El examen del módulo "${m.titulo}" debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.`,
+                        content: 'Error: El examen final debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.',
                         type: 'error'
                     });
                     setSaving(false)
                     return
                 }
-                for (let pIdx = 0; pIdx < m.examenPreguntas.length; pIdx++) {
-                    const p = m.examenPreguntas[pIdx];
+                for (let pIdx = 0; pIdx < preguntasExtraidas.length; pIdx++) {
+                    const p = preguntasExtraidas[pIdx];
                     if (!p.pregunta) {
                         setModalMessage({
                             title: 'Pregunta Incompleta',
-                            content: `Error: Completa la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                            content: `Error: Por favor completa el texto para la pregunta ${pIdx + 1} del examen final.`,
                             type: 'error'
                         });
                         setSaving(false)
@@ -1314,57 +1366,12 @@ const generationId = data.generationId;
                         if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
                             setModalMessage({
                                 title: 'Opciones Incompletas',
-                                content: `Error: Completa al menos las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                                content: `Error: Por favor completa las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} del examen final.`,
                                 type: 'error'
                             });
                             setSaving(false)
                             return
                         }
-                    }
-                }
-            }
-        }
-
-        if (requiereExamen) {
-            if (preguntasExtraidas.length === 0) {
-                setModalMessage({
-                    title: 'Cuestionario Vacío',
-                    content: 'Error: Has marcado que el curso requiere examen final, por favor añade al menos una pregunta.',
-                    type: 'error'
-                });
-                setSaving(false)
-                return
-            }
-            const tieneOpcionMultipleFinal = preguntasExtraidas.some(p => p.tipo_pregunta !== 'respuesta_libre');
-            if (!tieneOpcionMultipleFinal) {
-                setModalMessage({
-                    title: 'Falta Pregunta de Opción Múltiple',
-                    content: 'Error: El examen final debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.',
-                    type: 'error'
-                });
-                setSaving(false)
-                return
-            }
-            for (let pIdx = 0; pIdx < preguntasExtraidas.length; pIdx++) {
-                const p = preguntasExtraidas[pIdx];
-                if (!p.pregunta) {
-                    setModalMessage({
-                        title: 'Pregunta Incompleta',
-                        content: `Error: Por favor completa el texto para la pregunta ${pIdx + 1} del examen final.`,
-                        type: 'error'
-                    });
-                    setSaving(false)
-                    return
-                }
-                if (p.tipo_pregunta !== 'respuesta_libre') {
-                    if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
-                        setModalMessage({
-                            title: 'Opciones Incompletas',
-                            content: `Error: Por favor completa las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} del examen final.`,
-                            type: 'error'
-                        });
-                        setSaving(false)
-                        return
                     }
                 }
             }
@@ -1600,14 +1607,14 @@ const generationId = data.generationId;
                     mostrar_logo_constancia: mostrarLogoConstancia,
                     plantilla_constancia: plantillaConstancia,
                     cambios_pendientes: null, // Clear draft upon official publication
-                    estado: 'pendiente'
+                    estado: esBorrador ? 'borrador' : 'pendiente'
                 })
                 .eq('id', id)
 
             if (errorUpdate) {
                 setModalMessage({
-                    title: 'Error al Actualizar Curso',
-                    content: 'Error al actualizar los datos generales del curso: ' + errorUpdate.message,
+                    title: esBorrador ? 'Error al Guardar Borrador' : 'Error al Actualizar Curso',
+                    content: (esBorrador ? 'Error al guardar el borrador del curso: ' : 'Error al actualizar los datos generales del curso: ') + errorUpdate.message,
                     type: 'error'
                 });
                 setSaving(false)
@@ -1618,7 +1625,7 @@ const generationId = data.generationId;
             for (const mod of modulosFinales) {
                 const moduloPayload = {
                     curso_id: id,
-                    titulo: mod.titulo,
+                    titulo: mod.titulo || 'Módulo sin título',
                     url_contenido: mod.recursos.length > 0 ? mod.recursos[0].url_contenido : '',
                     orden: mod.orden,
                     requiere_cuestionario: !!mod.requiereCuestionario
@@ -1662,7 +1669,7 @@ const generationId = data.generationId;
                         if (rec.id) {
                             // Recurso existente → actualizar
                             await supabase.from('ie_modulo_recursos').update({
-                                titulo: rec.titulo,
+                                titulo: rec.titulo || 'Recurso sin título',
                                 url_contenido: rec.url_contenido,
                                 orden: rIdx + 1,
                                 descargable: rec.descargable || false
@@ -1672,7 +1679,7 @@ const generationId = data.generationId;
                             // Recurso nuevo → insertar
                             const { data: newRec, error: errorInsert } = await supabase.from('ie_modulo_recursos').insert({
                                 modulo_id: moduloId,
-                                titulo: rec.titulo,
+                                titulo: rec.titulo || 'Recurso sin título',
                                 url_contenido: rec.url_contenido,
                                 orden: rIdx + 1,
                                 descargable: rec.descargable || false
@@ -1909,13 +1916,15 @@ const generationId = data.generationId;
         })
 
         // Notificar a Admins y Financieros (usando Server Action)
-        if (estadoActual === 'aprobado') {
+        if (estadoActual === 'aprobado' && !esBorrador) {
             await notifyAdminsOnCourseEdit(formData.titulo, user.id, profile?.nombre || user.email || 'Profesor');
         }
 
         setModalMessage({
-            title: '¡Curso Guardado!',
-            content: 'Los cambios se han guardado correctamente y han sido enviados a revisión por el administrador.',
+            title: esBorrador ? '¡Borrador Guardado!' : '¡Curso Guardado!',
+            content: esBorrador 
+                ? 'El borrador del curso se ha guardado correctamente.' 
+                : 'Los cambios se han guardado correctamente y han sido enviados a revisión por el administrador.',
             type: 'success',
             redirectUrl: '/profesor/cursos'
         });
@@ -2026,9 +2035,14 @@ const generationId = data.generationId;
                 <form onSubmit={handleSubmit} noValidate className="space-y-8">
                     <div className={activeTab === 'info' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">1. Información Básica del Curso</h2>
-                                <p className="text-gray-500 text-xs mt-0.5">Modifica los campos principales del curso y la constancia.</p>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-gray-900">1. Información Básica del Curso</h2>
+                                    <p className="text-gray-500 text-xs mt-0.5">Modifica los campos principales del curso y la constancia.</p>
+                                </div>
+                                <button type="button" onClick={() => guardarCurso(true)} disabled={saving} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
+                                    {saving ? 'Guardando...' : 'Guardar Curso'}
+                                </button>
                             </div>
                             <div className="grid grid-cols-1 gap-6">
                                 <div>
@@ -2501,9 +2515,14 @@ const generationId = data.generationId;
                     {/* Tab 2: Temario y Clases (Módulos & PPT/Modular Exams) */}
                     <div className={activeTab === 'modulos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">2. Temario del Curso (Módulos)</h2>
-                                <p className="text-gray-500 text-xs mt-0.5">Organiza las clases de tu temario. Soporta archivos PDF, videos de YouTube, PowerPoint (.ppt, .pptx) o HTML.</p>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-gray-900">2. Temario del Curso (Módulos)</h2>
+                                    <p className="text-gray-500 text-xs mt-0.5">Organiza las clases de tu temario. Soporta archivos PDF, videos de YouTube, PowerPoint (.ppt, .pptx) o HTML.</p>
+                                </div>
+                                <button type="button" onClick={() => guardarCurso(true)} disabled={saving} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
+                                    {saving ? 'Guardando...' : 'Guardar Curso'}
+                                </button>
                             </div>
 
                             <div className="space-y-6">
@@ -2576,7 +2595,7 @@ const generationId = data.generationId;
                                                             onClick={() => handleAgregarRecurso(index)}
                                                             className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-extrabold transition flex items-center gap-1 border border-blue-200"
                                                         >
-                                                            <Plus className="h-3.5 w-3.5" /> Añadir Recurso
+                                                            <Plus className="h-3.5 w-3.5" /> Añadir Recurso Educativo
                                                         </button>
                                                     </div>
                                                 </div>
@@ -3307,9 +3326,14 @@ const generationId = data.generationId;
                     {/* Tab 3: Examen Final */}
                     <div className={activeTab === 'examen' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">3. Configuración del Examen Final del Curso</h2>
-                                <p className="text-gray-500 text-xs mt-0.5">El examen final habilitará la generación de constancias premium de Grupo Egac para los alumnos inscritos.</p>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-gray-900">3. Configuración del Examen Final del Curso</h2>
+                                    <p className="text-gray-500 text-xs mt-0.5">El examen final habilitará la generación de constancias premium de Grupo Egac para los alumnos inscritos.</p>
+                                </div>
+                                <button type="button" onClick={() => guardarCurso(true)} disabled={saving} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
+                                    {saving ? 'Guardando...' : 'Guardar Curso'}
+                                </button>
                             </div>
 
                             <div className="bg-green-55/40 border border-green-200 rounded-2xl p-6 shadow-md">
@@ -3659,7 +3683,7 @@ const generationId = data.generationId;
                                         disabled={saving}
                                         className="flex-grow py-3 px-6 border border-transparent rounded-xl shadow-md text-base font-black text-white bg-blue-600 hover:bg-blue-700 transition disabled:opacity-50 hover:scale-[1.01]"
                                     >
-                                        {saving ? 'Guardando Borrador...' : (estadoActual === 'aprobado' ? 'Guardar Borrador y Solicitar Revisión' : 'Guardar Cambios y Solicitar Revisión')}
+                                        {saving ? 'Guardando cambios...' : 'Guardar curso y Enviar a revisión'}
                                     </button>
                                 </div>
                             </div>

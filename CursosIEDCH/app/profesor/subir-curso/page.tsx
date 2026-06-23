@@ -925,6 +925,10 @@ export default function SubirCursoPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        await guardarCurso(false)
+    }
+
+    const guardarCurso = async (esBorrador: boolean) => {
         setLoading(true)
         setMensaje('')
 
@@ -944,125 +948,174 @@ export default function SubirCursoPage() {
             setLoading(false)
             return
         }
-        if (!formData.descripcion?.trim()) {
-            setModalMessage({
-                title: 'Faltan Campos',
-                content: 'Error: Por favor escribe la descripción del curso.',
-                type: 'error'
-            });
-            setLoading(false)
-            return
-        }
-        if (!formData.competencias?.trim()) {
-            setModalMessage({
-                title: 'Faltan Campos',
-                content: 'Error: Por favor escribe las competencias del curso.',
-                type: 'error'
-            });
-            setLoading(false)
-            return
-        }
-        if (!formData.beneficios?.trim()) {
-            setModalMessage({
-                title: 'Faltan Campos',
-                content: 'Error: Por favor especifica los beneficios del curso.',
-                type: 'error'
-            });
-            setLoading(false)
-            return
-        }
-        if (!formData.duracion?.trim()) {
-            setModalMessage({
-                title: 'Faltan Campos',
-                content: 'Error: Por favor especifica la duración del curso.',
-                type: 'error'
-            });
-            setLoading(false)
-            return
-        }
-
-        // Validate modules
-        if (modulos.length === 0) {
-            setModalMessage({
-                title: 'Faltan Módulos',
-                content: 'Error: Agrega al menos un módulo al curso.',
-                type: 'error'
-            });
-            setLoading(false)
-            return
-        }
-
-        for (let i = 0; i < modulos.length; i++) {
-            const m = modulos[i];
-            if (!m.titulo) {
+        
+        if (!esBorrador) {
+            if (!formData.descripcion?.trim()) {
                 setModalMessage({
                     title: 'Faltan Campos',
-                    content: `Error: Por favor especifica el título del módulo ${i + 1}.`,
+                    content: 'Error: Por favor escribe la descripción del curso.',
+                    type: 'error'
+                });
+                setLoading(false)
+                return
+            }
+            if (!formData.competencias?.trim()) {
+                setModalMessage({
+                    title: 'Faltan Campos',
+                    content: 'Error: Por favor escribe las competencias del curso.',
+                    type: 'error'
+                });
+                setLoading(false)
+                return
+            }
+            if (!formData.beneficios?.trim()) {
+                setModalMessage({
+                    title: 'Faltan Campos',
+                    content: 'Error: Por favor especifica los beneficios del curso.',
+                    type: 'error'
+                });
+                setLoading(false)
+                return
+            }
+            if (!formData.duracion?.trim()) {
+                setModalMessage({
+                    title: 'Faltan Campos',
+                    content: 'Error: Por favor especifica la duración del curso.',
                     type: 'error'
                 });
                 setLoading(false)
                 return
             }
 
-            // Check resources
-            for (let rIdx = 0; rIdx < m.recursos.length; rIdx++) {
-                const rec = m.recursos[rIdx];
-                if (!rec.titulo) {
+            // Validate modules
+            if (modulos.length === 0) {
+                setModalMessage({
+                    title: 'Faltan Módulos',
+                    content: 'Error: Agrega al menos un módulo al curso.',
+                    type: 'error'
+                });
+                setLoading(false)
+                return
+            }
+
+            for (let i = 0; i < modulos.length; i++) {
+                const m = modulos[i];
+                if (!m.titulo) {
                     setModalMessage({
-                        title: 'Título de Recurso Obligatorio',
-                        content: `Error: Por favor escribe un título para el recurso ${rIdx + 1} del módulo "${m.titulo}".`,
+                        title: 'Faltan Campos',
+                        content: `Error: Por favor especifica el título del módulo ${i + 1}.`,
                         type: 'error'
                     });
                     setLoading(false)
                     return
                 }
-                if (rec.tipo === 'video' && !rec.url_contenido) {
-                    setModalMessage({
-                        title: 'Enlace Obligatorio',
-                        content: `Error: Por favor escribe el enlace de video para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
-                        type: 'error'
-                    });
-                    setLoading(false)
-                    return
+
+                // Check resources
+                for (let rIdx = 0; rIdx < m.recursos.length; rIdx++) {
+                    const rec = m.recursos[rIdx];
+                    if (!rec.titulo) {
+                        setModalMessage({
+                            title: 'Título de Recurso Obligatorio',
+                            content: `Error: Por favor escribe un título para el recurso ${rIdx + 1} del módulo "${m.titulo}".`,
+                            type: 'error'
+                        });
+                        setLoading(false)
+                        return
+                    }
+                    if (rec.tipo === 'video' && !rec.url_contenido) {
+                        setModalMessage({
+                            title: 'Enlace Obligatorio',
+                            content: `Error: Por favor escribe el enlace de video para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
+                            type: 'error'
+                        });
+                        setLoading(false)
+                        return
+                    }
+                    if (rec.tipo !== 'video' && !rec.archivoPdf) {
+                        setModalMessage({
+                            title: 'Archivo Obligatorio',
+                            content: `Error: Por favor sube un archivo (PDF/PPT/HTML) para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
+                            type: 'error'
+                        });
+                        setLoading(false)
+                        return
+                    }
                 }
-                if (rec.tipo !== 'video' && !rec.archivoPdf) {
-                    setModalMessage({
-                        title: 'Archivo Obligatorio',
-                        content: `Error: Por favor sube un archivo (PDF/PPT/HTML) para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
-                        type: 'error'
-                    });
-                    setLoading(false)
-                    return
+
+                // If module requires exam, validate questions
+                if (m.requiereExamen) {
+                    if (m.examenPreguntas.length === 0) {
+                        setModalMessage({
+                            title: 'Examen Vacío',
+                            content: `Error: El módulo "${m.titulo}" requiere examen pero no tiene preguntas.`,
+                            type: 'error'
+                        });
+                        setLoading(false)
+                        return
+                    }
+                    const tieneOpcionMultiple = m.examenPreguntas.some(p => p.tipo_pregunta !== 'respuesta_libre');
+                    if (!tieneOpcionMultiple) {
+                        setModalMessage({
+                            title: 'Falta Pregunta de Opción Múltiple',
+                            content: `Error: El examen del módulo "${m.titulo}" debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.`,
+                            type: 'error'
+                        });
+                        setLoading(false)
+                        return
+                    }
+                    for (let pIdx = 0; pIdx < m.examenPreguntas.length; pIdx++) {
+                        const p = m.examenPreguntas[pIdx];
+                        if (!p.pregunta) {
+                            setModalMessage({
+                                title: 'Pregunta Incompleta',
+                                content: `Error: Completa la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                                type: 'error'
+                            });
+                            setLoading(false)
+                            return
+                        }
+                        if (p.tipo_pregunta !== 'respuesta_libre') {
+                            if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
+                                setModalMessage({
+                                    title: 'Opciones Incompletas',
+                                    content: `Error: Completa al menos las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                                    type: 'error'
+                                });
+                                setLoading(false)
+                                return
+                            }
+                        }
+                    }
                 }
             }
 
-            // If module requires exam, validate questions
-            if (m.requiereExamen) {
-                if (m.examenPreguntas.length === 0) {
+            // Validate final exam status
+            if (requiereExamen) {
+                if (preguntasExtraidas.length === 0) {
                     setModalMessage({
-                        title: 'Examen Vacío',
-                        content: `Error: El módulo "${m.titulo}" requiere examen pero no tiene preguntas.`,
+                        title: 'Cuestionario Vacío',
+                        content: 'Error: Has marcado que el curso requiere examen final, por favor añade al menos una pregunta.',
                         type: 'error'
                     });
                     setLoading(false)
                     return
                 }
-                const tieneOpcionMultiple = m.examenPreguntas.some(p => p.tipo_pregunta !== 'respuesta_libre');
-                if (!tieneOpcionMultiple) {
+                const tieneOpcionMultipleFinal = preguntasExtraidas.some(p => p.tipo_pregunta !== 'respuesta_libre');
+                if (!tieneOpcionMultipleFinal) {
                     setModalMessage({
                         title: 'Falta Pregunta de Opción Múltiple',
-                        content: `Error: El examen del módulo "${m.titulo}" debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.`,
+                        content: 'Error: El examen final debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.',
                         type: 'error'
                     });
                     setLoading(false)
                     return
                 }
-                for (let pIdx = 0; pIdx < m.examenPreguntas.length; pIdx++) {
-                    const p = m.examenPreguntas[pIdx];
+                for (let pIdx = 0; pIdx < preguntasExtraidas.length; pIdx++) {
+                    const p = preguntasExtraidas[pIdx];
                     if (!p.pregunta) {
                         setModalMessage({
                             title: 'Pregunta Incompleta',
-                            content: `Error: Completa la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                            content: `Error: Por favor completa el texto para la pregunta ${pIdx + 1} del examen final.`,
                             type: 'error'
                         });
                         setLoading(false)
@@ -1072,58 +1125,12 @@ export default function SubirCursoPage() {
                         if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
                             setModalMessage({
                                 title: 'Opciones Incompletas',
-                                content: `Error: Completa al menos las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
+                                content: `Error: Por favor completa las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} del examen final.`,
                                 type: 'error'
                             });
                             setLoading(false)
                             return
                         }
-                    }
-                }
-            }
-        }
-
-        // Validate final exam status
-        if (requiereExamen) {
-            if (preguntasExtraidas.length === 0) {
-                setModalMessage({
-                    title: 'Cuestionario Vacío',
-                    content: 'Error: Has marcado que el curso requiere examen final, por favor añade al menos una pregunta.',
-                    type: 'error'
-                });
-                setLoading(false)
-                return
-            }
-            const tieneOpcionMultipleFinal = preguntasExtraidas.some(p => p.tipo_pregunta !== 'respuesta_libre');
-            if (!tieneOpcionMultipleFinal) {
-                setModalMessage({
-                    title: 'Falta Pregunta de Opción Múltiple',
-                    content: 'Error: El examen final debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.',
-                    type: 'error'
-                });
-                setLoading(false)
-                return
-            }
-            for (let pIdx = 0; pIdx < preguntasExtraidas.length; pIdx++) {
-                const p = preguntasExtraidas[pIdx];
-                if (!p.pregunta) {
-                    setModalMessage({
-                        title: 'Pregunta Incompleta',
-                        content: `Error: Por favor completa el texto para la pregunta ${pIdx + 1} del examen final.`,
-                        type: 'error'
-                    });
-                    setLoading(false)
-                    return
-                }
-                if (p.tipo_pregunta !== 'respuesta_libre') {
-                    if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
-                        setModalMessage({
-                            title: 'Opciones Incompletas',
-                            content: `Error: Por favor completa las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} del examen final.`,
-                            type: 'error'
-                        });
-                        setLoading(false)
-                        return
                     }
                 }
             }
@@ -1164,7 +1171,7 @@ export default function SubirCursoPage() {
             instructor: instructorNombre,
             url_contenido: 'processing',
             precio: Number(formData.precio) * 1.16,
-            estado: 'pendiente',
+            estado: esBorrador ? 'borrador' : 'pendiente',
             creado_por: user.id,
             requiere_examen: requiereExamen,
             requiere_pago_completo: requierePagoCompleto,
@@ -1189,8 +1196,8 @@ export default function SubirCursoPage() {
 
         if (errorCurso || !cursoGuardado) {
             setModalMessage({
-                title: 'Error al Crear Curso',
-                content: 'Error al crear el curso en la base de datos: ' + errorCurso?.message,
+                title: esBorrador ? 'Error al Guardar Borrador' : 'Error al Crear Curso',
+                content: (esBorrador ? 'Error al guardar el borrador en la base de datos: ' : 'Error al crear el curso en la base de datos: ') + errorCurso?.message,
                 type: 'error'
             });
             setLoading(false)
@@ -1247,8 +1254,8 @@ export default function SubirCursoPage() {
                 .from('ie_curso_modulos')
                 .insert({
                     curso_id: cursoGuardado.id,
-                    titulo: currentMod.titulo,
-                    url_contenido: legacyUrl,
+                    titulo: currentMod.titulo || 'Módulo sin título',
+                    url_contenido: legacyUrl || '',
                     orden: i + 1,
                     requiere_cuestionario: !!currentMod.requiereCuestionario
                 })
@@ -1272,8 +1279,8 @@ export default function SubirCursoPage() {
                     .from('ie_modulo_recursos')
                     .insert({
                         modulo_id: moduloInsertado.id,
-                        titulo: rec.titulo,
-                        url_contenido: rec.url_contenido,
+                        titulo: rec.titulo || 'Recurso sin título',
+                        url_contenido: rec.url_contenido || '',
                         orden: rIdx + 1,
                         descargable: rec.descargable || false
                     });
@@ -1281,7 +1288,7 @@ export default function SubirCursoPage() {
                     console.error('Error insertando recurso en DB:', JSON.stringify(errorRecurso), errorRecurso);
                     setModalMessage({
                         title: 'Error de Base de Datos',
-                        content: `Error al guardar el recurso "${rec.titulo}": ${errorRecurso.message || JSON.stringify(errorRecurso)}`,
+                        content: `Error al guardar el recurso "${rec.titulo || 'sin título'}": ${errorRecurso.message || JSON.stringify(errorRecurso)}`,
                         type: 'error'
                     });
                     setLoading(false);
@@ -1411,8 +1418,10 @@ export default function SubirCursoPage() {
         }
 
         setModalMessage({
-            title: '¡Curso Creado!',
-            content: 'El curso se ha creado correctamente y ha sido enviado a revisión por el administrador.',
+            title: esBorrador ? '¡Curso Guardado!' : '¡Curso Creado!',
+            content: esBorrador 
+                ? 'El curso se ha guardado correctamente como borrador.' 
+                : 'El curso se ha creado correctamente y ha sido enviado a revisión por el administrador.',
             type: 'success',
             redirectUrl: '/profesor/cursos'
         });
@@ -1540,9 +1549,14 @@ export default function SubirCursoPage() {
                 <form onSubmit={handleSubmit} noValidate className="space-y-8">
                     <div className={activeTab === 'info' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">1. Información Básica del Curso</h2>
-                                <p className="text-gray-500 text-xs mt-0.5">Define los aspects centrales y de cobro del programa académico.</p>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-gray-900">1. Información Básica del Curso</h2>
+                                    <p className="text-gray-500 text-xs mt-0.5">Define los aspects centrales y de cobro del programa académico.</p>
+                                </div>
+                                <button type="button" onClick={() => guardarCurso(true)} disabled={loading} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
+                                    {loading ? 'Guardando...' : 'Guardar Curso'}
+                                </button>
                             </div>
                             <div className="grid grid-cols-1 gap-6">
                                 <div>
@@ -1960,7 +1974,7 @@ export default function SubirCursoPage() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex justify-end pt-4">
+                            <div className="flex justify-end pt-4 border-t border-gray-100">
                                 <button type="button" onClick={() => handleTabChange('modulos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
                                     Siguiente: Clases y Temas
                                 </button>
@@ -1971,9 +1985,14 @@ export default function SubirCursoPage() {
                     {/* Tab 2: Temario y Clases (Módulos & Múltiples Recursos & Exámenes Modulares) */}
                     <div className={activeTab === 'modulos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">2. Temario del Curso (Módulos)</h2>
-                                <p className="text-gray-500 text-xs mt-0.5">Organiza las clases y lecturas del temario. Puedes añadir múltiples recursos (videos, archivos PDF, presentaciones PowerPoint, u HTMLs) a cada módulo.</p>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-gray-900">2. Temario del Curso (Módulos)</h2>
+                                    <p className="text-gray-500 text-xs mt-0.5">Organiza las clases y lecturas del temario. Puedes añadir múltiples recursos (videos, archivos PDF, presentaciones PowerPoint, u HTMLs) a cada módulo.</p>
+                                </div>
+                                <button type="button" onClick={() => guardarCurso(true)} disabled={loading} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
+                                    {loading ? 'Guardando...' : 'Guardar Curso'}
+                                </button>
                             </div>
 
                             <div className="space-y-6">
@@ -2049,7 +2068,7 @@ export default function SubirCursoPage() {
                                                             onClick={() => handleAgregarRecurso(index)}
                                                             className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-extrabold transition flex items-center gap-1 border border-blue-200"
                                                         >
-                                                            <Plus className="h-3.5 w-3.5" /> Añadir Recurso
+                                                            <Plus className="h-3.5 w-3.5" /> Añadir Recurso Educativo
                                                         </button>
                                                     </div>
                                                 </div>
@@ -2741,9 +2760,14 @@ export default function SubirCursoPage() {
                     {/* Tab 3: Examen Final */}
                     <div className={activeTab === 'examen' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">3. Evaluación (Examen Final del Curso)</h2>
-                                <p className="text-gray-500 text-xs mt-0.5">Configura un examen general que abarque todos los temas. Este examen es obligatorio para otorgar la constancia si se activa.</p>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-gray-900">3. Evaluación (Examen Final del Curso)</h2>
+                                    <p className="text-gray-500 text-xs mt-0.5">Configura un examen general que abarque todos los temas. Este examen es obligatorio para otorgar la constancia si se activa.</p>
+                                </div>
+                                <button type="button" onClick={() => guardarCurso(true)} disabled={loading} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
+                                    {loading ? 'Guardando...' : 'Guardar Curso'}
+                                </button>
                             </div>
 
                             <div className="bg-emerald-50/50 border border-emerald-150 rounded-2xl p-6 shadow-sm">
@@ -2965,9 +2989,14 @@ export default function SubirCursoPage() {
                     {/* Tab 4: Avisos e Historial (Clases en vivo y notas) */}
                     <div className={activeTab === 'avisos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">4. Clase en Vivo / Enlace e Indicaciones</h2>
-                                <p className="text-gray-500 text-xs mt-0.5 font-medium">Especifica links de Zoom, Teams o Meet y avisa a los alumnos sobre fechas de reunión o lecturas importantes.</p>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-gray-900">4. Clase en Vivo / Enlace e Indicaciones</h2>
+                                    <p className="text-gray-500 text-xs mt-0.5 font-medium">Especifica links de Zoom, Teams o Meet y avisa a los alumnos sobre fechas de reunión o lecturas importantes.</p>
+                                </div>
+                                <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="flex-shrink-0 whitespace-nowrap px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition-transform transform active:scale-95 flex items-center gap-2 text-sm">
+                                    {loading ? 'Registrando curso...' : 'Guardar curso y Enviar a revisión'}
+                                </button>
                             </div>
 
                             <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 shadow-sm space-y-6">
@@ -3021,7 +3050,7 @@ export default function SubirCursoPage() {
                                     Atrás
                                 </button>
                                 <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 flex items-center gap-2">
-                                    {loading ? 'Registrando curso...' : 'Enviar Curso a Revisión'}
+                                    {loading ? 'Registrando curso...' : 'Guardar curso y Enviar a revisión'}
                                 </button>
                             </div>
                         </div>
