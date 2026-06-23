@@ -13,11 +13,16 @@ export async function GET() {
 
         const { data: profile } = await supabaseSession
             .from('ie_profiles')
-            .select('rol')
+            .select('rol, permisos_adminjr')
             .eq('id', user.id)
             .single();
 
-        if (profile?.rol !== 'admin') return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 });
+        const rol = profile?.rol;
+        const permisos = Array.isArray(profile?.permisos_adminjr) ? (profile.permisos_adminjr as string[]) : [];
+
+        if (rol !== 'admin' && (rol !== 'adminjr' || !permisos.includes('usuarios'))) {
+            return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 });
+        }
 
         // Cliente con Service Role para leer Auth Users y perfiles sin RLS
         const supabaseAdmin = createClient(

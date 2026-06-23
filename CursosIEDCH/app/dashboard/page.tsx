@@ -25,6 +25,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         redirect('/admin/usuarios')
     }
 
+    if (profile?.rol === 'adminjr') {
+        const permisos = Array.isArray(profile?.permisos_adminjr) ? profile.permisos_adminjr : []
+        if (permisos.includes('usuarios')) redirect('/admin/usuarios')
+        if (permisos.includes('validaciones')) redirect('/admin/validaciones')
+        if (permisos.includes('cursos')) redirect('/admin/cursos')
+        if (permisos.includes('cupones')) redirect('/admin/cupones')
+        if (permisos.includes('pagos-manuales')) redirect('/admin/pagos-manuales')
+        if (permisos.includes('pagos-oxxo')) redirect('/admin/pagos-oxxo')
+        if (permisos.includes('transacciones')) redirect('/admin/transacciones')
+        if (permisos.includes('solicitudes')) redirect('/admin/solicitudes')
+        if (permisos.includes('actividad')) redirect('/admin/actividad')
+        redirect('/perfil')
+    }
+
     if (profile?.rol === 'institucion') {
         redirect('/profesor/cursos')
     }

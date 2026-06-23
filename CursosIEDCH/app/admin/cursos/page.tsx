@@ -835,7 +835,7 @@ export default function AdminCursosPage() {
                             c.creador?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
                         ).filter(c => c.estado !== 'eliminado').map(c => (
                             <tr key={c.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.titulo}</td>
+                                <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs sm:max-w-sm whitespace-normal break-words">{c.titulo}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.creador?.nombre || c.instructor}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.precio}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -867,44 +867,46 @@ export default function AdminCursosPage() {
                                         <Eye className="h-4 w-4 mr-1" /> {c.cambios_pendientes ? 'Ver Cambios' : 'Ver Módulos'}
                                     </button>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-500 flex flex-col gap-2">
-                                    <div className="flex items-center gap-2">
-                                        {!c.cambios_pendientes && (
-                                            <select
-                                                value={c.estado}
-                                                onChange={(e) => handleEstadoChange(c.id, e.target.value)}
-                                                className="block w-full pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
-                                            >
-                                                <option value="pendiente">Pendiente</option>
-                                                <option value="aprobado">Aprobado</option>
-                                                <option value="rechazado">Rechazado</option>
-                                            </select>
-                                        )}
-                                        <button
-                                            onClick={() => handleEliminarCurso(c.id)}
-                                            className="text-red-600 hover:text-red-900 p-1.5 bg-red-50 hover:bg-red-100 rounded transition-colors ml-auto"
-                                            title="Eliminar curso lógicamente"
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </button>
-                                    </div>
-                                    {c.cambios_pendientes && (
-                                        <div className="flex gap-2 w-full mt-1">
+                                <td className="px-6 py-4 text-sm text-gray-500">
+                                    <div className="flex flex-col gap-1.5 min-w-[160px]">
+                                        <div className="flex items-center gap-2 w-full">
+                                            {!c.cambios_pendientes && (
+                                                <select
+                                                    value={c.estado}
+                                                    onChange={(e) => handleEstadoChange(c.id, e.target.value)}
+                                                    className="block flex-1 pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
+                                                >
+                                                    <option value="pendiente">Pendiente</option>
+                                                    <option value="aprobado">Aprobado</option>
+                                                    <option value="rechazado">Rechazado</option>
+                                                </select>
+                                            )}
                                             <button
-                                                onClick={() => handleAprobarCambios(c.id, c.cambios_pendientes)}
-                                                disabled={procesandoAccion === c.id}
-                                                className={`flex-1 bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1.5 rounded text-xs font-bold transition-colors shadow-sm border border-green-200 ${procesandoAccion === c.id ? 'opacity-50 cursor-wait' : ''}`}
+                                                onClick={() => handleEliminarCurso(c.id)}
+                                                className="text-red-600 hover:text-red-900 p-1.5 bg-red-50 hover:bg-red-100 rounded transition-colors ml-auto flex-shrink-0"
+                                                title="Eliminar curso lógicamente"
                                             >
-                                                {procesandoAccion === c.id ? 'Aprobando...' : 'Aprobar Edición'}
-                                            </button>
-                                            <button
-                                                onClick={() => handleRechazarCambios(c.id)}
-                                                className="flex-1 bg-red-100 text-red-800 hover:bg-red-200 px-2 py-1.5 rounded text-xs font-bold transition-colors shadow-sm border border-red-200"
-                                            >
-                                                Rechazar Edición
+                                                <Trash2 className="h-5 w-5" />
                                             </button>
                                         </div>
-                                    )}
+                                        {c.cambios_pendientes && (
+                                            <div className="flex gap-2 w-full mt-1">
+                                                <button
+                                                    onClick={() => handleAprobarCambios(c.id, c.cambios_pendientes)}
+                                                    disabled={procesandoAccion === c.id}
+                                                    className={`flex-1 bg-green-100 text-green-800 hover:bg-green-200 px-2 py-1.5 rounded text-xs font-bold transition-colors shadow-sm border border-green-200 ${procesandoAccion === c.id ? 'opacity-50 cursor-wait' : ''}`}
+                                                >
+                                                    {procesandoAccion === c.id ? 'Aprobando...' : 'Aprobar Edición'}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRechazarCambios(c.id)}
+                                                    className="flex-1 bg-red-100 text-red-800 hover:bg-red-200 px-2 py-1.5 rounded text-xs font-bold transition-colors shadow-sm border border-red-200"
+                                                >
+                                                    Rechazar Edición
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}

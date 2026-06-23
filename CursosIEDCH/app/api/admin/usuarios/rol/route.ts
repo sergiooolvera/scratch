@@ -38,11 +38,14 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabaseSession
         .from('ie_profiles')
-        .select('rol')
+        .select('rol, permisos_adminjr')
         .eq('id', user.id)
         .single()
         
-    if (profile?.rol !== 'admin') {
+    const rolActualOperador = profile?.rol
+    const permisosOperador = Array.isArray(profile?.permisos_adminjr) ? (profile.permisos_adminjr as string[]) : []
+
+    if (rolActualOperador !== 'admin' && (rolActualOperador !== 'adminjr' || !permisosOperador.includes('usuarios'))) {
         return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 })
     }
 
@@ -59,19 +62,42 @@ export async function POST(request: Request) {
             process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         )
 
+        // 1. Obtener el perfil del usuario a modificar (destino)
+        const { data: targetProfile, error: targetError } = await supabaseAdmin
+            .from('ie_profiles')
+            .select('rol, nombre, referral_code')
+            .eq('id', userId)
+            .single()
+
+        if (targetError || !targetProfile) {
+            return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
+        }
+
+        // 2. VALIDACIONES DE SEGURIDAD PARA EL ROL ADMINJR
+        if (rolActualOperador === 'adminjr') {
+            // No puede asignar roles administrativos (admin o adminjr)
+            if (newRole === 'admin' || newRole === 'adminjr') {
+                return NextResponse.json({ error: 'No tienes autorización para asignar roles administrativos.' }, { status: 403 })
+            }
+
+            // No puede modificar cuentas de administrador principal
+            if (targetProfile.rol === 'admin') {
+                return NextResponse.json({ error: 'No tienes autorización para modificar cuentas de administrador.' }, { status: 403 })
+            }
+
+            // No puede modificarse a sí mismo
+            if (userId === user.id) {
+                return NextResponse.json({ error: 'No puedes modificar tu propio rol.' }, { status: 403 })
+            }
+        }
+
         // Actualización a aplicar
         const updatePayload: Record<string, any> = { rol: newRole }
 
         // Si el nuevo rol es instructor o vendedor, generar código de referido si no tiene uno
         if (newRole === 'instructor' || newRole === 'vendedor') {
-            const { data: targetProfile } = await supabaseAdmin
-                .from('ie_profiles')
-                .select('nombre, referral_code')
-                .eq('id', userId)
-                .single()
-
-            if (!targetProfile?.referral_code) {
-                updatePayload.referral_code = await generateReferralCode(supabaseAdmin, targetProfile?.nombre || '')
+            if (!targetProfile.referral_code) {
+                updatePayload.referral_code = await generateReferralCode(supabaseAdmin, targetProfile.nombre || '')
             }
         }
 

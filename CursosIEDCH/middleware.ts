@@ -33,14 +33,34 @@ export async function middleware(request: NextRequest) {
     if (user && (pathname.startsWith('/profesor') || pathname.startsWith('/admin') || pathname.startsWith('/institucion'))) {
         const { data: profile } = await supabase
             .from('ie_profiles')
-            .select('rol')
+            .select('rol, permisos_adminjr')
             .eq('id', user.id)
             .single()
 
         const rol = profile?.rol || 'alumno'
 
-        if (pathname.startsWith('/admin') && rol !== 'admin') {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
+        if (pathname.startsWith('/admin')) {
+            if (rol !== 'admin' && rol !== 'adminjr') {
+                return NextResponse.redirect(new URL('/dashboard', request.url))
+            }
+
+            // Si es adminjr, verificar permisos de subruta
+            if (rol === 'adminjr') {
+                const permisos = Array.isArray(profile?.permisos_adminjr)
+                    ? (profile.permisos_adminjr as string[])
+                    : []
+                
+                const parts = pathname.split('/')
+                const subpath = parts[2] // ej: 'usuarios' en '/admin/usuarios'
+
+                if (subpath && !permisos.includes(subpath)) {
+                    return NextResponse.redirect(new URL('/dashboard', request.url))
+                }
+
+                if (!subpath && permisos.length === 0) {
+                    return NextResponse.redirect(new URL('/dashboard', request.url))
+                }
+            }
         }
 
         if (pathname.startsWith('/institucion') && rol !== 'admin' && rol !== 'institucion') {

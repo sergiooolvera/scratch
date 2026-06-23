@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText, ShieldCheck, Ticket, Store, CreditCard, FileSpreadsheet, BarChart3 } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 export default function Navbar() {
@@ -117,12 +117,12 @@ export default function Navbar() {
                             <div className="flex">
                                 {user && (
                                     <div className="hidden md:flex items-center space-x-2">
-                                {profile?.rol !== 'admin' && (
+                                {profile?.rol !== 'admin' && profile?.rol !== 'adminjr' && (
                                     <Link href="/dashboard" className={navItemClass('/dashboard')}>
                                         <LayoutDashboard className="h-4 w-4" /> <span>Catálogo</span>
                                     </Link>
                                 )}
-                                {profile?.rol !== 'admin' && (
+                                {profile?.rol !== 'admin' && profile?.rol !== 'adminjr' && (
                                      <div className="relative group">
                                          <button
                                              onClick={() => setIsEstudiosMenuOpen(!isEstudiosMenuOpen)}
@@ -231,27 +231,91 @@ export default function Navbar() {
                                         <HandCoins className="h-4 w-4" /> <span>Mis Ventas</span>
                                     </Link>
                                 )}
-                                {profile?.rol === 'admin' && (
-                                     <div className="relative group">
-                                         <button
-                                             onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
-                                             className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium focus:outline-none transition-all duration-200 ${
-                                                 pathname.startsWith('/admin')
-                                                     ? 'text-blue-600 bg-blue-50/70 font-semibold'
-                                                     : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-                                             }`}
-                                         >
-                                             <Users className="h-4 w-4" /> <span>Panel Admin</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isAdminMenuOpen ? 'rotate-180' : ''}`} />
-                                         </button>
-                                         <div className={`absolute left-0 mt-1 w-52 rounded-xl shadow-xl bg-white ring-1 ring-black/5 transition-all duration-200 z-[100] ${isAdminMenuOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-2 invisible group-hover:opacity-100 group-hover:translate-y-0 group-hover:visible'}`}>
-                                             <div className="py-1.5 bg-white rounded-xl border border-gray-100/80 divide-y divide-gray-50" role="menu">
-                                                 <Link href="/admin/usuarios" onClick={() => setIsAdminMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg mx-1 my-0.5 transition-colors">Usuarios y Cursos</Link>
-                                                 <Link href="/admin/validaciones" onClick={() => setIsAdminMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg mx-1 my-0.5 transition-colors">Validar Identidades</Link>
-                                                 <Link href="/admin/solicitudes" onClick={() => setIsAdminMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg mx-1 my-0.5 transition-colors">Solicitudes de Ajuste</Link>
-                                             </div>
-                                         </div>
-                                     </div>
-                                 )}
+                                 {(profile?.rol === 'admin' || (profile?.rol === 'adminjr' && (
+                                     Array.isArray(profile?.permisos_adminjr) && profile.permisos_adminjr.length > 0
+                                 ))) && (
+                                      <div className="relative group">
+                                          <button
+                                              onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
+                                              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium focus:outline-none transition-all duration-200 ${
+                                                  pathname.startsWith('/admin')
+                                                      ? 'text-blue-600 bg-blue-50/70 font-semibold'
+                                                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                                              }`}
+                                          >
+                                              <Users className="h-4 w-4" /> <span>Panel Admin</span> <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${isAdminMenuOpen ? 'rotate-180' : ''}`} />
+                                          </button>
+                                          <div className={`absolute left-0 mt-1 w-64 rounded-xl shadow-xl bg-white ring-1 ring-black/5 transition-all duration-200 z-[100] ${isAdminMenuOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-2 invisible group-hover:opacity-100 group-hover:translate-y-0 group-hover:visible'}`}>
+                                              <div className="py-2 bg-white rounded-xl border border-gray-100/80 divide-y divide-gray-100" role="menu">
+                                                  {/* Grupo 1: Gestión de Contenido */}
+                                                  {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('usuarios') || profile?.permisos_adminjr?.includes('cursos') || profile?.permisos_adminjr?.includes('cupones')) && (
+                                                      <div className="py-1 px-1">
+                                                          <span className="block px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Gestión</span>
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('usuarios')) && (
+                                                              <Link href="/admin/usuarios" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <Users className="h-4 w-4 text-gray-400" /> Gestión de Usuarios
+                                                              </Link>
+                                                          )}
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('cursos')) && (
+                                                              <Link href="/admin/cursos" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <BookOpen className="h-4 w-4 text-gray-400" /> Revisión de Cursos
+                                                              </Link>
+                                                          )}
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('cupones')) && (
+                                                              <Link href="/admin/cupones" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <Ticket className="h-4 w-4 text-gray-400" /> Cupones y Bonos
+                                                              </Link>
+                                                          )}
+                                                      </div>
+                                                  )}
+
+                                                  {/* Grupo 2: Finanzas y Pagos */}
+                                                  {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('pagos-manuales') || profile?.permisos_adminjr?.includes('pagos-oxxo') || profile?.permisos_adminjr?.includes('transacciones')) && (
+                                                      <div className="py-1 px-1">
+                                                          <span className="block px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Finanzas</span>
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('pagos-manuales')) && (
+                                                              <Link href="/admin/pagos-manuales" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <Landmark className="h-4 w-4 text-gray-400" /> Pagos Transferencia
+                                                              </Link>
+                                                          )}
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('pagos-oxxo')) && (
+                                                              <Link href="/admin/pagos-oxxo" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <Store className="h-4 w-4 text-gray-400" /> Pagos Oxxo
+                                                              </Link>
+                                                          )}
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('transacciones')) && (
+                                                              <Link href="/admin/transacciones" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <CreditCard className="h-4 w-4 text-gray-400" /> Transacciones Stripe
+                                                              </Link>
+                                                          )}
+                                                      </div>
+                                                  )}
+
+                                                  {/* Grupo 3: Soporte y Auditoría */}
+                                                  {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('validaciones') || profile?.permisos_adminjr?.includes('solicitudes') || profile?.permisos_adminjr?.includes('actividad')) && (
+                                                      <div className="py-1 px-1">
+                                                          <span className="block px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Soporte y Reportes</span>
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('validaciones')) && (
+                                                              <Link href="/admin/validaciones" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <ShieldCheck className="h-4 w-4 text-gray-400" /> Validar Identidades
+                                                              </Link>
+                                                          )}
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('solicitudes')) && (
+                                                              <Link href="/admin/solicitudes" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <FileSpreadsheet className="h-4 w-4 text-gray-400" /> Solicitudes Ajuste
+                                                              </Link>
+                                                          )}
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('actividad')) && (
+                                                              <Link href="/admin/actividad" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <BarChart3 className="h-4 w-4 text-gray-400" /> Estadísticas
+                                                              </Link>
+                                                          )}
+                                                      </div>
+                                                  )}
+                                              </div>
+                                          </div>
+                                      </div>
+                                  )}
                             </div>
                         )}
                     </div>
@@ -368,7 +432,7 @@ export default function Navbar() {
                                         </span>
                                     </div>
                                 </div>
-                                {profile?.rol !== 'admin' && (
+                                {profile?.rol !== 'admin' && profile?.rol !== 'adminjr' && (
                                     <>
                                         <Link href="/dashboard" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">
                                             <LayoutDashboard className="h-5 w-5 text-gray-400" /> <span>Catálogo</span>
@@ -427,14 +491,46 @@ export default function Navbar() {
                                         <HandCoins className="h-5 w-5" /> <span>Mis Ventas</span>
                                     </Link>
                                 )}
-                                {profile?.rol === 'admin' && (
-                                    <div className="space-y-1">
-                                        <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Panel Admin</div>
-                                        <Link href="/admin/usuarios" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Usuarios y Cursos</Link>
-                                        <Link href="/admin/validaciones" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Validar Identidades</Link>
-                                        <Link href="/admin/solicitudes" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Solicitudes de Ajuste</Link>
-                                    </div>
-                                )}
+                                {(profile?.rol === 'admin' || (profile?.rol === 'adminjr' && (
+                                     Array.isArray(profile?.permisos_adminjr) && profile.permisos_adminjr.length > 0
+                                 ))) && (
+                                     <div className="space-y-1">
+                                         <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Panel Admin</div>
+                                         
+                                         {/* Gestión */}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('usuarios')) && (
+                                             <Link href="/admin/usuarios" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Gestión de Usuarios</Link>
+                                         )}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('cursos')) && (
+                                             <Link href="/admin/cursos" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Revisión de Cursos</Link>
+                                         )}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('cupones')) && (
+                                             <Link href="/admin/cupones" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Cupones y Bonos</Link>
+                                         )}
+
+                                         {/* Finanzas */}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('pagos-manuales')) && (
+                                             <Link href="/admin/pagos-manuales" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Pagos Transferencia</Link>
+                                         )}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('pagos-oxxo')) && (
+                                             <Link href="/admin/pagos-oxxo" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Pagos Oxxo</Link>
+                                         )}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('transacciones')) && (
+                                             <Link href="/admin/transacciones" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Transacciones Stripe</Link>
+                                         )}
+
+                                         {/* Soporte */}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('validaciones')) && (
+                                             <Link href="/admin/validaciones" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Validar Identidades</Link>
+                                         )}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('solicitudes')) && (
+                                             <Link href="/admin/solicitudes" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Solicitudes Ajuste</Link>
+                                         )}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('actividad')) && (
+                                             <Link href="/admin/actividad" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Estadísticas</Link>
+                                         )}
+                                     </div>
+                                 )}
                                 <Link href="/perfil" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">
                                     <User className="h-5 w-5 text-gray-400" /> <span>Mi Perfil</span>
                                 </Link>
