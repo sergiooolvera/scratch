@@ -4,7 +4,7 @@ import { X, Calculator, Info, Landmark, HelpCircle, CheckCircle } from 'lucide-r
 type SimuladorIngresosModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  precioBase: number;
+  precioPublico: number;
   aplicarIvaGlobal: boolean;
   onChangePrecio?: (precio: number) => void;
   onChangeAplicarIva?: (aplica: boolean) => void;
@@ -15,28 +15,28 @@ type RegimenType = 'RESICO' | 'ACTIVIDAD_PROFESIONAL' | 'ASIMILADOS' | 'PERSONA_
 export default function SimuladorIngresosModal({ 
   isOpen, 
   onClose, 
-  precioBase, 
+  precioPublico, 
   aplicarIvaGlobal, 
   onChangePrecio, 
   onChangeAplicarIva 
 }: SimuladorIngresosModalProps) {
-  const [precio, setPrecio] = useState(precioBase)
+  const [precio, setPrecio] = useState(precioPublico)
   const [alumnos, setAlumnos] = useState(20)
   const [regimen, setRegimen] = useState<RegimenType>('RESICO')
 
-  // Sincronizar precio base cuando se abra el modal
+  // Sincronizar precio al público cuando se abra el modal
   useEffect(() => {
     if (isOpen) {
-      setPrecio(precioBase)
+      setPrecio(precioPublico)
     }
-  }, [isOpen, precioBase])
+  }, [isOpen, precioPublico])
 
   if (!isOpen) return null
 
   // --- CÁLCULOS ACTUALIZADOS: INGRESO BRUTO SOBRE PRECIO AL PÚBLICO (CON IVA) ---
   
-  // Precio al público = precio * 1.16
-  const precioAlPublico = precio * 1.16
+  // El precio ingresado en el simulador ya es el precio al público
+  const precioAlPublico = precio
 
   // 1. Ingreso Bruto Total = Precio al público * Alumnos
   const ingresoBrutoTotal = precioAlPublico * alumnos
@@ -140,7 +140,7 @@ export default function SimuladorIngresosModal({
             <div className="space-y-4">
               {/* Costo del curso */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Precio Base del Curso (MXN)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Precio al Público del Curso (MXN)</label>
                 <div className="relative rounded-2xl shadow-sm">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
                   <input 
@@ -155,7 +155,7 @@ export default function SimuladorIngresosModal({
                 {precio > 0 && (
                   <div className="mt-2 p-2 bg-blue-50 rounded-xl border border-blue-100/50 text-xs text-blue-700 font-medium flex items-center gap-1.5 animate-fade-in">
                     <Info size={14} className="shrink-0" />
-                    <span>Precio al público (+16% IVA): <strong className="font-bold">{formatter.format(precio * 1.16)}</strong></span>
+                    <span>Precio base desglosado: <strong className="font-bold">{formatter.format(precio / 1.16)}</strong> | IVA (16%): <strong className="font-bold">{formatter.format(precio - (precio / 1.16))}</strong></span>
                   </div>
                 )}
               </div>
@@ -222,7 +222,7 @@ export default function SimuladorIngresosModal({
                 </thead>
                 <tbody className="divide-y divide-gray-50 text-gray-700">
                   <tr>
-                    <td className="p-3 pl-4 font-medium">Ingreso Bruto Total <span className="text-[10px] text-gray-400">(Precio al público {precio > 0 ? formatter.format(precio * 1.16) : '$0.00'} × {alumnos} alumnos)</span></td>
+                    <td className="p-3 pl-4 font-medium">Ingreso Bruto Total <span className="text-[10px] text-gray-400">(Precio al público {precio > 0 ? formatter.format(precio) : '$0.00'} × {alumnos} alumnos)</span></td>
                     <td className="p-3 pr-4 text-right font-semibold text-gray-900">{formatter.format(ingresoBrutoTotal)}</td>
                   </tr>
                   <tr>

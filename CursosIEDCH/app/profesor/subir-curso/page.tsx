@@ -1172,7 +1172,7 @@ export default function SubirCursoPage() {
             ...formData,
             instructor: instructorNombre,
             url_contenido: 'processing',
-            precio: Number(formData.precio) * 1.16,
+            precio: Number(formData.precio),
             estado: esBorrador ? 'borrador' : 'pendiente',
             creado_por: user.id,
             requiere_examen: requiereExamen,
@@ -1749,7 +1749,7 @@ export default function SubirCursoPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
                                     {profile?.rol !== 'capacitador' ? (
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Precio Base del Curso (MXN)</label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Precio al Público del Curso (MXN)</label>
                                             <div className="flex gap-2 items-center">
                                                 <div className="relative rounded-xl shadow-sm flex-1">
                                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -1769,12 +1769,12 @@ export default function SubirCursoPage() {
                                             {Number(formData.precio) > 0 && (
                                                 <div className="mt-2 p-3 bg-blue-50/50 border border-blue-100/50 rounded-xl text-xs flex gap-4 text-gray-700">
                                                     <div>
-                                                        <span className="text-gray-500 font-medium">IVA (16%):</span>{' '}
-                                                        <span className="font-semibold text-gray-900">${(Number(formData.precio) * 0.16).toFixed(2)} MXN</span>
+                                                        <span className="text-gray-500 font-medium">Precio Base:</span>{' '}
+                                                        <span className="font-semibold text-gray-900">${(Number(formData.precio) / 1.16).toFixed(2)} MXN</span>
                                                     </div>
                                                     <div className="border-l border-gray-200 pl-4">
-                                                        <span className="text-gray-500 font-medium">Precio al público:</span>{' '}
-                                                        <span className="font-bold text-blue-600">${(Number(formData.precio) * 1.16).toFixed(2)} MXN</span>
+                                                        <span className="text-gray-500 font-medium">IVA (16%):</span>{' '}
+                                                        <span className="font-bold text-blue-600">${(Number(formData.precio) - (Number(formData.precio) / 1.16)).toFixed(2)} MXN</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -3347,7 +3347,7 @@ export default function SubirCursoPage() {
                 <SimuladorIngresosModal
                     isOpen={isSimuladorOpen}
                     onClose={() => setIsSimuladorOpen(false)}
-                    precioBase={Number(formData.precio) || 0}
+                    precioPublico={Number(formData.precio) || 0}
                     aplicarIvaGlobal={aplicarIva}
                     onChangePrecio={(p) => setFormData(prev => ({ ...prev, precio: p }))}
                     onChangeAplicarIva={(a) => setAplicarIva(a)}
