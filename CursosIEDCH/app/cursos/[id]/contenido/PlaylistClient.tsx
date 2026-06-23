@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock, Maximize2, Minimize2 } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock, Maximize2, Minimize2, Gamepad2 } from 'lucide-react'
 import { notifyProfesorTaskSubmission } from '@/app/actions/taskNotifications'
 import { createClient } from '@/lib/supabase/client'
 import confetti from 'canvas-confetti'
@@ -65,6 +65,102 @@ type PuzzleDef = {
     puzzleRespuesta?: string;
     puzzles?: { pregunta: string; respuesta: string; tipo?: 'anagrama' | 'ahorcado' | 'sopa' }[];
 }
+
+const playSuccessSound = () => {
+    if (typeof window === 'undefined') return;
+    try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, ctx.currentTime);
+        gain1.gain.setValueAtTime(0.04, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start();
+        osc1.stop(ctx.currentTime + 0.08);
+        
+        setTimeout(() => {
+            try {
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880, ctx.currentTime);
+                gain2.gain.setValueAtTime(0.04, ctx.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start();
+                osc2.stop(ctx.currentTime + 0.18);
+            } catch (e) {
+                console.error(e);
+            }
+        }, 60);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+const playErrorSound = () => {
+    if (typeof window === 'undefined') return;
+    try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(110, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(55, ctx.currentTime + 0.22);
+        
+        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.22);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+const playVictorySound = () => {
+    if (typeof window === 'undefined') return;
+    try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, index) => {
+            setTimeout(() => {
+                try {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.04, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } catch (e) {
+                    console.error(e);
+                }
+            }, index * 80);
+        });
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 
 export default function PlaylistClient({
     playlist,
@@ -429,11 +525,13 @@ export default function PlaylistClient({
 
         if (activePuzzleIndex < totalPuzzles - 1) {
             setPuzzleSuccess(true)
+            playSuccessSound()
             setTimeout(() => {
                 setActivePuzzleIndex(prev => prev + 1);
             }, 1500)
         } else {
             setPuzzleSuccess(true)
+            playVictorySound()
             setEnviandoTarea(true)
             
             const puntos = Number(puzzleDef?.puntos) || 10
@@ -1599,7 +1697,7 @@ export default function PlaylistClient({
                                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-2 border-orange-400 bg-orange-50/80 rounded-xl p-4 shadow-sm w-full">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2.5 bg-orange-500 text-white rounded-xl shadow-sm">
-                                                        <Sparkles className="h-5 w-5 animate-pulse" />
+                                                        <Gamepad2 className="h-5 w-5 animate-pulse" />
                                                     </div>
                                                     <div>
                                                         <h3 className="text-lg font-bold text-orange-900">Puzle o Juego Interactivo</h3>
@@ -1657,7 +1755,7 @@ export default function PlaylistClient({
                                                 <div className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 space-y-4 shadow-sm">
                                                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
                                                         <div className="bg-amber-500 text-white p-2 rounded-lg shadow-sm">
-                                                            <Sparkles className="h-5 w-5 animate-pulse" />
+                                                            <Gamepad2 className="h-5 w-5 animate-pulse" />
                                                         </div>
                                                         <div className="flex-1">
                                                             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1748,6 +1846,8 @@ export default function PlaylistClient({
                                                                                 const correcta = sanitizarTexto(currentPuzzle?.respuesta || '');
                                                                                 if (newInput === correcta) {
                                                                                     handleExitoPuzzle();
+                                                                                } else if (newInput.length >= correcta.length) {
+                                                                                    playErrorSound();
                                                                                 }
                                                                             }
                                                                         }}
@@ -1808,11 +1908,14 @@ export default function PlaylistClient({
                                                                             
                                                                             if (!correcta) {
                                                                                 setPuzzleVidas(prev => prev - 1);
+                                                                                playErrorSound();
                                                                             } else {
                                                                                 const palabraCorrecta = sanitizarTexto(currentPuzzle?.respuesta || '');
                                                                                 const ganaste = palabraCorrecta.split('').every(letra => nuevasAdivinadas.includes(letra));
                                                                                 if (ganaste) {
                                                                                     handleExitoPuzzle();
+                                                                                } else {
+                                                                                    playSuccessSound();
                                                                                 }
                                                                             }
                                                                         };
@@ -1906,6 +2009,7 @@ export default function PlaylistClient({
                                                                                     handleExitoPuzzle();
                                                                                 } else if (palabraDeletreada.length >= palabraCorrecta.length) {
                                                                                     setPuzzleErrorMsg("La palabra construida no es correcta. ¡Inténtalo de nuevo!");
+                                                                                    playErrorSound();
                                                                                 }
                                                                             }
                                                                         }}
@@ -2197,7 +2301,7 @@ export default function PlaylistClient({
                                                         ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                                                         : 'bg-orange-50 text-orange-600 border border-orange-200'
                                                     }`}>
-                                                        <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                                        <Gamepad2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                                         {puzzleEntregas[item.id] ? 'Puzle Completado' : 'Tiene Puzle'}
                                                     </span>
                                                 )}

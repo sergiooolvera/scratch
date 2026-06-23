@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2 } from 'lucide-react'
 import Link from 'next/link'
 import { moduloTieneExamenContestado } from './actions'
 import { notifyAdminsOnCourseEdit } from '@/app/actions/notifications'
@@ -816,9 +816,11 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     }
 
     const handleModuloChange = (index: number, field: keyof Modulo, value: any) => {
-        const nuevosModulos = [...modulos]
-        nuevosModulos[index] = { ...nuevosModulos[index], [field]: value }
-        setModulos(nuevosModulos)
+        setModulos(prev => {
+            const nuevosModulos = [...prev]
+            nuevosModulos[index] = { ...nuevosModulos[index], [field]: value }
+            return nuevosModulos
+        })
     }
 
     const handleMoverModulo = (index: number, direccion: 'subir' | 'bajar') => {
@@ -3148,7 +3150,7 @@ const generationId = data.generationId;
                                                             className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                                                         />
                                                         <span className="text-sm font-bold text-orange-900 flex items-center gap-1.5">
-                                                            <Sparkles className="h-4 w-4 text-orange-700" />
+                                                            <Gamepad2 className="h-4 w-4 text-orange-700" />
                                                             ¿Este módulo requiere un Puzle (Juego Interactivo)?
                                                         </span>
                                                     </label>
@@ -3210,14 +3212,21 @@ const generationId = data.generationId;
                                                                                 onClick={() => {
                                                                                     const newPuzzles = [...(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }])];
                                                                                     newPuzzles.splice(pIdx, 1);
-                                                                                    handleModuloChange(index, 'puzzlePuzzles', newPuzzles);
-                                                                                    handleModuloChange(index, 'puzzlePregunta', newPuzzles[0].pregunta);
-                                                                                    handleModuloChange(index, 'puzzleRespuesta', newPuzzles[0].respuesta);
-                                                                                    handleModuloChange(index, 'puzzleTipo', newPuzzles[0].tipo || 'anagrama');
+                                                                                    
+                                                                                    const nuevosModulos = [...modulos];
+                                                                                    nuevosModulos[index] = {
+                                                                                        ...nuevosModulos[index],
+                                                                                        puzzlePuzzles: newPuzzles,
+                                                                                        puzzlePregunta: newPuzzles[0]?.pregunta || '',
+                                                                                        puzzleRespuesta: newPuzzles[0]?.respuesta || '',
+                                                                                        puzzleTipo: newPuzzles[0]?.tipo || 'anagrama'
+                                                                                    };
+                                                                                    setModulos(nuevosModulos);
                                                                                 }}
-                                                                                className="text-red-550 hover:text-red-700 text-[10px] font-bold transition"
+                                                                                className="p-1 rounded-md text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                                                                                title="Eliminar pregunta"
                                                                             >
-                                                                                Eliminar
+                                                                                <Trash2 className="h-4 w-4" />
                                                                             </button>
                                                                         )}
                                                                     </div>
