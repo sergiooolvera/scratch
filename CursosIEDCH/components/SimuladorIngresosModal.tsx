@@ -65,13 +65,13 @@ export default function SimuladorIngresosModal({
     ivaTrasladado = subtotalNeto * 0.16
     totalBruto = subtotalNeto + ivaTrasladado // que es igual a comisionInstructor
     retencionISR = subtotalNeto * 0.0125      // 1.25% de retención de ISR en RESICO
-    retencionIVA = 0
+    retencionIVA = subtotalNeto * 0.106667    // 10.6667% de retención de IVA en RESICO
   } else if (regimen === 'ACTIVIDAD_PROFESIONAL') {
     subtotalNeto = comisionInstructor / 1.16
     ivaTrasladado = subtotalNeto * 0.16
     totalBruto = subtotalNeto + ivaTrasladado // que es igual a comisionInstructor
     retencionISR = subtotalNeto * 0.10        // 10% de retención de ISR en Actividad Profesional
-    retencionIVA = 0
+    retencionIVA = subtotalNeto * 0.106667    // 10.6667% de retención de IVA en Actividad Profesional
   } else if (regimen === 'ASIMILADOS') {
     subtotalNeto = comisionInstructor         // No traslada IVA
     ivaTrasladado = 0
@@ -196,8 +196,8 @@ export default function SimuladorIngresosModal({
                 Detalles del régimen
               </span>
               <p className="text-xs text-gray-600 leading-relaxed">
-                {regimen === 'RESICO' && 'Régimen Simplificado de Confianza: Se aplica una tasa mínima de retención de ISR fija del 1.25% sobre el subtotal neto. Excelente para personas físicas con ingresos menores a 3.5 MDP.'}
-                {regimen === 'ACTIVIDAD_PROFESIONAL' && 'Persona Física con Actividad Profesional (Honorarios): Se aplica una retención de ISR del 10% sobre el subtotal neto. Apto para profesionistas independientes tradicionales.'}
+                {regimen === 'RESICO' && 'Régimen Simplificado de Confianza: Se aplica una tasa de retención de ISR del 1.25% y una retención de IVA del 10.6667% sobre el subtotal neto. Excelente para personas físicas con ingresos menores a 3.5 MDP.'}
+                {regimen === 'ACTIVIDAD_PROFESIONAL' && 'Persona Física con Actividad Profesional (Honorarios): Se aplica una retención de ISR del 10% y una retención de IVA del 10.6667% sobre el subtotal neto. Apto para profesionistas independientes tradicionales.'}
                 {regimen === 'ASIMILADOS' && 'Asimilados a Salarios: No traslada IVA (tasa exenta/no objeto). Se calcula una retención estimada del 6.15% sobre la comisión base.'}
                 {regimen === 'PERSONA_MORAL' && 'Persona Moral (S.A. / S.C.): No se aplican retenciones automáticas de ISR ni de IVA por parte de la plataforma en la simulación base. El IVA del 16% se traslada completo y el instructor gestiona sus impuestos internamente.'}
               </p>
