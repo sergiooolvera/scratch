@@ -43,17 +43,34 @@ export default async function ExpedientePage() {
         .from('ie_profiles')
         .select('id, rol')
         .in('id', creadorIds)
+    // 4. Obtener exámenes de los cursos comprados
+    const { data: examenes } = await supabase
+        .from('ie_examenes')
+        .select('id, curso_id')
+        .in('curso_id', comprasIds)
 
-    // 4. Obtener todos los exámenes aprobados por el usuario
+    const examenIds = examenes?.map(e => e.id) || []
+
+    // 5. Obtener resultados aprobados de exámenes para el usuario
+    const { data: resultadosExamenes } = examenIds.length > 0
+        ? await supabase
+            .from('ie_resultados_examenes')
+            .select('id, examen_id, aprobado, created_at, calificacion')
+            .eq('user_id', user.id)
+            .eq('aprobado', true)
+            .in('examen_id', examenIds)
+        : { data: [] }
+
+    // 6. Obtener constancias generales (para cursos sin examen)
     const { data: examenesAprobados } = await supabase
         .from('ie_examenes_usuario')
         .select('*')
         .eq('user_id', user.id)
         .eq('aprobado', true)
 
-    // 5. Filtrar y construir la lista de expediente (cursos con constancia desbloqueada)
+    // 7. Filtrar y construir la lista de expediente (cursos con constancia desbloqueada)
     const cursosCertificados = cursos.map(curso => {
-        // Si el curso tiene explícitamente mostrar_constancia = false, no ofrece constancia
+        // Si el curso tiene explícitamente mostrar_constancia === false, no ofrece constancia
         if (curso.mostrar_constancia === false) return null
 
         const compra = compras.find(c => c.curso_id === curso.id)
@@ -72,11 +89,14 @@ export default async function ExpedientePage() {
 
         // Validar examen si aplica
         if (curso.requiere_examen) {
-            const examen = examenesAprobados?.find(ex => ex.curso_id === curso.id && ex.aprobado === true)
-            if (!examen) return null // No ha aprobado el examen
+            const examenCurso = examenes?.find(e => e.curso_id === curso.id)
+            const resultado = examenCurso ? resultadosExamenes?.find(r => r.examen_id === examenCurso.id && r.aprobado === true) : null
+            const examenUsuario = examenesAprobados?.find(ex => ex.curso_id === curso.id && ex.aprobado === true)
 
-            // Obtener la fecha del examen aprobado (con control de desfase de zona horaria)
-            const rawDate = examen.fecha || examen.created_at
+            if (!resultado && !examenUsuario) return null // No ha aprobado el examen
+
+            const examen = resultado || examenUsuario
+            const rawDate = (examen as any).created_at || (examen as any).fecha
             if (rawDate) {
                 const dateStr = rawDate.split('T')[0]
                 const [y, m, d] = dateStr.split('-').map(Number)
@@ -86,7 +106,8 @@ export default async function ExpedientePage() {
             }
         } else {
             // Si no requiere examen, se acredita al comprarlo (con control de desfase)
-            const rawDate = compra.fecha_compra
+            const examenUsuario = examenesAprobados?.find(ex => ex.curso_id === curso.id && ex.aprobado === true)
+            const rawDate = examenUsuario?.fecha || compra.fecha_compra
             if (rawDate) {
                 const dateStr = rawDate.split('T')[0]
                 const [y, m, d] = dateStr.split('-').map(Number)
@@ -156,7 +177,7 @@ export default async function ExpedientePage() {
                             
                             <div className="bg-zinc-50/80 border-t border-zinc-100 p-4 sm:px-8 flex flex-col sm:flex-row gap-3">
                                 <Link 
-                                    href={`/cursos/${curso.id}/constancia`}
+                                    href={`/cursos/${curso.id}/certificado`}
                                     className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-full hover:bg-blue-700 transition font-bold text-sm shadow-sm"
                                 >
                                     <Award className="w-4 h-4" />
