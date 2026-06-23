@@ -77,11 +77,12 @@ export default function CertificadoDocument({
 
                 {/* Header Row */}
                 <div className="flex justify-between items-center w-full z-20">
-                    <p className="text-[13.5px] leading-snug font-bold text-black max-w-[450px] font-sans">
+                    <p className="text-[16px] leading-snug font-bold text-black max-w-[520px] font-sans ml-6">
                         El Instituto Educativo De Especialidades Para La Conducta y el Desarrollo Humano S.C<br/>
                         a través del Ecosistema Global de Acreditación y Certificación.
                     </p>
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-4">
+                        <img src="/mundo.jpeg" alt="Mundo" className="h-[110px] w-[110px] object-contain rounded" />
                         {mostrarLogoConstancia ? (
                             logoUrl ? (
                                 <img src={logoUrl} alt="Logo Institución" className="h-[90px] object-contain" />
@@ -104,7 +105,7 @@ export default function CertificadoDocument({
                     
                     {/* Alumno Name */}
                     <h2 
-                        className={`text-[#0B1A3F] mt-2 pb-2 font-serif font-normal leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[700px] text-center ${alumnoNombre.length > 30 ? 'text-[46px]' : alumnoNombre.length > 22 ? 'text-[54px]' : 'text-[64px]'}`}
+                        className={`text-[#0B1A3F] mt-2 pb-2 font-serif font-normal leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[700px] text-center ${alumnoNombre.length > 40 ? 'text-[32px]' : alumnoNombre.length > 30 ? 'text-[42px]' : alumnoNombre.length > 22 ? 'text-[52px]' : 'text-[62px]'}`}
                     >
                         {alumnoNombre}
                     </h2>

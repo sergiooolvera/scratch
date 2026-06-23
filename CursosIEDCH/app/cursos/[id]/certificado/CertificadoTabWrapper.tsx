@@ -121,7 +121,7 @@ export default function CertificadoTabWrapper({
     return (
         <div className="w-full flex flex-col items-center">
             {/* Tabs Selector */}
-            <div className="flex bg-slate-800/10 p-1.5 rounded-2xl mb-8 w-full max-w-sm border border-slate-200 z-10 relative">
+            <div className="flex bg-slate-800/10 p-1.5 rounded-2xl mb-8 w-full max-w-sm border border-slate-200 z-10 relative print:hidden">
                 <button
                     onClick={() => setActiveTab('constancia')}
                     className={`flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all ${
@@ -145,7 +145,7 @@ export default function CertificadoTabWrapper({
             </div>
 
             {/* Downloader Widget */}
-            <div className="w-full bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 z-10 relative">
+            <div className="w-full bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 z-10 relative print:hidden">
                 <div className="flex items-center space-x-4">
                     <div className="p-3 bg-blue-50 rounded-full text-blue-600">
                         <BadgeCheck className="h-7 w-7" />
@@ -175,6 +175,7 @@ export default function CertificadoTabWrapper({
                 <ResponsiveCertificateWrapper width={1056} height={816}>
                     {(() => {
                         const props = {
+                            id: "certificado-document",
                             documentRef: constanciaRef,
                             alumnoNombre,
                             cursoTitulo,

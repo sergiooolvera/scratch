@@ -138,7 +138,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
             <div className="max-w-6xl w-full px-4 z-10">
                 <Link
                     href={`/cursos/${id}/contenido`}
-                    className="inline-flex items-center text-sm font-medium text-blue-100 hover:text-white mb-8 transition-colors font-sans bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm"
+                    className="inline-flex items-center text-sm font-medium text-blue-100 hover:text-white mb-8 transition-colors font-sans bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm print:hidden"
                 >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Volver al curso

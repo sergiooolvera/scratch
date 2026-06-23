@@ -46,10 +46,11 @@ export default function ResponsiveCertificateWrapper({
     return (
         <div 
             ref={containerRef} 
-            className="w-full flex justify-center items-start overflow-hidden transition-all duration-200" 
+            className="w-full flex justify-center items-start overflow-hidden transition-all duration-200 print-wrapper" 
             style={{ height: `${height * scale}px` }}
         >
             <div 
+                className="print-scale-container"
                 style={{ 
                     transform: `scale(${scale})`, 
                     transformOrigin: 'top center',

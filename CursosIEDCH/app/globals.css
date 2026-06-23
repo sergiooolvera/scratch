@@ -24,3 +24,72 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  /* Ocultar elementos de navegación y pies de página globales */
+  header, nav, footer, [role="navigation"], .navbar, .footer {
+    display: none !important;
+  }
+  
+  /* Forzar fondo blanco y eliminar márgenes en el viewport de impresión */
+  html, body {
+    background-color: white !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  
+  /* Resetear el contenedor gris principal del certificado */
+  .bg-gray-100 {
+    background-color: white !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+  }
+  
+  /* Quitar elementos de adorno de fondo */
+  .bg-gradient-to-b {
+    display: none !important;
+  }
+  
+  /* Anular la escala reactiva de pantalla en impresión */
+  .print-wrapper {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .print-scale-container {
+    transform: none !important;
+    width: 1056px !important;
+    height: 816px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+
+  /* Ajustar el certificado */
+  #certificado-document {
+    width: 1056px !important;
+    height: 816px !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    background-color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Configurar el tamaño y orientación de página en horizontal */
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+}
