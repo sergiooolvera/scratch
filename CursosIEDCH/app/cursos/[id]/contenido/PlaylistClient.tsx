@@ -1088,8 +1088,8 @@ export default function PlaylistClient({
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 w-full">
             {/* Main Content Viewer (80%) */}
             <div className={`${isSingleItem ? 'lg:col-span-5' : 'lg:col-span-4'} flex flex-col`}>
-                <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 flex-grow">
-                    <div className="p-4 sm:p-6 border-b border-gray-100 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="bg-white shadow-xl rounded-2xl border border-gray-100 flex-grow">
+                    <div className="p-4 sm:p-6 border-b border-gray-100 bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 rounded-t-2xl">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 mb-1">
                                 {currentItem.titulo}
@@ -1112,7 +1112,7 @@ export default function PlaylistClient({
                         )}
                     </div>
 
-                    <div className="p-4 sm:p-6 bg-gray-50 flex flex-col items-center">
+                    <div className="p-4 sm:p-6 bg-gray-50 flex flex-col items-center rounded-b-2xl">
                         {mostrarExamenActivo && activeExam ? (
                             /* Modular quiz interface rendered directly inside content zone */
                             <div className="w-full max-w-3xl bg-white rounded-2xl shadow-md border border-gray-100 p-6 sm:p-8 transition-all duration-300">
@@ -1208,7 +1208,7 @@ export default function PlaylistClient({
                                     </div>
                                 ) : (
                                     <form onSubmit={handleGradingExamen} className="space-y-6">
-                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-4 gap-2.5">
+                                        <div className="sticky top-[76px] z-30 bg-white/95 backdrop-blur-sm -mt-6 sm:-mt-8 -mx-6 sm:-mx-8 px-6 sm:px-8 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 rounded-t-2xl shadow-sm">
                                             <div className="flex flex-wrap items-center gap-3">
                                                 <h3 className="text-lg font-bold text-gray-900">Examen de Comprensión</h3>
                                                 {tiempoRestante !== null && (

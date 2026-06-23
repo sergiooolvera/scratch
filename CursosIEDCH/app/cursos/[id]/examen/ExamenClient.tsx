@@ -197,7 +197,7 @@ export default function ExamenClient({
             <div className="max-w-3xl mx-auto px-4 py-12">
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-8 text-center relative">
                     <Shield className="mx-auto h-12 w-12 text-blue-600 mb-4" />
-                    <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Preparación para el Examen</h2>
+                    <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Preparación para el Examen Final</h2>
                     <p className="text-gray-600 mb-6">{cursoTitulo}</p>
                     
                     <div className="space-y-4 mb-8">

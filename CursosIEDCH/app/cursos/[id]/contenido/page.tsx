@@ -204,7 +204,7 @@ export default async function CursoContenidoPage({ params }: { params: Promise<{
                                     className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                                 >
                                     <CheckCircle className="mr-2 h-4 w-4" />
-                                    Hacer Examen
+                                    Hacer Examen Final
                                 </Link>
                                 <p className="text-xs text-gray-500">Demuestra lo aprendido y obtén tu constancia.</p>
                             </>
