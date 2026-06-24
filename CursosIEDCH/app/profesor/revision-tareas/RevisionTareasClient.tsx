@@ -1,8 +1,34 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, CheckCircle, Award, Clock, ArrowRight, BookOpen, User, Star, Filter, Edit, ExternalLink } from 'lucide-react'
+import { FileText, CheckCircle, Award, Clock, ArrowRight, BookOpen, User, Star, Filter, Edit, ExternalLink, Link } from 'lucide-react'
 import { calificarTarea } from './actions'
+
+// Helpers para procesar URLs e incrustar videos
+const getYoutubeEmbedUrl = (url: string): string | null => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+        return `https://www.youtube.com/embed/${match[2]}`;
+    }
+    const shortsRegExp = /\/shorts\/([a-zA-Z0-9_-]{11})/;
+    const shortsMatch = url.match(shortsRegExp);
+    if (shortsMatch) {
+        return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+    }
+    return null;
+};
+
+const getTiktokEmbedUrl = (url: string): string | null => {
+    if (!url) return null;
+    const regExp = /\/video\/(\d+)/;
+    const match = url.match(regExp);
+    if (match && match[1]) {
+        return `https://www.tiktok.com/embed/v2/${match[1]}`;
+    }
+    return null;
+};
 
 type Entrega = {
     id: string;
@@ -13,6 +39,7 @@ type Entrega = {
     alumno_nombre: string;
     explicacion: string;
     archivos: string[];
+    enlaces?: string[];
     calificacion: number | null;
     retroalimentacion: string;
     created_at: string;
@@ -216,6 +243,107 @@ export default function RevisionTareasClient({ entregas: initialEntregas, cursos
                                     "{selectedEntrega.explicacion}"
                                 </p>
                             </div>
+
+                            {selectedEntrega.enlaces && selectedEntrega.enlaces.length > 0 && (
+                                <div className="space-y-3">
+                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Enlaces del Proyecto</h4>
+                                    <div className="flex flex-col gap-2">
+                                        {selectedEntrega.enlaces.map((url, idx) => {
+                                            const isYoutube = url.includes('youtube.com') || url.includes('youtu.be');
+                                            const isTiktok = url.includes('tiktok.com');
+                                            const isDrive = url.includes('drive.google.com');
+                                            const isCanva = url.includes('canva.com');
+                                            const isFigma = url.includes('figma.com');
+                                            const isGithub = url.includes('github.com');
+                                            
+                                            let badgeColor = 'bg-blue-50/30 hover:bg-blue-50/60 border-blue-200 text-blue-700';
+                                            let label = 'Enlace Externo';
+                                            
+                                            if (isYoutube) {
+                                                badgeColor = 'bg-red-50/30 hover:bg-red-50/60 border-red-200 text-red-700';
+                                                label = 'YouTube Video';
+                                            } else if (isTiktok) {
+                                                badgeColor = 'bg-zinc-100 hover:bg-zinc-200 border-zinc-300 text-zinc-800';
+                                                label = 'TikTok Video';
+                                            } else if (isDrive) {
+                                                badgeColor = 'bg-emerald-50/30 hover:bg-emerald-50/60 border-emerald-200 text-emerald-700';
+                                                label = 'Google Drive';
+                                            } else if (isCanva) {
+                                                badgeColor = 'bg-purple-50/30 hover:bg-purple-50/60 border-purple-200 text-purple-700';
+                                                label = 'Canva Design';
+                                            } else if (isFigma) {
+                                                badgeColor = 'bg-orange-50/30 hover:bg-orange-50/60 border-orange-200 text-orange-700';
+                                                label = 'Figma Project';
+                                            } else if (isGithub) {
+                                                badgeColor = 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-800';
+                                                label = 'GitHub Repository';
+                                            }
+                                            
+                                            return (
+                                                <a
+                                                    key={idx}
+                                                    href={url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`flex items-center justify-between px-3.5 py-2 border rounded-xl text-xs font-bold transition ${badgeColor}`}
+                                                >
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        <Link className="h-4 w-4 flex-shrink-0" />
+                                                        <div className="flex flex-col truncate">
+                                                            <span className="font-extrabold">{label}</span>
+                                                            <span className="text-[10px] opacity-70 truncate max-w-[170px] font-medium">{url.replace(/https?:\/\/(www\.)?/, '')}</span>
+                                                        </div>
+                                                    </div>
+                                                    <ExternalLink className="h-4 w-4 flex-shrink-0 opacity-60" />
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Embeds Multimedia Integrados */}
+                                    {selectedEntrega.enlaces.some(url => getYoutubeEmbedUrl(url) || getTiktokEmbedUrl(url)) && (
+                                        <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                                            <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Previsualización de Video</h5>
+                                            <div className="space-y-4">
+                                                {selectedEntrega.enlaces.map((url, idx) => {
+                                                    const ytEmbed = getYoutubeEmbedUrl(url);
+                                                    const ttEmbed = getTiktokEmbedUrl(url);
+                                                    
+                                                    if (ytEmbed) {
+                                                        return (
+                                                            <div key={idx} className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-black">
+                                                                <iframe
+                                                                    src={ytEmbed}
+                                                                    title="YouTube video player"
+                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                                    allowFullScreen
+                                                                    className="absolute top-0 left-0 w-full h-full border-0"
+                                                                />
+                                                            </div>
+                                                        );
+                                                    }
+                                                    
+                                                    if (ttEmbed) {
+                                                        return (
+                                                            <div key={idx} className="w-full flex justify-center border border-gray-200 rounded-xl overflow-hidden bg-black p-2 shadow-sm">
+                                                                <iframe
+                                                                    src={ttEmbed}
+                                                                    title="TikTok video player"
+                                                                    allow="autoplay; encrypted-media"
+                                                                    allowFullScreen
+                                                                    className="w-full max-w-[325px] h-[500px] border-0 rounded-lg"
+                                                                />
+                                                            </div>
+                                                        );
+                                                    }
+                                                    
+                                                    return null;
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {selectedEntrega.archivos && selectedEntrega.archivos.length > 0 && (
                                 <div className="space-y-2">

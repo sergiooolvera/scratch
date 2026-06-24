@@ -110,6 +110,7 @@ export default async function RevisionTareasPage() {
                     alumno_nombre: perfilesMap[e.user_id] || 'Alumno sin nombre',
                     explicacion: payload.explicacion || '',
                     archivos: payload.archivos || [],
+                    enlaces: payload.enlaces || [],
                     calificacion: payload.calificacion,
                     retroalimentacion: payload.retroalimentacion || '',
                     created_at: e.created_at,

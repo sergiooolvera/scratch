@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock, Maximize2, Minimize2, Gamepad2 } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock, Maximize2, Minimize2, Gamepad2, Link, ExternalLink } from 'lucide-react'
 import { notifyProfesorTaskSubmission } from '@/app/actions/taskNotifications'
 import { createClient } from '@/lib/supabase/client'
 import confetti from 'canvas-confetti'
@@ -244,8 +244,8 @@ export default function PlaylistClient({
     // Tasks and submissions state
     const [tareasDef, setTareasDef] = useState<Record<string, TareaDef>>({})
     const [puzzlesDef, setPuzzlesDef] = useState<Record<string, PuzzleDef>>({})
-    const [entregas, setEntregas] = useState<Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }>>({})
-    const [puzzleEntregas, setPuzzleEntregas] = useState<Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }>>({})
+    const [entregas, setEntregas] = useState<Record<string, { id: string, explicacion: string, archivos: string[], enlaces?: string[], calificacion: number | null, retroalimentacion: string | null }>>({})
+    const [puzzleEntregas, setPuzzleEntregas] = useState<Record<string, { id: string, explicacion: string, archivos: string[], enlaces?: string[], calificacion: number | null, retroalimentacion: string | null }>>({})
     const [cargandoTareas, setCargandoTareas] = useState(true)
 
     // Puzzle States
@@ -337,8 +337,8 @@ export default function PlaylistClient({
                 .eq('user_id', userId)
                 .or('pregunta.like.TAREA_ENTREGA:%,pregunta.like.PUZZLE_ENTREGA:%');
 
-            const subMap: Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }> = {}
-            const puzzleSubMap: Record<string, { id: string, explicacion: string, archivos: string[], calificacion: number | null, retroalimentacion: string | null }> = {}
+            const subMap: Record<string, { id: string, explicacion: string, archivos: string[], enlaces?: string[], calificacion: number | null, retroalimentacion: string | null }> = {}
+            const puzzleSubMap: Record<string, { id: string, explicacion: string, archivos: string[], enlaces?: string[], calificacion: number | null, retroalimentacion: string | null }> = {}
             submissionsData?.forEach(s => {
                 const parts = s.pregunta.split('::')
                 const header = parts[0]
@@ -352,6 +352,7 @@ export default function PlaylistClient({
                                 id: s.id,
                                 explicacion: payload.explicacion,
                                 archivos: payload.archivos || [],
+                                enlaces: payload.enlaces || [],
                                 calificacion: payload.calificacion,
                                 retroalimentacion: payload.retroalimentacion
                             }
@@ -360,6 +361,7 @@ export default function PlaylistClient({
                                 id: s.id,
                                 explicacion: payload.explicacion,
                                 archivos: payload.archivos || [],
+                                enlaces: payload.enlaces || [],
                                 calificacion: payload.calificacion,
                                 retroalimentacion: payload.retroalimentacion
                             }
@@ -660,6 +662,7 @@ export default function PlaylistClient({
             const submissionPayload = JSON.stringify({
                 explicacion: explicacionTarea,
                 archivos: urlsArchivos,
+                enlaces: enlacesTarea.filter(url => url.trim() !== ''),
                 calificacion: null,
                 retroalimentacion: null
             })
@@ -701,6 +704,7 @@ export default function PlaylistClient({
     // Reset modular exam UI states and active resource when active module changes
     const [explicacionTarea, setExplicacionTarea] = useState('')
     const [archivosSeleccionados, setArchivosSeleccionados] = useState<File[]>([])
+    const [enlacesTarea, setEnlacesTarea] = useState<string[]>([''])
     const [enviandoTarea, setEnviandoTarea] = useState(false)
     const [subiendoArchivos, setSubiendoArchivos] = useState(false)
 
@@ -770,6 +774,7 @@ export default function PlaylistClient({
         setActiveRecursoIndex(0)
         setExplicacionTarea('')
         setArchivosSeleccionados([])
+        setEnlacesTarea([''])
         setEnviandoTarea(false)
         setSubiendoArchivos(false)
         setRespuestasCuestionario({})
@@ -1564,6 +1569,27 @@ export default function PlaylistClient({
                                                             <p className="text-sm text-gray-700 mt-1">{entregas[currentItem.id].explicacion}</p>
                                                         </div>
 
+                                                        {(entregas[currentItem.id]?.enlaces?.length ?? 0) > 0 && (
+                                                            <div className="pt-2 border-t border-gray-100">
+                                                                <h5 className="text-xs font-bold text-gray-400 mb-2">Enlaces entregados:</h5>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {entregas[currentItem.id]?.enlaces?.map((url, lIdx) => (
+                                                                        <a
+                                                                            key={lIdx}
+                                                                            href={url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/50 hover:bg-blue-100/60 border border-blue-200 text-blue-700 rounded-lg text-xs font-bold transition"
+                                                                        >
+                                                                            <Link className="h-3.5 w-3.5 text-blue-600" />
+                                                                            <span className="truncate max-w-[200px]">{url.replace(/https?:\/\/(www\.)?/, '')}</span>
+                                                                            <ExternalLink className="h-3 w-3 opacity-60" />
+                                                                        </a>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
                                                         {entregas[currentItem.id].archivos && entregas[currentItem.id].archivos.length > 0 && (
                                                             <div className="pt-2 border-t border-gray-100">
                                                                 <h5 className="text-xs font-bold text-gray-400 mb-2">Archivos adjuntos:</h5>
@@ -1653,6 +1679,48 @@ export default function PlaylistClient({
                                                                     </div>
                                                                 </div>
                                                             )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Enlaces del Proyecto */}
+                                                    <div className="pt-2">
+                                                        <label className="block text-xs font-bold text-gray-500 mb-1.5">Enlaces del Proyecto (YouTube, TikTok, Drive, Canva, etc. - Opcional):</label>
+                                                        <div className="space-y-2">
+                                                            {enlacesTarea.map((url, lIdx) => (
+                                                                <div key={lIdx} className="flex items-center gap-2">
+                                                                    <div className="relative flex-1">
+                                                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                            <Link className="h-4 w-4 text-gray-400" />
+                                                                        </div>
+                                                                        <input
+                                                                            type="url"
+                                                                            placeholder="https://ejemplo.com/tu-proyecto-o-video"
+                                                                            value={url}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value
+                                                                                setEnlacesTarea(prev => prev.map((item, idx) => idx === lIdx ? val : item))
+                                                                            }}
+                                                                            className="w-full text-sm rounded-xl border-gray-300 pl-10 p-2.5 border bg-white text-black font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                                        />
+                                                                    </div>
+                                                                    {enlacesTarea.length > 1 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setEnlacesTarea(prev => prev.filter((_, idx) => idx !== lIdx))}
+                                                                            className="p-3 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl transition font-bold text-xs"
+                                                                        >
+                                                                            Eliminar
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEnlacesTarea(prev => [...prev, ''])}
+                                                                className="mt-1 inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200 rounded-xl text-xs font-bold transition"
+                                                            >
+                                                                + Añadir otro enlace
+                                                            </button>
                                                         </div>
                                                     </div>
 
