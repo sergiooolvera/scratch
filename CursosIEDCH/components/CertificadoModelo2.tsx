@@ -48,7 +48,7 @@ export default function CertificadoModelo2({
             {/* Top Navy Blue Header Bar */}
             <div className="absolute z-[15] bg-[#002060] flex items-center justify-between px-12" style={{ top: '35px', left: '-2px', right: '-2px', height: '77px' }}>
                 <div className="flex items-center gap-5">
-                    <img src="/logoegac.jpg" alt="Logo EGAC" className="h-[52px] object-contain rounded bg-white p-0.5" />
+                    <img src="/logoconstancia.png" alt="Logo Constancia" className="h-[52px] object-contain rounded" />
                     <p className="text-[16px] font-bold leading-tight uppercase tracking-wider text-white font-sans">
                         Ecosistema Global de Acreditación y Certificación
                     </p>

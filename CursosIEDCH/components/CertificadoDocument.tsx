@@ -49,8 +49,8 @@ export default function CertificadoDocument({
             {/* Left Sidebar */}
             <div className="w-[224px] bg-[#0B1A3F] h-full flex flex-col items-center justify-between py-16 shrink-0 relative z-30">
                 {/* Logo Grupo EGAC */}
-                <div className="w-[150px] h-[85px] flex items-center justify-center overflow-hidden bg-white rounded-xl p-2 shadow-sm border border-white/20">
-                    <img src="/logoegac.jpg" alt="Logo Grupo EGAC" className="max-w-full max-h-full object-contain" />
+                <div className="w-[180px] h-[110px] flex items-center justify-center overflow-hidden p-1">
+                    <img src="/logoconstancia.png" alt="Logo Constancia" className="max-w-full max-h-full object-contain" />
                 </div>
                 
                 {/* QR Code Block */}
