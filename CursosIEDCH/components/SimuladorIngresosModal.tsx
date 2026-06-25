@@ -24,10 +24,10 @@ export default function SimuladorIngresosModal({
   const [alumnos, setAlumnos] = useState(20)
   const [regimen, setRegimen] = useState<RegimenType>('RESICO')
 
-  // Sincronizar precio al público cuando se abra el modal
+  // Sincronizar precio al público cuando se abra el modal (mínimo de 199 recomendado si es de pago)
   useEffect(() => {
     if (isOpen) {
-      setPrecio(precioPublico)
+      setPrecio(precioPublico < 199 ? 199 : precioPublico)
     }
   }, [isOpen, precioPublico])
 
@@ -48,10 +48,10 @@ export default function SimuladorIngresosModal({
   const comisionStripeFija = alumnos * 3.0 * 1.16
 
   // 4. Total Libre en Banco (Neto) = Ingreso Bruto - Comisión Stripe Variable - Comisión Stripe Fija
-  const totalLibreBanco = ingresoBrutoTotal - comisionStripeVariable - comisionStripeFija
+  const totalLibreBanco = Math.max(0, ingresoBrutoTotal - comisionStripeVariable - comisionStripeFija)
 
   // 5. Comisión para el Instructor (50%) = Total Libre en Banco * 50%
-  const comisionInstructor = totalLibreBanco * 0.50
+  const comisionInstructor = Math.max(0, totalLibreBanco * 0.50)
 
   // 6. Cálculos Fiscales según Régimen
   let subtotalNeto = 0
@@ -87,7 +87,7 @@ export default function SimuladorIngresosModal({
   }
 
   const totalRetenciones = retencionISR + retencionIVA
-  const pagoNeto = totalBruto - totalRetenciones
+  const pagoNeto = Math.max(0, totalBruto - totalRetenciones)
 
   const formatter = new Intl.NumberFormat('es-MX', { 
     style: 'currency', 
@@ -97,6 +97,7 @@ export default function SimuladorIngresosModal({
   })
 
   const handleGuardar = () => {
+    if (precio < 199) return;
     if (onChangePrecio) onChangePrecio(precio)
     // El IVA global en el curso ahora siempre se activa si el precio es mayor a 0, 
     // pero para compatibilidad con el resto del flujo, pasamos true
@@ -148,11 +149,17 @@ export default function SimuladorIngresosModal({
                     value={precio || ''} 
                     onChange={(e) => setPrecio(Math.max(0, Number(e.target.value)))}
                     className="w-full pl-9 pr-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-black bg-white font-medium"
-                    placeholder="0.00"
-                    min="0"
+                    placeholder="199.00"
+                    min="199"
                   />
                 </div>
-                {precio > 0 && (
+                {precio < 199 && (
+                  <div className="mt-2 p-2.5 bg-red-50 rounded-xl border border-red-100 text-xs text-red-700 font-medium flex items-center gap-1.5 animate-fade-in">
+                    <Info size={14} className="shrink-0" />
+                    <span>El precio mínimo debe ser de $199 MXN.</span>
+                  </div>
+                )}
+                {precio >= 199 && (
                   <div className="mt-2 p-2 bg-blue-50 rounded-xl border border-blue-100/50 text-xs text-blue-700 font-medium flex items-center gap-1.5 animate-fade-in">
                     <Info size={14} className="shrink-0" />
                     <span>Precio base desglosado: <strong className="font-bold">{formatter.format(precio / 1.16)}</strong> | IVA (16%): <strong className="font-bold">{formatter.format(precio - (precio / 1.16))}</strong></span>
@@ -210,6 +217,23 @@ export default function SimuladorIngresosModal({
               <span className="w-1.5 h-4 bg-emerald-500 rounded-full"></span>
               Proyección y Distribución Financiera
             </h3>
+
+            {/* Gran Total a Recibir (Ahora arriba) */}
+            <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-0.5">
+                  Pago Neto Estimado a Depositar
+                </span>
+                <span className="text-xs text-emerald-700/80 block leading-tight">
+                  Tus ganancias estimadas después de retenciones fiscales y comisiones de Stripe.
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black text-emerald-600 font-sans block tracking-tight">
+                  {formatter.format(pagoNeto)}
+                </span>
+              </div>
+            </div>
 
             {/* Tabla de Conceptos */}
             <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
@@ -277,22 +301,6 @@ export default function SimuladorIngresosModal({
               </table>
             </div>
 
-            {/* Gran Total a Recibir */}
-            <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-0.5">
-                  Pago Neto Estimado a Depositar
-                </span>
-                <span className="text-xs text-emerald-700/80 block leading-tight">
-                  Tus ganancias estimadas después de retenciones fiscales y comisiones de Stripe.
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="text-2xl font-black text-emerald-600 font-sans block tracking-tight">
-                  {formatter.format(pagoNeto)}
-                </span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -316,7 +324,8 @@ export default function SimuladorIngresosModal({
           <button 
             type="button"
             onClick={handleGuardar}
-            className="px-6 py-3 rounded-2xl font-semibold text-xs text-white bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-md shadow-blue-50 transition-all duration-200 cursor-pointer"
+            disabled={precio < 199}
+            className={`px-6 py-3 rounded-2xl font-semibold text-xs text-white bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-md shadow-blue-50 transition-all duration-200 cursor-pointer ${precio < 199 ? 'opacity-50 cursor-not-allowed active:scale-100' : ''}`}
           >
             Aplicar Precio al Curso
           </button>
