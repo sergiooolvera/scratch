@@ -4,6 +4,15 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 
 ## 🚀 Resumen de Avances Recientes (Junio 2026)
 
+### 💬 Comentarios y Sugerencias Globales (29 de Junio de 2026)
+- **Enlace Flotante Global:** Se incorporó un botón flotante (`fixed`) sumamente estético en la esquina inferior derecha de toda la aplicación que dice "Comentarios y sugerencias", con fondo de glassmorphism y micro-interacciones.
+- **Página de Envío de Opiniones (`/comentarios`):** Se diseñó y desarrolló una página específica para capturar de manera interactiva comentarios y sugerencias de cualquier usuario del portal.
+- **Detección Automática de Sesión:** Si el usuario tiene sesión iniciada, el formulario de comentarios autocompleta automáticamente su nombre y correo, vinculando además su `user_id` de forma transparente en la base de datos.
+- **Base de Datos y Seguridad:** Se creó la estructura en la base de datos `public.ie_comentarios` con políticas RLS de inserción pública e índices de alto rendimiento para mejorar la velocidad y seguridad del feedback.
+- **Bandeja de Entrada del Administrador (`/admin/comentarios`):** Se creó una sección administrativa completa y de diseño premium para consultar, buscar y filtrar todos los comentarios recibidos (soporta filtrados avanzados por rol y búsquedas inteligentes).
+- **Integración de Menús de Administración:** Se incorporó el acceso rápido a los comentarios en el `AdminNavbar` global, en el dropdown de navegación del `Navbar` principal (sección Soporte) y en la barra lateral del menú móvil de la plataforma.
+
+
 ### 👨‍🏫 Dashboard Premium Unificado para Instructores, Capacitadores e Instituciones (29 de Junio de 2026)
 - **Ruta de Control Unificada:** Se creó la página principal del profesor (`app/profesor/page.tsx`) con un diseño altamente estético y premium basado en las especificaciones del cliente.
 - **Redirección Automatizada por Roles:** Se modificó la página de inicio `/dashboard` (`app/dashboard/page.tsx`) para redirigir automáticamente a los usuarios con rol de `instructor`, `capacitador` o `institucion` a su respectivo portal.

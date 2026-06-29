@@ -292,7 +292,7 @@ export default function Navbar() {
                                                   )}
 
                                                   {/* Grupo 3: Soporte y Auditoría */}
-                                                  {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('validaciones') || profile?.permisos_adminjr?.includes('solicitudes') || profile?.permisos_adminjr?.includes('actividad')) && (
+                                                  {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('validaciones') || profile?.permisos_adminjr?.includes('solicitudes') || profile?.permisos_adminjr?.includes('comentarios') || profile?.permisos_adminjr?.includes('actividad')) && (
                                                       <div className="py-1 px-1">
                                                           <span className="block px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Soporte y Reportes</span>
                                                           {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('validaciones')) && (
@@ -303,6 +303,11 @@ export default function Navbar() {
                                                           {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('solicitudes')) && (
                                                               <Link href="/admin/solicitudes" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
                                                                   <FileSpreadsheet className="h-4 w-4 text-gray-400" /> Solicitudes Ajuste
+                                                              </Link>
+                                                          )}
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('comentarios')) && (
+                                                              <Link href="/admin/comentarios" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <MessageSquare className="h-4 w-4 text-gray-400" /> Comentarios
                                                               </Link>
                                                           )}
                                                           {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('actividad')) && (
@@ -528,6 +533,9 @@ export default function Navbar() {
                                          )}
                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('solicitudes')) && (
                                              <Link href="/admin/solicitudes" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Solicitudes Ajuste</Link>
+                                         )}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('comentarios')) && (
+                                             <Link href="/admin/comentarios" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Comentarios</Link>
                                          )}
                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('actividad')) && (
                                              <Link href="/admin/actividad" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Estadísticas</Link>

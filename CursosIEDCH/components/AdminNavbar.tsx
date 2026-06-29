@@ -11,7 +11,8 @@ import {
     Store, 
     CreditCard, 
     FileSpreadsheet, 
-    BarChart3 
+    BarChart3,
+    MessageSquare
 } from 'lucide-react'
 
 interface AdminNavbarProps {
@@ -36,6 +37,7 @@ export default function AdminNavbar({ rol, permisos }: AdminNavbarProps) {
         { id: 'pagos-oxxo', label: 'Pagos Oxxo', href: '/admin/pagos-oxxo', icon: Store },
         { id: 'transacciones', label: 'Transacciones Stripe', href: '/admin/transacciones', icon: CreditCard },
         { id: 'solicitudes', label: 'Solicitudes Ajuste', href: '/admin/solicitudes', icon: FileSpreadsheet },
+        { id: 'comentarios', label: 'Comentarios', href: '/admin/comentarios', icon: MessageSquare },
         { id: 'actividad', label: 'Estadísticas', href: '/admin/actividad', icon: BarChart3 },
     ]
 
