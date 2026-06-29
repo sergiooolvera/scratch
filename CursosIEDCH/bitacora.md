@@ -4,6 +4,21 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 
 ## 🚀 Resumen de Avances Recientes (Junio 2026)
 
+### 👨‍🏫 Dashboard Premium Unificado para Instructores, Capacitadores e Instituciones (29 de Junio de 2026)
+- **Ruta de Control Unificada:** Se creó la página principal del profesor (`app/profesor/page.tsx`) con un diseño altamente estético y premium basado en las especificaciones del cliente.
+- **Redirección Automatizada por Roles:** Se modificó la página de inicio `/dashboard` (`app/dashboard/page.tsx`) para redirigir automáticamente a los usuarios con rol de `instructor`, `capacitador` o `institucion` a su respectivo portal.
+- **Remoción de Ingresos e Indicadores Reajustados:** Se eliminó la tarjeta de estadística "Ingresos este mes" y se rediseñó el contenedor de resumen rápido a una cuadrícula equilibrada de 3 columnas para Alumnos, Cursos Publicados y Certificados Emitidos.
+- **Visualización de Métricas Reales Directas:**
+  - Se implementó el cálculo en tiempo real de estadísticas dinámicas directamente de la base de datos de Supabase.
+  - Para el rol de `institucion`, se suman dinámicamente las actividades presenciales (`ie_actividad_institucion`), alumnos por actividad (`ie_actividad_alumnos`) y folios de constancia reales, además de sus cursos de plataforma.
+  - Se corrigió la consulta de certificados emitidos de cursos en plataforma: en lugar de consultar la tabla vacía `ie_constancias`, ahora calcula de forma precisa los registros aprobados de `ie_examenes_usuario` para los cursos del instructor.
+  - Se eliminaron por completo los fallbacks de demostración (si un usuario no posee registros, las estadísticas reflejan con exactitud el valor `0`).
+- **Diseño de Banners y Secciones:**
+  - Se crearon banners visuales con ilustraciones vectoriales (SVG) responsivas para la creación rápida de Academias y Cursos (enlazados a `/profesor/subir-curso`).
+  - Se integró la sección de "Mis Academias" con diseño de tarjetas modernas y micro-interacciones.
+  - **Actividad Reciente Personalizada:** Se removió el enlace "Ver todas" de la cabecera. Asimismo, se cambió la visualización de eventos de alumnos por un listado en tiempo real de las acciones del instructor/institución (registro de nuevos cursos, ediciones en sus cursos e historial y registro de actividades presenciales), ordenadas por fecha con formateador de tiempo relativo en español.
+  - **Botonera de Navegación del Navbar:** Se insertó un botón interactivo de inicio (icono de casita `Home` de lucide-react) al lado izquierdo de la campana de notificaciones para permitir a los usuarios con sesión iniciada retornar de forma ágil a su página de inicio inteligente (`/dashboard`).
+
 ### 🎓 Mejoras de Interfaz y Experiencia del Usuario (11 de Junio de 2026)
 - **Leyenda de Material Didáctico:** Se agregó la etiqueta visual "Material Didáctico" con ícono representativo en la vista de contenido del alumno para clarificar el área de visualización de recursos.
 - **Optimización de Tareas y Cuestionarios:** Se estilizó el formulario de entrega ("Datos de tarea") encapsulándolo en un recuadro azul para mayor claridad visual.

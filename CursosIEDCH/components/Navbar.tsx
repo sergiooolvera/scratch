@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText, ShieldCheck, Ticket, Store, CreditCard, FileSpreadsheet, BarChart3 } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText, ShieldCheck, Ticket, Store, CreditCard, FileSpreadsheet, BarChart3, Home } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 export default function Navbar() {
@@ -341,6 +341,9 @@ export default function Navbar() {
                                 {profile?.rol || 'Alumno'}
                             </span>
                         </div>
+                        <Link href="/dashboard" className="p-1 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 rounded-full transition-colors border border-slate-200/60 overflow-hidden flex items-center justify-center w-9 h-9" title="Inicio / Dashboard">
+                            <Home className="h-5 w-5" />
+                        </Link>
                         <NotificationBell userId={user.id} />
                         <Link href="/perfil" className="p-1 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 rounded-full transition-colors border border-transparent overflow-hidden flex items-center justify-center w-9 h-9" title="Mi Perfil">
                             {(profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture) ? (
