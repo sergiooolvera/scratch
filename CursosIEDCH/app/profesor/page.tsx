@@ -54,7 +54,7 @@ export default async function ProfesorDashboardPage() {
     // 1. Obtener cursos del profesor
     const { data: cursos } = await supabase
         .from('ie_cursos')
-        .select('id, titulo, precio, estado, requiere_examen, created_at')
+        .select('id, titulo, precio, estado, requiere_examen, created_at, categoria')
         .in('creado_por', creadoresIds)
 
     const cursoIds = cursos?.map(c => c.id) || []
