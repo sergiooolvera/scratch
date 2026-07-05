@@ -488,3 +488,95 @@ ALTER TABLE public.ie_comentarios
 CREATE INDEX IF NOT EXISTS idx_ie_comentarios_user_id ON public.ie_comentarios(user_id);
 CREATE INDEX IF NOT EXISTS idx_ie_comentarios_created_at ON public.ie_comentarios(created_at);
 
+-- Tabla de Academias
+CREATE TABLE IF NOT EXISTS public.ie_academias (
+    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    creado_por uuid NOT NULL,
+    nombre text NOT NULL,
+    descripcion character varying(300) NOT NULL,
+    categoria text NOT NULL,
+    logo_url text,
+    banner_url text,
+    color_principal text DEFAULT '#6366f1',
+    mensaje_bienvenida character varying(300),
+    publica boolean DEFAULT true,
+    permitir_inscripciones boolean DEFAULT true,
+    certificados_automaticos boolean DEFAULT true,
+    foro_discusion boolean DEFAULT false,
+    correo_contacto text NOT NULL,
+    telefono_contacto text,
+    sitio_web text,
+    redes_sociales jsonb DEFAULT '{}'::jsonb,
+    color_palette integer DEFAULT 0,
+    subdominio text UNIQUE NOT NULL,
+    registro_abierto boolean DEFAULT true,
+    requiere_aprobacion boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Relaciones de ie_academias
+ALTER TABLE public.ie_academias
+    ADD CONSTRAINT fk_academias_creado_por FOREIGN KEY (creado_por) REFERENCES public.ie_profiles(id) ON DELETE CASCADE;
+
+-- Índices de rendimiento para ie_academias
+CREATE INDEX IF NOT EXISTS idx_ie_academias_creado_por ON public.ie_academias(creado_por);
+CREATE INDEX IF NOT EXISTS idx_ie_academias_subdominio ON public.ie_academias(subdominio);
+
+-- Tabla de Grupos
+CREATE TABLE IF NOT EXISTS public.ie_grupos (
+    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    academia_id uuid NOT NULL,
+    creado_por uuid NOT NULL,
+    nombre text NOT NULL,
+    descripcion text,
+    activo boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Relaciones de ie_grupos
+ALTER TABLE public.ie_grupos
+    ADD CONSTRAINT fk_grupos_academia FOREIGN KEY (academia_id) REFERENCES public.ie_academias(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_grupos_creador FOREIGN KEY (creado_por) REFERENCES public.ie_profiles(id) ON DELETE CASCADE;
+
+-- Índices de rendimiento para ie_grupos
+CREATE INDEX IF NOT EXISTS idx_ie_grupos_academia_id ON public.ie_grupos(academia_id);
+CREATE INDEX IF NOT EXISTS idx_ie_grupos_creado_por ON public.ie_grupos(creado_por);
+
+-- Tabla de Relación Cursos - Grupos
+CREATE TABLE IF NOT EXISTS public.ie_grupo_cursos (
+    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    grupo_id uuid NOT NULL,
+    curso_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_grupo_curso UNIQUE (grupo_id, curso_id)
+);
+
+-- Relaciones de ie_grupo_cursos
+ALTER TABLE public.ie_grupo_cursos
+    ADD CONSTRAINT fk_grupo_cursos_grupo FOREIGN KEY (grupo_id) REFERENCES public.ie_grupos(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_grupo_cursos_curso FOREIGN KEY (curso_id) REFERENCES public.ie_cursos(id) ON DELETE CASCADE;
+
+-- Índices de rendimiento para ie_grupo_cursos
+CREATE INDEX IF NOT EXISTS idx_ie_grupo_cursos_grupo_id ON public.ie_grupo_cursos(grupo_id);
+CREATE INDEX IF NOT EXISTS idx_ie_grupo_cursos_curso_id ON public.ie_grupo_cursos(curso_id);
+
+-- Tabla de Relación Alumnos - Grupos
+CREATE TABLE IF NOT EXISTS public.ie_grupo_alumnos (
+    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    grupo_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_grupo_alumno UNIQUE (grupo_id, user_id)
+);
+
+-- Relaciones de ie_grupo_alumnos
+ALTER TABLE public.ie_grupo_alumnos
+    ADD CONSTRAINT fk_grupo_alumnos_grupo FOREIGN KEY (grupo_id) REFERENCES public.ie_grupos(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_grupo_alumnos_user FOREIGN KEY (user_id) REFERENCES public.ie_profiles(id) ON DELETE CASCADE;
+
+-- Índices de rendimiento para ie_grupo_alumnos
+CREATE INDEX IF NOT EXISTS idx_ie_grupo_alumnos_grupo_id ON public.ie_grupo_alumnos(grupo_id);
+CREATE INDEX IF NOT EXISTS idx_ie_grupo_alumnos_user_id ON public.ie_grupo_alumnos(user_id);
+
+
+

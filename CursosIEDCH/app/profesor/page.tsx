@@ -63,16 +63,18 @@ export default async function ProfesorDashboardPage() {
     // 2. Obtener compras de esos cursos (alumnos y certificados de plataforma)
     let totalAlumnosPlataforma = 0
     let totalCertificadosPlataforma = 0
+    let comprasRealizadas: any[] = []
     
     if (cursoIds.length > 0) {
         // Alumnos únicos
         const { data: compras } = await supabase
             .from('ie_compras')
-            .select('user_id')
+            .select('user_id, curso_id')
             .in('curso_id', cursoIds)
             .eq('pagado', true)
 
         if (compras) {
+            comprasRealizadas = compras
             totalAlumnosPlataforma = new Set(compras.map(c => c.user_id)).size
         }
 
@@ -148,6 +150,13 @@ export default async function ProfesorDashboardPage() {
         
         if (historial) historialCambios = historial
     }
+
+    // 4.5 Obtener academias reales creadas por el profesor
+    const { data: academias } = await supabase
+        .from('ie_academias')
+        .select('*')
+        .in('creado_por', creadoresIds)
+        .order('created_at', { ascending: false })
 
     // 5. Consolidar actividades del instructor / institución
     const actividadesRecientes: any[] = []
@@ -242,7 +251,7 @@ export default async function ProfesorDashboardPage() {
                         <div className="text-right">
                             <p className="text-xs text-slate-400">Rol de Acceso</p>
                             <p className="text-sm font-bold text-slate-700 capitalize mt-0.5 bg-slate-100 px-3 py-1 rounded-lg inline-block border border-slate-200">
-                                {rol === 'institucion' ? '🏢 Institución' : rol === 'capacitador' ? '👨‍🏫 Capacitador' : '🎓 Instructor'}
+                                {rol === 'institucion' ? '🏢 Institución' : rol === 'capacitador' ? '👨‍🏫 Capacitador' : rol === 'admin' ? '🛡️ Administrador' : '🎓 Instructor'}
                             </p>
                         </div>
                     </div>
@@ -265,7 +274,7 @@ export default async function ProfesorDashboardPage() {
                                 Crea tu academia con tu identidad, agrega instructores y ofrece programas.
                             </p>
                             <Link 
-                                href={rol === 'institucion' ? "/institucion/crear" : "#"}
+                                href={['institucion', 'capacitador', 'instructor', 'admin'].includes(rol) ? "/institucion/crear" : "#"}
                                 className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-xs transition-colors"
                             >
                                 Crear Academia <PlusCircle className="h-4 w-4" />
@@ -376,65 +385,83 @@ export default async function ProfesorDashboardPage() {
                         <div>
                             <div className="flex items-center justify-between mb-6 pb-2 border-b border-slate-100">
                                 <h3 className="font-bold text-slate-900 text-lg">Mis academias</h3>
-                                <Link href="#" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-                                    Ver todas (3)
-                                </Link>
+                                <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                                    Total: {academias?.length || 0}
+                                </span>
                             </div>
 
                             <div className="space-y-4">
-                                {/* Academia 1 */}
-                                <Link href="#" className="flex items-center justify-between p-3.5 hover:bg-slate-50/80 rounded-2xl transition border border-transparent hover:border-slate-100 group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-2xl bg-indigo-950 flex items-center justify-center text-white">
-                                            <Heart className="h-6 w-6 fill-white" />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
-                                                Academia de Salud EGAC
-                                            </h4>
-                                            <p className="text-xs text-slate-500 mt-0.5">
-                                                12 cursos <span className="mx-1.5 text-slate-300">•</span> 745 alumnos
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <ChevronRight className="h-5 w-5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                                </Link>
+                                {academias && academias.length > 0 ? (
+                                    academias.map((academia) => {
+                                        // Filtrar cursos de la academia por categoría (ej. Salud)
+                                        const cursosAcademia = cursos?.filter(
+                                            c => c.categoria?.toLowerCase() === academia.categoria?.toLowerCase()
+                                        ) || []
+                                        const cursoIdsAcademia = cursosAcademia.map(c => c.id)
 
-                                {/* Academia 2 */}
-                                <Link href="#" className="flex items-center justify-between p-3.5 hover:bg-slate-50/80 rounded-2xl transition border border-transparent hover:border-slate-100 group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">
-                                            AE
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-slate-900 text-sm group-hover:text-emerald-600 transition-colors">
-                                                Academia de Enfermería
-                                            </h4>
-                                            <p className="text-xs text-slate-500 mt-0.5">
-                                                8 cursos <span className="mx-1.5 text-slate-300">•</span> 320 alumnos
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <ChevronRight className="h-5 w-5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                                </Link>
+                                        // Calcular alumnos inscritos en los cursos de esta academia
+                                        const comprasAcademia = comprasRealizadas.filter(compra =>
+                                            cursoIdsAcademia.includes(compra.curso_id)
+                                        )
+                                        const alumnosAcademia = new Set(comprasAcademia.map(c => c.user_id)).size
 
-                                {/* Academia 3 */}
-                                <Link href="#" className="flex items-center justify-between p-3.5 hover:bg-slate-50/80 rounded-2xl transition border border-transparent hover:border-slate-100 group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-2xl bg-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                                            AU
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-slate-900 text-sm group-hover:text-purple-600 transition-colors">
-                                                Academia de Urgencias
-                                            </h4>
-                                            <p className="text-xs text-slate-500 mt-0.5">
-                                                4 cursos <span className="mx-1.5 text-slate-300">•</span> 183 alumnos
-                                            </p>
+                                        // Iniciales para el avatar si no hay logo_url
+                                        const iniciales = academia.nombre
+                                            .split(' ')
+                                            .map((w: string) => w[0])
+                                            .join('')
+                                            .substring(0, 2)
+                                            .toUpperCase()
+
+                                        return (
+                                            <Link 
+                                                key={academia.id} 
+                                                href={`/profesor/academias/${academia.id}`} 
+                                                className="flex items-center justify-between p-3.5 hover:bg-slate-50/80 rounded-2xl transition border border-transparent hover:border-slate-100 group"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    {academia.logo_url ? (
+                                                        <img 
+                                                            src={academia.logo_url} 
+                                                            alt={academia.nombre} 
+                                                            className="h-12 w-12 rounded-2xl object-cover border border-slate-100"
+                                                        />
+                                                    ) : (
+                                                        <div 
+                                                            className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-sm"
+                                                            style={{ backgroundColor: academia.color_principal || '#6366f1' }}
+                                                        >
+                                                            {iniciales}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <h4 className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
+                                                            {academia.nombre}
+                                                        </h4>
+                                                        <p className="text-xs text-slate-500 mt-0.5">
+                                                            {cursosAcademia.length} {cursosAcademia.length === 1 ? 'curso' : 'cursos'} 
+                                                            <span className="mx-1.5 text-slate-300">•</span> 
+                                                            {alumnosAcademia} {alumnosAcademia === 1 ? 'alumno' : 'alumnos'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <ChevronRight className="h-5 w-5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                                            </Link>
+                                        )
+                                    })
+                                ) : (
+                                    <div className="text-center py-8 text-slate-400 text-sm">
+                                        No has creado ninguna academia aún.
+                                        <div className="mt-2">
+                                            <Link 
+                                                href="/institucion/crear" 
+                                                className="text-indigo-600 font-semibold hover:underline"
+                                            >
+                                                Crear academia ahora
+                                            </Link>
                                         </div>
                                     </div>
-                                    <ChevronRight className="h-5 w-5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                                </Link>
+                                )}
                             </div>
                         </div>
 

@@ -63,8 +63,14 @@ export async function middleware(request: NextRequest) {
             }
         }
 
-        if (pathname.startsWith('/institucion') && rol !== 'admin' && rol !== 'institucion') {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
+        if (pathname.startsWith('/institucion')) {
+            const rolesPermitidosInstitucion = ['admin', 'institucion']
+            if (pathname.startsWith('/institucion/crear')) {
+                rolesPermitidosInstitucion.push('instructor', 'capacitador')
+            }
+            if (!rolesPermitidosInstitucion.includes(rol)) {
+                return NextResponse.redirect(new URL('/dashboard', request.url))
+            }
         }
 
         if (pathname.startsWith('/profesor')) {

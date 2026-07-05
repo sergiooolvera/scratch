@@ -2,6 +2,18 @@
 
 Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, organizados por Ã¡reas clave.
 
+## 🚀 Resumen de Avances Recientes (Julio 2026)
+
+### 🏢 Creación de Academia Paso a Paso (3 de Julio de 2026)
+- **Flujo de Registro Paso a Paso (Stepper):** Se desarrolló una interfaz interactiva premium de 4 pasos (`/institucion/crear`) para guiar a los usuarios en la creación de su academia de manera inmersiva.
+- **Paso 1 (Información Básica):** Formulario completo con validación del nombre, descripción con contador de caracteres (300 máx), selección de categorías orientadas a salud, urgencias e idiomas, y selector de archivos interactivo con visualización previa para cargar el logotipo.
+- **Paso 2 (Personalización):** Rediseñado por completo para ofrecer un selector de 7 colores circulares interactivos, zona de subida de banner y campo de mensaje de bienvenida (opcional), sincronizado con una simulación del portal web en la tarjeta de vista previa lateral (pestañas interactivas, logo, nombre y mensaje de bienvenida en tiempo real).
+- **Paso 3 (Configuración):** Rediseñado en dos columnas para ofrecer interruptores tipo toggle de permisos (Academia pública, Permitir inscripciones, Certificados automáticos, Foro de discusión) a la izquierda, e inputs de Información de contacto (Correo de contacto obligatorio con validación, Teléfono, Sitio web), campo de subdominio de acceso y barra interactiva de enlaces de Redes Sociales (Facebook, Instagram, LinkedIn, YouTube) a la derecha.
+- **Paso 4 (Resumen):** Rediseñado en 3 tarjetas de columnas de revisión (Información básica, Personalización y Configuración) que permiten devolverse a editar los pasos correspondientes con un clic, agregando una barra verde interactiva en la parte inferior para configurar si se creará un curso de inmediato al lanzar la academia, y optimizando la maquetación a pantalla completa al ocultar el panel flotante lateral de vista previa.
+- **Flujo de Integración Rápida de Curso:** Se incorporó una tarjeta lateral inteligente que permite activar el flujo de subir un curso inmediatamente al finalizar el registro.
+- **Habilitación y Control en Panel:** Se modificó el enlace del botón de "Crear Academia" en `app/profesor/page.tsx` para redirigir a `/institucion/crear` a los usuarios con rol de `institucion`, `capacitador`, `instructor` y `admin` (mostrando además correctamente la etiqueta de *🛡️ Administrador* en la esquina superior si el rol interno es `admin`).
+- **Ajuste de Permisos en Middleware:** Se modificó `middleware.ts` para autorizar a los roles de `instructor` y `capacitador` a acceder a la ruta `/institucion/crear`, evitando redirecciones cíclicas incorrectas al dashboard.
+
 ## 🚀 Resumen de Avances Recientes (Junio 2026)
 
 ### 💬 Comentarios y Sugerencias Globales (29 de Junio de 2026)
@@ -151,4 +163,22 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 - **Actualización de Plantilla:** Se modificó la plantilla de ejemplo (ejemplo-examen.html), retirando los ejemplos de preguntas abiertas y añadiendo una nota explícita sobre el uso obligatorio y exclusivo de preguntas de opción múltiple.
 
 ---
-*Última actualización: 9 de Junio de 2026*
+*Última actualización: 4 de Julio de 2026*
+
+### 🏢 Academias Reales del Profesor
+- **Visualización Dinámica:** Se reemplazó el listado de academias "quemadas" (hardcodeadas) en el Dashboard del Profesor (`app/profesor/page.tsx`) por las academias reales obtenidas de la base de datos (`ie_academias`).
+- **Métricas por Academia:** Se calculan dinámicamente el número de cursos de cada academia y la cantidad de alumnos inscritos en base a la categoría de los cursos (`ie_cursos`) y sus compras correspondientes (`ie_compras`).
+- **Avatar Dinámico:** Se incorporó el renderizado del logo oficial de la academia (`logo_url`) o, en su defecto, un avatar con iniciales dinámicas y el color de marca asignado.
+- **Página de Pasos de la Academia:** Se creó la nueva pantalla interactiva y responsiva `app/profesor/academias/[id]/page.tsx` para guiar al profesor a través de los pasos iniciales para empezar a enseñar (Paso 1: Crear grupo, Paso 2: Crear curso para grupo). Se enlazaron las academias del listado a esta vista.
+- **Módulo de Grupos y Base de Datos:**
+  - Se crearon las tablas `ie_grupos`, `ie_grupo_cursos` y `ie_grupo_alumnos` en PostgreSQL (documentadas en `crear_tabla_grupos.sql` e integradas en `esquema_produccion.sql`) junto con políticas RLS e índices de optimización.
+  - Se implementó la pantalla de administración y listado de grupos en `app/profesor/academias/[id]/grupos/page.tsx`, con un modal funcional que permite crear grupos e insertarlos de forma real y dinámica en Supabase.
+  - Se creó la pantalla de detalle del grupo (`app/profesor/academias/[id]/grupos/[grupoId]/page.tsx`) para la administración unificada de alumnos y cursos de cada grupo, permitiendo al profesor crear nuevos cursos para el grupo o asociar cursos existentes (mediante un modal de selección interactivo).
+- **Eliminación Restrictiva de Academias y Grupos:**
+  - **Eliminar Grupo:** Se añadió un botón de eliminación en la pantalla de detalle del grupo. Este botón se deshabilita si el grupo ya tiene cursos asociados en la tabla `ie_grupo_cursos`.
+  - **Eliminar Academia:** Se añadió un botón en la pantalla principal de la academia que se deshabilita si existen cursos asociados a esta mediante sus grupos (tabla `ie_grupo_cursos`), solucionando el bloqueo que ocurría al comparar erróneamente por categorías globales.
+  - **Evitar Persistencia en Caché:** Se cambiaron los redireccionamientos de mutación (`router.push`) por redireccionamiento nativo de recarga completa (`window.location.href`) tanto en la eliminación de academias como en la de grupos para invalidar de inmediato la caché del cliente (Router Cache de Next.js) y actualizar los listados de inmediato.
+
+
+
+
