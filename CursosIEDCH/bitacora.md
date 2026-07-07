@@ -177,7 +177,17 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 - **Eliminación Restrictiva de Academias y Grupos:**
   - **Eliminar Grupo:** Se añadió un botón de eliminación en la pantalla de detalle del grupo. Este botón se deshabilita si el grupo ya tiene cursos asociados en la tabla `ie_grupo_cursos`.
   - **Eliminar Academia:** Se añadió un botón en la pantalla principal de la academia que se deshabilita si existen cursos asociados a esta mediante sus grupos (tabla `ie_grupo_cursos`), solucionando el bloqueo que ocurría al comparar erróneamente por categorías globales.
-  - **Evitar Persistencia en Caché:** Se cambiaron los redireccionamientos de mutación (`router.push`) por redireccionamiento nativo de recarga completa (`window.location.href`) tanto en la eliminación de academias como en la de grupos para invalidar de inmediato la caché del cliente (Router Cache de Next.js) y actualizar los listados de inmediato.
+
+---
+*Última actualización: 7 de Julio de 2026*
+
+### 🎓 Ajuste de Diseño en Constancia Digital (7 de Julio de 2026)
+- **Alineación Vertical de Detalles:** Se redujo el margen superior (`mt-12` a `mt-5`) en el contenedor de los detalles del certificado (Valor curricular, Folio y Fecha) dentro de [CertificadoDocument.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoDocument.tsx) para subir visualmente la sección, equilibrando el espacio y reduciendo la distancia vacía respecto al título del curso.
+- **Mejoras en Página de Validación (`/validar`):**
+  - Se modificó la etiqueta `"Nombre del Curso"` por `"Capacitación"` para el tipo de resultado de cursos en [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/validar/page.tsx).
+  - Se añadió la alineación justificada (`text-justify`) al renderizar las competencias en el validador de constancias.
+  - Se cambió el texto del pie de página del validador para referenciar a "El Instituto Educativo de Especialdiades para la Conducta y el Desarrollo Humano S.C." en lugar de la entidad de acreditación global.
+
 
 
 

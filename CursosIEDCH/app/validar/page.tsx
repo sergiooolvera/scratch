@@ -327,7 +327,7 @@ function ValidacionContent() {
                                     <div className="col-span-1">
                                         <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
                                             <FileText className="w-4 h-4 mr-1.5" /> 
-                                            {resultado.tipo === 'curso' ? 'Nombre del Curso' : 'Nombre de la Actividad'}
+                                            {resultado.tipo === 'curso' ? 'Capacitación' : 'Nombre de la Actividad'}
                                         </dt>
                                         <dd className="text-lg font-medium text-gray-800 border-b pb-4">
                                             {resultado.curso}
@@ -339,7 +339,7 @@ function ValidacionContent() {
                                             <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
                                                 <Award className="w-4 h-4 mr-1.5" /> Competencia
                                             </dt>
-                                            <dd className="text-lg font-medium text-gray-800 border-b pb-4 whitespace-pre-wrap">
+                                            <dd className="text-lg font-medium text-gray-800 border-b pb-4 whitespace-pre-wrap text-justify">
                                                 {resultado.competencias}
                                             </dd>
                                         </div>
@@ -406,7 +406,7 @@ function ValidacionContent() {
                 </div>
 
                 <p className="text-center text-gray-500 text-sm mt-12 mb-12">
-                    El Ecosistema Global de Acreditación y Certificación avala la autenticidad de los datos mostrados en esta plataforma oficial.
+                    El Instituto Educativo de Especialdiades para la Conducta y el Desarrollo Humano S.C. avala la autenticidad de los datos mostrados en esta plataforma oficial.
                 </p>
             </div>
         </div>

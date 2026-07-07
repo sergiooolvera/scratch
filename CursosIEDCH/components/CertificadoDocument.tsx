@@ -124,7 +124,7 @@ export default function CertificadoDocument({
                     </h3>
 
                     {/* Details Grid */}
-                    <div className="flex justify-between items-start w-[85%] mt-12 text-[15px] font-sans text-black">
+                    <div className="flex justify-between items-start w-[85%] mt-5 text-[15px] font-sans text-black">
                         {/* Left Column - Takes up available space */}
                         <div className="flex flex-col text-left gap-1 flex-1 pr-6">
                             <p className="leading-snug text-justify">
