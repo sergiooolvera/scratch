@@ -2023,7 +2023,7 @@ const generationId = data.generationId;
                     }`}
                 >
                     <MessageSquare className="h-4 w-4" />
-                    <span>4. Avisos y Notas</span>
+                    <span>4. Avisos, Notas <br /> y Enviar a Revisión</span>
                 </button>
             </div>
 
@@ -3598,7 +3598,7 @@ const generationId = data.generationId;
                                             Guardando...
                                         </>
                                     ) : (
-                                        'Siguiente: Avisos y Notas'
+                                        'Siguiente: Avisos, Notas y Enviar a Revisión'
                                     )}
                                 </button>
                             </div>

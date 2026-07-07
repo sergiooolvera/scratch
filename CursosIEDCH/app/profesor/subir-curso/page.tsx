@@ -1537,7 +1537,7 @@ export default function SubirCursoPage() {
                     }`}
                 >
                     <MessageSquare className="h-4 w-4" />
-                    <span>4. Avisos y Notas</span>
+                    <span>4. Avisos, Notas <br /> y Enviar a Revisión</span>
                 </button>
             </div>
 

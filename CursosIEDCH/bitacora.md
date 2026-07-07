@@ -188,7 +188,13 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
   - Se añadió la alineación justificada (`text-justify`) al renderizar las competencias en el validador de constancias.
   - Se cambió el texto del pie de página del validador para referenciar a "El Instituto Educativo de Especialdiades para la Conducta y el Desarrollo Humano S.C." en lugar de la entidad de acreditación global.
 
+---
+*Última actualización: 7 de Julio de 2026*
 
-
-
-
+### 🧩 Límite de Puzles, Label de Video y Texto del Paso 4 (7 de Julio de 2026)
+- **Incremento de Límite de Secuencia:** Se aumentó el límite máximo de preguntas configurables para la secuencia del puzle (Anagrama, Ahorcado y Ordenar Sílabas) de **5 a 10 preguntas**.
+- **Actualización de Label de Video:** Se modificó el label del recurso tipo Video de `"Enlace del Video (YouTube o Vimeo)"` a `"Enlace del Video (YouTube, TikTok, Facebook, etc.)"` para hacerlo más descriptivo.
+- **Actualización del Paso 4 (Stepper y Botones):** Se cambió el nombre de la sección `"Avisos y Notas"` a `"Avisos, Notas y Enviar a Revisión"` en el stepper e interfaces de navegación para dar mayor claridad sobre las acciones de ese paso.
+- **Archivos Modificados:**
+  - En la vista de creación: [subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
+  - En la vista de edición: [editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)
