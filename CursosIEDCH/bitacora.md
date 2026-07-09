@@ -217,4 +217,16 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 - **Archivos Modificados:**
   - [MicrocredencialDocument.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/MicrocredencialDocument.tsx)
 
+---
+*Última actualización: 9 de Julio de 2026*
+
+### 📲 Corrección de Renderizado de Códigos QR (9 de Julio de 2026)
+- **Migración a QRCodeSVG:** Se reemplazó el uso de `QRCodeCanvas` por `QRCodeSVG` en todos los componentes de visualización y descarga de certificados y microcredenciales. Esto corrige el problema por el cual el código QR no se mostraba (quedaba en blanco) en el navegador o al exportarse en PDF/imagen debido a limitaciones de renderizado en servidor (SSR) e incompatibilidades en la clonación del DOM con librerías como `html-to-image` y `html2canvas`.
+- **Archivos Modificados:**
+  - [CertificadoDocument.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoDocument.tsx)
+  - [CertificadoModelo2.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo2.tsx)
+  - [CertificadoModelo3.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo3.tsx)
+  - [MicrocredencialDocument.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/MicrocredencialDocument.tsx)
+
+
 

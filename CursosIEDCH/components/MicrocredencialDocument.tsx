@@ -1,6 +1,6 @@
 'use client'
 
-import { QRCodeCanvas } from 'qrcode.react'
+import { QRCodeSVG } from 'qrcode.react'
 
 interface MicrocredencialDocumentProps {
     alumnoNombre: string;
@@ -108,7 +108,7 @@ export default function MicrocredencialDocument({
                                 </div>
 
                                 <div className="my-auto flex flex-col items-center">
-                                    <QRCodeCanvas
+                                    <QRCodeSVG
                                         value={qrVerificacionUrl}
                                         size={78}
                                         level="M"
@@ -175,7 +175,7 @@ export default function MicrocredencialDocument({
                 <div className="flex justify-between items-end px-10 mt-8">
                     {/* Left Column: Website QR code */}
                     <div className="flex items-center space-x-4">
-                        <QRCodeCanvas
+                        <QRCodeSVG
                             value="https://grupoegac.com"
                             size={76}
                             level="L"

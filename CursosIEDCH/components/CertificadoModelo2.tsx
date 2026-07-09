@@ -1,6 +1,6 @@
 'use client'
 
-import { QRCodeCanvas } from 'qrcode.react'
+import { QRCodeSVG } from 'qrcode.react'
 
 interface CertificadoModelo2Props {
     alumnoNombre: string;
@@ -149,7 +149,7 @@ export default function CertificadoModelo2({
 
             {/* QR Code and Folio */}
             <div className="absolute bottom-[40px] right-[40px] flex flex-col items-center z-30">
-                <QRCodeCanvas 
+                <QRCodeSVG 
                     value={qrUrl} 
                     size={100} 
                     level="L"
