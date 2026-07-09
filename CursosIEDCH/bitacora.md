@@ -198,3 +198,14 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 - **Archivos Modificados:**
   - En la vista de creación: [subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
   - En la vista de edición: [editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)
+
+---
+*Última actualización: 8 de Julio de 2026*
+
+### 🎓 Tamaño de Fuente Dinámico en Nombres de Constancia (8 de Julio de 2026)
+- **Ajuste Dinámico de Fuente para Nombres:** Se implementó una lógica de tamaño de fuente condicional en las tres plantillas de constancia/certificado para reducir proporcionalmente el tamaño del nombre del alumno de acuerdo con la cantidad de caracteres. Esto previene que nombres largos (como "JUAN MANUEL DE LA LUZ SIERRA") se trunquen con puntos suspensivos (`...`) debido a restricciones de ancho máximo y desborden el diseño horizontal de las plantillas.
+- **Archivos Modificados:**
+  - [CertificadoDocument.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoDocument.tsx) (Modelo 1)
+  - [CertificadoModelo2.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo2.tsx) (Modelo 2)
+  - [CertificadoModelo3.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo3.tsx) (Modelo 3)
+

@@ -108,7 +108,7 @@ export default function CertificadoModelo3({
                 <p className="text-[13px] text-gray-600 tracking-wider font-sans uppercase mt-4">a:</p>
 
                 {/* Name */}
-                <h2 className="mt-1 text-[54px] text-[#0B1A3F] tracking-wide leading-none text-center truncate max-w-[850px] px-4 font-normal" style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive, Georgia, serif" }}>
+                <h2 className={`mt-1 text-[#0B1A3F] tracking-wide leading-none text-center truncate max-w-[850px] px-4 font-normal ${alumnoNombre.length > 35 ? 'text-[32px]' : alumnoNombre.length > 25 ? 'text-[42px]' : alumnoNombre.length > 18 ? 'text-[48px]' : 'text-[54px]'}`} style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive, Georgia, serif" }}>
                     {alumnoNombre}
                 </h2>
                 

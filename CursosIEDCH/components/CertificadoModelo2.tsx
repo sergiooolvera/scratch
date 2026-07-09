@@ -85,7 +85,7 @@ export default function CertificadoModelo2({
                 <p className="mt-0 text-lg text-black font-semibold">a:</p>
 
                 {/* Name */}
-                <h2 className="mt-1 text-[48px] text-black tracking-wide leading-tight text-center truncate w-full px-4" style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive, Georgia, serif" }}>
+                <h2 className={`mt-1 text-black tracking-wide leading-tight text-center truncate w-full px-4 ${alumnoNombre.length > 35 ? 'text-[28px]' : alumnoNombre.length > 25 ? 'text-[36px]' : alumnoNombre.length > 18 ? 'text-[42px]' : 'text-[48px]'}`} style={{ fontFamily: "'Brush Script MT', 'Great Vibes', cursive, Georgia, serif" }}>
                     {alumnoNombre}
                 </h2>
 

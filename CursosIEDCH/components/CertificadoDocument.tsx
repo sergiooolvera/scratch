@@ -106,7 +106,7 @@ export default function CertificadoDocument({
                     
                     {/* Alumno Name */}
                     <h2 
-                        className={`text-[#0B1A3F] mt-2 pb-2 font-serif font-normal leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[700px] text-center ${alumnoNombre.length > 40 ? 'text-[32px]' : alumnoNombre.length > 30 ? 'text-[42px]' : alumnoNombre.length > 22 ? 'text-[52px]' : 'text-[62px]'}`}
+                        className={`text-[#0B1A3F] mt-2 pb-2 font-serif font-normal leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-4 max-w-[700px] text-center ${alumnoNombre.length > 35 ? 'text-[30px]' : alumnoNombre.length > 25 ? 'text-[38px]' : alumnoNombre.length > 18 ? 'text-[46px]' : 'text-[56px]'}`}
                     >
                         {alumnoNombre}
                     </h2>
