@@ -89,7 +89,7 @@ export default function MicrocredencialDocument({
                                     <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider block">
                                         Descripción de la capacitación:
                                     </span>
-                                    <p className="text-[7.8px] text-slate-650 leading-relaxed line-clamp-6 mt-0.5">
+                                    <p className="text-[7.8px] text-slate-650 leading-relaxed line-clamp-6 mt-0.5 text-justify">
                                         {descripcionFinal}
                                     </p>
                                 </div>

@@ -209,3 +209,12 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
   - [CertificadoModelo2.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo2.tsx) (Modelo 2)
   - [CertificadoModelo3.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo3.tsx) (Modelo 3)
 
+---
+*Última actualización: 9 de Julio de 2026*
+
+### 🪪 Justificación de Texto en la Microcredencial (9 de Julio de 2026)
+- **Texto Justificado en Descripción:** Se agregó la clase `text-justify` en el párrafo `<p>` de la sección "Descripción de la capacitación" en el componente `MicrocredencialDocument` para que el texto explicativo se presente plenamente justificado, mejorando la alineación visual y la estética premium del reverso de la microcredencial.
+- **Archivos Modificados:**
+  - [MicrocredencialDocument.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/MicrocredencialDocument.tsx)
+
+
