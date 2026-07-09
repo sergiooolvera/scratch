@@ -4,6 +4,12 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 📲 Reducción de Espaciado Vertical Excesivo y Altura de Línea Global (9 de Julio de 2026)
+- **Token de Espaciado Global (Tailwind v4):** Se configuró `--spacing: 0.22rem` (reducción respecto al valor base predeterminado de `0.25rem`) en la directiva `@theme inline` dentro de [globals.css](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/globals.css). Esto reduce dinámicamente todos los paddings, margins y gaps de todo el portal en un ~12% de manera uniforme y segura.
+- **Reducción de Altura de Línea (line-height):** Se estableció un `line-height: 1.4` en la regla del cuerpo (`body`) en [globals.css](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/globals.css) para que el interlineado de todos los textos del sitio sea más compacto.
+- **Compactación del Panel del Profesor:** Se disminuyeron adicionalmente los márgenes verticales y gaps de la pantalla del panel de control del profesor (`app/profesor/page.tsx`).
+- **Reducción de Espaciado en Contenido de Cursos:** Se redujo el margen superior de los bloques de "Proyecto o Tarea Práctica" y "Cuestionario Abierto" en `app/cursos/[id]/contenido/PlaylistClient.tsx`.
+
 ### 👨‍🏫 Ocultar alertas de presentaciones descargadas (9 de Julio de 2026)
 - **Botón "Lo sigo revisando":** Se incorporó un botón dinámico con estilo de borde ámbar y fondo blanco al lado de "Utilizar esta presentación" en la sección de recursos del módulo de edición y subida de cursos.
 - **Estado Local e Interactivo:** Al pulsar "Lo sigo revisando", se almacena temporalmente el ID de la presentación en un estado de React (`hiddenGenerations`) para ocultar el div de alerta en la sesión actual.

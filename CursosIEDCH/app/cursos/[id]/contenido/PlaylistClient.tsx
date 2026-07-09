@@ -1510,7 +1510,7 @@ export default function PlaylistClient({
 
                                 {/* Tarea Práctica Convencional */}
                                 {currentItem.id && tareasDef[currentItem.id] && (
-                                    <div id="tarea-section" className="mt-12 bg-zinc-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6">
+                                    <div id="tarea-section" className="mt-6 bg-zinc-50 border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6">
                                         <div className="flex items-center gap-3 border-2 border-amber-400 bg-amber-50/80 rounded-xl p-4 shadow-sm">
                                             <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-sm">
                                                 <FileText className="h-5 w-5" />
@@ -2102,7 +2102,7 @@ export default function PlaylistClient({
 
                                 {/* Cuestionario Modular */}
                                 {currentItem.id && currentItem.requiere_cuestionario && currentItem.cuestionarioPreguntas && currentItem.cuestionarioPreguntas.length > 0 && (
-                                    <div id="cuestionario-section" className="mt-12 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
+                                    <div id="cuestionario-section" className="mt-6 bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
                                         <div className="flex items-center gap-3 border-2 border-blue-400 bg-blue-50/80 rounded-xl p-4 shadow-sm">
                                             <div className="p-2.5 bg-blue-500 text-white rounded-xl shadow-sm">
                                                 <FileText className="h-5 w-5" />

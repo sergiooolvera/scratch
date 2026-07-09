@@ -258,9 +258,9 @@ export default async function ProfesorDashboardPage() {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
                 {/* 1. Fila Superior: Banners de Creación */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     {/* Banner Crear Academia */}
                     <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/70 to-emerald-100/40 rounded-3xl border border-emerald-500/10 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:shadow-md hover:border-emerald-500/20 transition-all group">
                         <div className="flex-1 space-y-4 z-10">
@@ -328,12 +328,12 @@ export default async function ProfesorDashboardPage() {
                 </div>
 
                 {/* 2. Sección: Resumen Rápido */}
-                <div className="mb-8">
-                    <h2 className="text-lg font-bold text-slate-900 mb-4 tracking-tight">
+                <div className="mb-4">
+                    <h2 className="text-lg font-bold text-slate-900 mb-3 tracking-tight">
                         Resumen rápido
                     </h2>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {/* Alumnos */}
                         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
                             <div className="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
@@ -379,7 +379,7 @@ export default async function ProfesorDashboardPage() {
                 </div>
 
                 {/* 3. Sección: Fila Inferior 50/50 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* Columna Izquierda: Mis Academias */}
                     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 flex flex-col justify-between">
                         <div>
@@ -533,7 +533,7 @@ export default async function ProfesorDashboardPage() {
             </div>
 
             {/* Footer Minimalista */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-slate-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-6 border-t border-slate-200">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
                     <div>
                         © {new Date().getFullYear()} EGAC. Todos los derechos reservados.
