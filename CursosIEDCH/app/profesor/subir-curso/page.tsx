@@ -1559,7 +1559,7 @@ export default function SubirCursoPage() {
                                     <p className="text-gray-500 text-xs mt-0.5">Define los aspects centrales y de cobro del programa académico.</p>
                                 </div>
                                 <button type="button" onClick={() => guardarCurso(true)} disabled={loading} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
-                                    {loading ? 'Guardando...' : 'Guardar Curso'}
+                                    {loading ? 'Guardando...' : 'Guardar Borrador'}
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 gap-6">
@@ -1995,7 +1995,7 @@ export default function SubirCursoPage() {
                                     <p className="text-gray-500 text-xs mt-0.5">Organiza las clases y lecturas del temario. Puedes añadir múltiples recursos (videos, archivos PDF, presentaciones PowerPoint, u HTMLs) a cada módulo.</p>
                                 </div>
                                 <button type="button" onClick={() => guardarCurso(true)} disabled={loading} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
-                                    {loading ? 'Guardando...' : 'Guardar Curso'}
+                                    {loading ? 'Guardando...' : 'Guardar Borrador'}
                                 </button>
                             </div>
 
@@ -2786,7 +2786,7 @@ export default function SubirCursoPage() {
                                     <p className="text-gray-500 text-xs mt-0.5">Configura un examen general que abarque todos los temas. Este examen es obligatorio para otorgar la constancia si se activa.</p>
                                 </div>
                                 <button type="button" onClick={() => guardarCurso(true)} disabled={loading} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
-                                    {loading ? 'Guardando...' : 'Guardar Curso'}
+                                    {loading ? 'Guardando...' : 'Guardar Borrador'}
                                 </button>
                             </div>
 

@@ -239,5 +239,11 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
   - [CertificadoModelo3.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo3.tsx)
   - [MicrocredencialDocument.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/MicrocredencialDocument.tsx)
 
+---
+*Última actualización: 9 de Julio de 2026*
 
-
+### 💾 Cambiar Texto de Botón a 'Guardar Borrador' (9 de Julio de 2026)
+- **Cambio de texto en la interfaz:** Se renombró el texto de los botones de guardado parcial que llamaban a la función `guardarCurso(true)` (la cual guarda el curso como borrador) en las pestañas de información, módulos y examen final. Ahora el botón muestra el texto `"Guardar Borrador"` en lugar de `"Guardar Curso"`, brindando mayor claridad al usuario sobre la acción que se va a realizar.
+- **Archivos Modificados:**
+  - [subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
+  - [editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)

@@ -2045,7 +2045,7 @@ const generationId = data.generationId;
                                     <p className="text-gray-500 text-xs mt-0.5">Modifica los campos principales del curso y la constancia.</p>
                                 </div>
                                 <button type="button" onClick={() => guardarCurso(true)} disabled={saving} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
-                                    {saving ? 'Guardando...' : 'Guardar Curso'}
+                                    {saving ? 'Guardando...' : 'Guardar Borrador'}
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 gap-6">
@@ -2525,7 +2525,7 @@ const generationId = data.generationId;
                                     <p className="text-gray-500 text-xs mt-0.5">Organiza las clases de tu temario. Soporta archivos PDF, videos de YouTube, PowerPoint (.ppt, .pptx) o HTML.</p>
                                 </div>
                                 <button type="button" onClick={() => guardarCurso(true)} disabled={saving} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
-                                    {saving ? 'Guardando...' : 'Guardar Curso'}
+                                    {saving ? 'Guardando...' : 'Guardar Borrador'}
                                 </button>
                             </div>
 
@@ -3352,8 +3352,8 @@ const generationId = data.generationId;
                                     <p className="text-gray-500 text-xs mt-0.5">El examen final habilitará la generación de constancias premium de Grupo Egac para los alumnos inscritos.</p>
                                 </div>
                                 <button type="button" onClick={() => guardarCurso(true)} disabled={saving} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
-                                    {saving ? 'Guardando...' : 'Guardar Curso'}
-                                </button>
+                                    {saving ? 'Guardando...' : 'Guardar Borrador'}
+                                 </button>
                             </div>
 
                             <div className="bg-green-55/40 border border-green-200 rounded-2xl p-6 shadow-md">
