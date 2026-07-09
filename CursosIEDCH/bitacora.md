@@ -4,6 +4,11 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 👨‍🏫 Ocultar alertas de presentaciones descargadas (9 de Julio de 2026)
+- **Botón "Lo sigo revisando":** Se incorporó un botón dinámico con estilo de borde ámbar y fondo blanco al lado de "Utilizar esta presentación" en la sección de recursos del módulo de edición y subida de cursos.
+- **Estado Local e Interactivo:** Al pulsar "Lo sigo revisando", se almacena temporalmente el ID de la presentación en un estado de React (`hiddenGenerations`) para ocultar el div de alerta en la sesión actual.
+- **Persistencia Temporal:** La alerta volverá a mostrarse en la siguiente ocasión en que el profesor acceda a la edición o subida del curso (cuando el componente se vuelva a montar), cumpliendo con el comportamiento solicitado.
+
 ### 🏢 Creación de Academia Paso a Paso (3 de Julio de 2026)
 - **Flujo de Registro Paso a Paso (Stepper):** Se desarrolló una interfaz interactiva premium de 4 pasos (`/institucion/crear`) para guiar a los usuarios en la creación de su academia de manera inmersiva.
 - **Paso 1 (Información Básica):** Formulario completo con validación del nombre, descripción con contador de caracteres (300 máx), selección de categorías orientadas a salud, urgencias e idiomas, y selector de archivos interactivo con visualización previa para cargar el logotipo.

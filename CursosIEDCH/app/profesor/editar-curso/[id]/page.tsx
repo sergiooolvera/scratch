@@ -123,6 +123,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
 
     // Gamma API integration states
     const [gammaGenerations, setGammaGenerations] = useState<any[]>([])
+    const [hiddenGenerations, setHiddenGenerations] = useState<string[]>([])
     const [activeGammaModuloIdx, setActiveGammaModuloIdx] = useState<number | null>(null)
     const [gammaPrompt, setGammaPrompt] = useState('')
     const [gammaNumSlides, setGammaNumSlides] = useState(10)
@@ -843,7 +844,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         return gammaGenerations.filter(gen => {
             const isUsedInModule = modulo.recursos.some(r => r.url_contenido === gen.export_url);
             const belongsToThisCourse = gen.curso_id === id;
-            return gen.descargado && !isUsedInModule && !gen.utilizado && belongsToThisCourse;
+            const isHidden = hiddenGenerations.includes(gen.id);
+            return gen.descargado && !isUsedInModule && !gen.utilizado && belongsToThisCourse && !isHidden;
         });
     }
 
@@ -2614,25 +2616,34 @@ const generationId = data.generationId;
                                                                 <p className="text-[11px] text-amber-700 font-medium">Generaste y descargaste la presentación "{gen.titulo || gen.prompt}" pero aún no la has agregado como recurso del módulo.</p>
                                                             </div>
                                                         </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const nuevosModulos = [...modulos];
-                                                                const displayTitle = gen.titulo ? gen.titulo : `Presentación: ${gen.prompt.length > 50 ? `${gen.prompt.substring(0, 50)}...` : gen.prompt}`;
-                                                                nuevosModulos[index].recursos.push({
-                                                                    titulo: displayTitle,
-                                                                    tipo: gen.formato === 'pdf' ? 'pdf' : 'ppt',
-                                                                    url_contenido: gen.export_url,
-                                                                    archivoPdf: null,
-                                                                    descargable: true
-                                                                });
-                                                                setModulos(nuevosModulos);
-                                                                handleMarcarGammaUtilizado(gen.id);
-                                                            }}
-                                                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition shadow-sm self-start md:self-auto cursor-pointer"
-                                                        >
-                                                            Utilizar esta presentación
-                                                        </button>
+                                                        <div className="flex gap-2 self-start md:self-auto flex-wrap">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setHiddenGenerations(prev => [...prev, gen.id])}
+                                                                className="px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-bold transition shadow-sm cursor-pointer"
+                                                            >
+                                                                Lo sigo revisando
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const nuevosModulos = [...modulos];
+                                                                    const displayTitle = gen.titulo ? gen.titulo : `Presentación: ${gen.prompt.length > 50 ? `${gen.prompt.substring(0, 50)}...` : gen.prompt}`;
+                                                                    nuevosModulos[index].recursos.push({
+                                                                        titulo: displayTitle,
+                                                                        tipo: gen.formato === 'pdf' ? 'pdf' : 'ppt',
+                                                                        url_contenido: gen.export_url,
+                                                                        archivoPdf: null,
+                                                                        descargable: true
+                                                                    });
+                                                                    setModulos(nuevosModulos);
+                                                                    handleMarcarGammaUtilizado(gen.id);
+                                                                }}
+                                                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition shadow-sm cursor-pointer"
+                                                            >
+                                                                Utilizar esta presentación
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ))}
 
