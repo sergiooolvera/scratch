@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, User } from 'lucide-react'
 
 interface Course {
     id: string
@@ -10,6 +10,11 @@ interface Course {
     estado: string
     es_super_curso?: boolean
     categoria?: string
+    imagen_url?: string
+    profesor?: {
+        nombre: string
+        fotografia_perfil?: string
+    }
 }
 
 const catLabels: Record<string, { label: string; bg: string; text: string; border: string }> = {
@@ -36,32 +41,76 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
             )}
 
             <div className={isSuper ? 'px-5 py-6 sm:p-7 flex-grow' : 'px-4 py-5 sm:p-6 flex-grow'}>
-                <div className="flex flex-wrap gap-2 mb-3.5">
-                    {isSuper && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-sm uppercase tracking-wider">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                            Super Curso
-                        </span>
-                    )}
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border shadow-xs uppercase tracking-wider ${cat.bg} ${cat.text} ${cat.border}`}>
-                        {cat.label}
-                    </span>
-                </div>
+                {/* Flex contenedor para alinear contenido (izq) e imagen (der) */}
+                <div className="flex gap-4 items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                        {/* Badges */}
+                        <div className="flex flex-wrap gap-2 mb-3.5">
+                            {isSuper && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-sm uppercase tracking-wider">
+                                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                    Super Curso
+                                </span>
+                            )}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border shadow-xs uppercase tracking-wider ${cat.bg} ${cat.text} ${cat.border}`}>
+                                {cat.label}
+                            </span>
+                        </div>
 
-                <h3 className={isSuper ? 'text-xl leading-7 font-extrabold text-gray-900' : 'text-lg leading-6 font-bold text-gray-900'}>
-                    {course.titulo}
-                </h3>
+                        {/* Título */}
+                        <h3 className={isSuper ? 'text-xl leading-7 font-extrabold text-gray-900' : 'text-lg leading-6 font-bold text-gray-900'}>
+                            {course.titulo}
+                        </h3>
 
-                <p className={isSuper ? 'mt-2 text-sm text-gray-600 line-clamp-3' : 'mt-1.5 max-w-2xl text-sm text-gray-500 line-clamp-2'}>
-                    {course.descripcion}
-                </p>
+                        {/* Descripción */}
+                        <p className={isSuper ? 'mt-2 text-sm text-gray-600 line-clamp-3' : 'mt-1.5 max-w-2xl text-sm text-gray-500 line-clamp-2'}>
+                            {course.descripcion}
+                        </p>
 
-                <div className={isSuper ? 'mt-4 flex items-center text-sm font-semibold text-indigo-700' : 'mt-3.5 flex items-center text-sm font-medium text-blue-600'}>
-                    Instructor: {course.instructor}
+                        {/* Perfil del Profesor */}
+                        <div className="mt-4 flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center border border-zinc-200 shadow-xs flex-shrink-0">
+                                {course.profesor?.fotografia_perfil ? (
+                                    <img
+                                        src={course.profesor.fotografia_perfil}
+                                        alt={course.profesor.nombre || course.instructor}
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <User className="h-4.5 w-4.5 text-zinc-500" />
+                                )}
+                            </div>
+                            <span className={`text-sm font-medium ${isSuper ? 'text-indigo-700 font-semibold' : 'text-zinc-700'}`}>
+                                {course.profesor?.nombre || course.instructor || 'Instructor'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Imagen sutil del Curso en la parte derecha */}
+                    <div className={
+                        `flex-shrink-0 rounded-lg overflow-hidden border border-zinc-100 shadow-xs bg-zinc-50 transition-transform duration-300 hover:scale-[1.03] ` +
+                        (isSuper 
+                            ? 'w-24 h-24 sm:w-36 sm:h-36' 
+                            : 'w-20 h-20 sm:w-24 sm:h-24')
+                    }>
+                        <img
+                            src={course.imagen_url || '/mundo.jpeg'}
+                            alt={course.titulo}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
                 </div>
             </div>
 
             <div className={(isSuper ? 'bg-gradient-to-r from-amber-50 via-white to-indigo-50 ' : 'bg-gray-50 ') + 'px-4 py-4 sm:px-6 mt-auto flex flex-col gap-2'}>
+                {/* Visualización del Precio */}
+                <div className="flex items-center justify-between px-1 mb-1">
+                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Inversión</span>
+                    <span className="text-base font-extrabold text-indigo-700">
+                        {course.precio && Number(course.precio) > 0 ? `$${Number(course.precio).toLocaleString('es-MX')} MXN` : 'Gratuito'}
+                    </span>
+                </div>
+
                 <Link
                     href={isPagado ? `/cursos/${course.id}/contenido` : `/cursos/${course.id}`}
                     className={
@@ -85,4 +134,3 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
         </div>
     )
 }
-

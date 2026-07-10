@@ -263,3 +263,17 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
   - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql)
   - [agregar_imagen_url_cursos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_imagen_url_cursos.sql)
 
+---
+*Última actualización: 9 de Julio de 2026*
+
+### 🎨 Vista de Tarjeta de Curso del Alumno y Detalle del Profesor (9 de Julio de 2026)
+- **Imagen del Curso e Imagen por Defecto:** Se integró la imagen del curso en la parte derecha del contenido mediante un contenedor flexible (`flex gap-4 items-start justify-between`), usando `course.imagen_url` o en su defecto `/mundo.jpeg`. Para lograr máxima sutileza y elegancia, se configuró como una miniatura responsiva compacta (`w-20 h-20 sm:w-24 sm:h-24` para cursos normales y `w-24 h-24 sm:w-36 sm:h-36` para Super Cursos), lo que evita la saturación visual.
+- **Información y Avatar del Profesor:** Se modificó la consulta en las vistas del alumno para unirse con la tabla `ie_profiles` a través de la relación de clave foránea `creado_por`. Ahora, el componente muestra la foto de perfil del profesor (o un icono de avatar por defecto si no está definida).
+- **Precio Formateado:** Se integró la visualización del precio formateado en la parte inferior de la tarjeta, mostrando la palabra `"Gratuito"` si el precio es cero o indefinido.
+- **Imagen en la Vista Detallada del Curso:** Se incorporó la visualización de la imagen del curso en la parte derecha de la sección de información detallada, estructurando el contenido en dos columnas responsivas (`flex-col md:flex-row`). Adicionalmente, se aplicó la justificación de texto (`text-justify`) en los bloques de Descripción, Beneficios y Competencias para lograr una lectura más limpia y premium.
+- **Archivos Modificados:**
+  - [CourseCard.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx)
+  - [dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx)
+  - [mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx)
+  - [cursos/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx)
+

@@ -81,33 +81,49 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         <div className="max-w-4xl mx-auto px-4 py-8">
             <div className="bg-white shadow rounded-lg p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">{curso.titulo}</h1>
-                <p className="text-gray-600 mb-6">{curso.descripcion}</p>
+                <p className="text-gray-600 mb-6 text-justify">{curso.descripcion}</p>
  
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-500">Instructor</h3>
-                        <p className="mt-1 text-sm text-gray-900">{curso.instructor}</p>
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-500">Duración</h3>
-                        <p className="mt-1 text-sm text-gray-900">{curso.duracion}</p>
-                    </div>
-                    <div className="col-span-2">
-                        <h3 className="text-sm font-medium text-gray-500">Beneficios</h3>
-                        <p className="mt-1 text-sm text-gray-900">{curso.beneficios}</p>
-                    </div>
-                    {curso.competencias && (
-                        <div className="col-span-2">
-                            <h3 className="text-sm font-medium text-gray-500">Competencias</h3>
-                            <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{curso.competencias}</p>
-                        </div>
-                    )}
-                    {!isPagado && (
+                <div className="flex flex-col md:flex-row gap-8 mb-8">
+                    {/* Información del Curso (izq) */}
+                    <div className="flex-1 grid grid-cols-2 gap-4">
                         <div>
-                            <h3 className="text-sm font-medium text-gray-500">Precio</h3>
-                            <p className="mt-1 text-lg font-bold text-gray-900">${curso.precio}</p>
+                            <h3 className="text-sm font-medium text-gray-500">Instructor</h3>
+                            <p className="mt-1 text-sm text-gray-900">{curso.instructor}</p>
                         </div>
-                    )}
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-500">Duración</h3>
+                            <p className="mt-1 text-sm text-gray-900">{curso.duracion}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <h3 className="text-sm font-medium text-gray-500">Beneficios</h3>
+                            <p className="mt-1 text-sm text-gray-900 text-justify">{curso.beneficios}</p>
+                        </div>
+                        {curso.competencias && (
+                            <div className="col-span-2">
+                                <h3 className="text-sm font-medium text-gray-500">Competencias</h3>
+                                <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap text-justify">{curso.competencias}</p>
+                            </div>
+                        )}
+                        {!isPagado && (
+                            <div className="col-span-2">
+                                <h3 className="text-sm font-medium text-gray-500">Precio</h3>
+                                <p className="mt-1 text-lg font-bold text-gray-900">
+                                    {curso.precio && Number(curso.precio) > 0 ? `$${Number(curso.precio).toLocaleString('es-MX')}` : 'Gratuito'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Imagen del Curso (der) */}
+                    <div className="w-full md:w-64 flex-shrink-0">
+                        <div className="relative w-full aspect-square md:aspect-auto md:h-64 rounded-xl overflow-hidden border border-zinc-100 bg-zinc-50 shadow-sm">
+                            <img
+                                src={curso.imagen_url || '/mundo.jpeg'}
+                                alt={curso.titulo}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    </div>
                 </div>
  
                 <div className="border-t border-gray-200 pt-6">

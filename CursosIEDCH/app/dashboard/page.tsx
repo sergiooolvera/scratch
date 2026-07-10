@@ -45,7 +45,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
     const { data: rawCursos } = await supabase
         .from('ie_cursos')
-        .select('*')
+        .select('*, profesor:ie_profiles!creado_por(nombre, fotografia_perfil)')
         .eq('estado', 'aprobado')
 
     const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
