@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS public.ie_cursos (
     precio numeric NOT NULL DEFAULT 0.0,
     instructor text,
     logo_url text,
+    imagen_url text,
     curso_url text,
     estado text NOT NULL DEFAULT 'pendiente'::text,
     creado_por uuid,

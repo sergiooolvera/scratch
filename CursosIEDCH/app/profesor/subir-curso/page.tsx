@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2 } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -208,6 +208,8 @@ export default function SubirCursoPage() {
     // Logo custom states
     const [archivoLogo, setArchivoLogo] = useState<File | null>(null)
     const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
+    const [archivoImagen, setArchivoImagen] = useState<File | null>(null)
+    const [imagenPreviewUrl, setImagenPreviewUrl] = useState<string | null>(null)
     const [mostrarLogoConstancia, setMostrarLogoConstancia] = useState(false)
     const [plantillaConstancia, setPlantillaConstancia] = useState('modelo1')
     const [modificarConstancia, setModificarConstancia] = useState(false)
@@ -515,6 +517,8 @@ export default function SubirCursoPage() {
         setPlantillaConstancia('modelo1');
         setArchivoLogo(null);
         setLogoPreviewUrl(null);
+        setArchivoImagen(null);
+        setImagenPreviewUrl(null);
     }
 
     useEffect(() => {
@@ -1170,6 +1174,26 @@ export default function SubirCursoPage() {
             logoUrl = supabase.storage.from('cursos_contenido').getPublicUrl(fileName).data.publicUrl
         }
 
+        let portadaUrl = null;
+        if (archivoImagen) {
+            setMensaje('Subiendo imagen de portada del curso...')
+            const fileExt = archivoImagen.name.split('.').pop()
+            const fileName = `portada_curso_${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
+            const { error: uploadError } = await supabase.storage
+                .from('cursos_contenido')
+                .upload(fileName, archivoImagen, { contentType: archivoImagen.type })
+            if (uploadError) {
+                setModalMessage({
+                    title: 'Error de Imagen de Portada',
+                    content: `Error subiendo la imagen de portada del curso: ${uploadError.message}`,
+                    type: 'error'
+                });
+                setLoading(false);
+                return;
+            }
+            portadaUrl = supabase.storage.from('cursos_contenido').getPublicUrl(fileName).data.publicUrl
+        }
+
         const cursoDraftObj: any = {
             ...formData,
             instructor: instructorNombre,
@@ -1192,6 +1216,7 @@ export default function SubirCursoPage() {
             mostrar_revision_examen: mostrarRevisionExamen,
             limite_inscripcion: formData.modalidad === 'cerrada' && formData.limite_inscripcion ? formData.limite_inscripcion : null,
             logo_url: logoUrl,
+            imagen_url: portadaUrl,
             mostrar_logo_constancia: mostrarLogoConstancia,
             plantilla_constancia: plantillaConstancia
         }
@@ -1435,6 +1460,12 @@ export default function SubirCursoPage() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
     }
+
+    const instructorNombre = profile
+        ? (profile.rol === 'institucion' 
+            ? `${profile.nombre || ''}`.trim() 
+            : `${profile.nombre || ''} ${profile.apellido_paterno || ''} ${profile.apellido_materno || ''}`.trim()) || 'Instructor'
+        : 'Instructor';
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-8">
@@ -1852,6 +1883,111 @@ export default function SubirCursoPage() {
                                             </div>
                                         </div>
                                     )}
+
+                                    {/* Sección de Imagen de Portada y Vista Previa */}
+                                    <div className="col-span-full pt-6 border-t border-gray-100 space-y-4">
+                                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Imagen de Portada del Curso</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                            {/* Columna Izquierda: Subir imagen */}
+                                            <div className="flex flex-col gap-3">
+                                                <label className="block text-sm font-semibold text-gray-700">Subir Imagen Relacionada al Curso</label>
+                                                <div className="flex items-center gap-4">
+                                                    {imagenPreviewUrl ? (
+                                                        <div className="relative w-36 h-24 border border-gray-300 rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center p-1">
+                                                            <img src={imagenPreviewUrl} alt="Vista previa de portada" className="w-full h-full object-cover rounded-lg" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setArchivoImagen(null);
+                                                                    setImagenPreviewUrl(null);
+                                                                }}
+                                                                className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            className="w-36 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition p-2 text-center"
+                                                            onClick={() => document.getElementById('portada-upload-input')?.click()}
+                                                        >
+                                                            <Plus className="w-6 h-6 text-gray-400" />
+                                                            <span className="text-[10px] text-gray-500 font-semibold mt-1">Subir Portada</span>
+                                                        </div>
+                                                    )}
+                                                    <input
+                                                        id="portada-upload-input"
+                                                        type="file"
+                                                        accept="image/png, image/jpeg, image/webp"
+                                                        className="hidden"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                setArchivoImagen(file);
+                                                                setImagenPreviewUrl(URL.createObjectURL(file));
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="text-xs text-gray-500 max-w-xs leading-relaxed">
+                                                        Soporta archivos PNG, JPG o WEBP. Relación de aspecto recomendada: 16:9 (horizontal). Esta imagen se mostrará en las tarjetas del catálogo.
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Columna Derecha: Vista Previa en Miniatura */}
+                                            <div className="flex flex-col items-center justify-start bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
+                                                <span className="text-xs font-bold text-gray-500 mb-3">Vista Previa de la Tarjeta del Curso</span>
+                                                <div className="border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col w-[260px] hover:shadow-md transition-shadow">
+                                                    <div className="relative aspect-video w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                                                        {imagenPreviewUrl ? (
+                                                            <img src={imagenPreviewUrl} alt="Portada" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="flex flex-col items-center justify-center text-gray-400 p-4 text-center">
+                                                                <ImageIcon className="w-8 h-8 mb-1 text-gray-300" />
+                                                                <span className="text-[10px] font-semibold">Sin imagen de portada</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-xs rounded-full p-1 shadow-xs">
+                                                            <Heart className="w-3.5 h-3.5 text-gray-400" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-4 flex-grow flex flex-col text-left">
+                                                        <h4 className="font-bold text-gray-900 text-sm line-clamp-2 min-h-[40px] mb-1.5 leading-tight">
+                                                            {formData.titulo || 'Título del Curso'}
+                                                        </h4>
+                                                        <div className="flex items-center gap-1.5 mb-2">
+                                                            <div className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 overflow-hidden uppercase">
+                                                                {profile?.fotografia_perfil ? (
+                                                                    <img src={profile.fotografia_perfil} alt="Avatar" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    instructorNombre.substring(0, 2).toUpperCase()
+                                                                )}
+                                                            </div>
+                                                            <span className="text-[11px] text-gray-500 font-medium truncate">{instructorNombre}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 mb-1">
+                                                            <span className="text-[11px] font-bold text-amber-500">4.9</span>
+                                                            <div className="flex text-amber-400">
+                                                                {[...Array(5)].map((_, i) => (
+                                                                    <Star key={i} className="w-3 h-3 fill-current" />
+                                                                ))}
+                                                            </div>
+                                                            <span className="text-[10px] text-gray-400 font-medium">(240)</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-400 font-medium mb-3">
+                                                            240 alumnos
+                                                        </div>
+                                                        <div className="mt-auto pt-2 border-t border-gray-100 flex items-center justify-between">
+                                                            <span className="text-xs font-semibold text-gray-400">Precio</span>
+                                                            <span className="text-sm font-bold text-indigo-600">
+                                                                {profile?.rol === 'capacitador' || Number(formData.precio) === 0 ? 'Gratis' : `$${Number(formData.precio).toFixed(2)} MXN`}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     <div className="col-span-full pt-6 border-t border-gray-150 space-y-4">
                                         <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Reglas de Avance del Curso</h3>

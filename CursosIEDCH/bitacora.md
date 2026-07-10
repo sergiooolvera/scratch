@@ -247,3 +247,19 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, org
 - **Archivos Modificados:**
   - [subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
   - [editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)
+
+---
+*Última actualización: 9 de Julio de 2026*
+
+### 🖼️ Subida de Imagen de Portada y Vista Previa de Tarjeta de Curso (9 de Julio de 2026)
+- **Imagen de Portada en Base de Datos:** Se creó el archivo de migración SQL [agregar_imagen_url_cursos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_imagen_url_cursos.sql) para añadir la columna `imagen_url` a la tabla `ie_cursos` de Supabase, y se actualizó el esquema general consolidado [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql).
+- **Subida de Imagen en Formularios:** Se agregó una sección debajo del precio para subir una imagen de portada relacionada al curso (tanto en creación como en edición de cursos).
+  - En la página de creación ([subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)), la imagen se sube al storage bucket `cursos_contenido` al guardar/crear.
+  - En la página de edición ([editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)), la imagen se sube inmediatamente a través del bucket `cursos_contenido` al seleccionarla, para su persistencia en borradores.
+- **Vista Previa Dinámica (Miniatura de Tarjeta):** Se incorporó una previsualización de la tarjeta de curso en miniatura que se actualiza en tiempo real de acuerdo con la imagen seleccionada, el título del curso y el precio ingresados por el profesor, respetando el diseño visual de la plataforma (título, autor con avatar, calificación demo de 4.9 con 5 estrellas, 240 alumnos demo y el precio formateado o "Gratis").
+- **Archivos Modificados:**
+  - [subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
+  - [editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)
+  - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql)
+  - [agregar_imagen_url_cursos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_imagen_url_cursos.sql)
+
