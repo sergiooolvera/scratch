@@ -118,7 +118,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                         </div>
                         <div>
                             <h1 className="text-xl font-extrabold text-gray-800 tracking-tight">
-                                ¡Hola, {profile?.nombre || user.user_metadata?.full_name || user.email.split('@')[0]}! 👋
+                                ¡Hola, {profile?.nombre || user.user_metadata?.full_name || user.email?.split('@')[0] || ''}! 👋
                             </h1>
                             <p className="text-xs text-gray-500">
                                 Rol: <span className="font-semibold capitalize text-indigo-600">{profile?.rol || 'Alumno'}</span>
