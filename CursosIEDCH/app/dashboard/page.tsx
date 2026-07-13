@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import CourseCard from '@/components/CourseCard'
 import DashboardSearch from '@/components/DashboardSearch'
-import { BookMarked, User, Search } from 'lucide-react'
+import { BookMarked, User, Search, HeartPulse, Briefcase, Code, Smile, Globe, MoreHorizontal } from 'lucide-react'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -95,101 +95,153 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     })
 
     const categorias = [
-        { id: 'desarrollo', label: 'Desarrollo Humano', icon: '🧠', color: 'purple' },
-        { id: 'salud', label: 'Salud y Medicina', icon: '🩺', color: 'emerald' },
-        { id: 'arte', label: 'Arte y Cultura', icon: '🎨', color: 'pink' },
-        { id: 'tecnologia', label: 'Tecnología y Ciencia', icon: '💻', color: 'blue' },
-        { id: 'educacion', label: 'Educación', icon: '📚', color: 'amber' },
+        { id: 'salud', label: 'Salud', icon: HeartPulse, bgClass: 'bg-purple-50', textClass: 'text-purple-600', activeBg: 'bg-purple-600 border-purple-600 text-white' },
+        { id: 'negocios', label: 'Negocios', icon: Briefcase, bgClass: 'bg-emerald-50', textClass: 'text-emerald-600', activeBg: 'bg-emerald-600 border-emerald-600 text-white' },
+        { id: 'tecnologia', label: 'Tecnología', icon: Code, bgClass: 'bg-blue-50', textClass: 'text-blue-600', activeBg: 'bg-blue-600 border-blue-600 text-white' },
+        { id: 'desarrollo', label: 'Desarrollo Personal', icon: Smile, bgClass: 'bg-orange-50', textClass: 'text-orange-600', activeBg: 'bg-orange-600 border-orange-600 text-white' },
+        { id: 'idiomas', label: 'Idiomas', icon: Globe, bgClass: 'bg-indigo-50', textClass: 'text-indigo-600', activeBg: 'bg-indigo-600 border-indigo-600 text-white' },
+        { id: 'todas', label: 'Más', icon: MoreHorizontal, bgClass: 'bg-zinc-100', textClass: 'text-zinc-600', activeBg: 'bg-zinc-700 border-zinc-700 text-white' },
     ]
 
     return (
-        <div className="bg-zinc-50 min-h-[calc(100vh-64px)] font-sans">
-            <div className="bg-white border-b border-gray-200 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-                    <div className="flex items-center space-x-4">
-                        <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shadow-inner overflow-hidden">
+        <div className="bg-zinc-50 min-h-[calc(100vh-64px)] font-sans pb-16">
+            {/* Buscador superior y saludo en contenedor limpio */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                    <div className="flex items-center space-x-3.5">
+                        <div className="h-12 w-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 shadow-inner overflow-hidden flex-shrink-0 border border-zinc-200">
                             {(profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture) ? (
                                 <img src={profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture} alt="Avatar" className="h-full w-full object-cover" />
                             ) : (
-                                <User className="h-8 w-8" />
+                                <User className="h-6 w-6" />
                             )}
                         </div>
                         <div>
-                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                                ¡Hola de nuevo, {profile?.nombre || user.user_metadata?.full_name || user.email}!
+                            <h1 className="text-xl font-extrabold text-gray-800 tracking-tight">
+                                ¡Hola, {profile?.nombre || user.user_metadata?.full_name || user.email.split('@')[0]}! 👋
                             </h1>
-                            <p className="mt-1 text-lg text-gray-500">
-                                Rol actual: <span className="font-semibold capitalize text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">{profile?.rol || 'Alumno'}</span>
+                            <p className="text-xs text-gray-500">
+                                Rol: <span className="font-semibold capitalize text-indigo-600">{profile?.rol || 'Alumno'}</span>
                             </p>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-                    <div className="flex items-center space-x-3">
-                        <BookMarked className="h-7 w-7 text-indigo-600" />
-                        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Catálogo de Cursos</h2>
+                    <div className="w-full md:w-96">
+                        <DashboardSearch defaultValue={query} activeCategory={activeCategory} />
                     </div>
-                    
-                    {/* Barra de Búsqueda */}
-                    <DashboardSearch defaultValue={query} activeCategory={activeCategory} />
                 </div>
 
-                {/* Fila de Píldoras de Categoría */}
-                <div className="flex flex-wrap gap-2.5 mb-10 overflow-x-auto pb-2 scrollbar-none">
-                    {categorias.map((cat) => {
-                        const isSelected = activeCategory === cat.id
-                        const linkUrl = `/dashboard?category=${cat.id}${query ? `&q=${query}` : ''}`
-                        
-                        // Personalización del badge según la selección
-                        let badgeStyle = "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300"
-                        if (isSelected) {
-                            if (cat.id === 'todas') badgeStyle = "bg-indigo-600 border-indigo-600 text-white shadow-sm"
-                            if (cat.id === 'desarrollo') badgeStyle = "bg-purple-600 border-purple-600 text-white shadow-sm"
-                            if (cat.id === 'salud') badgeStyle = "bg-emerald-600 border-emerald-600 text-white shadow-sm"
-                            if (cat.id === 'arte') badgeStyle = "bg-pink-600 border-pink-600 text-white shadow-sm"
-                            if (cat.id === 'tecnologia') badgeStyle = "bg-blue-600 border-blue-600 text-white shadow-sm"
-                            if (cat.id === 'educacion') badgeStyle = "bg-amber-600 border-amber-600 text-white shadow-sm"
-                        }
-
-                        return (
-                            <Link 
-                                href={linkUrl} 
-                                key={cat.id}
-                                scroll={false}
-                                className={`px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${badgeStyle}`}
-                            >
-                                <span className="text-base">{cat.icon}</span>
-                                <span>{cat.label}</span>
-                            </Link>
-                        )
-                    })}
-                </div>
-
-                {cursosDisponibles.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {cursosDisponibles.map((curso: any) => (
-                            <CourseCard
-                                key={curso.id}
-                                course={curso}
-                                isPagado={false}
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center bg-white p-16 rounded-3xl border border-dashed border-gray-300 shadow-sm">
-                        <div className="mx-auto h-20 w-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                            <BookMarked className="h-10 w-10 text-gray-400" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">No se encontraron cursos</h3>
-                        <p className="text-gray-500 text-base max-w-md mx-auto">No hay cursos disponibles en la categoría seleccionada bajo los criterios actuales de búsqueda.</p>
-                        <Link href="/dashboard" className="mt-5 inline-block text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-5 py-2 rounded-full">
-                            Ver todos los cursos
+                {/* Banner Principal ("Aprende a tu ritmo") */}
+                <div className="relative overflow-hidden rounded-3xl bg-zinc-950 text-white mb-12 shadow-xl border border-zinc-800/50 flex flex-col md:flex-row items-center min-h-[140px] md:min-h-[160px]">
+                    {/* Lado izquierdo (Texto) */}
+                    <div className="p-4 md:p-6 z-10 w-full md:w-3/5 flex flex-col justify-center items-start">
+                        <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-white mb-2 leading-tight">
+                            Aprende a tu ritmo,<br />certifícate y crece.
+                        </h2>
+                        <p className="text-zinc-300 text-xs md:text-sm max-w-md mb-4 leading-relaxed">
+                            Miles de cursos en diferentes áreas impartidos por expertos del sector salud y profesional.
+                        </p>
+                        <Link
+                            href="/dashboard?category=todas"
+                            scroll={false}
+                            className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold py-2 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/30 text-xs cursor-pointer"
+                        >
+                            Explorar cursos
                         </Link>
                     </div>
-                )}
+                    {/* Lado derecho (Imagen) */}
+                    <div className="relative w-full md:w-2/5 h-32 md:h-full min-h-[110px] md:absolute md:right-0 md:top-0 md:bottom-0 overflow-hidden">
+                        <img 
+                            src="/hero_student_banner.png" 
+                            alt="Estudiante" 
+                            className="w-full h-full object-cover object-center md:object-right select-none pointer-events-none"
+                        />
+                        {/* Gradiente para fundir la imagen con el fondo oscuro */}
+                        <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-zinc-950 via-transparent to-transparent"></div>
+                    </div>
+                </div>
+
+                {/* Sección "Explora por categorías" */}
+                <div className="mb-12">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-extrabold text-zinc-900 tracking-tight">Explora por categorías</h3>
+                        <Link 
+                            href="/dashboard?category=todas" 
+                            scroll={false}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm font-bold transition-colors"
+                        >
+                            Ver todas
+                        </Link>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                        {categorias.map((cat) => {
+                            const isSelected = activeCategory === cat.id
+                            const linkUrl = `/dashboard?category=${cat.id}${query ? `&q=${query}` : ''}`
+                            const Icon = cat.icon
+
+                            return (
+                                <Link 
+                                    href={linkUrl} 
+                                    key={cat.id}
+                                    scroll={false}
+                                    className={`flex flex-col items-center justify-center p-6 bg-white rounded-2xl border transition-all duration-200 hover:shadow-md hover:scale-[1.03] cursor-pointer ${
+                                        isSelected 
+                                            ? 'border-indigo-600 ring-4 ring-indigo-500/10 shadow-sm' 
+                                            : 'border-zinc-100 hover:border-zinc-200 shadow-sm'
+                                    }`}
+                                >
+                                    <div className={`h-14 w-14 rounded-full flex items-center justify-center mb-4 transition-transform duration-200 group-hover:scale-110 ${
+                                        isSelected ? 'bg-indigo-600 text-white' : cat.bgClass
+                                    }`}>
+                                        <Icon className={`h-7 w-7 ${isSelected ? 'text-white' : cat.textClass}`} />
+                                    </div>
+                                    <span className="text-zinc-900 font-bold text-sm text-center leading-tight">{cat.label}</span>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* Sección "Cursos populares" o Resultados */}
+                <div>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-extrabold text-zinc-900 tracking-tight">
+                            {query || activeCategory !== 'todas' ? 'Resultados de búsqueda' : 'Cursos populares'}
+                        </h3>
+                        {cursosDisponibles.length > 0 && (
+                            <Link 
+                                href="/dashboard?category=todas" 
+                                scroll={false}
+                                className="text-indigo-600 hover:text-indigo-800 text-sm font-bold transition-colors"
+                            >
+                                Ver todas
+                            </Link>
+                        )}
+                    </div>
+
+                    {cursosDisponibles.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {cursosDisponibles.map((curso: any) => (
+                                <CourseCard
+                                    key={curso.id}
+                                    course={curso}
+                                    isPagado={false}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center bg-white p-16 rounded-3xl border border-dashed border-zinc-200 shadow-sm">
+                            <div className="mx-auto h-20 w-20 bg-zinc-50 rounded-full flex items-center justify-center mb-6">
+                                <BookMarked className="h-10 w-10 text-zinc-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-zinc-900 mb-2">No se encontraron cursos</h3>
+                            <p className="text-zinc-500 text-base max-w-md mx-auto">No hay cursos disponibles en la categoría seleccionada bajo los criterios actuales de búsqueda.</p>
+                            <Link href="/dashboard" className="mt-5 inline-block text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-5 py-2 rounded-full">
+                                Ver todos los cursos
+                            </Link>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     )

@@ -1,8 +1,13 @@
-# BitÃ¡cora de Avance - CursosIEDCH
+# Bitácora de Avance - CursosIEDCH
 
-Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, organizados por Ã¡reas clave.
+Esta bitácora resume los avances realizados recientemente en el proyecto, organizados por áreas clave.
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
+
+### 🎨 Rediseño del Dashboard del Alumno: Banner Hero con IA y Tarjetas de Categorías Grandes (12 de Julio de 2026)
+- **Banner Hero Interactivo:** Se integró un banner principal de bienvenida con la ilustración de una estudiante generada mediante IA (`public/hero_student_banner.png`) a la derecha, con un fondo degradado oscuro de alta calidad y un botón de llamada a la acción ("Explorar cursos"). Se ajustó su altura a la mitad para lograr un diseño más compacto y equilibrado, y se corrigieron las clases a `bg-zinc-950` y `from-zinc-950` para asegurar que el fondo se renderice correctamente en negro.
+- **Estructura de Búsqueda Mejorada y Avatar:** Se posicionó la barra de búsqueda en la parte superior derecha de la pantalla junto a un saludo inicial que reintegra la imagen de avatar circular del estudiante (`ie_profiles.fotografia_perfil` o metadatos de sesión) y su respectiva etiqueta de rol de forma limpia y profesional.
+- **Categorías como Tarjetas Modernas:** Se reemplazaron las píldoras horizontales por una cuadrícula de 6 tarjetas de categorías grandes. Cada tarjeta contiene un icono de Lucide en un círculo de color pastel y sombra suave, interactuando directamente con el filtro de búsqueda. Se estructuraron las categorías: Salud, Negocios, Tecnología, Desarrollo Personal, Idiomas y Más.
 
 ### 📲 Reducción de Espaciado Vertical Excesivo y Altura de Línea Global (9 de Julio de 2026)
 - **Token de Espaciado Global (Tailwind v4):** Se configuró `--spacing: 0.22rem` (reducción respecto al valor base predeterminado de `0.25rem`) en la directiva `@theme inline` dentro de [globals.css](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/globals.css). Esto reduce dinámicamente todos los paddings, margins y gaps de todo el portal en un ~12% de manera uniforme y segura.
