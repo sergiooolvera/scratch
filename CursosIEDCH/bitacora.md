@@ -282,3 +282,21 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx)
   - [cursos/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx)
 
+---
+*Última actualización: 12 de Julio de 2026*
+
+### 🏢 Modal de Éxito en Creación de Academia (12 de Julio de 2026)
+- **Flujo de Creación Modificado**: Se eliminó la redirección directa al subir curso o al panel del instructor al finalizar el paso 4 de "Crear Academia".
+- **Modal de Felicitación**: Se diseñó e implementó un modal de éxito premium y responsivo que muestra un mensaje felicitando al instructor/institución con el nombre de su nueva academia (`"¡Felicidades! Creaste la academia: {nombre}"`).
+- **Redirección de Cierre**: Al interactuar con el botón del modal, este redirige adecuadamente a la sección principal del instructor (`/profesor`).
+- **Eliminación de Academias con Server Action**: Se detectó que las políticas RLS del lado del cliente impedían el borrado silenciosamente sin arrojar error (provocando redirección sin haber eliminado el registro). Se creó una Server Action (`eliminarAcademiaAction`) que ejecuta la eliminación de forma segura en el servidor usando privilegios `service_role` (evadiendo RLS) tras verificar que el usuario solicitante sea el creador legítimo del registro.
+- **Corrección de Métricas Duplicadas en Academias**: Se identificó que la vista de lista de academias agrupaba los cursos globalmente por la **categoría** de la academia, lo que provocaba que todas las academias de una misma categoría mostraran las mismas métricas repetidas. Se corrigió para que consulte los grupos y las relaciones reales en la tabla `ie_grupo_cursos` de Supabase, obteniendo la cifra exacta y dinámica por academia.
+- **Archivos Modificados**:
+  - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/institucion/crear/page.tsx)
+  - [academias.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/actions/academias.ts) (Nuevo)
+  - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/%5Bid%5D/page.tsx)
+  - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx)
+
+
+
+

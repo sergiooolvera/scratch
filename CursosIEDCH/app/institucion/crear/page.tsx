@@ -56,6 +56,7 @@ export default function CrearAcademiaPage() {
     const [saving, setSaving] = useState(false)
     const [dbError, setDbError] = useState('')
     const [activeSocial, setActiveSocial] = useState<'facebook' | 'instagram' | 'linkedin' | 'youtube'>('facebook')
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
 
     // Datos del formulario
     const [formData, setFormData] = useState({
@@ -282,11 +283,8 @@ export default function CrearAcademiaPage() {
                 throw insertError
             }
 
-            if (formData.crearCursoAhora === 'si') {
-                router.push('/profesor/subir-curso')
-            } else {
-                router.push('/profesor')
-            }
+            setShowSuccessModal(true)
+            setSaving(false)
         } catch (err: any) {
             setDbError(err.message || 'Ocurrió un error inesperado al guardar en la base de datos.')
             setSaving(false)
@@ -1338,6 +1336,45 @@ export default function CrearAcademiaPage() {
                 </div>
 
             </div>
+
+            {/* Modal de Éxito Premium */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300 animate-in fade-in">
+                    <div className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-350 ease-out">
+                        {/* Círculo animado de éxito */}
+                        <div className="h-20 w-20 rounded-full bg-emerald-55 flex items-center justify-center text-emerald-600 mb-6 relative">
+                            <span className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></span>
+                            <CheckCircle2 className="w-12 h-12 relative z-10" />
+                        </div>
+
+                        {/* Título de Felicidades */}
+                        <h3 className="text-2xl font-black mb-3 text-slate-900 leading-tight">
+                            ¡Felicidades!
+                        </h3>
+                        
+                        {/* Mensaje de creación */}
+                        <p className="text-sm text-slate-600 mb-1">
+                            Creaste la academia:
+                        </p>
+                        <p className="text-lg font-extrabold text-indigo-650 bg-indigo-50/50 px-4 py-2 rounded-2xl border border-indigo-100 mb-6 inline-block">
+                            {formData.nombre}
+                        </p>
+
+                        {/* Descripción de bienvenida */}
+                        <p className="text-xs text-slate-500 leading-relaxed mb-8 max-w-sm">
+                            Tu espacio de capacitación profesional ya está activo. Ya puedes acceder al panel de administración para configurar tus cursos, estudiantes y el portal de tu academia.
+                        </p>
+
+                        {/* Botón de acción */}
+                        <button
+                            onClick={() => router.push('/profesor')}
+                            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/35 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                        >
+                            Ir al panel del instructor
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

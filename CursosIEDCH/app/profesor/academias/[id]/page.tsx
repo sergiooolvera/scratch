@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { eliminarAcademiaAction } from '@/app/actions/academias'
 import { 
     Users, 
     BookOpen, 
@@ -94,17 +95,22 @@ export default function AcademiaDetallePage({ params }: PageProps) {
 
         setEliminando(true)
         try {
-            const { error } = await supabase
-                .from('ie_academias')
-                .delete()
-                .eq('id', id)
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                alert('Debes iniciar sesión para realizar esta acción.')
+                setEliminando(false)
+                return
+            }
 
-            if (error) throw error
+            const res = await eliminarAcademiaAction(id, user.id)
+            if (!res.success) {
+                throw new Error(res.error)
+            }
 
             window.location.href = '/profesor'
-        } catch (e) {
+        } catch (e: any) {
             console.error('Error eliminando academia:', e)
-            alert('Ocurrió un error al intentar eliminar la academia.')
+            alert(e.message || 'Ocurrió un error al intentar eliminar la academia.')
         } finally {
             setEliminando(false)
         }

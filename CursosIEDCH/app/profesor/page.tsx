@@ -158,6 +158,34 @@ export default async function ProfesorDashboardPage() {
         .in('creado_por', creadoresIds)
         .order('created_at', { ascending: false })
 
+    // Obtener los grupos de estas academias
+    const academiaIds = academias?.map(a => a.id) || []
+    let todosLosGrupos: any[] = []
+    let relacionesCursos: any[] = []
+
+    if (academiaIds.length > 0) {
+        const { data: gruposData } = await supabase
+            .from('ie_grupos')
+            .select('id, academia_id')
+            .in('academia_id', academiaIds)
+
+        if (gruposData) {
+            todosLosGrupos = gruposData
+            const grupoIds = gruposData.map(g => g.id)
+
+            if (grupoIds.length > 0) {
+                const { data: relData } = await supabase
+                    .from('ie_grupo_cursos')
+                    .select('grupo_id, curso_id')
+                    .in('grupo_id', grupoIds)
+
+                if (relData) {
+                    relacionesCursos = relData
+                }
+            }
+        }
+    }
+
     // 5. Consolidar actividades del instructor / institución
     const actividadesRecientes: any[] = []
 
@@ -393,11 +421,17 @@ export default async function ProfesorDashboardPage() {
                             <div className="space-y-4">
                                 {academias && academias.length > 0 ? (
                                     academias.map((academia) => {
-                                        // Filtrar cursos de la academia por categoría (ej. Salud)
-                                        const cursosAcademia = cursos?.filter(
-                                            c => c.categoria?.toLowerCase() === academia.categoria?.toLowerCase()
+                                        // Filtrar cursos de la academia por los grupos de la misma
+                                        const gruposDeAcademia = todosLosGrupos.filter(g => g.academia_id === academia.id)
+                                        const grupoIdsDeAcademia = gruposDeAcademia.map(g => g.id)
+                                        const relacionesDeAcademia = relacionesCursos.filter(r => 
+                                            grupoIdsDeAcademia.includes(r.grupo_id)
+                                        )
+                                        const cursoIdsAcademia = relacionesDeAcademia.map(r => r.curso_id)
+
+                                        const cursosAcademia = cursos?.filter(c => 
+                                            cursoIdsAcademia.includes(c.id)
                                         ) || []
-                                        const cursoIdsAcademia = cursosAcademia.map(c => c.id)
 
                                         // Calcular alumnos inscritos en los cursos de esta academia
                                         const comprasAcademia = comprasRealizadas.filter(compra =>
