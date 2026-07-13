@@ -15,7 +15,8 @@ import {
     PlusCircle,
     Building2,
     GraduationCap,
-    ArrowUpRight
+    ArrowUpRight,
+    User
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -265,16 +266,25 @@ export default async function ProfesorDashboardPage() {
             <div className="bg-white border-b border-slate-200/80 shadow-xs">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                                Panel de Control
-                            </span>
-                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
-                                ¡Hola, {profile?.nombre || user.email}!
-                            </h1>
-                            <p className="text-sm text-slate-500 mt-1">
-                                Gestiona tus programas académicos, cursos e instructores.
-                            </p>
+                        <div className="flex items-center space-x-3.5">
+                            <div className="h-14 w-14 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 shadow-inner overflow-hidden flex-shrink-0 border border-slate-200">
+                                {(profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture) ? (
+                                    <img src={profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture} alt="Avatar" className="h-full w-full object-cover" />
+                                ) : (
+                                    <User className="h-7 w-7 text-indigo-500" />
+                                )}
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                    Panel de Control
+                                </span>
+                                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
+                                    ¡Hola, {profile?.nombre || user.email}! 👋
+                                </h1>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Gestiona tus programas académicos, cursos e instructores.
+                                </p>
+                            </div>
                         </div>
                         <div className="text-right">
                             <p className="text-xs text-slate-400">Rol de Acceso</p>

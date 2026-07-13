@@ -332,7 +332,7 @@ export default function Navbar() {
             <div className="hidden md:flex items-center space-x-3 z-10">
                 {user ? (
                     <>
-                        <div className="flex flex-col items-end mr-1">
+                        <div className="hidden lg:flex flex-col items-end mr-1">
                             <span className="text-sm font-semibold text-gray-800">
                                 {profile?.nombre || user.email}
                             </span>

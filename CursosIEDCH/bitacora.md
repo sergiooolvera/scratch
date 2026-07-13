@@ -297,6 +297,19 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/%5Bid%5D/page.tsx)
   - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx)
 
+---
+*Última actualización: 12 de Julio de 2026*
 
+### 🧭 Corrección de Responsividad en Navbar y Visibilidad de Avatar (12 de Julio de 2026)
+- **Problema de Espacio**: Con roles con más opciones (como Profesor/Instructor/Institución), el menú central se ensancha y desplazaba la sección derecha (el avatar) fuera de la pantalla en resoluciones medianas.
+- **Ocultamiento de Texto en Medium Screens**: Se modificó la clase del contenedor de nombre y rol del usuario a `hidden lg:flex` para ocultar estos textos en pantallas de tamaño mediano (laptops/tablets) y asegurar que el avatar, el botón de inicio, la campana y salir quepan y se mantengan visibles sin desbordamiento.
+- **Archivos Modificados**:
+  - [Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx)
 
+---
+*Última actualización: 12 de Julio de 2026*
 
+### 🎨 Incorporación de Avatar en el Saludo de Bienvenida del Profesor (12 de Julio de 2026)
+- **Unificación Visual**: Se añadió el avatar circular de perfil al lado del saludo de bienvenida `"¡Hola, {nombre}!"` en el cuerpo del dashboard del profesor, para que sea visualmente coherente con la cabecera de la vista de alumno.
+- **Archivos Modificados**:
+  - [page.tsx (Profesor)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx)
