@@ -4,6 +4,12 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 🏢 Academias Populares en la Vista de Alumno (13 de Julio de 2026)
+- **Layout de Grid de Dos Columnas:** Se reestructuró la maquetación del dashboard del alumno (`app/dashboard/page.tsx`) a un grid adaptativo (`lg:grid-cols-3`) que ubica el catálogo e información del alumno en la columna izquierda (`lg:col-span-2`) y un nuevo panel lateral en la columna derecha (`lg:col-span-1`).
+- **Sección de Academias Populares:** Se implementó una lista dinámica de las academias que más alumnos tienen inscritos en sus cursos asignados. Se obtiene a partir de la relación entre academias, grupos, cursos y compras pagadas en Supabase. Cuenta con un diseño premium que muestra el logo de la academia, nombre, número de alumnos y un botón de "Ingresar" que redirige al portal correspondiente.
+- **Gráficos e Ilustraciones Premium:** Se incorporó una sección ilustrativa con los beneficios clave de unirse a una academia y un banner degradado interactivo para invitar al alumno a explorar más academias del portal.
+- **Datos Fallback Estéticos:** Se incorporó un fallback representativo idéntico al mockup (Salud, Negocios, Tecnología e Idiomas) para garantizar que el diseño premium siempre se visualice y no quede vacío mientras se crean más academias en el sistema.
+
 ### 📊 Actualización de Calculadora Fiscal y Simulador de Ventas (13 de Julio de 2026)
 - **Reordenación de Variables**: Se reposicionó el Régimen Fiscal al inicio del formulario del simulador para una mejor experiencia de usuario.
 - **Nuevos Regímenes Fiscales (Fila 10 del Excel)**: Se implementaron los regímenes oficiales: Actividad Empresarial y Profesional, Plataforma Personas Físicas con RFC, Plataforma Personas Físicas sin RFC, y Plataforma Persona Moral sin RFC.
