@@ -19,6 +19,7 @@ interface Grupo {
     id: string
     nombre: string
     descripcion: string
+    imagen_url?: string
     activo: boolean
     created_at: string
     alumnos_count?: number
@@ -42,6 +43,8 @@ export default function MisGruposPage({ params }: PageProps) {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [nuevoNombre, setNuevoNombre] = useState('')
     const [nuevaDesc, setNuevaDesc] = useState('')
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string>('')
     const [creandoGrupo, setCreandoGrupo] = useState(false)
     const [error, setError] = useState('')
 
@@ -67,6 +70,7 @@ export default function MisGruposPage({ params }: PageProps) {
                         id,
                         nombre,
                         descripcion,
+                        imagen_url,
                         activo,
                         created_at,
                         ie_grupo_alumnos(id),
@@ -82,6 +86,7 @@ export default function MisGruposPage({ params }: PageProps) {
                         id: g.id,
                         nombre: g.nombre,
                         descripcion: g.descripcion,
+                        imagen_url: g.imagen_url,
                         activo: g.activo,
                         created_at: g.created_at,
                         alumnos_count: g.ie_grupo_alumnos?.length || 0,
@@ -113,6 +118,18 @@ export default function MisGruposPage({ params }: PageProps) {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error('No autenticado')
 
+            let uploadedUrl = ''
+            if (imageFile) {
+                const ext = imageFile.name.split('.').pop()
+                const fileName = `grupo_${user.id}_${Date.now()}.${ext}`
+                const { error: upErr } = await supabase.storage.from('perfiles').upload(fileName, imageFile)
+                if (upErr) throw new Error('Error al subir la imagen: ' + upErr.message)
+                uploadedUrl = supabase.storage.from('perfiles').getPublicUrl(fileName).data.publicUrl
+            } else {
+                // Imagen por defecto
+                uploadedUrl = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=300&q=80'
+            }
+
             const { data: nuevoGrupo, error: errInsert } = await supabase
                 .from('ie_grupos')
                 .insert({
@@ -120,6 +137,7 @@ export default function MisGruposPage({ params }: PageProps) {
                     creado_por: user.id,
                     nombre: nuevoNombre.trim(),
                     descripcion: nuevaDesc.trim(),
+                    imagen_url: uploadedUrl,
                     activo: true
                 })
                 .select()
@@ -132,6 +150,7 @@ export default function MisGruposPage({ params }: PageProps) {
                     id: nuevoGrupo.id,
                     nombre: nuevoGrupo.nombre,
                     descripcion: nuevoGrupo.descripcion,
+                    imagen_url: nuevoGrupo.imagen_url,
                     activo: nuevoGrupo.activo,
                     created_at: nuevoGrupo.created_at,
                     alumnos_count: 0,
@@ -141,6 +160,8 @@ export default function MisGruposPage({ params }: PageProps) {
                 setIsModalOpen(false)
                 setNuevoNombre('')
                 setNuevaDesc('')
+                setImageFile(null)
+                setImagePreview('')
             }
         } catch (e: any) {
             setError(e.message || 'Ocurrió un error al crear el grupo.')
@@ -204,8 +225,16 @@ export default function MisGruposPage({ params }: PageProps) {
                                     className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 flex flex-col sm:flex-row justify-between items-center gap-4 hover:shadow-md hover:border-slate-300 transition-all group w-full"
                                 >
                                     <div className="flex items-center gap-4 flex-1 w-full">
-                                        <div className={`h-14 w-14 rounded-2xl ${style.bg} flex items-center justify-center ${style.text} shrink-0 group-hover:scale-105 transition-transform duration-300`}>
-                                            <Users className="h-7 w-7" />
+                                        <div className="h-14 w-14 rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300 border border-slate-200 animate-in fade-in">
+                                            {grupo.imagen_url ? (
+                                                <img 
+                                                    src={grupo.imagen_url} 
+                                                    alt={grupo.nombre} 
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            ) : (
+                                                <Users className="h-7 w-7 text-indigo-600" />
+                                            )}
                                         </div>
                                         <div className="min-w-0">
                                             <h3 className="text-lg font-bold text-slate-900 truncate">
@@ -315,6 +344,45 @@ export default function MisGruposPage({ params }: PageProps) {
                                     rows={3}
                                     className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-sm focus:outline-hidden focus:border-indigo-500 focus:bg-white transition-all text-slate-900 resize-none"
                                 />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-700">
+                                    Imagen del Grupo (Opcional)
+                                </label>
+                                <div className="flex items-center gap-4 bg-slate-50/50 border border-slate-100 p-3 rounded-2xl">
+                                    {imagePreview ? (
+                                        <div className="h-16 w-16 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                                            <img src={imagePreview} alt="Vista previa" className="h-full w-full object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="h-16 w-16 rounded-xl bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center shrink-0">
+                                            <Users className="h-6 w-6 text-slate-400" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <input 
+                                            type="file" 
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0]
+                                                if (file) {
+                                                    setImageFile(file)
+                                                    setImagePreview(URL.createObjectURL(file))
+                                                }
+                                            }}
+                                            className="hidden"
+                                            id="group-image-upload"
+                                        />
+                                        <label 
+                                            htmlFor="group-image-upload"
+                                            className="inline-flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all shadow-3xs"
+                                        >
+                                            Seleccionar archivo
+                                        </label>
+                                        <p className="text-[10px] text-slate-400 mt-1">PNG, JPG o WEBP. Si se omite, se usará una por defecto.</p>
+                                    </div>
+                                </div>
                             </div>
 
                             {error && (

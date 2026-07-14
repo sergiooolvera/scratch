@@ -530,6 +530,7 @@ CREATE TABLE IF NOT EXISTS public.ie_grupos (
     creado_por uuid NOT NULL,
     nombre text NOT NULL,
     descripcion text,
+    imagen_url text,
     activo boolean DEFAULT true,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );

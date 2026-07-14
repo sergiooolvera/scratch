@@ -326,3 +326,20 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Unificación Visual**: Se añadió el avatar circular de perfil al lado del saludo de bienvenida `"¡Hola, {nombre}!"` en el cuerpo del dashboard del profesor, para que sea visualmente coherente con la cabecera de la vista de alumno.
 - **Archivos Modificados**:
   - [page.tsx (Profesor)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx)
+
+---
+*Última actualización: 13 de Julio de 2026*
+
+### 👥 Imagen de Grupo y Fallback por Defecto (13 de Julio de 2026)
+- **Imagen en Base de Datos**: Se creó la migración [agregar_imagen_url_grupos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_imagen_url_grupos.sql) para agregar el campo `imagen_url` en la tabla `ie_grupos`. Se actualizaron los esquemas locales [crear_tabla_grupos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_tabla_grupos.sql) y [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) con este nuevo campo.
+- **Formulario y Subida a Storage**: Se añadió un control de carga de archivos en el modal de "Crear Nuevo Grupo" con previsualización en tiempo real. Al enviar el formulario, el archivo se sube al bucket `perfiles` en Supabase Storage.
+- **Fallback por Defecto**: Si no se selecciona un archivo, se almacena una URL de imagen ilustrativa por defecto para la representación del equipo.
+- **Renderizado Dinámico**: Se modificó la vista de listado de grupos y la página de detalle individual del grupo para consultar el campo `imagen_url` y renderizar la imagen con bordes suavizados y aspecto premium.
+- **Archivos Modificados**:
+  - [grupos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/%5Bid%5D/grupos/page.tsx)
+  - [grupos/[grupoId]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/%5Bid%5D/grupos/%5BgrupoId%5D/page.tsx)
+  - [crear_tabla_grupos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_tabla_grupos.sql)
+  - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql)
+  - [agregar_imagen_url_grupos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_imagen_url_grupos.sql)
+  - [run_migration_grupos_imagen.js](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/run_migration_grupos_imagen.js)
+

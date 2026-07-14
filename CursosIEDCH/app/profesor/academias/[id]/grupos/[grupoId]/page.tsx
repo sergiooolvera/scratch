@@ -42,6 +42,7 @@ export default function DetalleGrupoPage({ params }: PageProps) {
     const supabase = createClient()
     
     const [grupoNombre, setGrupoNombre] = useState('Grupo')
+    const [grupoImagen, setGrupoImagen] = useState('')
     const [academiaNombre, setAcademiaNombre] = useState('Academia')
     const [loading, setLoading] = useState(true)
     
@@ -91,12 +92,13 @@ export default function DetalleGrupoPage({ params }: PageProps) {
                 // 1. Obtener detalles del grupo y de la academia
                 const { data: grupo } = await supabase
                     .from('ie_grupos')
-                    .select('nombre, ie_academias(nombre)')
+                    .select('nombre, imagen_url, ie_academias(nombre)')
                     .eq('id', grupoId)
                     .single()
                 
                 if (grupo) {
                     setGrupoNombre(grupo.nombre)
+                    setGrupoImagen(grupo.imagen_url || '')
                     if (grupo.ie_academias) {
                         setAcademiaNombre((grupo.ie_academias as any).nombre)
                     }
@@ -209,8 +211,12 @@ export default function DetalleGrupoPage({ params }: PageProps) {
                 {/* Cabecera del Grupo */}
                 <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-4">
-                        <div className="h-16 w-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-xs shadow-indigo-100">
-                            <Users className="h-8 w-8" />
+                        <div className="h-16 w-16 bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-200 shrink-0">
+                            {grupoImagen ? (
+                                <img src={grupoImagen} alt={grupoNombre} className="h-full w-full object-cover" />
+                            ) : (
+                                <Users className="h-8 w-8 text-indigo-600" />
+                            )}
                         </div>
                         <div>
                             <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
