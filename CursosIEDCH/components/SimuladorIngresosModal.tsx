@@ -1,28 +1,38 @@
 import React, { useState, useEffect } from 'react'
-import { X, Calculator, Info, Landmark, HelpCircle, CheckCircle } from 'lucide-react'
+import { X, Calculator, Info, Landmark, ChevronDown } from 'lucide-react'
 
 type SimuladorIngresosModalProps = {
   isOpen: boolean;
   onClose: () => void;
   precioPublico: number;
   aplicarIvaGlobal: boolean;
+  comisionInstructorPercent?: number;
   onChangePrecio?: (precio: number) => void;
   onChangeAplicarIva?: (aplica: boolean) => void;
 }
 
-type RegimenType = 'RESICO' | 'ACTIVIDAD_PROFESIONAL' | 'ASIMILADOS' | 'PERSONA_MORAL';
+type RegimenType = 'ACTIVIDAD_EMPRESARIAL' | 'PLATAFORMA_RFC' | 'PLATAFORMA_SIN_RFC' | 'PLATAFORMA_MORAL_SIN_RFC';
+
+const REGIMENES = [
+  { value: 'ACTIVIDAD_EMPRESARIAL', label: 'Actividad Empresarial y Profesional' },
+  { value: 'PLATAFORMA_RFC', label: 'Plataforma Personas Físicas con RFC' },
+  { value: 'PLATAFORMA_SIN_RFC', label: 'Plataforma Personas Físicas sin RFC' },
+  { value: 'PLATAFORMA_MORAL_SIN_RFC', label: 'Plataforma Persona Moral sin RFC' }
+] as const;
 
 export default function SimuladorIngresosModal({ 
   isOpen, 
   onClose, 
   precioPublico, 
   aplicarIvaGlobal, 
+  comisionInstructorPercent,
   onChangePrecio, 
   onChangeAplicarIva 
 }: SimuladorIngresosModalProps) {
   const [precio, setPrecio] = useState(precioPublico)
   const [alumnos, setAlumnos] = useState(20)
-  const [regimen, setRegimen] = useState<RegimenType>('RESICO')
+  const [regimen, setRegimen] = useState<RegimenType>('ACTIVIDAD_EMPRESARIAL')
+  const [isOpenRegimen, setIsOpenRegimen] = useState(false)
 
   // Sincronizar precio al público cuando se abra el modal (mínimo de 199 recomendado si es de pago)
   useEffect(() => {
@@ -33,61 +43,63 @@ export default function SimuladorIngresosModal({
 
   if (!isOpen) return null
 
-  // --- CÁLCULOS ACTUALIZADOS: INGRESO BRUTO SOBRE PRECIO AL PÚBLICO (CON IVA) ---
-  
-  // El precio ingresado en el simulador ya es el precio al público
+  // --- CONFIGURACIÓN DE COMISIÓN DE LA BASE DE DATOS ---
+  const comisionPercent = comisionInstructorPercent !== undefined && comisionInstructorPercent !== null 
+    ? comisionInstructorPercent 
+    : 60;
+  const comisionLabel = `Comisión para el Instructor (${comisionPercent}%)`;
+
+  // --- CÁLCULOS ACTUALIZADOS BASADOS EN EXCEL FILA 16 EN ADELANTE ---
   const precioAlPublico = precio
 
   // 1. Ingreso Bruto Total = Precio al público * Alumnos
   const ingresoBrutoTotal = precioAlPublico * alumnos
 
-  // 2. (-) Comisión Stripe Variable = Ingreso Bruto * 3.6% * 1.16
-  const comisionStripeVariable = ingresoBrutoTotal * 0.036 * 1.16
+  // 2. Desglose de importe total y IVA Trasladado (16%)
+  const desgloseImporteTotal = ingresoBrutoTotal / 1.16
+  const ivaTrasladado16 = desgloseImporteTotal * 0.16
+  const totalRecibido = desgloseImporteTotal + ivaTrasladado16 // Equivale a ingresoBrutoTotal
 
-  // 3. (-) Comisión Stripe Fija = Alumnos * $3.00 * 1.16
-  const comisionStripeFija = alumnos * 3.0 * 1.16
+  // 3. Total Bruto (Subtotal + IVA) en banco antes de Stripe es igual a totalRecibido
+  const totalBrutoFila16 = totalRecibido
 
-  // 4. Total Libre en Banco (Neto) = Ingreso Bruto - Comisión Stripe Variable - Comisión Stripe Fija
+  // 4. (-) Comisión Stripe Variable (3.6%) = Ingreso Bruto * 3.6% (sin IVA)
+  const comisionStripeVariable = ingresoBrutoTotal * 0.036
+
+  // 5. (-) Comisión Stripe Fija ($3.00 MXN por alumno) = Alumnos * 3.0 (sin IVA)
+  const comisionStripeFija = alumnos * 3.0
+
+  // 6. Total Libre en Banco (Neto) = Ingreso Bruto - Comisión Stripe Variable - Comisión Stripe Fija
   const totalLibreBanco = Math.max(0, ingresoBrutoTotal - comisionStripeVariable - comisionStripeFija)
 
-  // 5. Comisión para el Instructor (50%) = Total Libre en Banco * 50%
-  const comisionInstructor = Math.max(0, totalLibreBanco * 0.50)
+  // 7. Comisión para el Instructor = Total Libre en Banco * multiplicador configurable
+  const comisionInstructor = Math.max(0, totalLibreBanco * (comisionPercent / 100))
 
-  // 6. Cálculos Fiscales según Régimen
-  let subtotalNeto = 0
-  let ivaTrasladado = 0
-  let totalBruto = 0
+  // 8. Desglose de pago instructor (Subtotal + IVA)
+  const importeSubtotal = comisionInstructor / 1.16
+  const ivaPagadoInstructor = importeSubtotal * 0.16
+  const totalBrutoInstructor = importeSubtotal + ivaPagadoInstructor // Equivale a comisionInstructor
+
+  // 9. Cálculos Fiscales según Régimen (Retenciones)
   let retencionISR = 0
   let retencionIVA = 0
 
-  if (regimen === 'RESICO') {
-    subtotalNeto = comisionInstructor / 1.16
-    ivaTrasladado = subtotalNeto * 0.16
-    totalBruto = subtotalNeto + ivaTrasladado // que es igual a comisionInstructor
-    retencionISR = subtotalNeto * 0.0125      // 1.25% de retención de ISR en RESICO
-    retencionIVA = subtotalNeto * 0.106667    // 10.6667% de retención de IVA en RESICO
-  } else if (regimen === 'ACTIVIDAD_PROFESIONAL') {
-    subtotalNeto = comisionInstructor / 1.16
-    ivaTrasladado = subtotalNeto * 0.16
-    totalBruto = subtotalNeto + ivaTrasladado // que es igual a comisionInstructor
-    retencionISR = subtotalNeto * 0.10        // 10% de retención de ISR en Actividad Profesional
-    retencionIVA = subtotalNeto * 0.106667    // 10.6667% de retención de IVA en Actividad Profesional
-  } else if (regimen === 'ASIMILADOS') {
-    subtotalNeto = comisionInstructor         // No traslada IVA
-    ivaTrasladado = 0
-    totalBruto = comisionInstructor
-    retencionISR = subtotalNeto * 0.0615      // 6.15% de retención de ISR en Asimilados
-    retencionIVA = 0
-  } else if (regimen === 'PERSONA_MORAL') {
-    subtotalNeto = comisionInstructor / 1.16
-    ivaTrasladado = subtotalNeto * 0.16
-    totalBruto = subtotalNeto + ivaTrasladado // que es igual a comisionInstructor
-    retencionISR = 0                          // Persona Moral no sufre retención de ISR de sí misma aquí
-    retencionIVA = 0
+  if (regimen === 'ACTIVIDAD_EMPRESARIAL') {
+    retencionISR = importeSubtotal * 0.10 // 10% del subtotal
+    retencionIVA = importeSubtotal * 0.10667 // 10.667% del subtotal (según B27: B23*0.10667)
+  } else if (regimen === 'PLATAFORMA_RFC') {
+    retencionISR = totalBrutoInstructor * 0.025 // 2.5% del total bruto (según C26: C25*0.025)
+    retencionIVA = importeSubtotal * 0.08 // 8% del subtotal (según C27: C23*0.08)
+  } else if (regimen === 'PLATAFORMA_SIN_RFC') {
+    retencionISR = totalBrutoInstructor * 0.20 // 20% del total bruto (según D26: D25*0.2)
+    retencionIVA = ivaPagadoInstructor * 1.0 // 100% del IVA (según D27: (D23*0.16)*1)
+  } else if (regimen === 'PLATAFORMA_MORAL_SIN_RFC') {
+    retencionISR = totalBrutoInstructor * 0.20 // 20% del total bruto (según E26: E25*0.2)
+    retencionIVA = ivaPagadoInstructor * 1.0 // 100% del IVA (según E27: (E23*0.16)*1)
   }
 
   const totalRetenciones = retencionISR + retencionIVA
-  const pagoNeto = Math.max(0, totalBruto - totalRetenciones)
+  const pagoNeto = Math.max(0, totalBrutoInstructor - totalRetenciones)
 
   const formatter = new Intl.NumberFormat('es-MX', { 
     style: 'currency', 
@@ -99,8 +111,6 @@ export default function SimuladorIngresosModal({
   const handleGuardar = () => {
     if (precio < 199) return;
     if (onChangePrecio) onChangePrecio(precio)
-    // El IVA global en el curso ahora siempre se activa si el precio es mayor a 0, 
-    // pero para compatibilidad con el resto del flujo, pasamos true
     if (onChangeAplicarIva) onChangeAplicarIva(true)
     onClose()
   }
@@ -139,7 +149,53 @@ export default function SimuladorIngresosModal({
             </h3>
 
             <div className="space-y-4">
-              {/* Costo del curso */}
+              {/* 1. Régimen Fiscal (Combobox Premium) */}
+              <div className="relative">
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Régimen Fiscal del Instructor</label>
+                <button
+                  type="button"
+                  onClick={() => setIsOpenRegimen(!isOpenRegimen)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-black bg-white font-medium flex items-center justify-between cursor-pointer text-left shadow-sm hover:border-gray-300"
+                >
+                  <span className="truncate pr-2">
+                    {REGIMENES.find(r => r.value === regimen)?.label}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0 ${isOpenRegimen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isOpenRegimen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsOpenRegimen(false)}
+                    />
+                    <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-gray-50 py-1 animate-slide-up">
+                      {REGIMENES.map((item) => (
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => {
+                            setRegimen(item.value)
+                            setIsOpenRegimen(false)
+                          }}
+                          className={`w-full px-4 py-3 text-left text-xs font-semibold transition-all duration-200 flex items-center justify-between cursor-pointer ${
+                            regimen === item.value 
+                              ? 'bg-blue-50 text-blue-600' 
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span>{item.label}</span>
+                          {regimen === item.value && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* 2. Costo del curso */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Precio al Público del Curso (MXN)</label>
                 <div className="relative rounded-2xl shadow-sm">
@@ -167,7 +223,7 @@ export default function SimuladorIngresosModal({
                 )}
               </div>
 
-              {/* Número de alumnos */}
+              {/* 3. Número de alumnos */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Número Estimado de Alumnos</label>
                 <input 
@@ -179,21 +235,6 @@ export default function SimuladorIngresosModal({
                   min="1"
                 />
               </div>
-
-              {/* Régimen Fiscal */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Régimen Fiscal del Instructor</label>
-                <select 
-                  value={regimen} 
-                  onChange={(e) => setRegimen(e.target.value as RegimenType)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-black bg-white font-medium cursor-pointer"
-                >
-                  <option value="RESICO">RESICO (P. Física)</option>
-                  <option value="ACTIVIDAD_PROFESIONAL">Actividad Profesional (Honorarios)</option>
-                  <option value="ASIMILADOS">Asimilados a Salarios</option>
-                  <option value="PERSONA_MORAL">Persona Moral (S.A. / S.C.)</option>
-                </select>
-              </div>
             </div>
 
             {/* Tarjeta del Régimen Seleccionado */}
@@ -203,10 +244,10 @@ export default function SimuladorIngresosModal({
                 Detalles del régimen
               </span>
               <p className="text-xs text-gray-600 leading-relaxed">
-                {regimen === 'RESICO' && 'Régimen Simplificado de Confianza: Se aplica una tasa de retención de ISR del 1.25% y una retención de IVA del 10.6667% sobre el subtotal neto. Excelente para personas físicas con ingresos menores a 3.5 MDP.'}
-                {regimen === 'ACTIVIDAD_PROFESIONAL' && 'Persona Física con Actividad Profesional (Honorarios): Se aplica una retención de ISR del 10% y una retención de IVA del 10.6667% sobre el subtotal neto. Apto para profesionistas independientes tradicionales.'}
-                {regimen === 'ASIMILADOS' && 'Asimilados a Salarios: No traslada IVA (tasa exenta/no objeto). Se calcula una retención estimada del 6.15% sobre la comisión base.'}
-                {regimen === 'PERSONA_MORAL' && 'Persona Moral (S.A. / S.C.): No se aplican retenciones automáticas de ISR ni de IVA por parte de la plataforma en la simulación base. El IVA del 16% se traslada completo y el instructor gestiona sus impuestos internamente.'}
+                {regimen === 'ACTIVIDAD_EMPRESARIAL' && 'Actividad Empresarial y Profesional: Retención de ISR del 10% y de IVA del 10.667% sobre el subtotal neto de la comisión del instructor.'}
+                {regimen === 'PLATAFORMA_RFC' && 'Plataforma con RFC: Retención de ISR del 2.5% sobre la comisión total bruta, y retención de IVA del 8% sobre el subtotal neto.'}
+                {regimen === 'PLATAFORMA_SIN_RFC' && 'Plataforma sin RFC: Retención de ISR del 20% sobre la comisión total bruta, y retención de IVA del 100% sobre el IVA trasladado de la comisión.'}
+                {regimen === 'PLATAFORMA_MORAL_SIN_RFC' && 'Persona Moral sin RFC: Retención de ISR del 20% sobre la comisión total bruta, y retención de IVA del 100% sobre el IVA trasladado de la comisión.'}
               </p>
             </div>
           </div>
@@ -218,7 +259,7 @@ export default function SimuladorIngresosModal({
               Proyección y Distribución Financiera
             </h3>
 
-            {/* Gran Total a Recibir (Ahora arriba) */}
+            {/* Gran Total a Recibir */}
             <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-100 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-0.5">
@@ -236,7 +277,7 @@ export default function SimuladorIngresosModal({
             </div>
 
             {/* Tabla de Conceptos */}
-            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+            <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm bg-white">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold">
@@ -245,54 +286,56 @@ export default function SimuladorIngresosModal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 text-gray-700">
+                  {/* Fila 16 en adelante de la Calculadora Excel */}
                   <tr>
-                    <td className="p-3 pl-4 font-medium">Ingreso Bruto Total <span className="text-[10px] text-gray-400">(Precio al público {precio > 0 ? formatter.format(precio) : '$0.00'} × {alumnos} alumnos)</span></td>
-                    <td className="p-3 pr-4 text-right font-semibold text-gray-900">{formatter.format(ingresoBrutoTotal)}</td>
+                    <td className="p-3 pl-4 font-semibold text-gray-900">Total Bruto (Subtotal + IVA) <span className="text-[10px] text-gray-400 font-normal">(Precio al público {precio > 0 ? formatter.format(precio) : '$0.00'} × {alumnos} alumnos)</span></td>
+                    <td className="p-3 pr-4 text-right font-bold text-gray-900">{formatter.format(totalBrutoFila16)}</td>
                   </tr>
                   <tr>
-                    <td className="p-3 pl-4 text-gray-500">(-) Comisión Stripe Variable <span className="text-[10px] text-gray-400">(3.6% + IVA)</span></td>
+                    <td className="p-3 pl-4 text-gray-500">(-) Comisión Stripe Variable <span className="text-[10px] text-gray-400">(3.6% sobre Ingreso Bruto)</span></td>
                     <td className="p-3 pr-4 text-right text-red-500">-{formatter.format(comisionStripeVariable)}</td>
                   </tr>
                   <tr>
-                    <td className="p-3 pl-4 text-gray-500">(-) Comisión Stripe Fija <span className="text-[10px] text-gray-400">($3.00 MXN + IVA por alumno)</span></td>
+                    <td className="p-3 pl-4 text-gray-500">(-) Comisión Stripe Fija <span className="text-[10px] text-gray-400">($3.00 MXN por alumno)</span></td>
                     <td className="p-3 pr-4 text-right text-red-500">-{formatter.format(comisionStripeFija)}</td>
                   </tr>
                   <tr className="bg-blue-50/30">
                     <td className="p-3 pl-4 font-semibold text-blue-900">Total Libre en Banco (Neto)</td>
                     <td className="p-3 pr-4 text-right font-bold text-blue-900">{formatter.format(totalLibreBanco)}</td>
                   </tr>
-                  <tr>
-                    <td className="p-3 pl-4 font-medium text-indigo-900">Comisión para el Instructor (50%)</td>
+                  {/* Comisión del Instructor configurable */}
+                  <tr className="bg-indigo-50/20">
+                    <td className="p-3 pl-4 font-medium text-indigo-900">{comisionLabel}</td>
                     <td className="p-3 pr-4 text-right font-bold text-indigo-900">{formatter.format(comisionInstructor)}</td>
                   </tr>
-                  <tr className="bg-gray-50/50">
-                    <td className="p-3 pl-4 text-gray-500 pl-6">Subtotal Neto (Antes de IVA)</td>
-                    <td className="p-3 pr-4 text-right text-gray-800">{formatter.format(subtotalNeto)}</td>
+                  <tr className="bg-gray-50/30">
+                    <td className="p-3 pl-6 text-gray-500">Importe subtotal (Antes de IVA)</td>
+                    <td className="p-3 pr-4 text-right text-gray-800">{formatter.format(importeSubtotal)}</td>
                   </tr>
-                  <tr className="bg-gray-50/50">
-                    <td className="p-3 pl-4 text-gray-500 pl-6">(+) IVA Trasladado (16%)</td>
+                  <tr className="bg-gray-50/30">
+                    <td className="p-3 pl-6 text-gray-500">(+) IVA trasladado al instructor (16%)</td>
                     <td className="p-3 pr-4 text-right text-gray-800">
-                      {ivaTrasladado > 0 ? `+${formatter.format(ivaTrasladado)}` : '—'}
+                      {ivaPagadoInstructor > 0 ? `+${formatter.format(ivaPagadoInstructor)}` : '—'}
                     </td>
                   </tr>
                   <tr className="bg-gray-50/50 font-medium">
-                    <td className="p-3 pl-4 text-gray-700 pl-6">Total Bruto (Subtotal + IVA)</td>
-                    <td className="p-3 pr-4 text-right text-gray-900">{formatter.format(totalBruto)}</td>
+                    <td className="p-3 pl-6 text-gray-700">Total Bruto del Instructor (Subtotal + IVA)</td>
+                    <td className="p-3 pr-4 text-right text-gray-900">{formatter.format(totalBrutoInstructor)}</td>
                   </tr>
                   <tr>
-                    <td className="p-3 pl-4 text-gray-500 pl-6">(-) Retención de ISR</td>
+                    <td className="p-3 pl-6 text-gray-500">(-) Retención de ISR</td>
                     <td className="p-3 pr-4 text-right text-red-500">
                       {retencionISR > 0 ? `-${formatter.format(retencionISR)}` : '—'}
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3 pl-4 text-gray-500 pl-6">(-) Retención de IVA</td>
+                    <td className="p-3 pl-6 text-gray-500">(-) Retención de IVA</td>
                     <td className="p-3 pr-4 text-right text-red-500">
                       {retencionIVA > 0 ? `-${formatter.format(retencionIVA)}` : '—'}
                     </td>
                   </tr>
                   <tr className="bg-red-50/20">
-                    <td className="p-3 pl-4 text-red-700 pl-6 font-medium">Total de Retenciones</td>
+                    <td className="p-3 pl-6 text-red-700 font-medium">Total de Retenciones</td>
                     <td className="p-3 pr-4 text-right text-red-600 font-semibold">
                       {totalRetenciones > 0 ? `-${formatter.format(totalRetenciones)}` : '—'}
                     </td>

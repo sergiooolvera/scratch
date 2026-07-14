@@ -114,6 +114,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [minAprobacion, setMinAprobacion] = useState<number | ''>(80)
     const [aplicarIva, setAplicarIva] = useState(false)
     const [isSimuladorOpen, setIsSimuladorOpen] = useState(false)
+    const [porcentajeProfesor, setPorcentajeProfesor] = useState(60)
     const [conTiempo, setConTiempo] = useState(false)
     const [tiempoExamen, setTiempoExamen] = useState<number | ''>(60)
     const [seguridadAumentada, setSeguridadAumentada] = useState(false)
@@ -455,6 +456,13 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 setMostrarConstancia(borrador.mostrar_constancia !== undefined ? borrador.mostrar_constancia : (curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true))
                 setMostrarCalificacionConstancia(borrador.mostrar_calificacion_constancia !== undefined ? borrador.mostrar_calificacion_constancia : (curso.mostrar_calificacion_constancia !== undefined ? curso.mostrar_calificacion_constancia : true))
                 setMostrarRevisionExamen(borrador.mostrar_revision_examen !== undefined ? borrador.mostrar_revision_examen : (curso.mostrar_revision_examen !== undefined ? curso.mostrar_revision_examen : false))
+                setPorcentajeProfesor(
+                    borrador.porcentaje_profesor !== undefined && borrador.porcentaje_profesor !== null
+                        ? borrador.porcentaje_profesor
+                        : (curso.porcentaje_profesor !== undefined && curso.porcentaje_profesor !== null
+                            ? curso.porcentaje_profesor
+                            : 60)
+                )
                 
                 const lUrl = borrador.logo_url !== undefined ? borrador.logo_url : curso.logo_url;
                 setLogoUrl(lUrl)
@@ -620,6 +628,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             setMostrarConstancia(curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true)
             setMostrarCalificacionConstancia(curso.mostrar_calificacion_constancia !== undefined ? curso.mostrar_calificacion_constancia : true)
             setMostrarRevisionExamen(curso.mostrar_revision_examen !== undefined ? curso.mostrar_revision_examen : false)
+            setPorcentajeProfesor(curso.porcentaje_profesor !== null && curso.porcentaje_profesor !== undefined ? curso.porcentaje_profesor : 60)
             setLogoUrl(curso.logo_url)
             setLogoPreviewUrl(curso.logo_url)
             setImagenUrl((curso as any).imagen_url)
@@ -1194,6 +1203,17 @@ const generationId = data.generationId;
         }
 
         // Validate general course fields
+        const precioCurso = Number(formData.precio) || 0;
+        if (precioCurso > 0 && precioCurso < 199) {
+            setModalMessage({
+                title: 'Precio Inválido',
+                content: 'El precio del curso debe ser exactamente de $0.00 MXN (gratuito) o mayor o igual a $199.00 MXN.',
+                type: 'error'
+            });
+            setSaving(false);
+            return;
+        }
+
         if (!formData.titulo?.trim()) {
             setModalMessage({
                 title: 'Faltan Campos',
@@ -2209,18 +2229,6 @@ const generationId = data.generationId;
                                                     Simular ventas
                                                 </button>
                                             </div>
-                                            {Number(formData.precio) > 0 && (
-                                                <div className="mt-2 p-3 bg-blue-50/50 border border-blue-100/50 rounded-xl text-xs flex gap-4 text-gray-700">
-                                                    <div>
-                                                        <span className="text-gray-500 font-medium">Precio Base:</span>{' '}
-                                                        <span className="font-semibold text-gray-900">${(Number(formData.precio) / 1.16).toFixed(2)} MXN</span>
-                                                    </div>
-                                                    <div className="border-l border-gray-200 pl-4">
-                                                        <span className="text-gray-500 font-medium">IVA (16%):</span>{' '}
-                                                        <span className="font-bold text-blue-600">${(Number(formData.precio) - (Number(formData.precio) / 1.16)).toFixed(2)} MXN</span>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     ) : (
                                         <div className="bg-gray-50 rounded-xl p-4 flex items-center">
@@ -4125,6 +4133,7 @@ const generationId = data.generationId;
                     onClose={() => setIsSimuladorOpen(false)}
                     precioPublico={Number(formData.precio) || 0}
                     aplicarIvaGlobal={aplicarIva}
+                    comisionInstructorPercent={porcentajeProfesor}
                     onChangePrecio={(p) => setFormData(prev => ({ ...prev, precio: p }))}
                     onChangeAplicarIva={(a) => setAplicarIva(a)}
                 />

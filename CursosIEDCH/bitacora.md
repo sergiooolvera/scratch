@@ -4,6 +4,13 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 📊 Actualización de Calculadora Fiscal y Simulador de Ventas (13 de Julio de 2026)
+- **Reordenación de Variables**: Se reposicionó el Régimen Fiscal al inicio del formulario del simulador para una mejor experiencia de usuario.
+- **Nuevos Regímenes Fiscales (Fila 10 del Excel)**: Se implementaron los regímenes oficiales: Actividad Empresarial y Profesional, Plataforma Personas Físicas con RFC, Plataforma Personas Físicas sin RFC, y Plataforma Persona Moral sin RFC.
+- **Comisión Stripe Sincronizada**: Se alineó el cálculo de Stripe quitando el recargo del IVA para las comisiones variable (3.6%) y fija ($3.00), igualando al nuevo formato de Excel.
+- **Comisión de Instructor desde Base de Datos**: Se vinculó el cálculo con la columna `porcentaje_profesor` de la tabla `ie_cursos` en Supabase (por defecto 60% si es nulo o al subir un curso nuevo) y se removieron los inputs de la interfaz para evitar su modificación por parte del usuario. La etiqueta se autogenera dinámicamente como `"Comisión para el Instructor (X%)"`.
+- **Retenciones Fiscales Precisas**: Se programaron las retenciones de ISR e IVA detalladas en las columnas del Excel para cada uno de los cuatro regímenes, logrando que el pago neto a depositar concuerde al centavo.
+
 ### 🎨 Rediseño del Dashboard del Alumno: Banner Hero con IA y Tarjetas de Categorías Grandes (12 de Julio de 2026)
 - **Banner Hero Interactivo:** Se integró un banner principal de bienvenida con la ilustración de una estudiante generada mediante IA (`public/hero_student_banner.png`) a la derecha, con un fondo degradado oscuro de alta calidad y un botón de llamada a la acción ("Explorar cursos"). Se ajustó su altura a la mitad para lograr un diseño más compacto y equilibrado, y se corrigieron las clases a `bg-zinc-950` y `from-zinc-950` para asegurar que el fondo se renderice correctamente en negro.
 - **Estructura de Búsqueda Mejorada y Avatar:** Se posicionó la barra de búsqueda en la parte superior derecha de la pantalla junto a un saludo inicial que reintegra la imagen de avatar circular del estudiante (`ie_profiles.fotografia_perfil` o metadatos de sesión) y su respectiva etiqueta de rol de forma limpia y profesional.

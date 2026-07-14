@@ -947,6 +947,17 @@ export default function SubirCursoPage() {
         }
 
         // Validate general course fields
+        const precioCurso = Number(formData.precio) || 0;
+        if (precioCurso > 0 && precioCurso < 199) {
+            setModalMessage({
+                title: 'Precio Inválido',
+                content: 'El precio del curso debe ser exactamente de $0.00 MXN (gratuito) o mayor o igual a $199.00 MXN.',
+                type: 'error'
+            });
+            setLoading(false);
+            return;
+        }
+
         if (!formData.titulo?.trim()) {
             setModalMessage({
                 title: 'Faltan Campos',
@@ -1799,18 +1810,6 @@ export default function SubirCursoPage() {
                                                     Simular ventas
                                                 </button>
                                             </div>
-                                            {Number(formData.precio) > 0 && (
-                                                <div className="mt-2 p-3 bg-blue-50/50 border border-blue-100/50 rounded-xl text-xs flex gap-4 text-gray-700">
-                                                    <div>
-                                                        <span className="text-gray-500 font-medium">Precio Base:</span>{' '}
-                                                        <span className="font-semibold text-gray-900">${(Number(formData.precio) / 1.16).toFixed(2)} MXN</span>
-                                                    </div>
-                                                    <div className="border-l border-gray-200 pl-4">
-                                                        <span className="text-gray-500 font-medium">IVA (16%):</span>{' '}
-                                                        <span className="font-bold text-blue-600">${(Number(formData.precio) - (Number(formData.precio) / 1.16)).toFixed(2)} MXN</span>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     ) : (
                                         <div className="bg-gray-50 rounded-xl p-4 flex items-center">
