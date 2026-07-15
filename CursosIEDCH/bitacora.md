@@ -4,6 +4,10 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 📊 Tarjeta de "Mis ventas" en el Panel del Profesor (15 de Julio de 2026)
+- **Tarjeta de Acceso Directo:** Se expandió el grid del panel del profesor (`app/profesor/page.tsx`) de 3 a 4 columnas en pantallas medianas y grandes.
+- **Enlace a Finanzas:** Se agregó una nueva tarjeta interactiva ("Mis ventas") con el icono `TrendingUp` que redirige de forma directa a la sección de finanzas y ventas (`/profesor/ventas`). Cuenta con un diseño premium y micro-interacciones (borde activo, sombra y flecha de enlace dinámico).
+
 ### 📊 Reordenación y Ajuste de Regímenes Fiscales del Simulador (14 de Julio de 2026)
 - **Modificación y Orden de Regímenes Fiscales:** Se actualizaron los regímenes fiscales en el componente [SimuladorIngresosModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx) al orden y nombres específicos solicitados:
   1. **Actividad empresarial y Profesional** (ACTIVIDAD_EMPRESARIAL): Mantiene las retenciones del 10% de ISR y 10.667% de IVA sobre el subtotal neto.

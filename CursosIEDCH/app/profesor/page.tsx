@@ -371,7 +371,7 @@ export default async function ProfesorDashboardPage() {
                         Resumen rápido
                     </h2>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         {/* Alumnos */}
                         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
                             <div className="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
@@ -413,6 +413,20 @@ export default async function ProfesorDashboardPage() {
                                 </span>
                             </div>
                         </div>
+
+                        {/* Mis Ventas */}
+                        <Link href="/profesor/ventas" className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4 hover:shadow-md hover:border-indigo-300 transition-all group">
+                            <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 group-hover:bg-indigo-100 transition-colors">
+                                <TrendingUp className="h-6 w-6" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs text-slate-400 font-medium tracking-wide">Finanzas</p>
+                                <p className="text-2xl font-black text-slate-800 mt-0.5">Mis ventas</p>
+                                <span className="text-[11px] font-bold text-indigo-600 flex items-center gap-0.5 mt-0.5">
+                                    Ir al detalle <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                </span>
+                            </div>
+                        </Link>
                     </div>
                 </div>
 
