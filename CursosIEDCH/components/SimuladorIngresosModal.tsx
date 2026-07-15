@@ -11,13 +11,13 @@ type SimuladorIngresosModalProps = {
   onChangeAplicarIva?: (aplica: boolean) => void;
 }
 
-type RegimenType = 'ACTIVIDAD_EMPRESARIAL' | 'PLATAFORMA_RFC' | 'PLATAFORMA_SIN_RFC' | 'PLATAFORMA_MORAL_SIN_RFC';
+type RegimenType = 'ACTIVIDAD_EMPRESARIAL' | 'PLATAFORMA_RFC' | 'PLATAFORMA_MORAL_RFC' | 'SIN_RFC';
 
 const REGIMENES = [
-  { value: 'ACTIVIDAD_EMPRESARIAL', label: 'Actividad Empresarial y Profesional' },
-  { value: 'PLATAFORMA_RFC', label: 'Plataforma Personas Físicas con RFC' },
-  { value: 'PLATAFORMA_SIN_RFC', label: 'Plataforma Personas Físicas sin RFC' },
-  { value: 'PLATAFORMA_MORAL_SIN_RFC', label: 'Plataforma Persona Moral sin RFC' }
+  { value: 'ACTIVIDAD_EMPRESARIAL', label: 'Actividad empresarial y Profesional' },
+  { value: 'PLATAFORMA_RFC', label: 'Plataforma personas Físicas con RFC' },
+  { value: 'PLATAFORMA_MORAL_RFC', label: 'Plataforma personas Morales con RFC' },
+  { value: 'SIN_RFC', label: 'Sin RFC' }
 ] as const;
 
 export default function SimuladorIngresosModal({ 
@@ -90,12 +90,12 @@ export default function SimuladorIngresosModal({
   } else if (regimen === 'PLATAFORMA_RFC') {
     retencionISR = totalBrutoInstructor * 0.025 // 2.5% del total bruto (según C26: C25*0.025)
     retencionIVA = importeSubtotal * 0.08 // 8% del subtotal (según C27: C23*0.08)
-  } else if (regimen === 'PLATAFORMA_SIN_RFC') {
-    retencionISR = totalBrutoInstructor * 0.20 // 20% del total bruto (según D26: D25*0.2)
-    retencionIVA = ivaPagadoInstructor * 1.0 // 100% del IVA (según D27: (D23*0.16)*1)
-  } else if (regimen === 'PLATAFORMA_MORAL_SIN_RFC') {
-    retencionISR = totalBrutoInstructor * 0.20 // 20% del total bruto (según E26: E25*0.2)
-    retencionIVA = ivaPagadoInstructor * 1.0 // 100% del IVA (según E27: (E23*0.16)*1)
+  } else if (regimen === 'PLATAFORMA_MORAL_RFC') {
+    retencionISR = 0 // Personas morales con RFC no tienen retención de ISR
+    retencionIVA = 0 // Personas morales con RFC no tienen retención de IVA
+  } else if (regimen === 'SIN_RFC') {
+    retencionISR = totalBrutoInstructor * 0.20 // 20% del total bruto
+    retencionIVA = ivaPagadoInstructor * 1.0 // 100% del IVA
   }
 
   const totalRetenciones = retencionISR + retencionIVA
@@ -244,10 +244,10 @@ export default function SimuladorIngresosModal({
                 Detalles del régimen
               </span>
               <p className="text-xs text-gray-600 leading-relaxed">
-                {regimen === 'ACTIVIDAD_EMPRESARIAL' && 'Actividad Empresarial y Profesional: Retención de ISR del 10% y de IVA del 10.667% sobre el subtotal neto de la comisión del instructor.'}
-                {regimen === 'PLATAFORMA_RFC' && 'Plataforma con RFC: Retención de ISR del 2.5% sobre la comisión total bruta, y retención de IVA del 8% sobre el subtotal neto.'}
-                {regimen === 'PLATAFORMA_SIN_RFC' && 'Plataforma sin RFC: Retención de ISR del 20% sobre la comisión total bruta, y retención de IVA del 100% sobre el IVA trasladado de la comisión.'}
-                {regimen === 'PLATAFORMA_MORAL_SIN_RFC' && 'Persona Moral sin RFC: Retención de ISR del 20% sobre la comisión total bruta, y retención de IVA del 100% sobre el IVA trasladado de la comisión.'}
+                {regimen === 'ACTIVIDAD_EMPRESARIAL' && 'Actividad empresarial y Profesional: Retención de ISR del 10% y de IVA del 10.667% sobre el subtotal neto de la comisión del instructor.'}
+                {regimen === 'PLATAFORMA_RFC' && 'Plataforma personas Físicas con RFC: Retención de ISR del 2.5% sobre la comisión total bruta, y retención de IVA del 8% sobre el subtotal neto.'}
+                {regimen === 'PLATAFORMA_MORAL_RFC' && 'Plataforma personas Morales con RFC: Sin retenciones de ISR ni IVA por parte de la plataforma al ser Persona Moral con RFC.'}
+                {regimen === 'SIN_RFC' && 'Sin RFC: Retención del 20% de ISR sobre el total bruto y del 100% de IVA sobre el IVA trasladado por no contar con RFC registrado.'}
               </p>
             </div>
           </div>

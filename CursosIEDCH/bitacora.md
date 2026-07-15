@@ -4,6 +4,14 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 📊 Reordenación y Ajuste de Regímenes Fiscales del Simulador (14 de Julio de 2026)
+- **Modificación y Orden de Regímenes Fiscales:** Se actualizaron los regímenes fiscales en el componente [SimuladorIngresosModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx) al orden y nombres específicos solicitados:
+  1. **Actividad empresarial y Profesional** (ACTIVIDAD_EMPRESARIAL): Mantiene las retenciones del 10% de ISR y 10.667% de IVA sobre el subtotal neto.
+  2. **Plataforma personas Físicas con RFC** (PLATAFORMA_RFC): Mantiene las retenciones de 2.5% de ISR sobre el total bruto y 8% de IVA sobre el subtotal.
+  3. **Plataforma personas Morales con RFC** (PLATAFORMA_MORAL_RFC): Configurado con retenciones del 0% tanto para ISR como para IVA (las personas morales no sufren retenciones por parte de la plataforma al contar con RFC).
+  4. **Sin RFC** (SIN_RFC): Aplica las retenciones máximas por defecto del 20% de ISR sobre el total bruto y 100% de IVA sobre el IVA trasladado de la comisión.
+- **Actualización de Tarjetas de Información:** Se actualizaron los textos de descripción fiscal dentro del simulador para que correspondan con los nuevos regímenes y su comportamiento fiscal.
+
 ### 🏢 Academias Populares en la Vista de Alumno (13 de Julio de 2026)
 - **Layout de Grid de Dos Columnas:** Se reestructuró la maquetación del dashboard del alumno (`app/dashboard/page.tsx`) a un grid adaptativo (`lg:grid-cols-3`) que ubica el catálogo e información del alumno en la columna izquierda (`lg:col-span-2`) y un nuevo panel lateral en la columna derecha (`lg:col-span-1`).
 - **Sección de Academias Populares:** Se implementó una lista dinámica de las academias que más alumnos tienen inscritos en sus cursos asignados. Se obtiene a partir de la relación entre academias, grupos, cursos y compras pagadas en Supabase. Cuenta con un diseño premium que muestra el logo de la academia, nombre, número de alumnos y un botón de "Ingresar" que redirige al portal correspondiente.
