@@ -340,6 +340,19 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [grupos/[grupoId]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/%5Bid%5D/grupos/%5BgrupoId%5D/page.tsx)
   - [crear_tabla_grupos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_tabla_grupos.sql)
   - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql)
-  - [agregar_imagen_url_grupos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_imagen_url_grupos.sql)
-  - [run_migration_grupos_imagen.js](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/run_migration_grupos_imagen.js)
+  - [agregar_imagen_url_grupos.sql](file:///c:/Users/sergi/.gemini/antigravity\scratch\CursosIEDCH/agregar_imagen_url_grupos.sql)
+  - [run_migration_grupos_imagen.js](file:///c:/Users/sergi/.gemini/antigravity\scratch\CursosIEDCH/run_migration_grupos_imagen.js)
+
+---
+*Última actualización: 14 de Julio de 2026*
+
+### 📝 Cambio de Etiqueta de Enlace de Video (14 de Julio de 2026)
+- **Label Descriptivo**: Se cambió el texto del label del campo de video cuando se selecciona el tipo de recurso "video" en la creación y edición de cursos. Ahora indica: `"Enlace del Video (YouTube , Vimeo, Tiktok, Reels, etc. )"`.
+- **Archivos Modificados**:
+  - [page.tsx (Subir Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
+  - [page.tsx (Editar Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)
+
+---
+*Última actualización: 14 de Julio de 2026*
+
 

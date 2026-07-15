@@ -2865,7 +2865,7 @@ const generationId = data.generationId;
                                                                     <div className="col-span-full pt-1">
                                                                         {recurso.tipo === 'video' ? (
                                                                             <div key={`video-input-container-${index}-${rIdx}`}>
-                                                                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Enlace del Video (YouTube o Vimeo)</label>
+                                                                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Enlace del Video (YouTube , Vimeo, Tiktok, Reels, etc. )</label>
                                                                                 <input
                                                                                     type="url"
                                                                                     required
