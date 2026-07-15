@@ -2125,11 +2125,12 @@ const generationId = data.generationId;
                                             onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
                                             className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
                                         >
-                                            <option value="desarrollo">🧠 Desarrollo Humano</option>
-                                            <option value="salud">🩺 Salud y Medicina</option>
-                                            <option value="arte">🎨 Arte y Cultura</option>
-                                            <option value="tecnologia">💻 Tecnología y Ciencia</option>
-                                            <option value="educacion">📚 Educación</option>
+                                            <option value="salud">🩺 Salud</option>
+                                            <option value="negocios">💼 Negocios</option>
+                                            <option value="tecnologia">💻 Tecnología</option>
+                                            <option value="desarrollo">😊 Desarrollo Personal</option>
+                                            <option value="idiomas">🌐 Idiomas</option>
+                                            <option value="mas">💬 Más</option>
                                         </select>
                                     </div>
                                 </div>

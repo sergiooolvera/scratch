@@ -21,10 +21,14 @@ interface Course {
 }
 
 const catLabels: Record<string, { label: string; bg: string; text: string; border: string }> = {
-    desarrollo: { label: '🧠 Desarrollo Humano', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
-    salud: { label: '🩺 Salud y Medicina', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    salud: { label: '🩺 Salud', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+    negocios: { label: '💼 Negocios', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    tecnologia: { label: '💻 Tecnología', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+    desarrollo: { label: '😊 Desarrollo Personal', bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+    idiomas: { label: '🌐 Idiomas', bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
+    mas: { label: '💬 Más', bg: 'bg-zinc-50', text: 'text-zinc-700', border: 'border-zinc-200' },
+    // Compatibilidad con categorías anteriores
     arte: { label: '🎨 Arte y Cultura', bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
-    tecnologia: { label: '💻 Tecnología y Ciencia', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
     educacion: { label: '📚 Educación', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
 }
 

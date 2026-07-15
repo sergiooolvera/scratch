@@ -8,7 +8,15 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Tarjeta de Acceso Directo:** Se expandió el grid del panel del profesor (`app/profesor/page.tsx`) de 3 a 4 columnas en pantallas medianas y grandes.
 - **Enlace a Finanzas:** Se agregó una nueva tarjeta interactiva ("Mis ventas") con el icono `TrendingUp` que redirige de forma directa a la sección de finanzas y ventas (`/profesor/ventas`). Cuenta con un diseño premium y micro-interacciones (borde activo, sombra y flecha de enlace dinámico).
 
-### 📊 Reordenación y Ajuste de Regímenes Fiscales del Simulador (14 de Julio de 2026)
+### 📁 Homogeneización de Categorías de Cursos (15 de Julio de 2026)
+- **Unificación de Opciones:** Se modificaron los formularios de creación (`app/profesor/subir-curso/page.tsx`) y edición de cursos (`app/profesor/editar-curso/[id]/page.tsx`) para ofrecer exactamente el conjunto de 6 categorías del dashboard de alumnos:
+  1. **Salud** (`salud`)
+  2. **Negocios** (`negocios`)
+  3. **Tecnología** (`tecnologia`)
+  4. **Desarrollo Personal** (`desarrollo`)
+  5. **Idiomas** (`idiomas`)
+  6. **Más** (`mas`)
+- **Actualización de Tarjetas de Curso:** Se actualizó el mapeo de etiquetas en `components/CourseCard.tsx` para sincronizar los textos, emojis y colores de fondo/borde según cada una de las nuevas categorías, manteniendo además compatibilidad con los cursos creados anteriormente con categorías heredadas.
 - **Modificación y Orden de Regímenes Fiscales:** Se actualizaron los regímenes fiscales en el componente [SimuladorIngresosModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx) al orden y nombres específicos solicitados:
   1. **Actividad empresarial y Profesional** (ACTIVIDAD_EMPRESARIAL): Mantiene las retenciones del 10% de ISR y 10.667% de IVA sobre el subtotal neto.
   2. **Plataforma personas Físicas con RFC** (PLATAFORMA_RFC): Mantiene las retenciones de 2.5% de ISR sobre el total bruto y 8% de IVA sobre el subtotal.
