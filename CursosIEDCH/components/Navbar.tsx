@@ -118,9 +118,14 @@ export default function Navbar() {
                                 {user && (
                                     <div className="hidden md:flex items-center space-x-2">
                                 {profile?.rol !== 'admin' && profile?.rol !== 'adminjr' && (
-                                    <Link href="/dashboard" className={navItemClass('/dashboard')}>
-                                        <LayoutDashboard className="h-4 w-4" /> <span>Catálogo</span>
-                                    </Link>
+                                    <>
+                                        <Link href="/dashboard" className={navItemClass('/dashboard')}>
+                                            <LayoutDashboard className="h-4 w-4" /> <span>Catálogo</span>
+                                        </Link>
+                                        <Link href="/deseos" className={navItemClass('/deseos')}>
+                                            <FolderHeart className="h-4 w-4 text-rose-500" /> <span>Mi lista</span>
+                                        </Link>
+                                    </>
                                 )}
                                 {profile?.rol !== 'admin' && profile?.rol !== 'adminjr' && (
                                      <div className="relative group">
@@ -444,6 +449,9 @@ export default function Navbar() {
                                     <>
                                         <Link href="/dashboard" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">
                                             <LayoutDashboard className="h-5 w-5 text-gray-400" /> <span>Catálogo</span>
+                                        </Link>
+                                        <Link href="/deseos" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">
+                                            <FolderHeart className="h-5 w-5 text-rose-500" /> <span>Mi lista</span>
                                         </Link>
                                         <Link href="/mis-cursos" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">
                                             <GraduationCap className="h-5 w-5 text-gray-400" /> <span>Mis Cursos</span>

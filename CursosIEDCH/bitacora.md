@@ -361,6 +361,18 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [page.tsx (Editar Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)
 
 ---
+### 📋 Lista de Deseos "Mi lista" (14 de Julio de 2026)
+- **Botón de Corazón Interactivo**: Se convirtió el componente [CourseCard.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx) en un Client Component y se le integró un botón de corazón en la esquina superior derecha con transiciones suaves, el cual se rellena de rosa/rojo (`fill-rose-550 text-rose-550`) cuando el curso está marcado en la lista de deseos.
+- **Persistencia con LocalStorage**: El estado de los cursos deseados se almacena localmente en el navegador bajo la clave `ie_deseos`. Se implementó comunicación mediante eventos personalizados (`wishlist-updated`) para actualizar la UI en tiempo real a través de las diferentes pantallas.
+- **Acceso en Barra de Navegación**: Se agregó la pestaña **"Mi lista"** con el icono `FolderHeart` de `lucide-react` en [Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) para acceso en Desktop y en el menú móvil responsivo del alumno.
+- **Página de Favoritos**: Se creó una nueva ruta en [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/deseos/page.tsx) que carga los IDs favoritos de `localStorage`, consulta los datos del curso aprobados y los renderiza en una cuadrícula premium. Cuenta con un estado vacío diseñado con ilustraciones minimalistas.
+- **Archivos Modificados y Creados**:
+  - [CourseCard.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx) (Modificado)
+  - [Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) (Modificado)
+  - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/deseos/page.tsx) (Nuevo)
+
+---
 *Última actualización: 14 de Julio de 2026*
+
 
 

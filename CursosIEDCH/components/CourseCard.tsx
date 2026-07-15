@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
-import { Sparkles, User } from 'lucide-react'
+import { Sparkles, User, Heart } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 interface Course {
     id: string
@@ -28,6 +31,40 @@ const catLabels: Record<string, { label: string; bg: string; text: string; borde
 export default function CourseCard({ course, isPagado }: { course: Course; isPagado?: boolean }) {
     const isSuper = !!course.es_super_curso
     const cat = catLabels[course.categoria || 'desarrollo'] || catLabels.desarrollo
+    const [isWished, setIsWished] = useState(false)
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const wished = JSON.parse(localStorage.getItem('ie_deseos') || '[]')
+            setIsWished(wished.includes(course.id))
+        }
+
+        const handleWishChange = () => {
+            const wished = JSON.parse(localStorage.getItem('ie_deseos') || '[]')
+            setIsWished(wished.includes(course.id))
+        }
+
+        window.addEventListener('wishlist-updated', handleWishChange)
+        return () => window.removeEventListener('wishlist-updated', handleWishChange)
+    }, [course.id])
+
+    const toggleWish = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (typeof window !== 'undefined') {
+            const wished = JSON.parse(localStorage.getItem('ie_deseos') || '[]')
+            let newWished: string[]
+            if (wished.includes(course.id)) {
+                newWished = wished.filter((id: string) => id !== course.id)
+                setIsWished(false)
+            } else {
+                newWished = [...wished, course.id]
+                setIsWished(true)
+            }
+            localStorage.setItem('ie_deseos', JSON.stringify(newWished))
+            window.dispatchEvent(new Event('wishlist-updated'))
+        }
+    }
 
     return (
         <div
@@ -36,6 +73,15 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                 (isSuper ? 'ring-2 ring-amber-300 sm:col-span-2 lg:col-span-2 rounded-2xl shadow-lg' : '')
             }
         >
+            {!isPagado && (
+                <button
+                    onClick={toggleWish}
+                    className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/80 hover:bg-white text-gray-400 hover:text-rose-500 shadow-md backdrop-blur-xs transition-all duration-200 hover:scale-110 active:scale-95 border border-zinc-100"
+                    title={isWished ? 'Quitar de mi lista' : 'Agregar a mi lista'}
+                >
+                    <Heart className={`h-4.5 w-4.5 transition-colors ${isWished ? 'fill-rose-500 text-rose-500' : 'text-zinc-400'}`} />
+                </button>
+            )}
             {isSuper && (
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-fuchsia-500 to-indigo-500" />
             )}
