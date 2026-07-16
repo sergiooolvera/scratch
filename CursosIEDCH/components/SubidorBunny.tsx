@@ -119,7 +119,7 @@ export default function SubidorBunny({ title, onUploadComplete }: SubidorBunnyPr
   return (
     <div className="bg-slate-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="font-bold text-gray-600">Subidor directo Bunny.net Stream</span>
+        <span className="font-bold text-gray-600">Sube tu video desde tu dispositivo</span>
         {completado && (
           <span className="flex items-center gap-1 text-green-600 font-bold">
             <CheckCircle2 className="h-4 w-4" /> ¡Subido con éxito!
@@ -139,20 +139,20 @@ export default function SubidorBunny({ title, onUploadComplete }: SubidorBunnyPr
           type="button"
           onClick={iniciarSubida}
           disabled={subiendo || !file}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded text-white font-semibold transition-all duration-200 ${
+          className={`flex items-center gap-2 rounded text-white font-bold transition-all duration-300 ${
             subiendo || !file
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700 shadow-sm"
+              ? "bg-gray-300 cursor-not-allowed px-3 py-2 text-xs"
+              : "bg-blue-600 hover:bg-blue-700 shadow-lg px-6 py-3 text-sm scale-105 transform hover:scale-110 active:scale-95"
           }`}
         >
           {subiendo ? (
             <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               {progreso}%
             </>
           ) : (
             <>
-              <Upload className="h-3.5 w-3.5" />
+              <Upload className="h-4 w-4" />
               Subir
             </>
           )}
