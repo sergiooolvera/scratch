@@ -411,3 +411,18 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [agregar_codigo_acceso_academias.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_codigo_acceso_academias.sql) (Nuevo)
   - [AcademyPortalClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AcademyPortalClient.tsx) (Nuevo)
   - [academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/%5Bid%5D/page.tsx) (Nuevo)
+
+---
+*Última actualización: 16 de Julio de 2026*
+
+### 🏢 Código de Acceso para Academias Privadas y Logos de Redes Sociales (16 de Julio de 2026)
+- **Generación Automática de Código**: Se implementó una lógica de generación de claves alfanuméricas aleatorias de 8 caracteres (`generateAccessCode`) en la creación de academias (`app/institucion/crear/page.tsx`).
+- **Persistencia en Base de Datos**: Si la academia se configura como privada (el interruptor "Academia pública" está apagado), se genera este código y se guarda en la columna `codigo_acceso` de la tabla `ie_academias`. Si la academia es pública, se almacena como `null`.
+- **Oculto en Formulario**: Al desactivar el interruptor de "pública", no se muestra el código de acceso en el formulario para evitar distracciones; la acción es silenciosa hasta el guardado.
+- **Interfaz de Usuario (Modal de Éxito Premium)**: Se rediseñó el modal de felicitaciones para mostrar de forma elegante una sección con fondo e iconos destacados (de `lucide-react`) que contiene el código de acceso y permite al profesor copiarlo al portapapeles con un botón que responde visualmente al estado ("Copiar" -> "¡Copiado!").
+- **Logotipos Oficiales de Redes Sociales y Web**: Se incorporaron logotipos vectoriales (SVG) oficiales a color para Facebook, Instagram, LinkedIn y YouTube en los botones selectores del Paso 3 del formulario. Adicionalmente, se incluyó el icono oficial de globo terráqueo a color junto con una máscara de protocolo (`https://`) en el input de Sitio Web.
+- **Validación del Estudiante**: La clave almacenada en la base de datos se conecta de forma inmediata con el portal del estudiante en [AcademyPortalClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AcademyPortalClient.tsx) para exigir el código antes de otorgar acceso.
+- **Archivos Modificados**:
+  - [crear/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/institucion/crear/page.tsx)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md)
+

@@ -18,7 +18,10 @@ import {
     Globe,
     CheckCircle2,
     X,
-    Loader2
+    Loader2,
+    Copy,
+    CopyCheck,
+    Lock
 } from 'lucide-react'
 
 // Pasos del formulario
@@ -57,6 +60,24 @@ export default function CrearAcademiaPage() {
     const [dbError, setDbError] = useState('')
     const [activeSocial, setActiveSocial] = useState<'facebook' | 'instagram' | 'linkedin' | 'youtube'>('facebook')
     const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const [generatedCode, setGeneratedCode] = useState('')
+    const [copied, setCopied] = useState(false)
+
+    const generateAccessCode = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        let code = ''
+        for (let i = 0; i < 8; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length))
+        }
+        return code
+    }
+
+    const handleCopyCode = () => {
+        if (!generatedCode) return
+        navigator.clipboard.writeText(generatedCode)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
 
     // Datos del formulario
     const [formData, setFormData] = useState({
@@ -245,6 +266,15 @@ export default function CrearAcademiaPage() {
                 bannerUrl = data.publicUrl
             }
 
+            // Generar código de acceso si no es pública
+            let accessCode = null
+            if (!formData.publica) {
+                accessCode = generateAccessCode()
+                setGeneratedCode(accessCode)
+            } else {
+                setGeneratedCode('')
+            }
+
             // Insertar datos en public.ie_academias
             const { error: insertError } = await supabase
                 .from('ie_academias')
@@ -258,6 +288,7 @@ export default function CrearAcademiaPage() {
                     color_principal: formData.colorPrincipal,
                     mensaje_bienvenida: formData.mensajeBienvenida,
                     publica: formData.publica,
+                    codigo_acceso: accessCode,
                     permitir_inscripciones: formData.permitirInscripciones,
                     certificados_automaticos: formData.certificadosAutomaticos,
                     foro_discusion: formData.foroDiscusion,
@@ -739,18 +770,28 @@ export default function CrearAcademiaPage() {
 
                                             {/* Sitio web */}
                                             <div className="space-y-1.5">
-                                                <label htmlFor="sitioWeb" className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                                                    Sitio web (opcional)
+                                                <label htmlFor="sitioWeb" className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <svg className="w-4 h-4 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="12" r="10" />
+                                                        <line x1="2" y1="12" x2="22" y2="12" />
+                                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                                    </svg>
+                                                    <span>Sitio web (opcional)</span>
                                                 </label>
-                                                <input
-                                                    type="text"
-                                                    id="sitioWeb"
-                                                    name="sitioWeb"
-                                                    value={formData.sitioWeb}
-                                                    onChange={handleTextChange}
-                                                    placeholder="www.academiadesaludegac.com"
-                                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none focus:ring-4 transition-all text-sm"
-                                                />
+                                                <div className="flex rounded-xl overflow-hidden border border-slate-200 focus-within:ring-4 focus-within:ring-indigo-100 focus-within:border-indigo-400 transition-all">
+                                                    <span className="bg-slate-50 text-slate-450 px-3 flex items-center text-xs font-bold border-r border-slate-200 select-none">
+                                                        https://
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        id="sitioWeb"
+                                                        name="sitioWeb"
+                                                        value={formData.sitioWeb}
+                                                        onChange={handleTextChange}
+                                                        placeholder="www.mi-sitio-web.com"
+                                                        className="w-full px-3.5 py-2.5 text-sm focus:outline-none"
+                                                    />
+                                                </div>
                                             </div>
 
                                             {/* Enlace / Subdominio */}
@@ -788,17 +829,19 @@ export default function CrearAcademiaPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setActiveSocial('facebook')}
-                                                        className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all font-extrabold text-base select-none relative cursor-pointer ${
+                                                        className={`h-11 w-11 rounded-2xl border flex items-center justify-center transition-all select-none relative cursor-pointer ${
                                                             activeSocial === 'facebook'
-                                                                ? 'border-blue-600 bg-blue-50 text-blue-650 ring-2 ring-blue-550/15'
+                                                                ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-550/15 scale-105 shadow-sm'
                                                                 : formData.facebook
-                                                                    ? 'border-blue-200 bg-blue-50/20 text-blue-600'
-                                                                    : 'border-slate-200 hover:border-slate-350 text-slate-400 bg-white'
+                                                                    ? 'border-blue-200 bg-blue-50/20'
+                                                                    : 'border-slate-200 hover:border-slate-350 bg-white hover:scale-102'
                                                         }`}
                                                     >
-                                                        f
+                                                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#1877F2"/>
+                                                        </svg>
                                                         {formData.facebook && (
-                                                            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-blue-600" />
+                                                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-blue-600 border border-white" />
                                                         )}
                                                     </button>
 
@@ -806,17 +849,29 @@ export default function CrearAcademiaPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setActiveSocial('instagram')}
-                                                        className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all font-extrabold text-base select-none relative cursor-pointer ${
+                                                        className={`h-11 w-11 rounded-2xl border flex items-center justify-center transition-all select-none relative cursor-pointer ${
                                                             activeSocial === 'instagram'
-                                                                ? 'border-pink-500 bg-pink-50 text-pink-650 ring-2 ring-pink-550/15'
+                                                                ? 'border-pink-500 bg-pink-50/50 ring-2 ring-pink-550/15 scale-105 shadow-sm'
                                                                 : formData.instagram
-                                                                    ? 'border-pink-200 bg-pink-50/20 text-pink-500'
-                                                                    : 'border-slate-200 hover:border-slate-350 text-slate-400 bg-white'
+                                                                    ? 'border-pink-200 bg-pink-50/20'
+                                                                    : 'border-slate-200 hover:border-slate-350 bg-white hover:scale-102'
                                                         }`}
                                                     >
-                                                        📸
+                                                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <defs>
+                                                                <linearGradient id="instagram-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                                                                    <stop offset="0%" stopColor="#FED976" />
+                                                                    <stop offset="25%" stopColor="#FEB24C" />
+                                                                    <stop offset="50%" stopColor="#FD8D3C" />
+                                                                    <stop offset="75%" stopColor="#FC4E2A" />
+                                                                    <stop offset="100%" stopColor="#E31A1C" />
+                                                                </linearGradient>
+                                                            </defs>
+                                                            <rect width="24" height="24" rx="6" fill="url(#instagram-grad)"/>
+                                                            <path d="M12 6.857c-2.84 0-5.143 2.303-5.143 5.143S9.16 17.143 12 17.143 17.143 14.84 17.143 12 14.84 6.857 12 6.857zm0 8.571c-1.893 0-3.428-1.535-3.428-3.428S10.107 8.571 12 8.571s3.428 1.535 3.428 3.428-1.535 3.428-3.428 3.428zm5.223-9.58a1.224 1.224 0 100 2.448 1.224 1.224 0 000-2.448z" fill="white"/>
+                                                        </svg>
                                                         {formData.instagram && (
-                                                            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-pink-500" />
+                                                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-pink-550 border border-white" />
                                                         )}
                                                     </button>
 
@@ -824,17 +879,20 @@ export default function CrearAcademiaPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setActiveSocial('linkedin')}
-                                                        className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all font-extrabold text-base select-none relative cursor-pointer ${
+                                                        className={`h-11 w-11 rounded-2xl border flex items-center justify-center transition-all select-none relative cursor-pointer ${
                                                             activeSocial === 'linkedin'
-                                                                ? 'border-sky-700 bg-sky-50 text-sky-750 ring-2 ring-sky-550/15'
+                                                                ? 'border-sky-700 bg-sky-50/50 ring-2 ring-sky-550/15 scale-105 shadow-sm'
                                                                 : formData.linkedin
-                                                                    ? 'border-sky-200 bg-sky-50/20 text-sky-700'
-                                                                    : 'border-slate-200 hover:border-slate-350 text-slate-400 bg-white'
+                                                                    ? 'border-sky-200 bg-sky-50/20'
+                                                                    : 'border-slate-200 hover:border-slate-350 bg-white hover:scale-102'
                                                         }`}
                                                     >
-                                                        in
+                                                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <rect width="24" height="24" rx="5" fill="#0A66C2"/>
+                                                            <path d="M19 19h-3v-4.5c0-1.1-.9-2-2-2s-2 .9-2 2V19h-3V9h3v1.5c.5-.8 1.5-1.5 2.5-1.5 2.2 0 4 1.8 4 4V19zM5 19h3V9H5V19zM6.5 7.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" fill="white"/>
+                                                        </svg>
                                                         {formData.linkedin && (
-                                                            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-sky-700" />
+                                                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-sky-700 border border-white" />
                                                         )}
                                                     </button>
 
@@ -842,26 +900,24 @@ export default function CrearAcademiaPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setActiveSocial('youtube')}
-                                                        className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-all font-extrabold text-base select-none relative cursor-pointer ${
+                                                        className={`h-11 w-11 rounded-2xl border flex items-center justify-center transition-all select-none relative cursor-pointer ${
                                                             activeSocial === 'youtube'
-                                                                ? 'border-red-650 bg-red-50 text-red-700 ring-2 ring-red-550/15'
+                                                                ? 'border-red-650 bg-red-50/50 ring-2 ring-red-550/15 scale-105 shadow-sm'
                                                                 : formData.youtube
-                                                                    ? 'border-red-200 bg-red-50/20 text-red-650'
-                                                                    : 'border-slate-200 hover:border-slate-350 text-slate-400 bg-white'
+                                                                    ? 'border-red-200 bg-red-50/20'
+                                                                    : 'border-slate-200 hover:border-slate-350 bg-white hover:scale-102'
                                                         }`}
                                                     >
-                                                        ▶
+                                                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <rect width="24" height="24" rx="6" fill="#FF0000"/>
+                                                            <path d="M15.5 12l-5-3v6l5-3z" fill="white"/>
+                                                        </svg>
                                                         {formData.youtube && (
-                                                            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-600" />
+                                                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600 border border-white" />
                                                         )}
                                                     </button>
-
-                                                    {/* Add button */}
-                                                    <button type="button" className="h-10 w-10 rounded-xl border border-slate-200 hover:border-slate-350 text-slate-400 flex items-center justify-center bg-slate-50 font-bold transition-all text-lg cursor-pointer">
-                                                        +
-                                                    </button>
                                                 </div>
-
+                                                
                                                 {/* Input dinámico grande para la red social seleccionada */}
                                                 <div className="pt-1.5">
                                                     {activeSocial === 'facebook' && (
@@ -1359,6 +1415,48 @@ export default function CrearAcademiaPage() {
                         <p className="text-lg font-extrabold text-indigo-650 bg-indigo-50/50 px-4 py-2 rounded-2xl border border-indigo-100 mb-6 inline-block">
                             {formData.nombre}
                         </p>
+
+                        {/* Código de Acceso si es privada */}
+                        {!formData.publica && generatedCode && (
+                            <div className="w-full bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mb-6 text-left animate-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600">
+                                        <Lock className="w-3.5 h-3.5" />
+                                        <span>Academia Privada</span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400">Código de acceso requerido</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 mb-3 leading-snug">
+                                    Proporciona este código a tus estudiantes para que puedan inscribirse a esta academia.
+                                </p>
+                                <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-2.5 shadow-sm">
+                                    <code className="text-base font-extrabold text-slate-800 font-mono tracking-wider pl-1.5 select-all">
+                                        {generatedCode}
+                                    </code>
+                                    <button
+                                        onClick={handleCopyCode}
+                                        type="button"
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                                            copied 
+                                            ? 'bg-emerald-50 text-emerald-650 border border-emerald-100' 
+                                            : 'bg-indigo-50 text-indigo-650 border border-indigo-100 hover:bg-indigo-100'
+                                        }`}
+                                    >
+                                        {copied ? (
+                                            <>
+                                                <CopyCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                                <span>¡Copiado!</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="w-3.5 h-3.5 text-indigo-650" />
+                                                <span>Copiar</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Descripción de bienvenida */}
                         <p className="text-xs text-slate-500 leading-relaxed mb-8 max-w-sm">
