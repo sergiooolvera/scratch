@@ -512,6 +512,7 @@ CREATE TABLE IF NOT EXISTS public.ie_academias (
     subdominio text UNIQUE NOT NULL,
     registro_abierto boolean DEFAULT true,
     requiere_aprobacion boolean DEFAULT false,
+    codigo_acceso text,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

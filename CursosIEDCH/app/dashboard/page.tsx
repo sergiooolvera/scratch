@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import CourseCard from '@/components/CourseCard'
 import DashboardSearch from '@/components/DashboardSearch'
+import PopularAcademiesClient from '@/components/PopularAcademiesClient'
 import { BookMarked, User, Search, HeartPulse, Briefcase, Code, Smile, Globe, MoreHorizontal, CheckCircle2, ChevronRight, GraduationCap } from 'lucide-react'
 import Link from 'next/link'
 
@@ -108,7 +109,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         return {
             ...academia,
-            alumnosCount: alumnosUnicosCount
+            alumnosCount: Math.max(alumnosUnicosCount, 1)
         }
     }) || []
 
@@ -355,7 +356,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                                 </div>
                             </div>
                             <Link 
-                                href="/dashboard?q=academia" 
+                                href="/academias" 
                                 className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold text-xs px-5 py-3 rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-md shadow-indigo-600/10"
                             >
                                 Ver academias
@@ -373,62 +374,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                                     Academias populares
                                 </h3>
                                 <Link 
-                                    href="/dashboard?q=academia" 
+                                    href="/academias" 
                                     className="text-indigo-600 hover:text-indigo-800 text-xs font-extrabold transition-colors"
                                 >
                                     Ver todas
                                 </Link>
                             </div>
 
-                            <div className="space-y-5">
-                                {academiasMostradas.slice(0, 4).map((academia) => {
-                                    // Iniciales fallback para el logo si no hay imagen
-                                    const iniciales = academia.nombre
-                                        .split(' ')
-                                        .map((w: string) => w[0])
-                                        .join('')
-                                        .substring(0, 2)
-                                        .toUpperCase()
-
-                                    // URL de redirección al portal de la academia
-                                    const academiaUrl = `https://${academia.subdominio}.iedch.com`
-
-                                    return (
-                                        <div key={academia.id} className="flex items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3.5 min-w-0">
-                                                {academia.logo_url ? (
-                                                    <img 
-                                                        src={academia.logo_url} 
-                                                        alt={academia.nombre} 
-                                                        className="h-11 w-11 rounded-xl object-cover border border-zinc-100 flex-shrink-0"
-                                                    />
-                                                ) : (
-                                                    <div 
-                                                        className="h-11 w-11 rounded-xl flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-                                                        style={{ backgroundColor: academia.color_principal || '#6366f1' }}
-                                                    >
-                                                        {iniciales}
-                                                    </div>
-                                                )}
-                                                <div className="min-w-0">
-                                                    <h4 className="font-extrabold text-zinc-800 text-xs truncate leading-tight">
-                                                        {academia.nombre}
-                                                    </h4>
-                                                    <p className="text-[10px] text-zinc-400 font-medium mt-0.5">
-                                                        {academia.alumnosCount.toLocaleString()} alumnos
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button 
-                                                type="button"
-                                                className="border border-indigo-200 text-indigo-600 font-bold text-[11px] px-3.5 py-1.5 rounded-lg whitespace-nowrap cursor-default"
-                                            >
-                                                Ingresar
-                                            </button>
-                                        </div>
-                                    )
-                                })}
-                            </div>
+                            <PopularAcademiesClient academias={academiasMostradas.slice(0, 4) as any} />
                         </div>
 
                         {/* Tarjeta: Beneficios */}
@@ -487,7 +440,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                                     </p>
                                 </div>
                                 <Link 
-                                    href="/dashboard?q=academia"
+                                    href="/academias"
                                     className="inline-block bg-white hover:bg-zinc-100 text-indigo-600 active:scale-95 font-bold text-xs px-6 py-2.5 rounded-xl shadow-sm transition-all cursor-pointer"
                                 >
                                     Explorar academias

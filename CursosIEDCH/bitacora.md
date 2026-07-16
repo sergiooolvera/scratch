@@ -391,8 +391,23 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) (Modificado)
   - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/deseos/page.tsx) (Nuevo)
 
+
 ---
-*Última actualización: 14 de Julio de 2026*
+*Última actualización: 16 de Julio de 2026*
 
-
-
+### 🔑 Acceso a Academias Públicas y Privadas para Alumnos (16 de Julio de 2026)
+- **Base de Datos & Esquemas**:
+  - Se creó el archivo de migración SQL [agregar_codigo_acceso_academias.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_codigo_acceso_academias.sql) para añadir el campo `codigo_acceso` (TEXT) a la tabla `ie_academias`.
+  - Se actualizó el esquema general [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) documentando la nueva columna en la definición de la tabla `ie_academias`.
+- **Enlace de Dashboard a Academias**:
+  - Se modificó la vista del alumno [page.tsx (Dashboard)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) para que el botón "Ingresar" de las academias populares redirija directamente al detalle del portal en `/academias/[id]`.
+- **Portal de Academia & Verificación de Código**:
+  - Se creó el componente cliente [AcademyPortalClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AcademyPortalClient.tsx) que gestiona el flujo de autenticación de códigos de acceso. Si la academia es privada (`publica = false`), el portal se bloquea tras un muro de código y requiere que el alumno ingrese la clave correspondiente (almacenándose de forma segura en `sessionStorage` tras su validación exitosa).
+  - El portal recrea de forma fidedigna y premium el diseño del mockup: muestra banners personalizados, número de alumnos/cursos/grupos, herramienta de verificación de folios de constancias, listado dinámico de grupos asociados y listado de cursos aprobados vinculados a dichos grupos.
+  - Se creó la ruta dinámica del lado del servidor [page.tsx (Detalle Academia)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/%5Bid%5D/page.tsx) que obtiene la información de Supabase o provee datos mockup de demostración consistentes si es un ID demo.
+- **Archivos Modificados y Creados**:
+  - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql)
+  - [dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx)
+  - [agregar_codigo_acceso_academias.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_codigo_acceso_academias.sql) (Nuevo)
+  - [AcademyPortalClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AcademyPortalClient.tsx) (Nuevo)
+  - [academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/%5Bid%5D/page.tsx) (Nuevo)
