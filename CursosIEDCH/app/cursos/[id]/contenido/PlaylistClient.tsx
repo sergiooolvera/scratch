@@ -262,7 +262,7 @@ export default function PlaylistClient({
     const [puzzleExpanded, setPuzzleExpanded] = useState<boolean>(false)
 
     const currentItem = playlist[currentIndex] || { id: '', titulo: '', recursos: [] }
-    const isSingleItem = playlist.length === 1
+    const isSingleItem = playlist.length === 1 && (playlist[0]?.recursos?.length || 0) <= 1
 
     const taskDef = currentItem.id ? tareasDef[currentItem.id] : null;
     const puzzleDef = currentItem.id ? puzzlesDef[currentItem.id] : null;
