@@ -113,6 +113,8 @@ export default function ContentViewer({ url, titulo = 'Documento de Estudio', de
         } catch (e) { /* ignore parse error */ }
     }
 
+    const isBunny = url.includes('mediadelivery.net') || url.includes('bunnycdn.com')
+
     if (isPpt) {
         return (
             <div className="w-full h-[60vh] md:h-[80vh] min-h-[400px] md:min-h-[600px] border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg relative transition-all duration-300 flex flex-col">
@@ -278,6 +280,19 @@ export default function ContentViewer({ url, titulo = 'Documento de Estudio', de
                 <iframe
                     src={`https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0`}
                     className="absolute top-0 left-0 w-full h-full"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowFullScreen
+                ></iframe>
+            </div>
+        )
+    }
+
+    if (isBunny) {
+        return (
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-black">
+                <iframe
+                    src={url}
+                    className="absolute top-0 left-0 w-full h-full border-0"
                     allow="autoplay; fullscreen; picture-in-picture"
                     allowFullScreen
                 ></iframe>

@@ -9,6 +9,7 @@ import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 import SimuladorIngresosModal from '@/components/SimuladorIngresosModal'
+import SubidorBunny from '@/components/SubidorBunny'
 
 type Recurso = {
     id?: string;
@@ -2324,16 +2325,24 @@ export default function SubirCursoPage() {
 
                                                                     <div className="col-span-full pt-1">
                                                                         {recurso.tipo === 'video' ? (
-                                                                            <div>
-                                                                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Enlace del Video (YouTube , Vimeo, Tiktok, Reels, etc. )</label>
-                                                                                <input
-                                                                                    type="url"
-                                                                                    required
-                                                                                    placeholder="https://www.youtube.com/watch?v=..."
-                                                                                    value={recurso.url_contenido || ''}
-                                                                                    onChange={(e) => handleRecursoChange(index, rIdx, 'url_contenido', e.target.value)}
-                                                                                    className="w-full text-xs rounded border-gray-300 p-2 border bg-white text-black"
-                                                                                />
+                                                                            <div className="space-y-2">
+                                                                                <div>
+                                                                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Enlace del Video (YouTube , Vimeo, Tiktok, Reels, etc. )</label>
+                                                                                    <input
+                                                                                        type="url"
+                                                                                        required
+                                                                                        placeholder="https://www.youtube.com/watch?v=..."
+                                                                                        value={recurso.url_contenido || ''}
+                                                                                        onChange={(e) => handleRecursoChange(index, rIdx, 'url_contenido', e.target.value)}
+                                                                                        className="w-full text-xs rounded border-gray-300 p-2 border bg-white text-black"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="pt-1">
+                                                                                    <SubidorBunny
+                                                                                        title={recurso.titulo || `Clase - ${modulo.titulo}`}
+                                                                                        onUploadComplete={(url) => handleRecursoChange(index, rIdx, 'url_contenido', url)}
+                                                                                    />
+                                                                                </div>
                                                                             </div>
                                                                         ) : (
                                                                             <div>

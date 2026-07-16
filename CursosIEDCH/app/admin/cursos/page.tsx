@@ -824,7 +824,7 @@ export default function AdminCursosPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {cursos.filter(c => {
                             const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
-                            const allowedEmails = ['sergio.olver@gmail.com'];
+                            const allowedEmails = ['sergio.olver@gmail.com', 'admin@iedch.edu.mx'];
                             if (c.creado_por === maestroId) {
                                 return userEmail && allowedEmails.includes(userEmail);
                             }

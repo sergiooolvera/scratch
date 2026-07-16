@@ -12,6 +12,7 @@ import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 import SimuladorIngresosModal from '@/components/SimuladorIngresosModal'
+import SubidorBunny from '@/components/SubidorBunny'
 
 type Recurso = {
     id?: string;
@@ -2865,17 +2866,27 @@ const generationId = data.generationId;
 
                                                                     <div className="col-span-full pt-1">
                                                                         {recurso.tipo === 'video' ? (
-                                                                            <div key={`video-input-container-${index}-${rIdx}`}>
-                                                                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Enlace del Video (YouTube , Vimeo, Tiktok, Reels, etc. )</label>
-                                                                                <input
-                                                                                    type="url"
-                                                                                    required
-                                                                                    disabled={!!recurso.isPersisted}
-                                                                                    placeholder="https://www.youtube.com/watch?v=..."
-                                                                                    value={recurso.url_contenido || ''}
-                                                                                    onChange={(e) => handleRecursoChange(index, rIdx, 'url_contenido', e.target.value)}
-                                                                                    className="w-full text-xs rounded border-gray-300 p-2 border bg-white disabled:bg-zinc-100 disabled:text-zinc-500 text-black disabled:cursor-not-allowed"
-                                                                                />
+                                                                            <div key={`video-input-container-${index}-${rIdx}`} className="space-y-2">
+                                                                                <div>
+                                                                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Enlace del Video (YouTube , Vimeo, Tiktok, Reels, etc. )</label>
+                                                                                    <input
+                                                                                        type="url"
+                                                                                        required
+                                                                                        disabled={!!recurso.isPersisted}
+                                                                                        placeholder="https://www.youtube.com/watch?v=..."
+                                                                                        value={recurso.url_contenido || ''}
+                                                                                        onChange={(e) => handleRecursoChange(index, rIdx, 'url_contenido', e.target.value)}
+                                                                                        className="w-full text-xs rounded border-gray-300 p-2 border bg-white disabled:bg-zinc-100 disabled:text-zinc-500 text-black disabled:cursor-not-allowed"
+                                                                                    />
+                                                                                </div>
+                                                                                {!recurso.isPersisted && (
+                                                                                    <div className="pt-1">
+                                                                                        <SubidorBunny
+                                                                                            title={recurso.titulo || `Clase - ${modulo.titulo}`}
+                                                                                            onUploadComplete={(url) => handleRecursoChange(index, rIdx, 'url_contenido', url)}
+                                                                                        />
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
                                                                         ) : (
                                                                             <div key={`file-input-container-${index}-${rIdx}`}>

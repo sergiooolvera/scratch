@@ -4,6 +4,13 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 🐰 Integración de Bunny.net Stream para Videos de Clases (15 de Julio de 2026)
+- **Variables de Entorno:** Configuración de `NEXT_PUBLIC_BUNNY_LIBRARY_ID` y `NEXT_PUBLIC_BUNNY_STREAM_HOST` en `.env.local` para posibilitar el acceso al CDN y almacenamiento optimizado de Bunny.
+- **Ruta de API Segura:** Creación de la API Route en `/app/api/video/crear-bunny/route.ts` para inicializar el video en Bunny.net de forma remota y segura sin exponer claves privadas en el navegador.
+- **Subida Directa (Direct Upload):** Desarrollo del componente reutilizable `components/SubidorBunny.tsx` que permite a los instructores arrastrar/seleccionar un archivo de video desde su equipo y subirlo directo a los servidores de Bunny.net mediante peticiones HTTP PUT asíncronas con barra de progreso, previniendo sobrecargar el servidor de Next.js.
+- **Integración en Formularios de Cursos:** Integración del cargador en las vistas de creación (`app/profesor/subir-curso/page.tsx`) y edición de cursos (`app/profesor/editar-curso/[id]/page.tsx`).
+- **Reproducción Fluida de Alumno:** Actualización de `ContentViewer.tsx` para detectar URLs de `mediadelivery.net` y `bunnycdn.com`, incrustando un iframe responsivo y seguro para el reproductor de Bunny.net Stream en el visor del alumno.
+
 ### 📊 Tarjeta de "Mis ventas" en el Panel del Profesor (15 de Julio de 2026)
 - **Tarjeta de Acceso Directo:** Se expandió el grid del panel del profesor (`app/profesor/page.tsx`) de 3 a 4 columnas en pantallas medianas y grandes.
 - **Enlace a Finanzas:** Se agregó una nueva tarjeta interactiva ("Mis ventas") con el icono `TrendingUp` que redirige de forma directa a la sección de finanzas y ventas (`/profesor/ventas`). Cuenta con un diseño premium y micro-interacciones (borde activo, sombra y flecha de enlace dinámico).
