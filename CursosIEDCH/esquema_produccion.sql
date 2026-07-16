@@ -581,5 +581,24 @@ ALTER TABLE public.ie_grupo_alumnos
 CREATE INDEX IF NOT EXISTS idx_ie_grupo_alumnos_grupo_id ON public.ie_grupo_alumnos(grupo_id);
 CREATE INDEX IF NOT EXISTS idx_ie_grupo_alumnos_user_id ON public.ie_grupo_alumnos(user_id);
 
+-- Tabla de Relación Directa Alumnos - Academias
+CREATE TABLE IF NOT EXISTS public.ie_academia_alumnos (
+    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    academia_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_academia_alumno UNIQUE (academia_id, user_id)
+);
+
+-- Relaciones de ie_academia_alumnos
+ALTER TABLE public.ie_academia_alumnos
+    ADD CONSTRAINT fk_academia_alumnos_academia FOREIGN KEY (academia_id) REFERENCES public.ie_academias(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_academia_alumnos_user FOREIGN KEY (user_id) REFERENCES public.ie_profiles(id) ON DELETE CASCADE;
+
+-- Índices de rendimiento para ie_academia_alumnos
+CREATE INDEX IF NOT EXISTS idx_ie_academia_alumnos_academia_id ON public.ie_academia_alumnos(academia_id);
+CREATE INDEX IF NOT EXISTS idx_ie_academia_alumnos_user_id ON public.ie_academia_alumnos(user_id);
+
+
 
 

@@ -163,8 +163,20 @@ export default async function ProfesorDashboardPage() {
     const academiaIds = academias?.map(a => a.id) || []
     let todosLosGrupos: any[] = []
     let relacionesCursos: any[] = []
+    let alumnosDeAcademias: any[] = []
 
     if (academiaIds.length > 0) {
+        // 1. Obtener alumnos de las academias de forma directa
+        const { data: alumnosAcData } = await supabase
+            .from('ie_academia_alumnos')
+            .select('academia_id, user_id')
+            .in('academia_id', academiaIds)
+        
+        if (alumnosAcData) {
+            alumnosDeAcademias = alumnosAcData
+        }
+
+        // 2. Obtener grupos
         const { data: gruposData } = await supabase
             .from('ie_grupos')
             .select('id, academia_id')
@@ -175,6 +187,7 @@ export default async function ProfesorDashboardPage() {
             const grupoIds = gruposData.map(g => g.id)
 
             if (grupoIds.length > 0) {
+                // Obtener cursos de los grupos
                 const { data: relData } = await supabase
                     .from('ie_grupo_cursos')
                     .select('grupo_id, curso_id')
@@ -457,11 +470,10 @@ export default async function ProfesorDashboardPage() {
                                             cursoIdsAcademia.includes(c.id)
                                         ) || []
 
-                                        // Calcular alumnos inscritos en los cursos de esta academia
-                                        const comprasAcademia = comprasRealizadas.filter(compra =>
-                                            cursoIdsAcademia.includes(compra.curso_id)
-                                        )
-                                        const alumnosAcademia = new Set(comprasAcademia.map(c => c.user_id)).size
+                                        // Calcular alumnos inscritos de forma directa en esta academia
+                                        const alumnosAcademia = alumnosDeAcademias.filter(al =>
+                                            al.academia_id === academia.id
+                                        ).length
 
                                         // Iniciales para el avatar si no hay logo_url
                                         const iniciales = academia.nombre

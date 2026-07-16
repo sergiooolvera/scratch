@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -2309,17 +2309,34 @@ export default function SubirCursoPage() {
                                                                     <div>
                                                                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Tipo de Recurso</label>
                                                                         <div className="flex flex-wrap gap-3">
-                                                                            {(['video', 'pdf', 'ppt', 'html'] as const).map(tipoOpt => (
-                                                                                <label key={tipoOpt} className="flex items-center text-xs font-semibold text-gray-700 cursor-pointer">
-                                                                                    <input
-                                                                                        type="radio"
-                                                                                        checked={recurso.tipo === tipoOpt}
-                                                                                        onChange={() => handleRecursoChange(index, rIdx, 'tipo', tipoOpt)}
-                                                                                        className="mr-1.5 h-3.5 w-3.5 text-blue-600 focus:ring-blue-500"
-                                                                                    />
-                                                                                    {tipoOpt.toUpperCase()}
-                                                                                </label>
-                                                                            ))}
+                                                                            {(['video', 'pdf', 'ppt', 'html'] as const).map(tipoOpt => {
+                                                                                const Icon = {
+                                                                                    video: Play,
+                                                                                    pdf: FileText,
+                                                                                    ppt: Presentation,
+                                                                                    html: Code
+                                                                                }[tipoOpt];
+
+                                                                                return (
+                                                                                    <label 
+                                                                                        key={tipoOpt} 
+                                                                                        className={`flex items-center text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all select-none cursor-pointer ${
+                                                                                            recurso.tipo === tipoOpt 
+                                                                                                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-xs' 
+                                                                                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                                                                        }`}
+                                                                                    >
+                                                                                        <input
+                                                                                            type="radio"
+                                                                                            checked={recurso.tipo === tipoOpt}
+                                                                                            onChange={() => handleRecursoChange(index, rIdx, 'tipo', tipoOpt)}
+                                                                                            className="mr-2 h-3.5 w-3.5 text-indigo-600 focus:ring-indigo-500"
+                                                                                        />
+                                                                                        {Icon && <Icon className={`h-3.5 w-3.5 mr-1 shrink-0 ${recurso.tipo === tipoOpt ? 'text-indigo-650' : 'text-gray-400'}`} />}
+                                                                                        {tipoOpt.toUpperCase()}
+                                                                                    </label>
+                                                                                );
+                                                                            })}
                                                                         </div>
                                                                     </div>
 

@@ -426,3 +426,30 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [crear/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/institucion/crear/page.tsx)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md)
 
+### 🏢 Relación Directa Alumno - Academia e Inscripción Automática (16 de Julio de 2026)
+- **Nueva Tabla `ie_academia_alumnos`**: Se creó el script SQL [crear_tabla_academia_alumnos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_tabla_academia_alumnos.sql) para registrar de forma persistente e independiente la membresía de los alumnos en cada academia. Se agregaron políticas de RLS e índices de rendimiento.
+- **Registro de Membresía Automático al Ingresar**: Se actualizó el componente cliente [AcademyPortalClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AcademyPortalClient.tsx) para que, una vez concedido el acceso (sea público o tras ingresar la clave de acceso privada), se registre al alumno en la tabla `ie_academia_alumnos` de forma asíncrona y transparente.
+- **Homogeneización de Contadores**:
+  - Se modificó la pantalla principal del profesor ([profesor/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx)) para contar alumnos directamente desde `ie_academia_alumnos`.
+  - Se modificó el portal de detalle de la academia ([academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/%5Bid%5D/page.tsx)) para reflejar de forma exacta los alumnos usando esta misma tabla.
+  - Se reestructuró la consulta de "Academias Populares" ([dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx)) reduciendo llamadas y obteniendo el orden por popularidad mediante la nueva tabla.
+- **Archivos Modificados y Creados**:
+  - [crear_tabla_academia_alumnos.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_tabla_academia_alumnos.sql) (Nuevo)
+  - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql)
+  - [AcademyPortalClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AcademyPortalClient.tsx)
+  - [profesor/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx)
+  - [academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/%5Bid%5D/page.tsx)
+  - [dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md)
+
+### 🎨 Iconos en la Selección de Tipo de Recurso de Cursos (16 de Julio de 2026)
+- **Diseño Premium de Selectores**: Se rediseñó el selector de radio para el "Tipo de Recurso" en el formulario de creación (`app/profesor/subir-curso/page.tsx`) y edición (`app/profesor/editar-curso/[id]/page.tsx`) de cursos.
+- **Implementación**: Se agregaron los iconos de Lucide correspondientes a cada formato (`Play` para VIDEO, `FileText` para PDF, `Presentation` para PPT, y `Code` para HTML) con estilos dinámicos de color y contenedores tipo chip (`bg-indigo-50 border-indigo-200`) que responden visualmente a la selección activa del usuario.
+- **Archivos Modificados**:
+  - [subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
+  - [editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md)
+
+
+
+

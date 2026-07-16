@@ -76,36 +76,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         .select('id, nombre, logo_url, color_principal, subdominio')
         .eq('publica', true)
 
-    // 2. Obtener todos los grupos
-    const { data: rawGrupos } = await supabase
-        .from('ie_grupos')
-        .select('id, academia_id')
-        .eq('activo', true)
+    // 2. Obtener todas las membresías directas alumno-academia
+    const { data: todasLasMembresias } = await supabase
+        .from('ie_academia_alumnos')
+        .select('academia_id, user_id')
 
-    // 3. Obtener relaciones de cursos-grupos
-    const { data: rawGrupoCursos } = await supabase
-        .from('ie_grupo_cursos')
-        .select('grupo_id, curso_id')
-
-    // 4. Obtener todas las compras pagadas de la plataforma para contar alumnos
-    const { data: todasLasCompras } = await supabase
-        .from('ie_compras')
-        .select('curso_id, user_id')
-        .eq('pagado', true)
-
-    // Calcular alumnos inscritos por academia
+    // Calcular alumnos inscritos por academia de forma directa
     const academiasConAlumnos = rawAcademias?.map(academia => {
-        // Encontrar grupos de esta academia
-        const gruposDeAcademia = rawGrupos?.filter(g => g.academia_id === academia.id) || []
-        const grupoIds = gruposDeAcademia.map(g => g.id)
-
-        // Encontrar cursos asociados a estos grupos
-        const cursosDeGrupos = rawGrupoCursos?.filter(rgc => grupoIds.includes(rgc.grupo_id)) || []
-        const cursoIds = cursosDeGrupos.map(cg => cg.curso_id)
-
-        // Encontrar compras (alumnos) únicos inscritos en estos cursos
-        const comprasDeAcademia = todasLasCompras?.filter(compra => cursoIds.includes(compra.curso_id)) || []
-        const alumnosUnicosCount = new Set(comprasDeAcademia.map(c => c.user_id)).size
+        const miembrosDeAcademia = todasLasMembresias?.filter(m => m.academia_id === academia.id) || []
+        const alumnosUnicosCount = new Set(miembrosDeAcademia.map(m => m.user_id)).size
 
         return {
             ...academia,

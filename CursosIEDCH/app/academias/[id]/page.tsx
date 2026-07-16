@@ -119,16 +119,13 @@ export default async function AcademyPage({ params }: PageProps) {
         }
     }
 
-    // Obtener alumnos count
-    let alumnosCount = 1
-    if (grupoIds.length > 0) {
-        const { data: miembros } = await supabase
-            .from('ie_grupo_alumnos')
-            .select('user_id')
-            .in('grupo_id', grupoIds)
-        
-        alumnosCount = Math.max(new Set(miembros?.map(m => m.user_id)).size, 1)
-    }
+    // Obtener alumnos count directamente de la relación alumno-academia
+    const { count } = await supabase
+        .from('ie_academia_alumnos')
+        .select('*', { count: 'exact', head: true })
+        .eq('academia_id', id)
+
+    const alumnosCount = count || 0
 
     return (
         <AcademyPortalClient

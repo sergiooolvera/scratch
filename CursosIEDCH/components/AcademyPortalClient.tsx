@@ -46,6 +46,34 @@ export default function AcademyPortalClient({
         }
     }, [academia.id, isPrivate])
 
+    // Registrar al alumno de forma persistente en la academia
+    useEffect(() => {
+        if (hasAccess && !esMock) {
+            async function registrarMembresia() {
+                try {
+                    const { createClient } = await import('@/lib/supabase/client')
+                    const supabaseClient = createClient()
+                    const { data: { user } } = await supabaseClient.auth.getUser()
+                    if (user) {
+                        const { error } = await supabaseClient
+                            .from('ie_academia_alumnos')
+                            .insert({
+                                academia_id: academia.id,
+                                user_id: user.id
+                            })
+                        // Ignoramos error 23505 (violación de clave única si ya estaba registrado)
+                        if (error && error.code !== '23505') {
+                            console.error('Error registrando membresía de academia:', error)
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error al registrar membresía:', e)
+                }
+            }
+            registrarMembresia()
+        }
+    }, [hasAccess, academia.id, esMock])
+
     const handleVerifyCode = (e: React.FormEvent) => {
         e.preventDefault()
         setErrorMsg('')
