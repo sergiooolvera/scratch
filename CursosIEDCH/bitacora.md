@@ -4,6 +4,14 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 🔗 Botón de Compartir y Vista Previa Enriquecida de Curso (19 de Julio de 2026)
+- **Componente Interactivo de Cliente:** Creación del componente `ShareButton.tsx` en `app/cursos/[id]/` utilizando `lucide-react` para iconografía moderna.
+- **Acción Dual de Compartido:**
+  - En dispositivos móviles o navegadores compatibles, hace uso de la API nativa `navigator.share` para una integración de sistema fluida.
+  - En navegadores de escritorio, copia automáticamente la URL del curso al portapapeles y cambia de forma dinámica el estado del botón a un check verde con la leyenda "¡Enlace copiado!" durante 2.5 segundos.
+- **Metadatos Open Graph y Twitter Cards Dinámicos:** Implementación de la función dinámica `generateMetadata` de Next.js. El servidor ahora extrae en tiempo real la información del curso (Título, Descripción e Imagen de portada) para generar las etiquetas meta de Open Graph. Al compartir el enlace en WhatsApp, Facebook, Telegram o Twitter, la aplicación ahora generará de forma automática una tarjeta elegante que incluye la imagen del curso, el título destacado en negrita y la descripción.
+- **Integración Responsiva:** Se reestructuró la cabecera del detalle del curso (`app/cursos/[id]/page.tsx`) con un contenedor flexible para situar el botón de forma alineada y estéticamente atractiva en pantallas de cualquier tamaño.
+
 ### 🐰 Integración de Bunny.net Stream para Videos de Clases (15 de Julio de 2026)
 - **Variables de Entorno:** Configuración de `NEXT_PUBLIC_BUNNY_LIBRARY_ID` y `NEXT_PUBLIC_BUNNY_STREAM_HOST` en `.env.local` para posibilitar el acceso al CDN y almacenamiento optimizado de Bunny.
 - **Ruta de API Segura:** Creación de la API Route en `/app/api/video/crear-bunny/route.ts` para inicializar el video en Bunny.net de forma remota y segura sin exponer claves privadas en el navegador.

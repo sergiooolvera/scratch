@@ -2,6 +2,63 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import CourseActions from './CourseActions'
 import CourseReviews from './CourseReviews'
+import ShareButton from './ShareButton'
+import { Metadata } from 'next'
+import { headers } from 'next/headers'
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const { id } = await params
+    const supabase = await createClient()
+    const { data: curso } = await supabase
+        .from('ie_cursos')
+        .select('titulo, descripcion, imagen_url')
+        .eq('id', id)
+        .single()
+
+    if (!curso) {
+        return {}
+    }
+
+    const headersList = await headers()
+    const host = headersList.get('host') || 'cursos.grupoegac.com'
+    const protocol = host.includes('localhost') ? 'http' : 'https'
+    const appUrl = `${protocol}://${host}`
+    const shareUrl = `${appUrl}/cursos/${id}`
+    
+    let imageUrl = curso.imagen_url || '/mundo.jpeg'
+    if (imageUrl.startsWith('/')) {
+        imageUrl = `${appUrl}${imageUrl}`
+    }
+
+    const cleanDescription = (curso.description || curso.descripcion || 'Aprende con nosotros en EGAC').replace(/\r?\n|\r/g, ' ')
+
+    return {
+        title: curso.titulo,
+        description: cleanDescription,
+        openGraph: {
+            title: curso.titulo,
+            description: cleanDescription,
+            url: shareUrl,
+            siteName: 'EGAC Portal',
+            images: [
+                {
+                    url: imageUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: curso.titulo,
+                }
+            ],
+            locale: 'es_MX',
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: curso.titulo,
+            description: cleanDescription,
+            images: [imageUrl],
+        }
+    }
+}
 
 export default async function CursoDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -80,7 +137,12 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
             <div className="bg-white shadow rounded-lg p-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">{curso.titulo}</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                    <h1 className="text-3xl font-bold text-gray-900">{curso.titulo}</h1>
+                    <div className="flex-shrink-0">
+                        <ShareButton title={curso.titulo} />
+                    </div>
+                </div>
                 <p className="text-gray-600 mb-6 text-justify">{curso.descripcion}</p>
  
                 <div className="flex flex-col md:flex-row gap-8 mb-8">
