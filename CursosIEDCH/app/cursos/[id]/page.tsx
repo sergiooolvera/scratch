@@ -83,46 +83,13 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
     // 3. Comprobar la sesión del usuario
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-        if (isBot) {
-            // Renderizado minimalista seguro para bots de previsualización (WhatsApp, Facebook, etc.)
-            return (
-                <div className="max-w-4xl mx-auto px-4 py-8">
-                    <div className="bg-white shadow rounded-lg p-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-4">{curso.titulo}</h1>
-                        <p className="text-gray-600 mb-6 text-justify">{curso.descripcion}</p>
-                        {curso.imagen_url && (
-                            <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-6">
-                                <img src={curso.imagen_url} alt={curso.titulo} className="w-full h-full object-cover" />
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )
-        }
-        // Usuario real no autenticado -> Redirigir al login pasando la ruta actual
-        redirect(`/login?next=/cursos/${id}`)
-    }
-
-    // 4. A partir de aquí, el usuario está autenticado. Procedemos con la lógica normal
-    const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
-    const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com'];
-    const userEmail = user?.email?.toLowerCase();
-
-    if (curso.creado_por === maestroId) {
-        if (!userEmail || !allowedEmails.includes(userEmail)) {
-            notFound();
-        }
-    }
-
-    const { data: compra } = await supabase
-        .from('ie_compras')
-        .select('*')
-        .eq('curso_id', id)
-        .eq('user_id', user.id)
-        .single()
-
+    // 4. Variables de estado del usuario respecto al curso
+    let compra = null
     let esCreadoPorInstructor = false
+    let isPagado = false
+    let pagoCompleto = false
+    let isAprobado = false
+
     if (curso?.creado_por) {
         const { data: creatorProfile } = await supabase
             .from('ie_profiles')
@@ -132,33 +99,47 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
     }
 
-    const isPagado = compra?.pagado || false
-    const pagoCompleto = compra?.pago_completo || false
-    // Si el curso requiere pago completo O es creado por instructor (siendo gratuito), y el alumno no pagó completo → bloquear constancia
-    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || (esCreadoPorInstructor && curso.precio === 0)) && !pagoCompleto
+    if (user) {
+        const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
+        const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com'];
+        const userEmail = user?.email?.toLowerCase();
 
-    let isAprobado = false;
-
-    // Check if the course requires an exam
-    if (curso.requiere_examen) {
-        const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single();
-        if (examenRow) {
-            const { data: resultRow } = await supabase
-                .from('ie_resultados_examenes')
-                .select('aprobado')
-                .eq('examen_id', examenRow.id)
-                .eq('user_id', user.id)
-                .eq('aprobado', true)
-                .limit(1);
-            if (resultRow && resultRow.length > 0) {
-                isAprobado = true;
+        if (curso.creado_por === maestroId) {
+            if (!userEmail || !allowedEmails.includes(userEmail)) {
+                notFound();
             }
         }
-    } else {
-        // If it doesn't require an exam, maybe they just get the certificate after completing?
-        // But the user said "If approved, show certificate". 
-        // For now, if no exam is required, we leave isAprobado false or deal with it if needed later.
+
+        const { data: compraRes } = await supabase
+            .from('ie_compras')
+            .select('*')
+            .eq('curso_id', id)
+            .eq('user_id', user.id)
+            .single()
+        
+        compra = compraRes
+        isPagado = compra?.pagado || false
+        pagoCompleto = compra?.pago_completo || false
+
+        // Check if the course requires an exam
+        if (curso.requiere_examen) {
+            const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single();
+            if (examenRow) {
+                const { data: resultRow } = await supabase
+                    .from('ie_resultados_examenes')
+                    .select('aprobado')
+                    .eq('examen_id', examenRow.id)
+                    .eq('user_id', user.id)
+                    .eq('aprobado', true)
+                    .limit(1);
+                if (resultRow && resultRow.length > 0) {
+                    isAprobado = true;
+                }
+            }
+        }
     }
+
+    const constanciaRequierePago = ((curso.requiere_pago_completo || false) || (esCreadoPorInstructor && curso.precio === 0)) && !pagoCompleto
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -242,6 +223,21 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                             )
                         }
 
+                        if (!user) {
+                            return (
+                                <div className="text-center py-10 bg-zinc-50 rounded-xl border border-zinc-200 shadow-inner">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">¿Quieres tomar este curso?</h3>
+                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">Inicia sesión o crea una cuenta para inscribirte y comenzar a aprender hoy mismo a tu propio ritmo.</p>
+                                    <a 
+                                        href={`/login?next=/cursos/${curso.id}`} 
+                                        className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all active:scale-95"
+                                    >
+                                        Iniciar Sesión o Registrarse
+                                    </a>
+                                </div>
+                            )
+                        }
+
                         return (
                             <CourseActions
                                 cursoId={curso.id}
@@ -265,7 +261,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
             <CourseReviews 
                 cursoId={curso.id}
                 isPagado={isPagado}
-                currentUserId={user.id}
+                currentUserId={user?.id || ''}
             />
         </div>
     )
