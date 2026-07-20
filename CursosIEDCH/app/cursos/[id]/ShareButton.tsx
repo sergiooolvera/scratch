@@ -13,7 +13,7 @@ export default function ShareButton({ title }: ShareButtonProps) {
     const handleShare = async () => {
         // Agregamos un parámetro a la URL para forzar a WhatsApp a refrescar la caché de la imagen
         const baseUrl = window.location.href.split('?')[0]
-        const url = `${baseUrl}?ref=share`
+        const url = `${baseUrl}?ref=share2`
         
         const shareText = `🎓 *Te recomiendo este curso:* \n✨ ${title}\n\n👉 ¡Inscríbete y aprende a tu propio ritmo!`
 
