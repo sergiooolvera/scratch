@@ -11,21 +11,26 @@ export default function ShareButton({ title }: ShareButtonProps) {
     const [copied, setCopied] = useState(false)
 
     const handleShare = async () => {
-        const url = window.location.href
+        // Agregamos un parámetro a la URL para forzar a WhatsApp a refrescar la caché de la imagen
+        const baseUrl = window.location.href.split('?')[0]
+        const url = `${baseUrl}?ref=share`
+        
+        const shareText = `🎓 *Te recomiendo este curso:* \n✨ ${title}\n\n👉 ¡Inscríbete y aprende a tu propio ritmo!`
+
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: title,
-                    text: `Te recomiendo este curso: ${title}`,
-                    url: url
+                    text: shareText + `\n\n` + url
+                    // Omitimos 'url' y 'title' por separado porque algunas versiones de WhatsApp 
+                    // lo concatenan raro. Pasando todo en 'text' nos aseguramos del formato.
                 })
             } catch (error) {
-                // El usuario canceló o falló, ignoramos para no interrumpir la experiencia
                 console.log('Compartir cancelado o no disponible', error)
             }
         } else {
             try {
-                await navigator.clipboard.writeText(url)
+                // Si copiamos al portapapeles, también usamos el texto enriquecido
+                await navigator.clipboard.writeText(shareText + `\n\n` + url)
                 setCopied(true)
                 setTimeout(() => setCopied(false), 2500)
             } catch (err) {
