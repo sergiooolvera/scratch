@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         imageUrl = `${appUrl}${imageUrl}`
     }
 
-    const cleanDescription = (curso.description || curso.descripcion || 'Aprende con nosotros en EGAC').replace(/\r?\n|\r/g, ' ')
+    const cleanDescription = (curso.descripcion || 'Aprende con nosotros en EGAC').replace(/\r?\n|\r/g, ' ')
 
     return {
         title: curso.titulo,
