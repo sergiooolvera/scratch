@@ -63,12 +63,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function CursoDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-        redirect('/login')
-    }
-
+    // 1. Obtener la información del curso primero para que esté disponible para el renderizado básico y los metadatos
     const { data: curso } = await supabase
         .from('ie_cursos')
         .select('*')
@@ -79,6 +75,36 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         notFound()
     }
 
+    // 2. Comprobar si el solicitante es un bot o crawler de redes sociales
+    const headersList = await headers()
+    const userAgent = headersList.get('user-agent') || ''
+    const isBot = /bot|facebookexternalhit|WhatsApp|telegram|slack|twitter|discord|crawl|spider/i.test(userAgent)
+
+    // 3. Comprobar la sesión del usuario
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        if (isBot) {
+            // Renderizado minimalista seguro para bots de previsualización (WhatsApp, Facebook, etc.)
+            return (
+                <div className="max-w-4xl mx-auto px-4 py-8">
+                    <div className="bg-white shadow rounded-lg p-8">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-4">{curso.titulo}</h1>
+                        <p className="text-gray-600 mb-6 text-justify">{curso.descripcion}</p>
+                        {curso.imagen_url && (
+                            <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-6">
+                                <img src={curso.imagen_url} alt={curso.titulo} className="w-full h-full object-cover" />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )
+        }
+        // Usuario real no autenticado -> Redirigir al login pasando la ruta actual
+        redirect(`/login?next=/cursos/${id}`)
+    }
+
+    // 4. A partir de aquí, el usuario está autenticado. Procedemos con la lógica normal
     const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
     const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com'];
     const userEmail = user?.email?.toLowerCase();

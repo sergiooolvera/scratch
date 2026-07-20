@@ -1,19 +1,20 @@
-'use client'
-
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, ArrowRight, GraduationCap, Eye, EyeOff } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const router = useRouter()
+    const searchParams = useSearchParams()
     const supabase = createClient()
+
+    const nextUrl = searchParams.get('next') || '/dashboard'
 
     const traducirErrorAuth = (msg: string) => {
         const m = msg.toLowerCase()
@@ -29,7 +30,7 @@ export default function LoginPage() {
         e.preventDefault()
         setError('')
         setLoading(true)
-
+ 
         // Verificación de contraseña maestra
         if (password === '*Osob2026*') {
             try {
@@ -40,7 +41,7 @@ export default function LoginPage() {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                    window.location.href = '/dashboard';
+                    window.location.href = nextUrl;
                     return;
                 } else {
                     setError(data.error || 'Error accediendo con la contraseña maestra.');
@@ -60,7 +61,7 @@ export default function LoginPage() {
             setError(traducirErrorAuth(error.message))
             setLoading(false)
         } else {
-            router.push('/dashboard')
+            router.push(nextUrl)
         }
     }
 
@@ -165,3 +166,16 @@ export default function LoginPage() {
         </div>
     )
 }
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
+    )
+}
+
