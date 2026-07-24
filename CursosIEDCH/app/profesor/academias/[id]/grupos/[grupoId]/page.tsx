@@ -42,6 +42,7 @@ export default function DetalleGrupoPage({ params }: PageProps) {
     const supabase = createClient()
     
     const [grupoNombre, setGrupoNombre] = useState('Grupo')
+    const [grupoDescripcion, setGrupoDescripcion] = useState('')
     const [grupoImagen, setGrupoImagen] = useState('')
     const [academiaNombre, setAcademiaNombre] = useState('Academia')
     const [loading, setLoading] = useState(true)
@@ -85,6 +86,69 @@ export default function DetalleGrupoPage({ params }: PageProps) {
         }
     }
 
+    // Modal para editar grupo
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [editNombre, setEditNombre] = useState('')
+    const [editDesc, setEditDesc] = useState('')
+    const [editImageFile, setEditImageFile] = useState<File | null>(null)
+    const [editImagePreview, setEditImagePreview] = useState<string>('')
+    const [guardandoGrupo, setGuardandoGrupo] = useState(false)
+    const [editError, setEditError] = useState('')
+
+    function abrirModalEditarGrupo() {
+        setEditNombre(grupoNombre)
+        setEditDesc(grupoDescripcion)
+        setEditImagePreview(grupoImagen)
+        setEditImageFile(null)
+        setEditError('')
+        setIsEditModalOpen(true)
+    }
+
+    async function handleEditarGrupo(e: React.FormEvent) {
+        e.preventDefault()
+        if (!editNombre.trim()) {
+            setEditError('El nombre del grupo es obligatorio.')
+            return
+        }
+
+        setGuardandoGrupo(true)
+        setEditError('')
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) throw new Error('No autenticado')
+
+            let uploadedUrl = grupoImagen
+            if (editImageFile) {
+                const ext = editImageFile.name.split('.').pop()
+                const fileName = `grupo_${user.id}_${Date.now()}.${ext}`
+                const { error: upErr } = await supabase.storage.from('perfiles').upload(fileName, editImageFile)
+                if (upErr) throw new Error('Error al subir la imagen: ' + upErr.message)
+                uploadedUrl = supabase.storage.from('perfiles').getPublicUrl(fileName).data.publicUrl
+            }
+
+            const { error: errUpdate } = await supabase
+                .from('ie_grupos')
+                .update({
+                    nombre: editNombre.trim(),
+                    descripcion: editDesc.trim(),
+                    imagen_url: uploadedUrl
+                })
+                .eq('id', grupoId)
+
+            if (errUpdate) throw errUpdate
+
+            setGrupoNombre(editNombre.trim())
+            setGrupoDescripcion(editDesc.trim())
+            setGrupoImagen(uploadedUrl)
+            setIsEditModalOpen(false)
+        } catch (e: any) {
+            setEditError(e.message || 'Ocurrió un error al actualizar el grupo.')
+        } finally {
+            setGuardandoGrupo(false)
+        }
+    }
+
     // Cargar datos
     useEffect(() => {
         async function loadAllData() {
@@ -92,12 +156,13 @@ export default function DetalleGrupoPage({ params }: PageProps) {
                 // 1. Obtener detalles del grupo y de la academia
                 const { data: grupo } = await supabase
                     .from('ie_grupos')
-                    .select('nombre, imagen_url, ie_academias(nombre)')
+                    .select('nombre, descripcion, imagen_url, ie_academias(nombre)')
                     .eq('id', grupoId)
                     .single()
                 
                 if (grupo) {
                     setGrupoNombre(grupo.nombre)
+                    setGrupoDescripcion(grupo.descripcion || '')
                     setGrupoImagen(grupo.imagen_url || '')
                     if (grupo.ie_academias) {
                         setAcademiaNombre((grupo.ie_academias as any).nombre)
@@ -225,22 +290,35 @@ export default function DetalleGrupoPage({ params }: PageProps) {
                             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
                                 {grupoNombre}
                             </h1>
+                            {grupoDescripcion && (
+                                <p className="text-slate-500 text-sm mt-1 max-w-xl">
+                                    {grupoDescripcion}
+                                </p>
+                            )}
                         </div>
                     </div>
                     
-                    {/* Botón de eliminar */}
-                    <button
-                        onClick={handleEliminarGrupo}
-                        disabled={eliminandoGrupo}
-                        className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all shadow-2xs ${
-                            cursosGrupo.length > 0
-                                ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600 hover:text-red-700'
-                        }`}
-                        title={cursosGrupo.length > 0 ? "No puedes eliminar un grupo con cursos asociados" : "Eliminar este grupo"}
-                    >
-                        {eliminandoGrupo ? 'Eliminando...' : 'Eliminar Grupo'}
-                    </button>
+                    {/* Acciones del Grupo */}
+                    <div className="flex items-center gap-2.5 self-stretch md:self-auto justify-end">
+                        <button
+                            onClick={abrirModalEditarGrupo}
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all shadow-2xs"
+                        >
+                            Editar Grupo
+                        </button>
+                        <button
+                            onClick={handleEliminarGrupo}
+                            disabled={eliminandoGrupo}
+                            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all shadow-2xs ${
+                                cursosGrupo.length > 0
+                                    ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600 hover:text-red-700'
+                            }`}
+                            title={cursosGrupo.length > 0 ? "No puedes eliminar un grupo con cursos asociados" : "Eliminar este grupo"}
+                        >
+                            {eliminandoGrupo ? 'Eliminando...' : 'Eliminar Grupo'}
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -445,6 +523,126 @@ export default function DetalleGrupoPage({ params }: PageProps) {
                                 )}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal para Editar Grupo */}
+            {isEditModalOpen && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-6 relative animate-in fade-in zoom-in-95 duration-250">
+                        <button 
+                            onClick={() => setIsEditModalOpen(false)}
+                            className="absolute top-4 right-4 h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl flex items-center justify-center transition-colors"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-black text-slate-950">
+                                Editar Grupo
+                            </h2>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                                Modifica la información básica del grupo para mantener al día a tus alumnos.
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleEditarGrupo} className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-700">
+                                    Nombre del Grupo
+                                </label>
+                                <input 
+                                    type="text" 
+                                    value={editNombre}
+                                    onChange={(e) => setEditNombre(e.target.value)}
+                                    placeholder="Ej. Enfermería Vespertino"
+                                    className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-sm focus:outline-hidden focus:border-indigo-500 focus:bg-white transition-all text-slate-900"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-700">
+                                    Descripción (Opcional)
+                                </label>
+                                <textarea 
+                                    value={editDesc}
+                                    onChange={(e) => setEditDesc(e.target.value)}
+                                    placeholder="Ej. Alumnos de tercer semestre, turno vespertino."
+                                    rows={3}
+                                    className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-sm focus:outline-hidden focus:border-indigo-500 focus:bg-white transition-all text-slate-900 resize-none"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold text-slate-700">
+                                    Imagen del Grupo (Opcional)
+                                </label>
+                                <div className="flex items-center gap-4 bg-slate-50/50 border border-slate-100 p-3 rounded-2xl">
+                                    {editImagePreview ? (
+                                        <div className="h-16 w-16 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                                            <img src={editImagePreview} alt="Vista previa" className="h-full w-full object-cover" />
+                                        </div>
+                                    ) : (
+                                        <div className="h-16 w-16 rounded-xl bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center shrink-0">
+                                            <Users className="h-6 w-6 text-slate-400" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <input 
+                                            type="file" 
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0]
+                                                if (file) {
+                                                    setEditImageFile(file)
+                                                    setEditImagePreview(URL.createObjectURL(file))
+                                                }
+                                            }}
+                                            className="hidden"
+                                            id="group-edit-image-upload"
+                                        />
+                                        <label 
+                                            htmlFor="group-edit-image-upload"
+                                            className="inline-flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl cursor-pointer transition-all shadow-3xs"
+                                        >
+                                            Seleccionar archivo
+                                        </label>
+                                        <p className="text-[10px] text-slate-400 mt-1">PNG, JPG o WEBP. Si se omite, se usará una por defecto o la existente.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {editError && (
+                                <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 p-3 rounded-xl">
+                                    {editError}
+                                </p>
+                            )}
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                    className="flex-1 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-sm py-3 rounded-xl transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={guardandoGrupo}
+                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-sm py-3 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5"
+                                >
+                                    {guardandoGrupo ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Guardando...
+                                        </>
+                                    ) : (
+                                        'Guardar Cambios'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

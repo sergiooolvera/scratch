@@ -550,3 +550,16 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [revision-cuestionarios/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/revision-cuestionarios/page.tsx) (Modificado)
   - [RevisionCuestionariosClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/revision-cuestionarios/RevisionCuestionariosClient.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 24 de Julio de 2026*
+
+### ✍️ Edición de Datos de Grupo en Panel de Profesor (24 de Julio de 2026)
+- **Visualización de Descripción**: Se modificó la vista de detalle de grupo en [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/[id]/grupos/[grupoId]/page.tsx) para consultar e incluir la descripción del grupo bajo el nombre en la cabecera si existe.
+- **Botón y Modal de Edición**: Se agregó un botón **"Editar Grupo"** de diseño premium en las acciones de la cabecera. Al pulsarlo, abre un modal interactivo con validaciones y campos para editar el nombre del grupo, la descripción y seleccionar una nueva imagen de portada.
+- **Persistencia en Supabase**:
+  - Las nuevas imágenes de portada se suben directamente al bucket `perfiles` en Supabase Storage (consistente con el flujo de creación).
+  - Se ejecuta una actualización en la tabla `ie_grupos` actualizando los campos `nombre`, `descripcion` e `imagen_url` y reflejando reactivamente los cambios en la UI.
+- **Archivos Modificados**:
+  - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/[id]/grupos/[grupoId]/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
