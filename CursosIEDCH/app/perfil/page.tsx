@@ -21,6 +21,7 @@ export default function PerfilPage() {
     const [csfUrl, setCsfUrl] = useState('')
     const [fotografiaPerfil, setFotografiaPerfil] = useState('')
     const [identidadValidada, setIdentidadValidada] = useState(false)
+    const [verificado, setVerificado] = useState(false)
     
     const [correoAdicional, setCorreoAdicional] = useState('')
     const [profesionEspecialidad, setProfesionEspecialidad] = useState('')
@@ -130,6 +131,7 @@ export default function PerfilPage() {
                 setCsfUrl(prof.constancia_situacion_fiscal || '')
                 setFotografiaPerfil(prof.fotografia_perfil || '')
                 setIdentidadValidada(prof.identidad_validada || false)
+                setVerificado(prof.verificado || false)
                 setDatosBancariosCapturados(prof.datos_bancarios_capturados || false)
                 setSolicitudCambioDatos(prof.solicitud_cambio_datos || false)
                 setCorreoAdicional(prof.correo_adicional || '')
@@ -290,7 +292,16 @@ export default function PerfilPage() {
                         />
                     )}
                     
-                    <h1 className="text-2xl font-bold text-gray-900 text-center mb-8">Mi Perfil</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 text-center mb-8 flex items-center justify-center gap-1.5">
+                        <span>Mi Perfil</span>
+                        {verificado && (
+                            <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                <svg className="w-6 h-6 fill-current inline-block" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                            </span>
+                        )}
+                    </h1>
 
                     {success && (
                         <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center text-green-700">

@@ -16,6 +16,7 @@ type Entrega = {
     modulo_id: string;
     modulo_titulo: string;
     alumno_nombre: string;
+    alumno_verificado?: boolean;
     preguntas: any[];
     respuestas: Record<string, string>;
     evaluaciones: Record<string, Evaluacion>;
@@ -179,9 +180,16 @@ export default function RevisionCuestionariosClient({ entregas: initialEntregas,
                                                             className={`w-full text-left p-3 rounded-lg border transition-colors flex justify-between items-center ${isSelected ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-100 hover:bg-gray-100'}`}
                                                         >
                                                             <div>
-                                                                <p className="font-medium text-gray-900 text-sm flex items-center gap-1">
+                                                                <p className="font-medium text-gray-900 text-sm flex items-center gap-1.5">
                                                                     <User className="h-3.5 w-3.5 text-gray-500" />
-                                                                    {ent.alumno_nombre}
+                                                                    <span>{ent.alumno_nombre}</span>
+                                                                    {ent.alumno_verificado && (
+                                                                        <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                                                            <svg className="w-3.5 h-3.5 fill-current inline-block" viewBox="0 0 24 24">
+                                                                                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                                                            </svg>
+                                                                        </span>
+                                                                    )}
                                                                 </p>
                                                                 <p className="text-xs text-gray-500" suppressHydrationWarning>
                                                                     {new Date(ent.created_at).toLocaleDateString()}
@@ -229,7 +237,16 @@ export default function RevisionCuestionariosClient({ entregas: initialEntregas,
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Alumno</p>
-                                    <p className="text-sm font-bold text-gray-800">{selectedEntrega.alumno_nombre}</p>
+                                    <div className="text-sm font-bold text-gray-800 flex items-center gap-1">
+                                        <span>{selectedEntrega.alumno_nombre}</span>
+                                        {selectedEntrega.alumno_verificado && (
+                                            <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                                <svg className="w-3.5 h-3.5 fill-current inline-block" viewBox="0 0 24 24">
+                                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                                </svg>
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Módulo</p>

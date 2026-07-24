@@ -503,3 +503,40 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [CourseActions.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseActions.tsx) (Modificado)
   - [OnboardingTour.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 24 de Julio de 2026*
+
+### 🚀 Verificación de Usuarios y Palomita Azul (24 de Julio de 2026)
+- **Base de Datos & Esquema**:
+  - Se creó el archivo de migración SQL [agregar_verificado_usuarios.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_verificado_usuarios.sql) para agregar el campo `verificado` (BOOLEAN) a la tabla `ie_profiles`.
+  - Se actualizó el esquema general [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) documentando la nueva columna en la definición de la tabla `ie_profiles`.
+- **Backend & APIs**:
+  - Se creó el endpoint `/api/admin/usuarios/verificar/route.ts` para permitir a administradores cambiar el estado de verificación de usuarios con control de permisos de sesión.
+  - Se modificó `/api/perfil/route.ts` para incluir la columna `verificado` en la consulta `select` del perfil actual.
+- **Interfaz de Admin**:
+  - Se actualizó [page.tsx (Admin Usuarios)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/usuarios/page.tsx) agregando la columna "Verificación" con un selector combobox y llamando al endpoint respectivo al cambiar su valor. Se agregó una palomita azul SVG al lado del nombre de usuario en la lista si está verificado.
+- **Propagación Visual**:
+  - Se añadió la palomita azul de verificación (check azul SVG) en:
+    - **Cabecera (Navbar)**: [Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) (tanto en barra de escritorio como menú móvil).
+    - **Catálogo de Cursos**: [CourseCard.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx), [page.tsx (Dashboard)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) y [page.tsx (Mis Cursos)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx).
+    - **Detalles del Curso**: [page.tsx (Detalle Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx).
+    - **Perfil de Usuario**: [page.tsx (Perfil)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/perfil/page.tsx).
+    - **Panel del Profesor**: [page.tsx (Profesor)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx) (saludo de bienvenida).
+    - **Revisión de Alumnos**: [page.tsx (Revisión Cuestionarios)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/revision-cuestionarios/page.tsx) and [RevisionCuestionariosClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/revision-cuestionarios/RevisionCuestionariosClient.tsx).
+- **Archivos Modificados y Creados**:
+  - [agregar_verificado_usuarios.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_verificado_usuarios.sql) (Nuevo)
+  - [route.ts (Verificar API)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/admin/usuarios/verificar/route.ts) (Nuevo)
+  - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) (Modificado)
+  - [route.ts (Perfil API)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/perfil/route.ts) (Modificado)
+  - [page.tsx (Admin Usuarios)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/usuarios/page.tsx) (Modificado)
+  - [CourseCard.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx) (Modificado)
+  - [dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) (Modificado)
+  - [mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx) (Modificado)
+  - [cursos/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx) (Modificado)
+  - [Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) (Modificado)
+  - [perfil/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/perfil/page.tsx) (Modificado)
+  - [profesor/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx) (Modificado)
+  - [revision-cuestionarios/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/revision-cuestionarios/page.tsx) (Modificado)
+  - [RevisionCuestionariosClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/revision-cuestionarios/RevisionCuestionariosClient.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)

@@ -291,8 +291,16 @@ export default async function ProfesorDashboardPage() {
                                 <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                                     Panel de Control
                                 </span>
-                                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
-                                    ¡Hola, {profile?.nombre || user.email}! 👋
+                                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1 flex items-center gap-1.5">
+                                    <span>¡Hola, {profile?.nombre || user.email}!</span>
+                                    {profile?.verificado && (
+                                        <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                            <svg className="w-6 h-6 fill-current inline-block" viewBox="0 0 24 24">
+                                                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                            </svg>
+                                        </span>
+                                    )}
+                                    <span>👋</span>
                                 </h1>
                                 <p className="text-xs text-slate-500 mt-0.5">
                                     Gestiona tus programas académicos, cursos e instructores.

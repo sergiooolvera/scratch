@@ -68,17 +68,20 @@ export default async function RevisionCuestionariosPage() {
     // 5. Nombres de alumnos
     const userIdsConEntregas = [...new Set(todasEntregas?.map(e => e.user_id) || [])]
     const perfilesMap: Record<string, string> = {}
+    const perfilesVerificadosMap: Record<string, boolean> = {}
     for (const uid of userIdsConEntregas) {
         try {
             const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(uid)
             const { data: perfil } = await supabaseAdmin
                 .from('ie_profiles')
-                .select('nombre, apellido_paterno, apellido_materno')
+                .select('nombre, apellido_paterno, apellido_materno, verificado')
                 .eq('id', uid)
                 .single()
             perfilesMap[uid] = `${perfil?.nombre || ''} ${perfil?.apellido_paterno || ''} ${perfil?.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || authUser?.email || 'Alumno sin nombre'
+            perfilesVerificadosMap[uid] = perfil?.verificado || false
         } catch {
             perfilesMap[uid] = 'Alumno sin nombre'
+            perfilesVerificadosMap[uid] = false
         }
     }
 
@@ -143,6 +146,7 @@ export default async function RevisionCuestionariosPage() {
             modulo_id: modId,
             modulo_titulo: mod.titulo || 'Módulo Desconocido',
             alumno_nombre: perfilesMap[uid] || 'Alumno sin nombre',
+            alumno_verificado: perfilesVerificadosMap[uid] || false,
             preguntas: preguntasArr,
             respuestas: respuestasObj,
             evaluaciones: evaluacionesObj,

@@ -84,6 +84,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
     // 4. Variables de estado del usuario respecto al curso
     let compra = null
     let esCreadoPorInstructor = false
+    let creatorVerificado = false
     let isPagado = false
     let pagoCompleto = false
     let isAprobado = false
@@ -91,10 +92,11 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
     if (curso?.creado_por) {
         const { data: creatorProfile } = await supabase
             .from('ie_profiles')
-            .select('rol')
+            .select('rol, verificado')
             .eq('id', curso.creado_por)
             .single()
         esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
+        creatorVerificado = creatorProfile?.verificado || false
     }
 
     if (user) {
@@ -155,7 +157,16 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                     <div className="flex-1 grid grid-cols-2 gap-4">
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Instructor</h3>
-                            <p className="mt-1 text-sm text-gray-900">{curso.instructor}</p>
+                            <div className="mt-1 text-sm text-gray-900 flex items-center gap-1">
+                                <span>{curso.instructor}</span>
+                                {creatorVerificado && (
+                                    <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                        <svg className="w-3.5 h-3.5 fill-current inline-block" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Duración</h3>

@@ -17,6 +17,7 @@ interface Course {
     profesor?: {
         nombre: string
         fotografia_perfil?: string
+        verificado?: boolean
     }
 }
 
@@ -130,8 +131,15 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                                     <User className="h-4.5 w-4.5 text-zinc-500" />
                                 )}
                             </div>
-                            <span className={`text-sm font-medium ${isSuper ? 'text-indigo-700 font-semibold' : 'text-zinc-700'}`}>
-                                {course.profesor?.nombre || course.instructor || 'Instructor'}
+                            <span className={`text-sm font-medium flex items-center gap-1 ${isSuper ? 'text-indigo-700 font-semibold' : 'text-zinc-700'}`}>
+                                <span>{course.profesor?.nombre || course.instructor || 'Instructor'}</span>
+                                {course.profesor?.verificado && (
+                                    <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                        <svg className="w-3.5 h-3.5 fill-current inline-block" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                    </span>
+                                )}
                             </span>
                         </div>
                     </div>

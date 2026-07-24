@@ -339,8 +339,15 @@ export default function Navbar() {
                 {user ? (
                     <>
                         <div className="hidden lg:flex flex-col items-end mr-1">
-                            <span className="text-sm font-semibold text-gray-800">
-                                {profile?.nombre || user.email}
+                            <span className="text-sm font-semibold text-gray-800 flex items-center gap-1">
+                                <span>{profile?.nombre || user.email}</span>
+                                {profile?.verificado && (
+                                    <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                        <svg className="w-3.5 h-3.5 fill-current inline-block" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                        </svg>
+                                    </span>
+                                )}
                             </span>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mt-0.5 ${
                                 profile?.rol === 'admin' ? 'bg-purple-50 text-purple-700 border border-purple-100' :
@@ -444,7 +451,16 @@ export default function Navbar() {
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-gray-900 truncate">{profile?.nombre || user.email}</p>
+                                        <p className="text-sm font-bold text-gray-900 truncate flex items-center gap-1">
+                                            <span>{profile?.nombre || user.email}</span>
+                                            {profile?.verificado && (
+                                                <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                                    <svg className="w-3.5 h-3.5 fill-current inline-block" viewBox="0 0 24 24">
+                                                        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                                    </svg>
+                                                </span>
+                                            )}
+                                        </p>
                                         <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider mt-0.5 ${
                                             profile?.rol === 'admin' ? 'bg-purple-50 text-purple-700 border border-purple-100' :
                                             ['instructor', 'capacitador'].includes(profile?.rol) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :

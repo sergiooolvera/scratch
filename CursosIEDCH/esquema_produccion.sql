@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS public.ie_profiles (
     identidad_validada boolean DEFAULT false,
     limite_generaciones_gamma integer DEFAULT 3,
     solicitud_mas_intentos_gamma boolean DEFAULT false,
+    verificado boolean DEFAULT false,
     permisos_adminjr jsonb DEFAULT '[]'::jsonb,
     CONSTRAINT ie_profiles_rol_check CHECK (rol IN ('alumno', 'profesor', 'vendedor', 'admin', 'financiero', 'institucion', 'instructor'))
 );

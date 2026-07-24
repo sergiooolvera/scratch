@@ -67,6 +67,22 @@ export default function AdminUsuariosPage() {
         }
     }
 
+    const handleVerificationChange = async (userId: string, isVerified: boolean) => {
+        try {
+            const res = await fetch('/api/admin/usuarios/verificar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, verificado: isVerified }),
+            })
+            const result = await res.json()
+            if (!res.ok) throw new Error(result.error || 'Error de red')
+            
+            setUsuarios(usuarios.map(u => u.id === userId ? { ...u, verificado: isVerified } : u))
+        } catch (error: any) {
+            alert('Error al actualizar la verificación: ' + error.message)
+        }
+    }
+
     const handleEliminarUsuario = async (userId: string) => {
         const confirmar = window.confirm("¿Seguro que deseas eliminar a este usuario lógicamente? No podrá acceder al sistema.");
         if (!confirmar) return;
@@ -173,6 +189,7 @@ export default function AdminUsuariosPage() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verificación</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
@@ -201,7 +218,18 @@ export default function AdminUsuariosPage() {
                             
                             return (
                             <tr key={u.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{nombreCompleto}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>{nombreCompleto}</span>
+                                        {u.verificado && (
+                                            <span className="text-blue-500 flex-shrink-0" title="Verificado">
+                                                <svg className="w-4 h-4 fill-current inline-block" viewBox="0 0 24 24">
+                                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                                </svg>
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email || 'N/A'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <div className="flex flex-col gap-1">
@@ -224,6 +252,17 @@ export default function AdminUsuariosPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <select
+                                        value={u.verificado ? "true" : "false"}
+                                        disabled={isSelectDisabled}
+                                        onChange={(e) => handleVerificationChange(u.id, e.target.value === "true")}
+                                        className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white disabled:opacity-60 disabled:bg-gray-50 transition-all"
+                                    >
+                                        <option value="false">No verificado</option>
+                                        <option value="true">Verificado</option>
+                                    </select>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <div className="flex items-center gap-3 justify-end md:justify-start min-w-[240px]">
                                         {u.rol === 'financiero' ? (
                                             <span className="block w-full px-3 py-2 text-sm text-gray-500 font-medium">Financiero (Especial)</span>
@@ -244,7 +283,7 @@ export default function AdminUsuariosPage() {
                                                     {/* Solo el administrador principal puede asignar el rol admin */}
                                                     {!isOperatorAdminJr && <option value="admin">Admin</option>}
                                                 </select>
-
+ 
                                                 {/* Mostrar botón de permisos para Admin Junior únicamente al Admin principal */}
                                                 {u.rol === 'adminjr' && currentUserProfile?.rol === 'admin' && (
                                                     <button
@@ -271,9 +310,9 @@ export default function AdminUsuariosPage() {
                             )
                         })}
                         {usuarios.length === 0 && !loading && (
-                            <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No hay usuarios</td></tr>
+                            <tr><td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">No hay usuarios</td></tr>
                         )}
-                        {loading && <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">Cargando...</td></tr>}
+                        {loading && <tr><td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">Cargando...</td></tr>}
                     </tbody>
                     </table>
                 </div>
