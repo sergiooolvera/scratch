@@ -457,7 +457,49 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
   - [editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md)
+---
+*Última actualización: 23 de Julio de 2026*
 
+### 🚀 Implementación de Tutoriales Interactivos y Onboarding Multiruta (23 de Julio de 2026)
+- **Instalación de Dependencia**: Se instaló la librería `driver.js` para proveer un sistema de onboarding interactivo animado y compatible con React 19.
+- **Onboarding Multiruta Inteligente**: Se reestructuró [OnboardingTour.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx) para leer `window.location.pathname` y cargar pasos específicos según la página:
+  - **Dashboard y General**: Guía de notificaciones, menú central, perfil y tarjetas de cursos de forma adaptada al rol (colores temáticos específicos).
+  - **Creador de Cursos (`/profesor/subir-curso`)**: Guía para los profesores sobre la estructuración de temarios, recuperación de borradores y guardado manual de avances.
+  - **Persistencia**: Guarda estados separados en `localStorage` (`iedch_onboarding_completed` y `iedch_subir_curso_tour_completed`) para que ambos tours arranquen automáticamente solo la primera vez.
+- **Selectores en Creador de Cursos**: Se modificó [page.tsx (Subir Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) inyectando selectores estables a los componentes clave: `#tour-recuperar-borrador` (banner de recuperación de progreso anterior), `#tour-pasos-creacion` (etapas de creación en pestañas) e `#tour-guardar-borrador` (botón de guardado manual del borrador).
+- **Integración en Barra de Navegación**: Se modificó [Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) añadiendo IDs estables a los elementos principales (`#tour-navbar-links`, `#tour-subir-curso`, `#tour-subir-curso-movil`, `#tour-notificaciones`, `#tour-perfil`) e inyectando botones de lanzamiento manual (icono `HelpCircle` en Desktop y opción en el menú móvil).
+- **Validación**: Se ejecutó `npm run build` con éxito en múltiples ocasiones, garantizando que el compilador de TypeScript y Next.js no detectan ningún error en las integraciones.
+- **Archivos Modificados y Creados**:
+  - [package.json](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/package.json) (Modificado)
+  - [Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) (Modificado)
+  - [OnboardingTour.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx) (Modificado)
+  - [page.tsx (Subir Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+---
+*Última actualización: 24 de Julio de 2026*
 
+### 🚀 Tutorial Guiado en el Dashboard del Profesor (24 de Julio de 2026)
+- **Selectores en Dashboard del Profesor**: Se modificó [page.tsx (Dashboard Profesor)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx) para integrar los selectores `#tour-crear-academia` (tarjeta de creación de academias), `#tour-crear-curso-dashboard` (tarjeta de creación de cursos) e `#tour-resumen-rapido` (sección del resumen rápido de métricas).
+- **Tour Específico del Panel del Instructor**: Se reestructuró [OnboardingTour.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx) para que, al detectar la ruta `/profesor` (o `/profesor/`), cargue un tutorial dedicado a los instructores/profesores. El tour explica las herramientas para crear academias y cursos, la visualización de métricas y las opciones de administración rápida del Navbar.
+- **Control de Persistencia**: Se integró la persistencia en `localStorage` bajo la clave `iedch_profesor_dashboard_tour_completed` para evitar que el tour del panel principal se repita automáticamente.
+- **Validación**: Se ejecutó `npm run build` con éxito, garantizando la compatibilidad del compilador y el correcto renderizado de todos los módulos.
+- **Archivos Modificados**:
+  - [page.tsx (Dashboard Profesor)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx) (Modificado)
+  - [OnboardingTour.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
 
+---
+*Última actualización: 24 de Julio de 2026*
 
+### 🚀 Tutorial Guiado en el Detalle del Curso para Alumnos (24 de Julio de 2026)
+- **Selectores en Detalle del Curso**:
+  - En [page.tsx (Detalle Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx) agregamos los selectores `#tour-informacion-curso` (tarjeta de datos generales del curso) e `#tour-opiniones-curso` (envolviendo las valoraciones).
+  - En [CourseActions.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseActions.tsx) inyectamos los selectores `#tour-codigo-referido` (campo de referido opcional) e `#tour-metodos-pago` (rejilla con las opciones de inscripción/pago con tarjeta, transferencia, Oxxo y cupón).
+- **Lógica en el Tour Multiruta**: Se reestructuró [OnboardingTour.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx) para que, al detectar que la ruta inicia con `/cursos/` (descartando constancias, exámenes o contenidos internos), cargue un tutorial interactivo de adquisición enfocado en los selectores añadidos.
+- **Persistencia**: Se almacena la finalización bajo la clave `iedch_curso_detail_tour_completed` en `localStorage`.
+- **Validación**: Se ejecutó `npm run build` con éxito, garantizando que el compilador y TypeScript no encuentran ningún error en la integración.
+- **Archivos Modificados**:
+  - [page.tsx (Detalle Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx) (Modificado)
+  - [CourseActions.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseActions.tsx) (Modificado)
+  - [OnboardingTour.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)

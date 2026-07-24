@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText, ShieldCheck, Ticket, Store, CreditCard, FileSpreadsheet, BarChart3, Home } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText, ShieldCheck, Ticket, Store, CreditCard, FileSpreadsheet, BarChart3, Home, HelpCircle } from 'lucide-react'
 import NotificationBell from './NotificationBell'
+import OnboardingTour from './OnboardingTour'
 
 export default function Navbar() {
     const supabase = createClient()
@@ -100,7 +101,7 @@ export default function Navbar() {
 
                 {/* CENTRO: Menú de Navegación (Cápsula flotante compacta para Desktop) */}
                 {user && (
-                    <nav className={`hidden md:flex relative pointer-events-auto bg-white/60 ${navBorderClass} rounded-full shadow-sm px-4 py-1.5 items-center justify-center transition-all duration-300 z-10`}>
+                    <nav id="tour-navbar-links" className={`hidden md:flex relative pointer-events-auto bg-white/60 ${navBorderClass} rounded-full shadow-sm px-4 py-1.5 items-center justify-center transition-all duration-300 z-10`}>
                         {/* Contenedor de Ondas con overflow-hidden para no sobresalir de las esquinas redondeadas */}
                         <div className="absolute inset-0 overflow-hidden rounded-full pointer-events-none z-0">
                             {/* Onda 1 */}
@@ -226,7 +227,7 @@ export default function Navbar() {
                                                  </div>
                                              </div>
                                          </div>
-                                         <Link href="/profesor/subir-curso" className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
+                                         <Link id="tour-subir-curso" href="/profesor/subir-curso" className="flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0">
                                              <Plus className="h-4 w-4" /> <span>Subir Curso</span>
                                          </Link>
                                      </>
@@ -354,8 +355,18 @@ export default function Navbar() {
                         <Link href="/dashboard" className="p-1 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 rounded-full transition-colors border border-slate-200/60 overflow-hidden flex items-center justify-center w-9 h-9" title="Inicio / Dashboard">
                             <Home className="h-5 w-5" />
                         </Link>
-                        <NotificationBell userId={user.id} />
-                        <Link href="/perfil" className="p-1 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 rounded-full transition-colors border border-transparent overflow-hidden flex items-center justify-center w-9 h-9" title="Mi Perfil">
+                        <div id="tour-notificaciones">
+                            <NotificationBell userId={user.id} />
+                        </div>
+                        <button
+                            onClick={() => window.dispatchEvent(new Event('start-onboarding-tour'))}
+                            className="p-1 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 rounded-full transition-colors border border-slate-200/60 overflow-hidden flex items-center justify-center w-9 h-9"
+                            title="Guía interactiva"
+                            id="tour-ayuda"
+                        >
+                            <HelpCircle className="h-5 w-5" />
+                        </button>
+                        <Link id="tour-perfil" href="/perfil" className="p-1 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800 rounded-full transition-colors border border-transparent overflow-hidden flex items-center justify-center w-9 h-9" title="Mi Perfil">
                             {(profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture) ? (
                                 <img src={profile?.fotografia_perfil || user?.user_metadata?.avatar_url || user?.user_metadata?.picture} alt="Perfil" className="w-full h-full object-cover rounded-full" />
                             ) : (
@@ -488,7 +499,7 @@ export default function Navbar() {
                                     <div className="space-y-1">
                                         <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Panel {profile?.rol === 'capacitador' ? 'Capacitador' : 'Instructor'}</div>
                                         <div className="px-3 py-1">
-                                            <Link href="/profesor/subir-curso" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center space-x-1.5 w-full py-2.5 px-4 rounded-xl text-base font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-md transition-all duration-200">
+                                            <Link id="tour-subir-curso-movil" href="/profesor/subir-curso" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center space-x-1.5 w-full py-2.5 px-4 rounded-xl text-base font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-md transition-all duration-200">
                                                 <Plus className="h-5 w-5" /> <span>Subir Curso</span>
                                             </Link>
                                         </div>
@@ -550,6 +561,12 @@ export default function Navbar() {
                                          )}
                                      </div>
                                  )}
+                                <button
+                                    onClick={() => { window.dispatchEvent(new Event('start-onboarding-tour')); setIsMenuOpen(false); }}
+                                    className="w-full text-left flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors"
+                                >
+                                    <HelpCircle className="h-5 w-5 text-gray-400" /> <span>Guía del Portal</span>
+                                </button>
                                 <Link href="/perfil" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">
                                     <User className="h-5 w-5 text-gray-400" /> <span>Mi Perfil</span>
                                 </Link>
@@ -578,6 +595,7 @@ export default function Navbar() {
                 </div>
             )}
             </div>
+            {user && <OnboardingTour rol={profile?.rol || 'alumno'} />}
         </div>
     )
 }

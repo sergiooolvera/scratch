@@ -313,7 +313,7 @@ export default async function ProfesorDashboardPage() {
                 {/* 1. Fila Superior: Banners de Creación */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     {/* Banner Crear Academia */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/70 to-emerald-100/40 rounded-3xl border border-emerald-500/10 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:shadow-md hover:border-emerald-500/20 transition-all group">
+                    <div id="tour-crear-academia" className="relative overflow-hidden bg-gradient-to-br from-emerald-50/70 to-emerald-100/40 rounded-3xl border border-emerald-500/10 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:shadow-md hover:border-emerald-500/20 transition-all group">
                         <div className="flex-1 space-y-4 z-10">
                             <div className="flex items-center gap-3">
                                 <div className="h-12 w-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
@@ -345,7 +345,7 @@ export default async function ProfesorDashboardPage() {
                     </div>
 
                     {/* Banner Crear Curso */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50/70 to-indigo-100/40 rounded-3xl border border-indigo-500/10 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:shadow-md hover:border-indigo-500/20 transition-all group">
+                    <div id="tour-crear-curso-dashboard" className="relative overflow-hidden bg-gradient-to-br from-indigo-50/70 to-indigo-100/40 rounded-3xl border border-indigo-500/10 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:shadow-md hover:border-indigo-500/20 transition-all group">
                         <div className="flex-1 space-y-4 z-10">
                             <div className="flex items-center gap-3">
                                 <div className="h-12 w-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-600/20">
@@ -379,7 +379,7 @@ export default async function ProfesorDashboardPage() {
                 </div>
 
                 {/* 2. Sección: Resumen Rápido */}
-                <div className="mb-4">
+                <div id="tour-resumen-rapido" className="mb-4">
                     <h2 className="text-lg font-bold text-slate-900 mb-3 tracking-tight">
                         Resumen rápido
                     </h2>

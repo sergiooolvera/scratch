@@ -141,7 +141,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="bg-white shadow rounded-lg p-8">
+            <div id="tour-informacion-curso" className="bg-white shadow rounded-lg p-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                     <h1 className="text-3xl font-bold text-gray-900">{curso.titulo}</h1>
                     <div className="flex-shrink-0">
@@ -256,11 +256,13 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                 </div>
             </div>
 
-            <CourseReviews 
-                cursoId={curso.id}
-                isPagado={isPagado}
-                currentUserId={user?.id || ''}
-            />
+            <div id="tour-opiniones-curso">
+                <CourseReviews 
+                    cursoId={curso.id}
+                    isPagado={isPagado}
+                    currentUserId={user?.id || ''}
+                />
+            </div>
         </div>
     )
 }

@@ -1500,7 +1500,7 @@ export default function SubirCursoPage() {
             </div>
             
             {tieneBorradorLocal && (
-                <div className="mb-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-md animate-fade-in">
+                <div id="tour-recuperar-borrador" className="mb-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-md animate-fade-in">
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 animate-pulse">
                             <Sparkles className="h-5 w-5" />
@@ -1532,7 +1532,7 @@ export default function SubirCursoPage() {
 
 
             {/* Navigation Tabs */}
-            <div className="flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px">
+            <div id="tour-pasos-creacion" className="flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px">
                 <button
                     onClick={() => handleTabChange('info')}
                     type="button"
@@ -1601,7 +1601,7 @@ export default function SubirCursoPage() {
                                     <h2 className="text-xl font-bold text-gray-900">1. Información Básica del Curso</h2>
                                     <p className="text-gray-500 text-xs mt-0.5">Define los aspects centrales y de cobro del programa académico.</p>
                                 </div>
-                                <button type="button" onClick={() => guardarCurso(true)} disabled={loading} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
+                                <button id="tour-guardar-borrador" type="button" onClick={() => guardarCurso(true)} disabled={loading} className="flex-shrink-0 whitespace-nowrap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-sm disabled:opacity-50 shadow-md">
                                     {loading ? 'Guardando...' : 'Guardar Borrador'}
                                 </button>
                             </div>

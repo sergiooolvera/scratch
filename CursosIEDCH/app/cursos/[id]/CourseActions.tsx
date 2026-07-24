@@ -318,7 +318,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
         return (
             <div className="w-full space-y-4">
                 {/* Campo de código de referido */}
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                <div id="tour-codigo-referido" className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
                     <label className="flex items-center gap-2 text-sm font-medium text-indigo-700 mb-2">
                         <Tag className="w-4 h-4" />
                         ¿Tienes un código de referido? <span className="text-indigo-400 font-normal">(opcional)</span>
@@ -364,7 +364,7 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div id="tour-metodos-pago" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <button
                         onClick={() => handleComprarStrípe()}
                         disabled={loading}
