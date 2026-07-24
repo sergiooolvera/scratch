@@ -4,6 +4,16 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### ⚙️ Edición de Información de Academias (24 de Julio de 2026)
+- **Botón de Edición en Detalle de Academia:** Se agregó el botón **Editar Academia** con diseño estilizado e icono `Settings` en la parte superior de la página de detalles (`app/profesor/academias/[id]/page.tsx`).
+- **Formulario de Edición Unificado:** Se creó la página de edición (`app/profesor/academias/[id]/editar/page.tsx`) con un formulario unificado y estructurado en secciones:
+  - *Información Básica:* Modificación de nombre, descripción (con contador de 300 caracteres) y categoría.
+  - *Personalización y Estética:* Selección interactiva de colores principales, carga/eliminación de logo y banner en Supabase Storage (bucket `perfiles`), y mensaje de bienvenida personalizado.
+  - *Contacto y Redes Sociales:* Modificación del correo electrónico de contacto obligatorio, teléfono, sitio web y URLs de redes sociales (Facebook, Instagram, LinkedIn y YouTube).
+  - *Acceso y Políticas:* Ajustes de visibilidad (pública o privada con código de acceso autogenerado o personalizado) y permisos de la academia (permitir inscripciones, registro abierto, aprobación manual, foro de discusión y certificados automáticos).
+  - *Enlace (Subdominio):* Campo para editar el identificador único del subdominio de la academia (con validación asíncrona de disponibilidad previa a guardar).
+- **Consistencia y Seguridad:** La página valida en el lado del cliente y servidor que el usuario solicitante sea el propietario legítimo de la academia, controlando las políticas RLS y devolviendo retroalimentación visual en caso de éxito o error.
+
 ### 🔗 Botón de Compartir y Vista Previa Enriquecida de Curso (19 de Julio de 2026)
 - **Componente Interactivo de Cliente:** Creación del componente `ShareButton.tsx` en `app/cursos/[id]/` utilizando `lucide-react` para iconografía moderna.
 - **Acción Dual de Compartido:**

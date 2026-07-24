@@ -12,7 +12,8 @@ import {
     ArrowDown,
     ArrowRight,
     Loader2,
-    Trash2
+    Trash2,
+    Settings
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -141,19 +142,30 @@ export default function AcademiaDetallePage({ params }: PageProps) {
                         <span className="text-slate-600 font-semibold">{academia.nombre}</span>
                     </div>
 
-                    {/* Botón de Eliminar Academia */}
-                    <button
-                        onClick={handleEliminarAcademia}
-                        disabled={eliminando}
-                        className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold transition-all shadow-2xs ${
-                            tieneCursos
-                                ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600 hover:text-red-700'
-                        }`}
-                        title={tieneCursos ? "No puedes eliminar una academia con cursos asociados" : "Eliminar esta academia"}
-                    >
-                        {eliminando ? 'Eliminando...' : 'Eliminar Academia'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {/* Botón de Editar Academia */}
+                        <Link
+                            href={`/profesor/academias/${id}/editar`}
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 hover:text-indigo-700 text-xs font-bold transition-all shadow-2xs"
+                        >
+                            <Settings className="h-3.5 w-3.5" />
+                            Editar Academia
+                        </Link>
+
+                        {/* Botón de Eliminar Academia */}
+                        <button
+                            onClick={handleEliminarAcademia}
+                            disabled={eliminando}
+                            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold transition-all shadow-2xs ${
+                                tieneCursos
+                                    ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600 hover:text-red-700'
+                            }`}
+                            title={tieneCursos ? "No puedes eliminar una academia con cursos asociados" : "Eliminar esta academia"}
+                        >
+                            {eliminando ? 'Eliminando...' : 'Eliminar Academia'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Título Principal */}
