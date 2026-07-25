@@ -123,7 +123,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
 
         // Check if the course requires an exam
         if (curso.requiere_examen) {
-            const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single();
+            const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).is('modulo_id', null).single();
             if (examenRow) {
                 const { data: resultRow } = await supabase
                     .from('ie_resultados_examenes')

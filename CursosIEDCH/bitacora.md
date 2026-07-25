@@ -574,3 +574,14 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/cursos/[id]/examen/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/page.tsx) (Modificado)
   - [app/cursos/[id]/examen/actions.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/actions.ts) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 24 de Julio de 2026*
+
+### 🎓 Corrección de Error 404 y Estatus de Aprobado en Descarga de Constancia (24 de Julio de 2026)
+- **Problema**: Al intentar descargar la constancia de un curso que requiere examen final pero que cuenta con exámenes modulares en la tabla `ie_examenes` (como en el curso "FCE-D"), se producía un error 404 y no permitía ver la página del certificado. Esto ocurría porque la consulta de base de datos `.single()` para obtener el examen devolvía múltiples registros (los modulares y el final), resultando en un error y en la ejecución de `notFound()`. De igual manera, la página informativa del curso no reflejaba correctamente que el alumno aprobó el curso al fallar la consulta bajo el mismo comportamiento.
+- **Solución**: Se actualizó la consulta del examen para la descarga de certificado en [page.tsx (Certificado)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/certificado/page.tsx) y en la página informativa del curso [page.tsx (Detalle Curso)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx) agregando el filtro `.is('modulo_id', null)`. Esto garantiza que únicamente se evalúe el examen final general del curso para el estatus de aprobado y la generación del PDF.
+- **Archivos Modificados**:
+  - [app/cursos/[id]/certificado/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/certificado/page.tsx) (Modificado)
+  - [app/cursos/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)

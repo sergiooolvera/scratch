@@ -61,7 +61,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     let calificacionFinal: number | string = '';
 
     if (curso.requiere_examen) {
-        const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).single()
+        const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).is('modulo_id', null).single()
         if (!examenRow) notFound()
 
         // Verify they actually passed
