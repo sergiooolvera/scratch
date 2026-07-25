@@ -173,6 +173,7 @@ export default async function ExamenContenidoPage({ params }: { params: Promise<
         .from('ie_examenes')
         .select('id, tiempo_limite, seguridad_aumentada, max_cambios_pantalla, intentos_permitidos')
         .eq('curso_id', id)
+        .is('modulo_id', null)
         .single()
 
     if (exmError || !examen) {

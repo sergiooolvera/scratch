@@ -563,3 +563,13 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Archivos Modificados**:
   - [page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/[id]/grupos/[grupoId]/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 24 de Julio de 2026*
+
+### 🚀 Corrección de Acceso a Examen Final en Cursos con Exámenes Modulares (24 de Julio de 2026)
+- **Problema**: Cuando un curso requiere examen final y además tiene exámenes modulares configurados en la tabla `ie_examenes`, la consulta de Supabase para obtener el examen final del curso devolvía múltiples registros (el examen final y todos los exámenes de sus módulos). Esto provocaba que `.single()` fallara en el frontend con el error `Cannot coerce the result to a single JSON object`, impidiendo que los alumnos cargaran la pantalla de evaluación final y arrojando el error de "Evaluación no disponible".
+- **Solución**: Se actualizó la consulta en [page.tsx (Examen)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/page.tsx) agregando el filtro `.is('modulo_id', null)`. Esto asegura que sólo se obtenga el examen final (que no tiene módulo asociado), evitando que falle la consulta de registro único.
+- **Archivos Modificados**:
+  - [app/cursos/[id]/examen/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
