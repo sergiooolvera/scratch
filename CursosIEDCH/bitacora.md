@@ -567,9 +567,10 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 ---
 *Última actualización: 24 de Julio de 2026*
 
-### 🚀 Corrección de Acceso a Examen Final en Cursos con Exámenes Modulares (24 de Julio de 2026)
-- **Problema**: Cuando un curso requiere examen final y además tiene exámenes modulares configurados en la tabla `ie_examenes`, la consulta de Supabase para obtener el examen final del curso devolvía múltiples registros (el examen final y todos los exámenes de sus módulos). Esto provocaba que `.single()` fallara en el frontend con el error `Cannot coerce the result to a single JSON object`, impidiendo que los alumnos cargaran la pantalla de evaluación final y arrojando el error de "Evaluación no disponible".
-- **Solución**: Se actualizó la consulta en [page.tsx (Examen)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/page.tsx) agregando el filtro `.is('modulo_id', null)`. Esto asegura que sólo se obtenga el examen final (que no tiene módulo asociado), evitando que falle la consulta de registro único.
+### 🚀 Corrección de Acceso y Envío de Examen Final en Cursos con Exámenes Modulares (24 de Julio de 2026)
+- **Problema**: Cuando un curso requiere examen final y además tiene exámenes modulares configurados en la tabla `ie_examenes`, la consulta de Supabase para obtener el examen final del curso devolvía múltiples registros (el examen final y todos los exámenes de sus módulos). Esto provocaba que `.single()` fallara tanto en la carga del frontend como en la Server Action de envío (`submitExamen`) con el error `Cannot coerce the result to a single JSON object`, bloqueando la visualización del examen ("Evaluación no disponible") o arrojando el error "Examen no encontrado en la base de datos" al intentar finalizarlo.
+- **Solución**: Se actualizaron las consultas en [page.tsx (Examen)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/page.tsx) y en la Server Action `submitExamen` en [actions.ts (Examen)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/actions.ts) agregando el filtro `.is('modulo_id', null)`. Esto asegura que sólo se obtenga el examen final del curso (que no tiene módulo asociado), previniendo fallas por registros múltiples.
 - **Archivos Modificados**:
   - [app/cursos/[id]/examen/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/page.tsx) (Modificado)
+  - [app/cursos/[id]/examen/actions.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/actions.ts) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)

@@ -17,6 +17,7 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
         .from('ie_examenes')
         .select('id, min_aprobacion')
         .eq('curso_id', cursoId)
+        .is('modulo_id', null)
         .single()
 
     if (exmError || !examen) {
