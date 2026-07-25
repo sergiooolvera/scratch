@@ -64,8 +64,10 @@ function ValidacionContent() {
                     }
                 }
 
-                const { data: uData } = await supabase.from('ie_profiles').select('nombre').eq('id', examenData.user_id).single()
-                userData = uData
+                const { data: uData } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', examenData.user_id).single()
+                if (uData) {
+                    userData = { nombre: `${uData.nombre || ''} ${uData.apellido_paterno || ''} ${uData.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() }
+                }
             } else {
                 // Si no se encuentra, buscamos en ie_examenes_usuario (Constancias)
                 const { data: constanciaData, error: constError } = await supabase
@@ -85,8 +87,10 @@ function ValidacionContent() {
                     const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion, competencias').eq('id', constanciaData.curso_id).single()
                     cursoInfoData = cursoData
 
-                    const { data: uData } = await supabase.from('ie_profiles').select('nombre').eq('id', constanciaData.user_id).single()
-                    userData = uData
+                    const { data: uData } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', constanciaData.user_id).single()
+                    if (uData) {
+                        userData = { nombre: `${uData.nombre || ''} ${uData.apellido_paterno || ''} ${uData.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() }
+                    }
                 }
             }
 
@@ -138,8 +142,10 @@ function ValidacionContent() {
                     const { data: cursoData } = await supabase.from('ie_cursos').select('titulo, vigencia_anos, duracion, competencias').eq('id', compraData.curso_id).single()
                     cursoInfoData = cursoData
 
-                    const { data: uData } = await supabase.from('ie_profiles').select('nombre').eq('id', compraData.user_id).single()
-                    userData = uData
+                    const { data: uData } = await supabase.from('ie_profiles').select('nombre, apellido_paterno, apellido_materno').eq('id', compraData.user_id).single()
+                    if (uData) {
+                        userData = { nombre: `${uData.nombre || ''} ${uData.apellido_paterno || ''} ${uData.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() }
+                    }
                 }
             }
 
@@ -149,7 +155,7 @@ function ValidacionContent() {
                 
                 const { data: actData, error: actError } = await supabase
                     .from('ie_actividad_institucion')
-                    .select('*, ie_profiles:user_id(nombre)')
+                    .select('*, ie_profiles:user_id(nombre, apellido_paterno, apellido_materno)')
                     .gte('id', `${idPart}-0000-0000-0000-000000000000`)
                     .lte('id', `${idPart}-ffff-ffff-ffff-ffffffffffff`)
                     .limit(1)
@@ -168,7 +174,14 @@ function ValidacionContent() {
                         duracion: actData.duracion,
                         vigencia_anos: 5
                     }
-                    userData = { nombre: actData.ie_profiles?.nombre || actData.institucion_acredita || 'Institución' }
+                    let nombreAct = 'Institución'
+                    if (actData.ie_profiles) {
+                        const p = actData.ie_profiles as any
+                        nombreAct = `${p.nombre || ''} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.replace(/\s+/g, ' ').trim()
+                    } else if (actData.institucion_acredita) {
+                        nombreAct = actData.institucion_acredita
+                    }
+                    userData = { nombre: nombreAct }
                 }
             }
 

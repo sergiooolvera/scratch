@@ -585,3 +585,13 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/cursos/[id]/certificado/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/certificado/page.tsx) (Modificado)
   - [app/cursos/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 24 de Julio de 2026*
+
+### 👤 Nombre Completo en Validación de Constancias (24 de Julio de 2026)
+- **Problema**: En la pantalla de validación de folios (`/validar`), los nombres de los titulares de las constancias o certificados se mostraban recortados (únicamente el primer nombre, p. ej., "KAREN YEDANI"), debido a que la consulta a la tabla `ie_profiles` seleccionaba únicamente la columna `nombre`.
+- **Solución**: Se actualizaron las cuatro consultas que obtienen información de `ie_profiles` en [page.tsx (Validar)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/validar/page.tsx) para incluir los campos `nombre`, `apellido_paterno` y `apellido_materno`, y se concatenaron de forma limpia para reflejar el nombre completo del alumno en los resultados de la validación.
+- **Archivos Modificados**:
+  - [app/validar/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/validar/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
