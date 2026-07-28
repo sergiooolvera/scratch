@@ -233,6 +233,24 @@ export default function CrearAcademiaPage() {
                 return
             }
 
+            // Consultar campos mínimos de validación de identidad y datos de pago
+            const { data: checkProfile } = await supabase
+                .from('ie_profiles')
+                .select('rfc, constancia_situacion_fiscal, telefono, banco, clabe')
+                .eq('id', user.id)
+                .single()
+
+            const rfcCompleto = checkProfile?.rfc?.trim()
+            const telefonoCompleto = checkProfile?.telefono?.trim()
+            const bancoCompleto = checkProfile?.banco?.trim()
+            const clabeCompleta = checkProfile?.clabe?.trim()
+
+            if (!rfcCompleto || !telefonoCompleto || !bancoCompleto || !clabeCompleta) {
+                setDbError('Antes de crear una academia, por seguridad y cumplimiento, debes registrar tu RFC y tus datos de contacto y pago (Teléfono, Banco, CLABE) en tu Perfil.')
+                setSaving(false)
+                return
+            }
+
             let logoUrl = null
             let bannerUrl = null
 

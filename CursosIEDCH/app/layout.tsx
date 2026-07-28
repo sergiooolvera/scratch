@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Portal Cursos Grupo EGAC',
   description: 'Sistema Nacional de Evaluación y Registro Laboral',
+  other: {
+    google: 'notranslate',
+  }
 }
 
 export default function RootLayout({
@@ -18,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    <html lang="es" translate="no" className="notranslate">
       <body className={inter.className}>
         <Navbar />
         <main>{children}</main>

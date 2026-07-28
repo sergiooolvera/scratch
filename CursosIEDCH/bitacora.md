@@ -595,3 +595,46 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Archivos Modificados**:
   - [app/validar/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/validar/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 27 de Julio de 2026*
+
+### 👤 Validación de Identidad de Instructores y Organizaciones (27 de Julio de 2026)
+- **Base de Datos & Esquema**:
+  - Se creó la migración [agregar_campos_perfil_grill.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_campos_perfil_grill.sql) agregando campos para Instructor (`nivel_academico`, `anos_experiencia`, `presentacion_profesional`) y Organización (`organizacion_tipo`, `representante_nombre`, `representante_cargo`, `descripcion_institucional`) a `ie_profiles`.
+  - Se actualizó el esquema general [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) agregando los campos y el índice de rendimiento `idx_ie_profiles_rol`.
+- **Backend**:
+  - Se actualizó [route.ts (Perfil API)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/perfil/route.ts) para retornar las nuevas columnas en la consulta select.
+- **Interfaz de Perfil**:
+  - Se modificó [page.tsx (Perfil)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/perfil/page.tsx) para renderizar el formulario extendido de instructores e instituciones con validaciones y opción "Otro".
+  - Se eliminó el atributo `required` en los campos bancarios/identidad a nivel HTML para permitir la captura parcial.
+  - Se añadió el botón **"Agregar en otro momento"** para omitir y continuar.
+- **Modal de Bloqueo e Intercepción**:
+  - Se creó [PerfilCheckModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/PerfilCheckModal.tsx) para dar la bienvenida y bloquear.
+  - Se creó [DashboardCrearBtn.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/DashboardCrearBtn.tsx) para interceptar clics e invocar el modal si el perfil está incompleto.
+  - Se integró la verificación server-side en [page.tsx (Profesor)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx).
+- **Validaciones de Revisión/Aprobación**:
+  - Se implementó la verificación de perfil completo al enviar a revisión en [subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx), [editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx) y en la creación de academias [crear/page.tsx (Academia)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/institucion/crear/page.tsx).
+- **Archivos Modificados y Creados**:
+  - [agregar_campos_perfil_grill.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_campos_perfil_grill.sql) (Nuevo)
+  - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) (Modificado)
+  - [app/api/perfil/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/perfil/route.ts) (Modificado)
+  - [app/perfil/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/perfil/page.tsx) (Modificado)
+  - [components/PerfilCheckModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/PerfilCheckModal.tsx) (Nuevo)
+  - [components/DashboardCrearBtn.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/DashboardCrearBtn.tsx) (Nuevo)
+  - [app/profesor/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx) (Modificado)
+  - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
+  - [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx) (Modificado)
+  - [app/institucion/crear/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/institucion/crear/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 27 de Julio de 2026*
+
+### 🛠️ Corrección de Duplicación Visual de Módulos en el Creador y Editor de Cursos (27 de Julio de 2026)
+- **Problema**: Al colapsar o editar los módulos (clases) en el formulario de creación (`subir-curso/page.tsx`) y edición (`editar-curso/[id]/page.tsx`), se producía una duplicación visual encimada y desfasada de los checkboxes e inputs (como tareas, cuestionarios y puzles) en el navegador del usuario. Esto ocurría porque el div contenedor de los detalles del módulo (con la clase `grid grid-cols-1 gap-6`) no se cerraba adecuadamente antes del cierre de la tarjeta del módulo, provocando un desbalance de etiquetas HTML en el DOM de React.
+- **Solución**: Se agregó la etiqueta de cierre `</div>` faltante justo antes del cierre de la tarjeta de cada módulo (`modulos.map`) en ambos archivos. Esto corrige el árbol DOM de forma fidedigna y evita discrepancias de reconciliación en React que duplicaban elementos interactivos.
+- **Archivos Modificados**:
+  - [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx) (Modificado)
+  - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)

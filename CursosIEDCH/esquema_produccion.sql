@@ -42,6 +42,13 @@ CREATE TABLE IF NOT EXISTS public.ie_profiles (
     solicitud_mas_intentos_gamma boolean DEFAULT false,
     verificado boolean DEFAULT false,
     permisos_adminjr jsonb DEFAULT '[]'::jsonb,
+    nivel_academico text,
+    anos_experiencia text,
+    presentacion_profesional character varying(250),
+    organizacion_tipo text,
+    representante_nombre text,
+    representante_cargo text,
+    descripcion_institucional character varying(300),
     CONSTRAINT ie_profiles_rol_check CHECK (rol IN ('alumno', 'profesor', 'vendedor', 'admin', 'financiero', 'institucion', 'instructor'))
 );
 
@@ -487,6 +494,7 @@ ALTER TABLE public.ie_comentarios
     ADD CONSTRAINT fk_comentarios_user FOREIGN KEY (user_id) REFERENCES public.ie_profiles(id) ON DELETE SET NULL;
 
 -- Índices de rendimiento
+CREATE INDEX IF NOT EXISTS idx_ie_profiles_rol ON public.ie_profiles(rol);
 CREATE INDEX IF NOT EXISTS idx_ie_comentarios_user_id ON public.ie_comentarios(user_id);
 CREATE INDEX IF NOT EXISTS idx_ie_comentarios_created_at ON public.ie_comentarios(created_at);
 

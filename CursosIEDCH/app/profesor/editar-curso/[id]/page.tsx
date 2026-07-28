@@ -1203,6 +1203,30 @@ const generationId = data.generationId;
             return
         }
 
+        // Consultar campos mínimos de validación de identidad y datos de pago
+        const { data: checkProfile } = await supabase
+            .from('ie_profiles')
+            .select('rfc, constancia_situacion_fiscal, telefono, banco, clabe')
+            .eq('id', user.id)
+            .single()
+
+        if (!esBorrador) {
+            const rfcCompleto = checkProfile?.rfc?.trim()
+            const telefonoCompleto = checkProfile?.telefono?.trim()
+            const bancoCompleto = checkProfile?.banco?.trim()
+            const clabeCompleta = checkProfile?.clabe?.trim()
+
+            if (!rfcCompleto || !telefonoCompleto || !bancoCompleto || !clabeCompleta) {
+                setModalMessage({
+                    title: 'Perfil Incompleto para Revisión',
+                    content: 'Antes de enviar tu curso a revisión, por seguridad y cumplimiento, debes registrar tu RFC y tus datos de contacto y pago (Teléfono, Banco, CLABE) en tu Perfil.',
+                    type: 'error'
+                });
+                setSaving(false);
+                return;
+            }
+        }
+
         // Validate general course fields
         const precioCurso = Number(formData.precio) || 0;
         if (precioCurso > 0 && precioCurso < 199) {

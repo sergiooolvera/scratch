@@ -21,7 +21,7 @@ export async function GET() {
 
         const { data: profile, error } = await supabaseAdmin
             .from('ie_profiles')
-            .select('id, nombre, apellido_paterno, apellido_materno, rol, referral_code, activo, telefono, banco, clabe, datos_bancarios_capturados, solicitud_cambio_datos, rfc, constancia_situacion_fiscal, fotografia_perfil, identidad_validada, correo_adicional, profesion_especialidad, institucion_labora, estado_municipio, cedula_profesional, clave_cct, limite_generaciones_gamma, solicitud_mas_intentos_gamma, verificado')
+            .select('id, nombre, apellido_paterno, apellido_materno, rol, referral_code, activo, telefono, banco, clabe, datos_bancarios_capturados, solicitud_cambio_datos, rfc, constancia_situacion_fiscal, fotografia_perfil, identidad_validada, correo_adicional, profesion_especialidad, institucion_labora, estado_municipio, cedula_profesional, clave_cct, limite_generaciones_gamma, solicitud_mas_intentos_gamma, verificado, nivel_academico, anos_experiencia, presentacion_profesional, organizacion_tipo, representante_nombre, representante_cargo, descripcion_institucional')
             .eq('id', user.id)
             .single()
 

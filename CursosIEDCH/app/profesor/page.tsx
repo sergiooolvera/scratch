@@ -18,6 +18,7 @@ import {
     ArrowUpRight,
     User
 } from 'lucide-react'
+import DashboardCrearBtn from '@/components/DashboardCrearBtn'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,28 @@ export default async function ProfesorDashboardPage() {
     const rolesAutorizados = ['admin', 'instructor', 'capacitador', 'institucion']
     if (!rolesAutorizados.includes(rol)) {
         redirect('/dashboard')
+    }
+
+    // Calcular si el perfil del instructor o de la institución está incompleto
+    let perfilIncompleto = false
+    if (rol === 'institucion') {
+        // Campos mínimos obligatorios para institución/organización
+        perfilIncompleto = !profile?.nombre || 
+                           !profile?.clave_cct || 
+                           !profile?.organizacion_tipo || 
+                           !profile?.correo_adicional || 
+                           !profile?.telefono || 
+                           !profile?.representante_nombre || 
+                           !profile?.representante_cargo || 
+                           !profile?.descripcion_institucional
+    } else {
+        // Campos mínimos obligatorios para instructor/profesor
+        perfilIncompleto = !profile?.nombre || 
+                           !profile?.apellido_paterno || 
+                           !profile?.profesion_especialidad || 
+                           !profile?.nivel_academico || 
+                           !profile?.anos_experiencia || 
+                           !profile?.presentacion_profesional
     }
 
     // --- CONSULTAS A BASE DE DATOS PARA MÉTRICAS REALES ---
@@ -332,12 +355,14 @@ export default async function ProfesorDashboardPage() {
                             <p className="text-sm text-emerald-800 leading-relaxed max-w-xs">
                                 Crea tu academia con tu identidad, agrega instructores y ofrece programas.
                             </p>
-                            <Link 
+                            <DashboardCrearBtn 
                                 href={['institucion', 'capacitador', 'instructor', 'admin'].includes(rol) ? "/institucion/crear" : "#"}
                                 className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-xs transition-colors"
+                                perfilIncompleto={perfilIncompleto}
+                                rol={rol}
                             >
                                 Crear Academia <PlusCircle className="h-4 w-4" />
-                            </Link>
+                            </DashboardCrearBtn>
                         </div>
                         {/* Ilustración de la Escuela */}
                         <div className="relative w-full sm:w-36 h-28 flex items-end justify-center sm:justify-end select-none pointer-events-none transition-transform duration-300 group-hover:scale-105">
@@ -364,12 +389,14 @@ export default async function ProfesorDashboardPage() {
                             <p className="text-sm text-indigo-800 leading-relaxed max-w-xs">
                                 Diseña y publica cursos de forma rápida y sencilla.
                             </p>
-                            <Link 
+                            <DashboardCrearBtn 
                                 href="/profesor/subir-curso"
                                 className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-xs transition-colors"
+                                perfilIncompleto={perfilIncompleto}
+                                rol={rol}
                             >
                                 Crear Curso <PlusCircle className="h-4 w-4" />
-                            </Link>
+                            </DashboardCrearBtn>
                         </div>
                         {/* Ilustración de la Laptop y el Birrete */}
                         <div className="relative w-full sm:w-36 h-28 flex items-end justify-center sm:justify-end select-none pointer-events-none transition-transform duration-300 group-hover:scale-105">
