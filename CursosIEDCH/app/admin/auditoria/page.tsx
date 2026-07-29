@@ -19,7 +19,8 @@ import {
   Activity,
   User,
   ShieldAlert,
-  Database
+  Database,
+  Info
 } from 'lucide-react'
 
 interface AuditLog {
@@ -222,12 +223,12 @@ export default function AdminAuditoriaPage() {
 
   // Deducir dispositivo básico del user agent
   const renderDeviceIcon = (userAgent: string | null) => {
-    if (!userAgent) return <Laptop className="w-4 h-4 text-slate-400" />
+    if (!userAgent) return <span title="Desconocido"><Laptop className="w-4 h-4 text-slate-400" /></span>
     const ua = userAgent.toLowerCase()
     if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
-      return <Smartphone className="w-4 h-4 text-slate-400" title={userAgent} />
+      return <span title={userAgent}><Smartphone className="w-4 h-4 text-slate-400" /></span>
     }
-    return <Laptop className="w-4 h-4 text-slate-400" title={userAgent} />
+    return <span title={userAgent}><Laptop className="w-4 h-4 text-slate-400" /></span>
   }
 
   // Estadísticas rápidas del set actual
