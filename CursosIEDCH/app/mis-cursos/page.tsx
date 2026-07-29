@@ -14,7 +14,7 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
 
     const { data: rawCursos } = await supabase
         .from('ie_cursos')
-        .select('*, profesor:ie_profiles!creado_por(nombre, fotografia_perfil, verificado)')
+        .select('*, profesor:ie_profiles!creado_por(nombre, apellido_paterno, apellido_materno, fotografia_perfil, verificado, rol, clave_cct, organizacion_tipo, correo_adicional, telefono, representante_nombre, representante_cargo, descripcion_institucional, profesion_especialidad, nivel_academico, anos_experiencia, presentacion_profesional, estado_municipio)')
         .eq('estado', 'aprobado')
 
     const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';

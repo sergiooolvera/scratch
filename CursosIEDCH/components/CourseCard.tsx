@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Sparkles, User, Heart } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import CreatorProfileModal from './CreatorProfileModal'
 
 interface Course {
     id: string
@@ -16,10 +17,52 @@ interface Course {
     imagen_url?: string
     profesor?: {
         nombre: string
+        apellido_paterno?: string
+        apellido_materno?: string
         fotografia_perfil?: string
         verificado?: boolean
+        rol?: string
+        clave_cct?: string
+        organizacion_tipo?: string
+        correo_adicional?: string
+        telefono?: string
+        representante_nombre?: string
+        representante_cargo?: string
+        descripcion_institucional?: string
+        profesion_especialidad?: string
+        nivel_academico?: string
+        anos_experiencia?: string | number
+        presentacion_profesional?: string
+        estado_municipio?: string
     }
 }
+
+const isProfileComplete = (prof: Course['profesor']) => {
+    if (!prof) return false
+    const rol = prof.rol || 'instructor'
+    if (rol === 'institucion') {
+        return !!(
+            prof.nombre &&
+            prof.clave_cct &&
+            prof.organizacion_tipo &&
+            prof.correo_adicional &&
+            prof.telefono &&
+            prof.representante_nombre &&
+            prof.representante_cargo &&
+            prof.descripcion_institucional
+        )
+    } else {
+        return !!(
+            prof.nombre &&
+            prof.apellido_paterno &&
+            prof.profesion_especialidad &&
+            prof.nivel_academico &&
+            prof.anos_experiencia &&
+            prof.presentacion_profesional
+        )
+    }
+}
+
 
 const catLabels: Record<string, { label: string; bg: string; text: string; border: string }> = {
     salud: { label: '🩺 Salud', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
@@ -32,11 +75,20 @@ const catLabels: Record<string, { label: string; bg: string; text: string; borde
     arte: { label: '🎨 Arte y Cultura', bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
     educacion: { label: '📚 Educación', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
 }
-
 export default function CourseCard({ course, isPagado }: { course: Course; isPagado?: boolean }) {
     const isSuper = !!course.es_super_curso
     const cat = catLabels[course.categoria || 'desarrollo'] || catLabels.desarrollo
     const [isWished, setIsWished] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const canShowProfile = isProfileComplete(course.profesor)
+
+    const handleProfileClick = (e: React.MouseEvent) => {
+        if (canShowProfile) {
+            e.preventDefault()
+            e.stopPropagation()
+            setIsModalOpen(true)
+        }
+    }
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -119,8 +171,12 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                         </p>
 
                         {/* Perfil del Profesor */}
-                        <div className="mt-4 flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center border border-zinc-200 shadow-xs flex-shrink-0">
+                        <div 
+                            onClick={handleProfileClick}
+                            className={`mt-4 flex items-center gap-2.5 ${canShowProfile ? 'cursor-pointer group/prof' : ''}`}
+                            title={canShowProfile ? 'Ver perfil del creador' : undefined}
+                        >
+                            <div className={`h-8 w-8 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center border border-zinc-200 shadow-xs flex-shrink-0 transition-transform duration-200 ${canShowProfile ? 'group-hover/prof:scale-105' : ''}`}>
                                 {course.profesor?.fotografia_perfil ? (
                                     <img
                                         src={course.profesor.fotografia_perfil}
@@ -131,7 +187,7 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                                     <User className="h-4.5 w-4.5 text-zinc-500" />
                                 )}
                             </div>
-                            <span className={`text-sm font-medium flex items-center gap-1 ${isSuper ? 'text-indigo-700 font-semibold' : 'text-zinc-700'}`}>
+                            <span className={`text-sm font-medium flex items-center gap-1 transition-colors duration-200 ${canShowProfile ? 'group-hover/prof:text-indigo-600' : ''} ${isSuper ? 'text-indigo-700 font-semibold' : 'text-zinc-700'}`}>
                                 <span>{course.profesor?.nombre || course.instructor || 'Instructor'}</span>
                                 {course.profesor?.verificado && (
                                     <span className="text-blue-500 flex-shrink-0" title="Verificado">
@@ -189,6 +245,14 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                     </Link>
                 )}
             </div>
+
+            {canShowProfile && (
+                <CreatorProfileModal 
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    profile={course.profesor || null}
+                />
+            )}
         </div>
     )
 }

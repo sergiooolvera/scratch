@@ -679,3 +679,22 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
 
 
+---
+*Última actualización: 29 de Julio de 2026*
+
+### 👤 Modal Elegante del Perfil del Creador de Curso al Clic del Alumno (29 de Julio de 2026)
+- **Visualización Condicional**:
+  - Se implementó un modal de perfil del creador del curso (`CreatorProfileModal.tsx`) que se despliega únicamente si el profesor o institución ha completado sus datos mínimos requeridos. Si su perfil está incompleto, el avatar o nombre del creador en la tarjeta del curso no es interactivo.
+- **Detalle de Datos en el Modal**:
+  - Para **Instructores**: Se muestra fotografía de perfil, especialidad/profesión, nivel académico, años de experiencia, biografía profesional, ubicación y datos de contacto opcionales.
+  - Para **Instituciones**: Se muestra logotipo/avatar, tipo de organización, clave CCT, nombre y cargo del representante legal, descripción institucional y datos de contacto opcionales.
+  - El diseño cuenta con efectos premium de desenfoque de vidrio (glassmorphism), cabecera con degradado distintivo según rol e insignia de verificación.
+- **Optimización de Carga**:
+  - Se modificaron las consultas de Supabase para obtener todos los campos de perfil del creador en las tarjetas de cursos de `/mis-cursos`, `/dashboard` y `/deseos` de forma anticipada. Esto permite evaluar la completitud del perfil en el cliente de manera instantánea y sin retrasos de carga (no requiere fetch al hacer clic).
+- **Archivos Modificados y Creados**:
+  - [components/CreatorProfileModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CreatorProfileModal.tsx) (Nuevo)
+  - [components/CourseCard.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx) (Modificado)
+  - [app/mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx) (Modificado)
+  - [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) (Modificado)
+  - [app/deseos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/deseos/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
