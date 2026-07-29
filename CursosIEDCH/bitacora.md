@@ -691,10 +691,13 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - El diseño cuenta con efectos premium de desenfoque de vidrio (glassmorphism), cabecera con degradado distintivo según rol e insignia de verificación.
 - **Optimización de Carga**:
   - Se modificaron las consultas de Supabase para obtener todos los campos de perfil del creador en las tarjetas de cursos de `/mis-cursos`, `/dashboard` y `/deseos` de forma anticipada. Esto permite evaluar la completitud del perfil en el cliente de manera instantánea y sin retrasos de carga (no requiere fetch al hacer clic).
+- **Corrección de Despliegue (Build en Vercel)**:
+  - Se solucionaron errores preexistentes de compilación de TypeScript en el panel de auditoría ([app/admin/auditoria/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/auditoria/page.tsx)) que impedían el despliegue automático: se importó el icono `Info` y se envolvieron los iconos de Lucide (`Smartphone`, `Laptop`) con elementos `<span>` para resolver el error de tipado con la propiedad `title`.
 - **Archivos Modificados y Creados**:
   - [components/CreatorProfileModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CreatorProfileModal.tsx) (Nuevo)
   - [components/CourseCard.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx) (Modificado)
   - [app/mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx) (Modificado)
   - [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) (Modificado)
   - [app/deseos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/deseos/page.tsx) (Modificado)
+  - [app/admin/auditoria/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/auditoria/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
