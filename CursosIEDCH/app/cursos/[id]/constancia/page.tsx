@@ -161,14 +161,13 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
             pdf.save(`Constancia_${curso?.titulo.replace(/\s+/g, '_')}.pdf`);
 
             // Log de auditoría
-            try {
-                await supabase.from('ie_auditoria_logs').insert({
-                    user_id: userId,
-                    evento: 'CONSTANCIA_DESCARGADA',
-                    detalles: { curso_id: cursoId, titulo_curso: curso?.titulo, tipo: 'constancia' }
-                })
-            } catch (err) {
-                console.error('Error guardando log de descarga de constancia:', err)
+            const { error: logError } = await supabase.from('ie_auditoria_logs').insert({
+                user_id: userId,
+                evento: 'CONSTANCIA_DESCARGADA',
+                detalles: { curso_id: cursoId, titulo_curso: curso?.titulo, tipo: 'constancia' }
+            })
+            if (logError) {
+                console.error('Error guardando log de descarga de constancia en Supabase:', logError)
             }
         } catch (error: any) {
             console.error('Error generando PDF', error)
@@ -201,14 +200,13 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
             pdf.save(`Microcredencial_${curso?.titulo.replace(/\s+/g, '_')}.pdf`);
 
             // Log de auditoría
-            try {
-                await supabase.from('ie_auditoria_logs').insert({
-                    user_id: userId,
-                    evento: 'CONSTANCIA_DESCARGADA',
-                    detalles: { curso_id: cursoId, titulo_curso: curso?.titulo, tipo: 'microcredencial' }
-                })
-            } catch (err) {
-                console.error('Error guardando log de descarga de microcredencial:', err)
+            const { error: logError } = await supabase.from('ie_auditoria_logs').insert({
+                user_id: userId,
+                evento: 'CONSTANCIA_DESCARGADA',
+                detalles: { curso_id: cursoId, titulo_curso: curso?.titulo, tipo: 'microcredencial' }
+            })
+            if (logError) {
+                console.error('Error guardando log de descarga de microcredencial en Supabase:', logError)
             }
         } catch (error: any) {
             console.error('Error generando PDF de la microcredencial', error)

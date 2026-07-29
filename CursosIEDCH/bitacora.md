@@ -656,10 +656,18 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - **Aprobaciones Manuales**: Se loguearon los eventos `'PAGO_MANUAL_APROBADO'` y `'PAGO_MANUAL_RECHAZADO'` en [route.ts (Approve-payment)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts) identificando al administrador responsable de la acción.
   - **Descargas de Constancias**: Se registró `'CONSTANCIA_DESCARGADA'` en [page.tsx (Constancias)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/constancia/page.tsx) para la constancia ordinaria y la microcredencial.
   - **Avance de Clases**: Se logueó el avance del alumno `'MODULO_VISTO'` en [PlaylistClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/contenido/PlaylistClient.tsx).
+- **Panel Administrativo (Nueva Vista de Logs)**:
+  - **Barra de Navegación**: Se modificó [AdminNavbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AdminNavbar.tsx) para integrar la pestaña "Logs de Auditoría".
+  - **API del Servidor**: Se creó el endpoint [route.ts (API Auditoría)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/admin/auditoria/route.ts) con validación de roles, consultas unificadas e integración segura de correos de Supabase Auth.
+  - **Interfaz de Filtros y Visor JSON**: Se creó la página interactiva [page.tsx (UI Auditoría)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/auditoria/page.tsx) con filtros avanzados de fecha, usuario y eventos, tabla con badges y visor modal detallado de metadatos.
 - **Archivos Modificados y Creados**:
   - [crear_tabla_auditoria_logs.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_tabla_auditoria_logs.sql) (Nuevo)
   - [run_migration_auditoria.js](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/run_migration_auditoria.js) (Nuevo)
   - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) (Modificado)
+  - [components/Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) (Modificado)
+  - [components/AdminNavbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AdminNavbar.tsx) (Modificado)
+  - [app/api/admin/auditoria/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/admin/auditoria/route.ts) (Nuevo)
+  - [app/admin/auditoria/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/auditoria/page.tsx) (Nuevo)
   - [app/layout.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/layout.tsx) (Modificado)
   - [app/login/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/login/page.tsx) (Modificado)
   - [app/api/auth/master/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/auth/master/route.ts) (Modificado)
@@ -669,4 +677,5 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/cursos/[id]/constancia/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/constancia/page.tsx) (Modificado)
   - [app/cursos/[id]/contenido/PlaylistClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/contenido/PlaylistClient.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
 

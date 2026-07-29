@@ -12,7 +12,8 @@ import {
     CreditCard, 
     FileSpreadsheet, 
     BarChart3,
-    MessageSquare
+    MessageSquare,
+    History
 } from 'lucide-react'
 
 interface AdminNavbarProps {
@@ -39,6 +40,7 @@ export default function AdminNavbar({ rol, permisos }: AdminNavbarProps) {
         { id: 'solicitudes', label: 'Solicitudes Ajuste', href: '/admin/solicitudes', icon: FileSpreadsheet },
         { id: 'comentarios', label: 'Comentarios', href: '/admin/comentarios', icon: MessageSquare },
         { id: 'actividad', label: 'Estadísticas', href: '/admin/actividad', icon: BarChart3 },
+        { id: 'auditoria', label: 'Logs de Auditoría', href: '/admin/auditoria', icon: History },
     ]
 
     const activeItems = menuItems.filter(item => hasAccess(item.id))

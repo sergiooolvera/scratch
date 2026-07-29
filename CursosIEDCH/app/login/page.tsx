@@ -63,14 +63,13 @@ function LoginForm() {
             setError(traducirErrorAuth(error.message))
             setLoading(false)
         } else {
-            try {
-                await supabase.from('ie_auditoria_logs').insert({
-                    user_id: data.user?.id,
-                    evento: 'INICIO_SESION',
-                    detalles: { email, metodo: 'contrasena' }
-                })
-            } catch (err) {
-                console.error('Error guardando log de inicio de sesión:', err)
+            const { error: logError } = await supabase.from('ie_auditoria_logs').insert({
+                user_id: data.user?.id,
+                evento: 'INICIO_SESION',
+                detalles: { email, metodo: 'contrasena' }
+            })
+            if (logError) {
+                console.error('Error guardando log de inicio de sesión en Supabase:', logError)
             }
             router.push(nextUrl)
         }

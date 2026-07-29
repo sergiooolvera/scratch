@@ -632,3 +632,23 @@ ALTER TABLE public.ie_auditoria_logs
 CREATE INDEX IF NOT EXISTS idx_ie_auditoria_logs_user_id ON public.ie_auditoria_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_ie_auditoria_logs_created_at ON public.ie_auditoria_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_ie_auditoria_logs_evento ON public.ie_auditoria_logs(evento);
+
+-- Habilitar Row Level Security (RLS)
+ALTER TABLE public.ie_auditoria_logs ENABLE ROW LEVEL SECURITY;
+
+-- Política para permitir que cualquier usuario (incluso anónimos o recién logueados) inserte logs
+CREATE POLICY "Permitir insercion de logs de auditoria a todos" 
+ON public.ie_auditoria_logs 
+FOR INSERT 
+WITH CHECK (true);
+
+-- Política para restringir la lectura de los logs únicamente al rol de administrador y adminjr
+CREATE POLICY "Permitir lectura de logs solo a administradores" 
+ON public.ie_auditoria_logs 
+FOR SELECT 
+USING (
+    auth.uid() IN (
+        SELECT id FROM public.ie_profiles 
+        WHERE rol = 'admin' OR rol = 'adminjr'
+    )
+);

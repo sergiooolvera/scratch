@@ -894,18 +894,17 @@ export default function PlaylistClient({
 
         if (!error) {
             // Log de auditoría
-            try {
-                await supabase.from('ie_auditoria_logs').insert({
-                    user_id: userId,
-                    evento: 'MODULO_VISTO',
-                    detalles: {
-                        curso_id: cursoId,
-                        modulo_id: currentId,
-                        titulo_modulo: playlist[currentIndex]?.titulo || `Módulo ${currentIndex + 1}`
-                    }
-                })
-            } catch (err) {
-                console.error('Error guardando log de módulo visto:', err)
+            const { error: logError } = await supabase.from('ie_auditoria_logs').insert({
+                user_id: userId,
+                evento: 'MODULO_VISTO',
+                detalles: {
+                    curso_id: cursoId,
+                    modulo_id: currentId,
+                    titulo_modulo: playlist[currentIndex]?.titulo || `Módulo ${currentIndex + 1}`
+                }
+            })
+            if (logError) {
+                console.error('Error guardando log de módulo visto en Supabase:', logError)
             }
 
             const updatedVistos = modulosVistos.includes(currentId) 

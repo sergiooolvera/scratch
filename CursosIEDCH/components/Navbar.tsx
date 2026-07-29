@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText, ShieldCheck, Ticket, Store, CreditCard, FileSpreadsheet, BarChart3, Home, HelpCircle } from 'lucide-react'
+import { LogOut, GraduationCap, LayoutDashboard, UserPlus, Users, BookOpen, BadgeCheck, MessageSquare, User, ChevronDown, Menu, X, Landmark, HandCoins, Building2, FolderHeart, Plus, ClipboardList, FileText, ShieldCheck, Ticket, Store, CreditCard, FileSpreadsheet, BarChart3, Home, HelpCircle, History } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 import OnboardingTour from './OnboardingTour'
 
@@ -321,6 +321,11 @@ export default function Navbar() {
                                                                   <BarChart3 className="h-4 w-4 text-gray-400" /> Estadísticas
                                                               </Link>
                                                           )}
+                                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('auditoria')) && (
+                                                              <Link href="/admin/auditoria" onClick={() => setIsAdminMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50/60 hover:text-blue-600 rounded-lg transition-colors">
+                                                                  <History className="h-4 w-4 text-gray-400" /> Logs de Auditoría
+                                                              </Link>
+                                                          )}
                                                       </div>
                                                   )}
                                               </div>
@@ -574,6 +579,9 @@ export default function Navbar() {
                                          )}
                                          {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('actividad')) && (
                                              <Link href="/admin/actividad" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Estadísticas</Link>
+                                         )}
+                                         {(profile?.rol === 'admin' || profile?.permisos_adminjr?.includes('auditoria')) && (
+                                             <Link href="/admin/auditoria" onClick={() => setIsMenuOpen(false)} className="block pl-10 pr-4 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 border-l-2 border-transparent hover:border-blue-500">Logs de Auditoría</Link>
                                          )}
                                      </div>
                                  )}
