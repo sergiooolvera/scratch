@@ -70,6 +70,17 @@ export async function POST(req: Request) {
                 console.error("Error guardando créditos de institución en DB:", error);
                 throw new Error("Database Error");
             }
+
+            // Log de auditoría
+            try {
+                await supabaseAdmin.from('ie_auditoria_logs').insert({
+                    user_id: userId,
+                    evento: 'COMPRA_PLAN_INSTITUCION',
+                    detalles: { plan_id: planId, creditos: creditosAComprar }
+                })
+            } catch (err) {
+                console.error('Error guardando log de compra de plan de institucion:', err)
+            }
             console.log(`Plan ${planId} acreditado para Institución ${userId}. (+${creditosAComprar} créditos)`);
             return;
         }
@@ -113,6 +124,17 @@ export async function POST(req: Request) {
             if (error) {
                 console.error("Error guardando compra en DB:", error);
                 throw new Error("Database Error");
+            }
+
+            // Log de auditoría
+            try {
+                await supabaseAdmin.from('ie_auditoria_logs').insert({
+                    user_id: userId,
+                    evento: 'COMPRA_CURSO_STRIPE',
+                    detalles: { curso_id: cursoId, monto: montoPagado, pago_completo: pagoCompleto }
+                })
+            } catch (err) {
+                console.error('Error guardando log de compra de curso por Stripe:', err)
             }
             console.log(`Compra registrada en DB: User ${userId}, Curso ${cursoId}`);
 

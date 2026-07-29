@@ -113,6 +113,23 @@ export async function POST(req: Request) {
                 console.error("Error creando notificaciones de pago manual:", notifErr);
             }
 
+            // Log de auditoría
+            try {
+                const { data: { user: adminUser } } = await supabaseAdmin.auth.getUser()
+                await supabaseAdmin.from('ie_auditoria_logs').insert({
+                    user_id: userId,
+                    evento: 'PAGO_MANUAL_APROBADO',
+                    detalles: {
+                        pago_id: pagoId,
+                        curso_id: cursoId,
+                        aprobado_por: adminUser?.id || null,
+                        es_pago_completo: esPagoCompleto
+                    }
+                })
+            } catch (err) {
+                console.error('Error guardando log de pago manual aprobado:', err)
+            }
+
             return NextResponse.json({ success: true, message: 'Aprobado y notificado' })
 
         } else if (accion === 'rechazar') {
@@ -164,6 +181,23 @@ export async function POST(req: Request) {
                 } catch (emailError) {
                     console.error('Error enviando email:', emailError)
                 }
+            }
+
+            // Log de auditoría
+            try {
+                const { data: { user: adminUser } } = await supabaseAdmin.auth.getUser()
+                await supabaseAdmin.from('ie_auditoria_logs').insert({
+                    user_id: userId,
+                    evento: 'PAGO_MANUAL_RECHAZADO',
+                    detalles: {
+                        pago_id: pagoId,
+                        curso_id: cursoId,
+                        rechazado_por: adminUser?.id || null,
+                        notas: notas
+                    }
+                })
+            } catch (err) {
+                console.error('Error guardando log de pago manual rechazado:', err)
             }
 
             return NextResponse.json({ success: true, message: 'Rechazado y notificado' })

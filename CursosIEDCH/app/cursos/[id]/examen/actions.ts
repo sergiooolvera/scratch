@@ -95,6 +95,23 @@ export async function submitExamen(cursoId: string, respuestasUsuario: Record<st
         return { error: 'Error guardando tu calificación: ' + insertError.message }
     }
 
+    // Log de auditoría
+    try {
+        await supabase.from('ie_auditoria_logs').insert({
+            user_id: user.id,
+            evento: 'EXAMEN_ENTREGADO',
+            detalles: {
+                curso_id: cursoId,
+                examen_id: examen.id,
+                calificacion: calificacionFinal,
+                aprobado: aprobado,
+                tipo: 'final'
+            }
+        })
+    } catch (err) {
+        console.error('Error guardando log de examen final:', err)
+    }
+
     // 4. Notificar al profesor
     try {
         const supabaseAdmin = createSupabaseClient(
@@ -214,6 +231,22 @@ export async function submitExamenModular(examenId: string, respuestasUsuario: R
 
     if (insertError) {
         return { error: 'Error guardando tu calificación: ' + insertError.message }
+    }
+
+    // Log de auditoría
+    try {
+        await supabase.from('ie_auditoria_logs').insert({
+            user_id: user.id,
+            evento: 'EXAMEN_ENTREGADO',
+            detalles: {
+                examen_id: examen.id,
+                calificacion: calificacionFinal,
+                aprobado: aprobado,
+                tipo: 'modular'
+            }
+        })
+    } catch (err) {
+        console.error('Error guardando log de examen modular:', err)
     }
 
     // 4. Notificar al profesor

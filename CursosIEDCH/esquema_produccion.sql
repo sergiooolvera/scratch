@@ -609,5 +609,26 @@ CREATE INDEX IF NOT EXISTS idx_ie_academia_alumnos_academia_id ON public.ie_acad
 CREATE INDEX IF NOT EXISTS idx_ie_academia_alumnos_user_id ON public.ie_academia_alumnos(user_id);
 
 
+-- =========================================================================
+-- REGISTRO DE AUDITORÍA Y TRAZABILIDAD
+-- =========================================================================
 
+-- Tabla de logs de auditoría de actividad del usuario
+CREATE TABLE IF NOT EXISTS public.ie_auditoria_logs (
+    id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id uuid,
+    evento text NOT NULL, -- Ej: 'INICIO_SESION', 'EXAMEN_ENTREGADO', 'COMPRA_CURSO_STRIPE', 'CONSTANCIA_DESCARGADA', 'MODULO_VISTO'
+    detalles jsonb DEFAULT '{}'::jsonb, -- Información dinámica (calificaciones, montos, ids, etc.)
+    ip_address text,
+    user_agent text,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
+-- Relaciones de ie_auditoria_logs
+ALTER TABLE public.ie_auditoria_logs
+    ADD CONSTRAINT fk_auditoria_logs_user FOREIGN KEY (user_id) REFERENCES public.ie_profiles(id) ON DELETE SET NULL;
+
+-- Índices de rendimiento para ie_auditoria_logs
+CREATE INDEX IF NOT EXISTS idx_ie_auditoria_logs_user_id ON public.ie_auditoria_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_ie_auditoria_logs_created_at ON public.ie_auditoria_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_ie_auditoria_logs_evento ON public.ie_auditoria_logs(evento);

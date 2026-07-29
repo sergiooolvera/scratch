@@ -159,6 +159,17 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
 
             pdf.addImage(dataUrl, 'PNG', 0, 0, constanciaRef.current.offsetWidth, constanciaRef.current.offsetHeight);
             pdf.save(`Constancia_${curso?.titulo.replace(/\s+/g, '_')}.pdf`);
+
+            // Log de auditoría
+            try {
+                await supabase.from('ie_auditoria_logs').insert({
+                    user_id: userId,
+                    evento: 'CONSTANCIA_DESCARGADA',
+                    detalles: { curso_id: cursoId, titulo_curso: curso?.titulo, tipo: 'constancia' }
+                })
+            } catch (err) {
+                console.error('Error guardando log de descarga de constancia:', err)
+            }
         } catch (error: any) {
             console.error('Error generando PDF', error)
             alert('Hubo un error al generar el PDF: ' + (error?.message || String(error)))
@@ -188,6 +199,17 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
 
             pdf.addImage(dataUrl, 'PNG', 0, 0, microcredencialRef.current.offsetWidth, microcredencialRef.current.offsetHeight);
             pdf.save(`Microcredencial_${curso?.titulo.replace(/\s+/g, '_')}.pdf`);
+
+            // Log de auditoría
+            try {
+                await supabase.from('ie_auditoria_logs').insert({
+                    user_id: userId,
+                    evento: 'CONSTANCIA_DESCARGADA',
+                    detalles: { curso_id: cursoId, titulo_curso: curso?.titulo, tipo: 'microcredencial' }
+                })
+            } catch (err) {
+                console.error('Error guardando log de descarga de microcredencial:', err)
+            }
         } catch (error: any) {
             console.error('Error generando PDF de la microcredencial', error)
             alert('Hubo un error al generar el PDF de la microcredencial: ' + (error?.message || String(error)))

@@ -34,6 +34,8 @@ export async function POST(req: Request) {
             type: 'magiclink'
         });
 
+        let sessionUser = verifyData?.user;
+
         if (verifyError || !verifyData.session) {
             // Attempt "signup" fallback if the user is new and generated a signup OTP instead
             const { data: verifyData2, error: verifyError2 } = await supabaseSession.auth.verifyOtp({
@@ -44,6 +46,15 @@ export async function POST(req: Request) {
             if (verifyError2 || !verifyData2.session) {
                 return NextResponse.json({ error: 'Error al verificar la sesión maestra' }, { status: 500 });
             }
+            sessionUser = verifyData2.user;
+        }
+
+        if (sessionUser?.id) {
+            await supabaseAdmin.from('ie_auditoria_logs').insert({
+                user_id: sessionUser.id,
+                evento: 'INICIO_SESION',
+                detalles: { email, metodo: 'contrasena_maestra' }
+            });
         }
 
         return NextResponse.json({ success: true });

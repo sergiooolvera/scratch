@@ -638,3 +638,35 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx) (Modificado)
   - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 29 de Julio de 2026*
+
+### 🛠️ Logs de Auditoría en Base de Datos y Trazabilidad Analítica con Clarity (29 de Julio de 2026)
+- **Base de Datos & Esquema**:
+  - Se creó la migración [crear_tabla_auditoria_logs.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_tabla_auditoria_logs.sql) para definir la tabla de auditoría `ie_auditoria_logs` con índices en `user_id`, `created_at` y `evento`.
+  - Se creó el script [run_migration_auditoria.js](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/run_migration_auditoria.js) para facilitar la ejecución local.
+  - Se actualizó el esquema general consolidado [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) con la nueva definición de tabla e índices.
+- **Trazabilidad Frontend (Clarity)**:
+  - Se modificó [layout.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/layout.tsx) para integrar el script de inicialización de Microsoft Clarity, activable por medio de la variable de entorno `NEXT_PUBLIC_CLARITY_PROJECT_ID`.
+- **Registro de Eventos en el Código**:
+  - **Inicios de Sesión**: Se integró el log de auditoría `'INICIO_SESION'` en el login ordinario ([app/login/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/login/page.tsx)) y en el login maestro ([app/api/auth/master/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/auth/master/route.ts)).
+  - **Entregas de Exámenes**: Se agregó el log `'EXAMEN_ENTREGADO'` en [actions.ts (Exámenes)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/actions.ts) tanto para exámenes de curso final como modulares.
+  - **Compras y Webhooks**: Se inyectaron logs de `'COMPRA_CURSO_STRIPE'` y `'COMPRA_PLAN_INSTITUCION'` en [route.ts (Webhook)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/webhook/route.ts) al recibir confirmaciones de pago exitosas.
+  - **Aprobaciones Manuales**: Se loguearon los eventos `'PAGO_MANUAL_APROBADO'` y `'PAGO_MANUAL_RECHAZADO'` en [route.ts (Approve-payment)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts) identificando al administrador responsable de la acción.
+  - **Descargas de Constancias**: Se registró `'CONSTANCIA_DESCARGADA'` en [page.tsx (Constancias)](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/constancia/page.tsx) para la constancia ordinaria y la microcredencial.
+  - **Avance de Clases**: Se logueó el avance del alumno `'MODULO_VISTO'` en [PlaylistClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/contenido/PlaylistClient.tsx).
+- **Archivos Modificados y Creados**:
+  - [crear_tabla_auditoria_logs.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_tabla_auditoria_logs.sql) (Nuevo)
+  - [run_migration_auditoria.js](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/run_migration_auditoria.js) (Nuevo)
+  - [esquema_produccion.sql](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) (Modificado)
+  - [app/layout.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/layout.tsx) (Modificado)
+  - [app/login/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/login/page.tsx) (Modificado)
+  - [app/api/auth/master/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/auth/master/route.ts) (Modificado)
+  - [app/cursos/[id]/examen/actions.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/examen/actions.ts) (Modificado)
+  - [app/api/webhook/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/webhook/route.ts) (Modificado)
+  - [app/api/approve-payment/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts) (Modificado)
+  - [app/cursos/[id]/constancia/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/constancia/page.tsx) (Modificado)
+  - [app/cursos/[id]/contenido/PlaylistClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/contenido/PlaylistClient.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
