@@ -4,6 +4,11 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
+### 📊 Integración de Google Analytics 4 (30 de Julio de 2026)
+- **Instalación de Dependencia:** Se instaló el paquete oficial de Next.js `@next/third-parties` para la integración optimizada de analíticas.
+- **Configuración en Layout:** Se integró el componente `<GoogleAnalytics />` de manera condicional dentro de [app/layout.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/layout.tsx) para rastrear de forma automatizada las visitas y el comportamiento en el sitio sin impactar negativamente en el rendimiento de la aplicación.
+- **Variable de Entorno:** Se añadió la variable de entorno `NEXT_PUBLIC_GA_ID` al archivo [.env.local](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/.env.local) con tu ID de medición oficial (`G-WPE50X1RPF`), listo para ser configurado también en el panel de Vercel para producción y staging.
+
 ### ⚙️ Edición de Información de Academias (24 de Julio de 2026)
 - **Botón de Edición en Detalle de Academia:** Se agregó el botón **Editar Academia** con diseño estilizado e icono `Settings` en la parte superior de la página de detalles (`app/profesor/academias/[id]/page.tsx`).
 - **Formulario de Edición Unificado:** Se creó la página de edición (`app/profesor/academias/[id]/editar/page.tsx`) con un formulario unificado y estructurado en secciones:

@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import { MessageSquare } from 'lucide-react'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -51,8 +52,10 @@ export default function RootLayout({
             `}
           </Script>
         )}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
       </body>
     </html>
   )
 }
-
