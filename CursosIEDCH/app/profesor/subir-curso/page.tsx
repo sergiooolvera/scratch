@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code, X } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -56,6 +56,74 @@ type PreguntaParsed = {
 }
 
 export default function SubirCursoPage() {
+    const [textExamenModalTarget, setTextExamenModalTarget] = useState<number | 'final' | null>(null)
+    const [examenTextInput, setExamenTextInput] = useState('')
+
+    const abrirModalPegarTexto = (target: number | 'final') => {
+        setTextExamenModalTarget(target)
+        setExamenTextInput('')
+    }
+
+    const handleProcesarTextoExamen = async () => {
+        if (!examenTextInput.trim()) {
+            alert('Por favor ingrese el texto del examen.')
+            return
+        }
+        
+        setIsParsing(true)
+        const target = textExamenModalTarget
+
+        try {
+            const response = await fetch('/api/parse-exam', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: examenTextInput }),
+            })
+
+            const data = await response.json()
+
+            if (response.ok && data.questions) {
+                setTextExamenModalTarget(null) // CERRAR MODAL SOLO EN CASO DE ÉXITO
+                if (target === 'final') {
+                    setPreguntasExtraidas(prev => [...prev, ...data.questions])
+                    setModalMessage({
+                        title: '¡Examen analizado con IA!',
+                        content: `Se detectaron e importaron ${data.questions.length} preguntas adicionales para la evaluación final del curso.`,
+                        type: 'success'
+                    })
+                } else if (typeof target === 'number') {
+                    const nuevosModulos = [...modulos]
+                    nuevosModulos[target].examenPreguntas = [
+                        ...nuevosModulos[target].examenPreguntas,
+                        ...data.questions
+                    ]
+                    setModulos(nuevosModulos)
+                    setModalMessage({
+                        title: '¡Examen de módulo analizado con IA!',
+                        content: `Se detectaron e importaron ${data.questions.length} preguntas adicionales para el módulo #${target + 1}.`,
+                        type: 'success'
+                    })
+                }
+            } else {
+                setModalMessage({
+                    title: 'Error al procesar examen',
+                    content: data.error || 'Formato no válido.',
+                    type: 'error'
+                })
+            }
+        } catch (err) {
+            setModalMessage({
+                title: 'Error de conexión',
+                content: 'Ocurrió un error al intentar conectarse al servidor de análisis de exámenes.',
+                type: 'error'
+            })
+        } finally {
+            setIsParsing(false)
+        }
+    }
+
     const [activeTab, setActiveTab] = useState<'info' | 'modulos' | 'examen' | 'avisos'>('info')
     const [formData, setFormData] = useState({
         titulo: '',
@@ -2492,6 +2560,17 @@ export default function SubirCursoPage() {
                                                                         className="block w-48 text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[9px] file:font-semibold file:bg-white file:text-indigo-700 hover:file:bg-indigo-100 border border-indigo-300 rounded bg-white p-1 cursor-pointer"
                                                                     />
                                                                 </div>
+                                                                <div className="flex flex-col items-start">
+                                                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">O pegar examen:</label>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => abrirModalPegarTexto(index)}
+                                                                        disabled={isParsing}
+                                                                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded text-xs font-bold transition flex items-center gap-1.5 shadow-sm mt-0.5 cursor-pointer"
+                                                                    >
+                                                                        <Sparkles className="h-3.5 w-3.5 text-indigo-600" /> Pegar Texto
+                                                                    </button>
+                                                                </div>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleAgregarPreguntaModulo(index)}
@@ -3007,9 +3086,19 @@ export default function SubirCursoPage() {
                                                 <input type="number" min="0" max="100" value={minAprobacion} onChange={(e) => setMinAprobacion(e.target.value === '' ? '' : Number(e.target.value))} className="w-full sm:w-32 rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 border p-2.5 text-black bg-white" />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Subir Evaluación desde PDF (Carga masiva)</label>
-                                                <input id="input-archivo-examen" type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-200 rounded-xl bg-white p-1" />
-                                                {isParsing && <p className="text-[10px] font-bold text-green-600 mt-1 animate-pulse italic">Analizando examen PDF...</p>}
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">Subir Evaluación desde PDF (Carga masiva) o pegar texto</label>
+                                                <div className="flex flex-col sm:flex-row gap-3">
+                                                    <input id="input-archivo-examen" type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full sm:w-2/3 text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-200 rounded-xl bg-white p-1 cursor-pointer" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => abrirModalPegarTexto('final')}
+                                                        disabled={isParsing}
+                                                        className="w-full sm:w-1/3 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 border border-green-300 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                                                    >
+                                                        <Sparkles className="h-4 w-4 text-green-600" /> Pegar Texto con IA
+                                                    </button>
+                                                </div>
+                                                {isParsing && <p className="text-[10px] font-bold text-green-600 mt-1 animate-pulse italic">Procesando el examen...</p>}
                                                 <a href="/ejemplo-examen.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline underline-offset-2 transition-colors">
                                                     📄 Ver ejemplo del formato correcto del PDF
                                                 </a>
@@ -3269,6 +3358,69 @@ export default function SubirCursoPage() {
                     </div>
                 </form>
             </div>
+
+            {/* Modal para pegar texto de examen con IA */}
+            {textExamenModalTarget !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-zinc-200/80 p-6 max-w-2xl w-full shadow-2xl animate-scale-up text-left">
+                        <div className="flex items-center justify-between border-b border-zinc-150 pb-3 mb-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <Sparkles className="h-5 w-5 text-indigo-500 animate-pulse" />
+                                Importar Examen pegando Texto (IA DeepSeek)
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => !isParsing && setTextExamenModalTarget(null)}
+                                disabled={isParsing}
+                                className="text-gray-400 hover:text-gray-600 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        
+                        <p className="text-xs text-gray-500 mb-3">
+                            Copia y pega el texto del examen. Nuestra IA inteligente (DeepSeek) detectará automáticamente las preguntas, las opciones de respuesta y las respuestas correctas.
+                        </p>
+
+                        <textarea
+                            value={examenTextInput}
+                            onChange={(e) => setExamenTextInput(e.target.value)}
+                            disabled={isParsing}
+                            placeholder={`Ejemplo:\n1. ¿Cuál es el principal objetivo del lavado de manos?\nA) Mejorar la circulación.\nB) Prevenir la transmisión de microorganismos.\nC) Disminuir la temperatura.\nD) Facilitar la administración.\n\nRespuesta correcta:\nB) Prevenir la transmisión de microorganismos.`}
+                            className="w-full h-80 rounded-xl border border-zinc-300 p-3 text-xs bg-white text-black font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y disabled:bg-zinc-50 disabled:text-zinc-400"
+                        />
+
+                        <div className="flex justify-end gap-3 mt-4">
+                            <button
+                                type="button"
+                                onClick={() => setTextExamenModalTarget(null)}
+                                disabled={isParsing}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleProcesarTextoExamen}
+                                disabled={isParsing}
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition shadow-md shadow-indigo-500/10 flex items-center gap-1.5 cursor-pointer disabled:bg-indigo-400 disabled:cursor-not-allowed"
+                            >
+                                {isParsing ? (
+                                    <>
+                                        <div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Procesando con IA...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="h-3.5 w-3.5" />
+                                        Procesar con IA
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Premium Glassmorphic Modal message dialog */}
             {modalMessage && (

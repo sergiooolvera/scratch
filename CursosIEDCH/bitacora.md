@@ -756,3 +756,25 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Archivos Modificados y Creados**:
   - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 4 de Agosto de 2026*
+
+### 🤖 Importación de Exámenes pegando Texto con IA DeepSeek (4 de Agosto de 2026)
+- **Extensión del Backend de Parsing**:
+  - Se modificó [app/api/parse-exam/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/parse-exam/route.ts) para soportar tanto PDFs tradicionales como texto plano enviado en formato JSON (`{ text }`).
+  - Se integró la API oficial de DeepSeek (`deepseek-chat`) para estructurar de manera robusta y flexible las preguntas y respuestas correctas, limpiando además los prefijos de las opciones de respuesta (`A)`, `B)`, etc.).
+  - Se definió un flujo de fallback por expresiones regulares si no existe la variable `DEEPSEEK_API_KEY` para no romper el procesamiento tradicional de PDFs en la plataforma.
+- **Interfaces de Creación y Edición de Cursos**:
+  - Se agregaron botones e interacciones de "Pegar Texto" con el icono de Sparkles al lado de la carga de PDFs tanto en los módulos de aprendizaje como en la sección de examen final.
+  - Se implementó un modal premium responsive y estilizado en [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx) y en [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) que contiene un área de texto con placeholders y guías de formato de ejemplo.
+  - Se rediseñó el sistema de notificaciones del proceso de la IA en la UI para canalizar los errores y éxitos mediante el diálogo de modal premium centrado en pantalla de la aplicación, evitando que las alertas pasaran desapercibidas ante el scroll.
+  - Se incorporó un estado de carga interactivo dentro del modal de pegado de texto. Durante el procesamiento, el botón de procesar muestra un spinner giratorio y cambia a "Procesando con IA...", mientras que el área de texto y el botón de cancelar se deshabilitan. El modal ahora persiste abierto si ocurre algún error, permitiendo al profesor corregir el texto o reintentar sin perder su contenido.
+- **Variables de Entorno**:
+  - Se añadió la clave de API ficticia en `.env.local` para el entorno local y se documentó la necesidad de configurar `DEEPSEEK_API_KEY` en producción.
+- **Archivos Modificados y Creados**:
+  - [app/api/parse-exam/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/parse-exam/route.ts) (Modificado)
+  - [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx) (Modificado)
+  - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
+  - [.env.local](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/.env.local) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
