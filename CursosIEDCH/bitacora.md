@@ -746,3 +746,13 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
   - [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 4 de Agosto de 2026*
+
+### 🏷️ Actualización de Etiqueta de Módulo (4 de Agosto de 2026)
+- **Cambio de Label**:
+  - Se modificó la etiqueta del botón de creación de módulos en la sección de temario de `"Añadir Objeto de Aprendizaje (Módulo)"` a `"Añadir Módulo"` para simplificar la interfaz y mejorar la experiencia de usuario.
+- **Archivos Modificados y Creados**:
+  - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)

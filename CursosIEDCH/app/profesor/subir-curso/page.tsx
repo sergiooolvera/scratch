@@ -2954,7 +2954,7 @@ export default function SubirCursoPage() {
                                 ))}
 
                                 <button type="button" onClick={handleAgregarModulo} className="w-full py-4 border-2 border-dashed border-zinc-300 rounded-2xl text-zinc-500 font-bold hover:border-blue-500 hover:text-blue-600 transition flex justify-center items-center gap-2">
-                                    <Plus className="h-5 w-5" /> Añadir Objeto de Aprendizaje (Módulo)
+                                    <Plus className="h-5 w-5" /> Añadir Módulo
                                 </button>
                             </div>
 
