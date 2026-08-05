@@ -42,17 +42,21 @@ export default function ShareButton({ title }: ShareButtonProps) {
     return (
         <button
             onClick={handleShare}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 shadow-sm active:scale-95 cursor-pointer"
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-md hover:shadow-lg active:scale-95 cursor-pointer ${
+                copied 
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-emerald-500/20" 
+                    : "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-indigo-600/25 hover:scale-[1.02]"
+            }`}
             title="Compartir curso"
         >
             {copied ? (
                 <>
-                    <Check className="h-4 w-4 text-emerald-500 animate-bounce" />
-                    <span className="text-emerald-600">¡Enlace copiado!</span>
+                    <Check className="h-4 w-4 text-white animate-bounce" />
+                    <span>¡Enlace copiado!</span>
                 </>
             ) : (
                 <>
-                    <Share2 className="h-4 w-4 text-gray-500" />
+                    <Share2 className="h-4 w-4 text-white" />
                     <span>Compartir</span>
                 </>
             )}

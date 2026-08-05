@@ -778,3 +778,17 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
   - [.env.local](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/.env.local) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 5 de Agosto de 2026*
+
+### 🎨 Botón de Compartir con Gradiente Premium y Animación (5 de Agosto de 2026)
+- **Rediseño Estético del Botón de Compartir**:
+  - Se modificaron los estilos del botón de compartir en la visualización del curso ([app/cursos/[id]/ShareButton.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/ShareButton.tsx)) para hacerlo más vistoso y moderno.
+  - Se implementó un gradiente dinámico de tres colores en reposo (`bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600`) junto con una sombra de acento (`shadow-indigo-600/25`).
+  - Se mejoró la transición del hover con un aumento de escala interactivo (`hover:scale-[1.02]`).
+  - Al copiar el enlace con éxito, el botón cambia de forma fluida a un gradiente verde esmeralda y turquesa (`bg-gradient-to-r from-emerald-500 to-teal-600`) con un icono de confirmación animado (`animate-bounce`), ofreciendo una excelente retroalimentación visual al usuario.
+- **Archivos Modificados y Creados**:
+  - [app/cursos/[id]/ShareButton.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/ShareButton.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
