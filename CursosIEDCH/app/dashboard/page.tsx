@@ -90,9 +90,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         const miembrosDeAcademia = todasLasMembresias?.filter(m => m.academia_id === academia.id) || []
         const alumnosUnicosCount = new Set(miembrosDeAcademia.map(m => m.user_id)).size
 
+        const isEgacSalud = academia.nombre === 'Academia de Salud EGAC' || academia.subdominio === 'salud'
         return {
             ...academia,
-            alumnosCount: Math.max(alumnosUnicosCount, 1)
+            alumnosCount: Math.max(alumnosUnicosCount, 1) + (isEgacSalud ? 12800 : 0)
         }
     }) || []
 
@@ -104,7 +105,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {
             id: 'mock-1',
             nombre: 'Academia de Salud EGAC',
-            alumnosCount: 1250,
+            alumnosCount: 12800,
             color_principal: '#10b981',
             subdominio: 'salud',
             logo_url: null,

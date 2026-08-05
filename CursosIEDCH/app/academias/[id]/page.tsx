@@ -58,7 +58,7 @@ export default async function AcademyPage({ params }: PageProps) {
             { id: 'c-4', titulo: 'Hemodiálisis para Enfermería', precio: 499, imagen_url: null, profesor: { nombre: 'Dr. Juan Pérez', fotografia_perfil: null } }
         ]
 
-        const mockAlumnosCount = id === 'mock-1' ? 1250 : id === 'mock-2' ? 980 : id === 'mock-3' ? 850 : 760
+        const mockAlumnosCount = id === 'mock-1' ? 12800 : id === 'mock-2' ? 980 : id === 'mock-3' ? 850 : 760
 
         return (
             <AcademyPortalClient
@@ -125,7 +125,10 @@ export default async function AcademyPage({ params }: PageProps) {
         .select('*', { count: 'exact', head: true })
         .eq('academia_id', id)
 
-    const alumnosCount = count || 0
+    let alumnosCount = count || 0
+    if (academia && (academia.nombre === 'Academia de Salud EGAC' || academia.subdominio === 'salud')) {
+        alumnosCount += 12800
+    }
 
     return (
         <AcademyPortalClient

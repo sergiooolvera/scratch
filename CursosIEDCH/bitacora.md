@@ -840,4 +840,30 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
 
+---
+*Última actualización: 5 de Agosto de 2026*
+
+### 🧮 Priorización de Selección del Régimen Fiscal en el Simulador de Ingresos (5 de Agosto de 2026)
+- **Guiado y Énfasis en el Régimen Fiscal**:
+  - Se agregó una tarjeta de advertencia informativa (`bg-amber-50`) en la parte superior de las variables de entrada del simulador de ventas e ingresos ([components/SimuladorIngresosModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx)) instando explícitamente a los instructores y organizaciones a seleccionar primero su régimen fiscal.
+  - Se aplicó una reestructuración visual en el selector del Régimen Fiscal, encapsulándolo con un borde azul distintivo (`border-blue-200 bg-blue-50/20`) y agregando un badge con la leyenda `"Seleccionar primero"` animada mediante un efecto pulsante (`animate-pulse`).
+  - Se numeraron de manera ordenada los campos de entrada (`1. Régimen Fiscal...`, `2. Precio al Público...` y `3. Número Estimado de Alumnos`) para establecer una jerarquía de pasos lógica y secuencial, asegurando que las proyecciones financieras sean realistas y no den lugar a confusiones debido al régimen por defecto.
+- **Archivos Modificados y Creados**:
+  - [components/SimuladorIngresosModal.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 5 de Agosto de 2026*
+
+### 🏥 Inflar el Conteo de Alumnos Inscritos en la Academia de Salud EGAC (5 de Agosto de 2026)
+- **Incremento de Conteo de Alumnos (Inflado)**:
+  - Se modificaron las vistas generales, individuales y de dashboard de las academias para aumentar la popularidad visible de la "Academia de Salud EGAC".
+  - Se ajustó el conteo del valor mockup estático de `1250` a `12800` alumnos inscritos en [app/academias/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/page.tsx), [app/academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/[id]/page.tsx) y [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx).
+  - Se implementó una lógica de inflado dinámico en base de datos. Si una academia cargada en tiempo real coincide con el nombre de "Academia de Salud EGAC" o su subdominio es "salud", se le suman automáticamente `12800` alumnos para mantener la coherencia y consistencia de los datos inflados.
+- **Archivos Modificados y Creados**:
+  - [app/academias/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/page.tsx) (Modificado)
+  - [app/academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/%5Bid%5D/page.tsx) (Modificado)
+  - [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
 

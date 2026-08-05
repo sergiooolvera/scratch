@@ -148,56 +148,76 @@ export default function SimuladorIngresosModal({
               Variables de Entrada
             </h3>
 
-            <div className="space-y-4">
-              {/* 1. Régimen Fiscal (Combobox Premium) */}
-              <div className="relative">
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Régimen Fiscal del Instructor</label>
-                <button
-                  type="button"
-                  onClick={() => setIsOpenRegimen(!isOpenRegimen)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-black bg-white font-medium flex items-center justify-between cursor-pointer text-left shadow-sm hover:border-gray-300"
-                >
-                  <span className="truncate pr-2">
-                    {REGIMENES.find(r => r.value === regimen)?.label}
-                  </span>
-                  <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0 ${isOpenRegimen ? 'rotate-180' : ''}`} />
-                </button>
+            {/* Banner de Advertencia/Indicación del Régimen Fiscal */}
+            <div className="bg-amber-50 border border-amber-100 text-amber-900 rounded-2xl p-4 flex gap-3 text-xs leading-relaxed font-medium shadow-sm">
+              <Info className="shrink-0 mt-0.5 text-amber-600" size={18} />
+              <div>
+                <strong className="font-semibold block mb-0.5">⚠️ Selección Requerida</strong>
+                Para que la simulación de ganancias sea realista y evitar confusiones, por favor <strong className="font-bold text-amber-950">selecciona primero tu régimen fiscal</strong> en el paso 1. Las retenciones fiscales aplicadas varían drásticamente entre regímenes.
+              </div>
+            </div>
 
-                {isOpenRegimen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setIsOpenRegimen(false)}
-                    />
-                    <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-gray-50 py-1 animate-slide-up">
-                      {REGIMENES.map((item) => (
-                        <button
-                          key={item.value}
-                          type="button"
-                          onClick={() => {
-                            setRegimen(item.value)
-                            setIsOpenRegimen(false)
-                          }}
-                          className={`w-full px-4 py-3 text-left text-xs font-semibold transition-all duration-200 flex items-center justify-between cursor-pointer ${
-                            regimen === item.value 
-                              ? 'bg-blue-50 text-blue-600' 
-                              : 'text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <span>{item.label}</span>
-                          {regimen === item.value && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+            <div className="space-y-4">
+              {/* 1. Régimen Fiscal (Combobox Premium Destacado) */}
+              <div className="relative border border-blue-200 bg-blue-50/20 p-4 rounded-2xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[11px] font-bold text-blue-900 uppercase tracking-wider">
+                    1. Régimen Fiscal del Instructor
+                  </label>
+                  <span className="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold uppercase animate-pulse">
+                    Seleccionar primero
+                  </span>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsOpenRegimen(!isOpenRegimen)}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-black bg-white font-medium flex items-center justify-between cursor-pointer text-left text-sm shadow-sm hover:border-gray-300"
+                  >
+                    <span className="truncate pr-2 text-xs">
+                      {REGIMENES.find(r => r.value === regimen)?.label}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 shrink-0 ${isOpenRegimen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isOpenRegimen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setIsOpenRegimen(false)}
+                      />
+                      <div className="absolute left-0 right-0 mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-gray-50 py-1 animate-slide-up">
+                        {REGIMENES.map((item) => (
+                          <button
+                            key={item.value}
+                            type="button"
+                            onClick={() => {
+                              setRegimen(item.value)
+                              setIsOpenRegimen(false)
+                            }}
+                            className={`w-full px-4 py-2.5 text-left text-[11px] font-semibold transition-all duration-200 flex items-center justify-between cursor-pointer ${
+                              regimen === item.value 
+                                ? 'bg-blue-50 text-blue-600' 
+                                : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <span>{item.label}</span>
+                            {regimen === item.value && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* 2. Costo del curso */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Precio al Público del Curso (MXN)</label>
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                  2. Precio al Público del Curso (MXN)
+                </label>
                 <div className="relative rounded-2xl shadow-sm">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
                   <input 
@@ -224,8 +244,10 @@ export default function SimuladorIngresosModal({
               </div>
 
               {/* 3. Número de alumnos */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Número Estimado de Alumnos</label>
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                  3. Número Estimado de Alumnos
+                </label>
                 <input 
                   type="number" 
                   value={alumnos || ''} 
