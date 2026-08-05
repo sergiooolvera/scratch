@@ -792,3 +792,35 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/cursos/[id]/ShareButton.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/ShareButton.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
 
+---
+*Última actualización: 5 de Agosto de 2026*
+
+### 📊 Detalle de Alumnos y Cursos en Resumen Rápido (5 de Agosto de 2026)
+- **Interactividad en Panel de Profesor**:
+  - Se transformaron las tarjetas del "Resumen rápido" de **Alumnos** y **Cursos publicados** en componentes dinámicos e interactivos con respuesta al hover y cursor apuntador.
+  - Al cliquear sobre ellos, se despliega un panel lateral deslizante premium (slide-over drawer) desde la derecha con animaciones fluidas y efecto glassmorphic de desenfoque de fondo.
+  - Se integró un buscador interactivo en tiempo real que permite filtrar a los alumnos por nombre/correo o a los cursos por título/categoría.
+- **Preparación de Datos en el Servidor**:
+  - Se optimizaron las consultas de Supabase en `app/profesor/page.tsx` para traer información adicional útil (fechas de registro, nombres completos y detalles).
+  - Se configuró la lectura segura en el servidor de los correos originales de los alumnos mediante un cliente Supabase con privilegios administrativos (Service Role) consultando `auth.users`, mapeándolos con los perfiles públicos sin exponer claves en el cliente.
+- **Archivos Modificados y Creados**:
+  - [components/DashboardStatsSection.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/DashboardStatsSection.tsx) (Creado)
+  - [app/profesor/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 5 de Agosto de 2026*
+
+### 🏢 Pestañas de Alumnos, Cursos y Grupos por Academia (5 de Agosto de 2026)
+- **Panel de Control por Academia**:
+  - Se rediseñó la vista de detalle de cada academia (`/profesor/academias/[id]`) incorporando una interfaz de pestañas premium (Cursos, Alumnos, Grupos, Guía de Inicio).
+  - Se agregaron tarjetas de métricas en la parte superior para mostrar la cantidad total de cursos, alumnos y grupos de esa academia.
+  - Se añadieron buscadores interactivos en tiempo real dentro de las pestañas de cursos y alumnos.
+  - Se implementó un flujo inteligente: si la academia es nueva, se preselecciona la pestaña de "Guía de Inicio" (con el Paso 1 y Paso 2 de creación), de lo contrario, muestra directamente los cursos o alumnos registrados.
+- **Acción de Servidor Segura**:
+  - Se creó la función `getAcademiaDetallesAction` en [academias.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/actions/academias.ts) que opera en el servidor con permisos de administrador (`Service Role`) para cruzar con total seguridad los perfiles públicos con los correos de acceso en `auth.users` y obtener detalles consolidados sin exponer llaves.
+- **Archivos Modificados y Creados**:
+  - [app/actions/academias.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/actions/academias.ts) (Modificado)
+  - [app/profesor/academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/%5Bid%5D/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+

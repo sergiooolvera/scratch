@@ -19,6 +19,7 @@ import {
     User
 } from 'lucide-react'
 import DashboardCrearBtn from '@/components/DashboardCrearBtn'
+import DashboardStatsSection from '@/components/DashboardStatsSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -93,7 +94,7 @@ export default async function ProfesorDashboardPage() {
         // Alumnos únicos
         const { data: compras } = await supabase
             .from('ie_compras')
-            .select('user_id, curso_id')
+            .select('user_id, curso_id, fecha_compra')
             .in('curso_id', cursoIds)
             .eq('pagado', true)
 
@@ -151,7 +152,7 @@ export default async function ProfesorDashboardPage() {
                 // Alumnos registrados en esas actividades
                 const { data: alumnosAct } = await supabase
                     .from('ie_actividad_alumnos')
-                    .select('id, folio_constancia')
+                    .select('id, actividad_id, nombre_alumno, correo_alumno, folio_constancia, created_at')
                     .in('actividad_id', actIds)
 
                 if (alumnosAct) {
@@ -192,7 +193,7 @@ export default async function ProfesorDashboardPage() {
         // 1. Obtener alumnos de las academias de forma directa
         const { data: alumnosAcData } = await supabase
             .from('ie_academia_alumnos')
-            .select('academia_id, user_id')
+            .select('academia_id, user_id, created_at')
             .in('academia_id', academiaIds)
         
         if (alumnosAcData) {
@@ -295,6 +296,129 @@ export default async function ProfesorDashboardPage() {
         cursos: (rol === 'institucion') ? (totalCursosPlataforma + totalActividades) : totalCursosPlataforma,
         certificados: totalCertificadosPlataforma + totalCertificadosActividad
     }
+
+    // --- OBTENER PERFILES Y EMAILS DE ALUMNOS (SEGURO EN EL SERVIDOR) ---
+    const studentIds = new Set<string>()
+    comprasRealizadas.forEach(c => studentIds.add(c.user_id))
+    alumnosDeAcademias.forEach(a => studentIds.add(a.user_id))
+
+    const studentIdsArray = Array.from(studentIds)
+    let studentProfiles: any[] = []
+    if (studentIdsArray.length > 0) {
+        const { data: profs } = await supabase
+            .from('ie_profiles')
+            .select('id, nombre, apellido_paterno, apellido_materno, telefono, correo_adicional')
+            .in('id', studentIdsArray)
+        if (profs) studentProfiles = profs
+    }
+
+    const studentProfileMap: Record<string, any> = {}
+    studentProfiles.forEach(p => {
+        studentProfileMap[p.id] = p
+    })
+
+    // Obtener emails de auth.users usando el cliente admin
+    const emailMap: Record<string, string> = {}
+    try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        if (supabaseUrl && supabaseServiceKey) {
+            const { createClient: createAdminClient } = require('@supabase/supabase-js')
+            const supabaseAdmin = createAdminClient(supabaseUrl, supabaseServiceKey)
+            const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers({
+                perPage: 1000
+            })
+            authUsers?.users?.forEach((u: any) => {
+                emailMap[u.id] = u.email || ''
+            })
+        }
+    } catch (e) {
+        console.error('Error al obtener correos de auth:', e)
+    }
+
+    // Consolidar la lista de alumnos
+    const alumnosList: any[] = []
+    const processedAlumnoKeys = new Set<string>()
+
+    // A. Alumnos de compras (Plataforma)
+    comprasRealizadas.forEach(comp => {
+        const key = `plataforma-${comp.user_id}-${comp.curso_id}`
+        if (processedAlumnoKeys.has(key)) return
+        processedAlumnoKeys.add(key)
+
+        const p = studentProfileMap[comp.user_id]
+        const nombreCompleto = p 
+            ? `${p.nombre || ''} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.replace(/\s+/g, ' ').trim()
+            : 'Estudiante'
+        const email = emailMap[comp.user_id] || p?.correo_adicional || 'Sin correo'
+        const cursoAsoc = cursos?.find(c => c.id === comp.curso_id)
+
+        alumnosList.push({
+            id: key,
+            nombre: nombreCompleto,
+            email: email,
+            tipo: 'plataforma',
+            contexto: `Curso: ${cursoAsoc?.titulo || 'Curso'}`,
+            fechaInscripcion: comp.fecha_compra || new Date().toISOString()
+        })
+    })
+
+    // B. Alumnos de Academias
+    alumnosDeAcademias.forEach(alAc => {
+        const key = `academia-${alAc.user_id}-${alAc.academia_id}`
+        if (processedAlumnoKeys.has(key)) return
+        processedAlumnoKeys.add(key)
+
+        const p = studentProfileMap[alAc.user_id]
+        const nombreCompleto = p 
+            ? `${p.nombre || ''} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.replace(/\s+/g, ' ').trim()
+            : 'Estudiante'
+        const email = emailMap[alAc.user_id] || p?.correo_adicional || 'Sin correo'
+        const academiaAsoc = academias?.find(a => a.id === alAc.academia_id)
+
+        alumnosList.push({
+            id: key,
+            nombre: nombreCompleto,
+            email: email,
+            tipo: 'academia',
+            contexto: `Academia: ${academiaAsoc?.nombre || 'Academia'}`,
+            fechaInscripcion: alAc.created_at || new Date().toISOString()
+        })
+    })
+
+    // C. Alumnos de Actividades (si es institución)
+    if (rol === 'institucion' && actividadesList.length > 0) {
+        const { data: alumnosActCompleto } = await supabase
+            .from('ie_actividad_alumnos')
+            .select('id, actividad_id, nombre_alumno, correo_alumno, created_at')
+            .in('actividad_id', actividadesList.map(a => a.id))
+
+        alumnosActCompleto?.forEach(actAl => {
+            const key = `actividad-${actAl.id}`
+            if (processedAlumnoKeys.has(key)) return
+            processedAlumnoKeys.add(key)
+
+            const actAsoc = actividadesList.find(a => a.id === actAl.actividad_id)
+            alumnosList.push({
+                id: key,
+                nombre: actAl.nombre_alumno || 'Estudiante',
+                email: actAl.correo_alumno || 'Sin correo',
+                tipo: 'actividad',
+                contexto: `Actividad: ${actAsoc?.nombre_actividad || 'Actividad'}`,
+                fechaInscripcion: actAl.created_at || new Date().toISOString()
+            })
+        })
+    }
+
+    // Consolidar la lista de cursos
+    const cursosList = cursos?.map(c => ({
+        id: c.id,
+        titulo: c.titulo,
+        categoria: c.categoria || 'Sin categoría',
+        precio: c.precio || 0,
+        estado: c.estado || 'borrador',
+        created_at: c.created_at || new Date().toISOString()
+    })) || []
 
     return (
         <div className="bg-slate-50 min-h-[calc(100vh-64px)] font-sans antialiased text-slate-800 pb-16">
@@ -419,63 +543,13 @@ export default async function ProfesorDashboardPage() {
                         Resumen rápido
                     </h2>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                        {/* Alumnos */}
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
-                            <div className="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
-                                <Users className="h-6 w-6" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs text-slate-400 font-medium tracking-wide">Alumnos</p>
-                                <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.alumnos.toLocaleString()}</p>
-                                <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5 mt-0.5">
-                                    ↑ 12% <span className="text-slate-400 font-normal">vs mes anterior</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Cursos Publicados */}
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
-                            <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                                <BookOpen className="h-6 w-6" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs text-slate-400 font-medium tracking-wide">Cursos publicados</p>
-                                <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.cursos}</p>
-                                <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5 mt-0.5">
-                                    ↑ 8% <span className="text-slate-400 font-normal">vs mes anterior</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Certificados Emitidos */}
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4 hover:shadow-md transition-shadow">
-                            <div className="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
-                                <Award className="h-6 w-6" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs text-slate-400 font-medium tracking-wide">Certificados emitidos</p>
-                                <p className="text-2xl font-black text-slate-800 mt-0.5">{stats.certificados.toLocaleString()}</p>
-                                <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5 mt-0.5">
-                                    ↑ 15% <span className="text-slate-400 font-normal">vs mes anterior</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Mis Ventas */}
-                        <Link href="/profesor/ventas" className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4 hover:shadow-md hover:border-indigo-300 transition-all group">
-                            <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 group-hover:bg-indigo-100 transition-colors">
-                                <TrendingUp className="h-6 w-6" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs text-slate-400 font-medium tracking-wide">Finanzas</p>
-                                <p className="text-2xl font-black text-slate-800 mt-0.5">Mis ventas</p>
-                                <span className="text-[11px] font-bold text-indigo-600 flex items-center gap-0.5 mt-0.5">
-                                    Ir al detalle <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                                </span>
-                            </div>
-                        </Link>
-                    </div>
+                    <DashboardStatsSection 
+                        totalAlumnos={stats.alumnos}
+                        totalCursos={stats.cursos}
+                        totalCertificados={stats.certificados}
+                        alumnosList={alumnosList}
+                        cursosList={cursosList}
+                    />
                 </div>
 
                 {/* 3. Sección: Fila Inferior 50/50 */}
