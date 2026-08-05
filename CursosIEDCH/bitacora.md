@@ -730,3 +730,19 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
   - [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 4 de Agosto de 2026*
+
+### 🧩 Ampliación del Límite de Puzles/Juegos Interactivos a 10 (4 de Agosto de 2026)
+- **Ampliación del Límite**:
+  - Se incrementó de 5 a 10 el número máximo de puzles/juegos interactivos que se pueden crear por cada módulo de un curso.
+- **Formularios de Creación y Edición**:
+  - Se modificó la validación visual en el formulario de creación de cursos ([app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)) para permitir agregar hasta 10 puzles (`.length < 10`).
+  - Se modificó de igual forma el formulario de edición de cursos ([app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx)) para reflejar el mismo límite de 10 puzles.
+- **Compatibilidad**:
+  - La visualización del alumno y la lógica de juego en ([app/cursos/[id]/contenido/PlaylistClient.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/contenido/PlaylistClient.tsx)) ya era dinámica, por lo que soporta el nuevo límite nativamente.
+- **Archivos Modificados y Creados**:
+  - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
+  - [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)

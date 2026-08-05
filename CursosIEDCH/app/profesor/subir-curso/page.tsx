@@ -2825,7 +2825,7 @@ export default function SubirCursoPage() {
                                                         <div className="space-y-4 pt-2">
                                                             <div className="flex justify-between items-center">
                                                                 <span className="text-xs font-bold text-gray-700">Preguntas de la secuencia del Puzle:</span>
-                                                                {(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).length < 5 && (
+                                                                {(modulo.puzzlePuzzles || [{ pregunta: '', respuesta: '', tipo: 'anagrama' }]).length < 10 && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {
