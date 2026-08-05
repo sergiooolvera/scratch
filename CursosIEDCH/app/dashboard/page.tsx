@@ -8,10 +8,11 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ q?: string; category?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ q?: string; category?: string; catalog?: string }> }) {
     const resolvedParams = await searchParams
     const query = resolvedParams.q?.toLowerCase() || ''
     const activeCategory = resolvedParams.category || 'todas'
+    const isCatalog = resolvedParams.catalog === 'true'
     
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -40,7 +41,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         redirect('/perfil')
     }
 
-    if (profile?.rol === 'institucion' || profile?.rol === 'instructor' || profile?.rol === 'capacitador') {
+    // Si el usuario es instructor, capacitador o institución, por defecto al ingresar (sin catalog=true)
+    // los redirigimos a su panel de control (/profesor). Pero si hacen clic en "Catálogo" (catalog=true),
+    // les permitimos ver la lista de cursos.
+    if ((profile?.rol === 'institucion' || profile?.rol === 'instructor' || profile?.rol === 'capacitador') && !isCatalog) {
         redirect('/profesor')
     }
 
@@ -217,7 +221,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                                     Miles de cursos en diferentes áreas impartidos por expertos del sector salud y profesional.
                                 </p>
                                 <Link
-                                    href="/dashboard?category=todas"
+                                    href={`/dashboard?category=todas${isCatalog ? '&catalog=true' : ''}`}
                                     scroll={false}
                                     className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold py-2 px-4 rounded-xl transition-all shadow-lg shadow-indigo-600/30 text-xs cursor-pointer"
                                 >
@@ -241,7 +245,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-xl font-extrabold text-zinc-900 tracking-tight">Explora por categorías</h3>
                                 <Link 
-                                    href="/dashboard?category=todas" 
+                                    href={`/dashboard?category=todas${isCatalog ? '&catalog=true' : ''}`}
                                     scroll={false}
                                     className="text-indigo-600 hover:text-indigo-800 text-sm font-bold transition-colors"
                                 >
@@ -252,7 +256,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                                 {categorias.map((cat) => {
                                     const isSelected = activeCategory === cat.id
-                                    const linkUrl = `/dashboard?category=${cat.id}${query ? `&q=${query}` : ''}`
+                                    const linkUrl = `/dashboard?category=${cat.id}${query ? `&q=${query}` : ''}${isCatalog ? '&catalog=true' : ''}`
                                     const Icon = cat.icon
 
                                     return (
@@ -286,7 +290,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                                 </h3>
                                 {cursosDisponibles.length > 0 && (
                                     <Link 
-                                        href="/dashboard?category=todas" 
+                                        href={`/dashboard?category=todas${isCatalog ? '&catalog=true' : ''}`}
                                         scroll={false}
                                         className="text-indigo-600 hover:text-indigo-800 text-sm font-bold transition-colors"
                                     >
@@ -312,7 +316,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                                     </div>
                                     <h3 className="text-xl font-bold text-zinc-900 mb-2">No se encontraron cursos</h3>
                                     <p className="text-zinc-500 text-base max-w-md mx-auto">No hay cursos disponibles en la categoría seleccionada bajo los criterios actuales de búsqueda.</p>
-                                    <Link href="/dashboard" className="mt-5 inline-block text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-5 py-2 rounded-full">
+                                    <Link href={`/dashboard${isCatalog ? '?catalog=true' : ''}`} className="mt-5 inline-block text-sm font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-5 py-2 rounded-full">
                                         Ver todos los cursos
                                     </Link>
                                 </div>

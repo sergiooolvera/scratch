@@ -824,3 +824,20 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/profesor/academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/academias/%5Bid%5D/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
 
+---
+*Última actualización: 5 de Agosto de 2026*
+
+### 📚 Acceso al Catálogo de Cursos para Profesores e Instructores (5 de Agosto de 2026)
+- **Habilitación y Control Condicional del Catálogo**:
+  - Se re-implementó la redirección para los roles de `instructor`, `capacitador` e `institucion` en [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) de modo que por defecto al ingresar (inicio de sesión, URL limpia, etc.) sigan siendo redirigidos a su respectivo Panel de Control en `/profesor`.
+  - Se condicionó esta redirección a la presencia del parámetro de búsqueda `catalog=true`. Si dicho parámetro se encuentra activo en la URL, se les permite explorar la lista de cursos existentes en `/dashboard`.
+  - Se modificaron los enlaces de "Catálogo" en [components/Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) (escritorio y móvil), así como en los accesos rápidos de [app/deseos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/deseos/page.tsx) y [app/mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx) para dirigir explícitamente a `/dashboard?catalog=true`.
+  - Se adaptaron los enlaces internos del catálogo (filtros por categorías, vaciados y restablecimientos) en [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) para preservar de manera consistente el parámetro `catalog=true` si este ya se encuentra presente.
+- **Archivos Modificados y Creados**:
+  - [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) (Modificado)
+  - [components/Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) (Modificado)
+  - [app/deseos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/deseos/page.tsx) (Modificado)
+  - [app/mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+

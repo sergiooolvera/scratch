@@ -126,7 +126,7 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
                         </div>
                         <h3 className="text-2xl font-bold text-gray-900 mb-2">Aún no tienes cursos</h3>
                         <p className="text-gray-500 text-lg max-w-md mx-auto mb-8">Explora nuestro catálogo para encontrar el curso perfecto para ti e impulsa tu carrera.</p>
-                        <Link href="/dashboard" className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors">
+                        <Link href="/dashboard?catalog=true" className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors">
                             Explorar Catálogo
                         </Link>
                     </div>

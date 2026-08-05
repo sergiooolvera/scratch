@@ -120,7 +120,7 @@ export default function Navbar() {
                                     <div className="hidden md:flex items-center space-x-2">
                                 {profile?.rol !== 'admin' && profile?.rol !== 'adminjr' && (
                                     <>
-                                        <Link href="/dashboard" className={navItemClass('/dashboard')}>
+                                        <Link href="/dashboard?catalog=true" className={navItemClass('/dashboard')}>
                                             <LayoutDashboard className="h-4 w-4" /> <span>Catálogo</span>
                                         </Link>
                                         <Link href="/deseos" className={navItemClass('/deseos')}>
@@ -479,7 +479,7 @@ export default function Navbar() {
                                 </div>
                                 {profile?.rol !== 'admin' && profile?.rol !== 'adminjr' && (
                                     <>
-                                        <Link href="/dashboard" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">
+                                        <Link href="/dashboard?catalog=true" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">
                                             <LayoutDashboard className="h-5 w-5 text-gray-400" /> <span>Catálogo</span>
                                         </Link>
                                         <Link href="/deseos" onClick={() => setIsMenuOpen(false)} className="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 mx-2 transition-colors">

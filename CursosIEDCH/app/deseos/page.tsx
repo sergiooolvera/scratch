@@ -152,7 +152,7 @@ export default function WishlistPage() {
                         <p className="text-zinc-500 text-sm max-w-md mx-auto mb-6">
                             Aún no has agregado ningún curso a tu lista. Explora nuestro catálogo y presiona el icono de corazón en los cursos que te interesen.
                         </p>
-                        <Link href="/dashboard" className="inline-block text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/10 transition-all cursor-pointer">
+                        <Link href="/dashboard?catalog=true" className="inline-block text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/10 transition-all cursor-pointer">
                             Ir al Catálogo de Cursos
                         </Link>
                     </div>
