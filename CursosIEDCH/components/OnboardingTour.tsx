@@ -38,7 +38,7 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
     // Evaluar la ruta actual en el navegador
     const pathname = window.location.pathname
     
-    if (pathname.includes('/profesor/subir-curso')) {
+    if (pathname.includes('/profesor/subir-curso') || pathname.includes('/profesor/editar-curso')) {
       const tourVistoSubir = localStorage.getItem('iedch_subir_curso_tour_completed')
       if (!tourVistoSubir) {
         const autoStartTimeout = setTimeout(() => {
@@ -91,6 +91,15 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
   }, [rol])
 
   const startTour = (isAuto = false) => {
+    // Si ya existe un popover de driver.js en el DOM o una bandera global indica que está activo, no hacer nada
+    if (document.querySelector('.driver-popover') || (typeof window !== 'undefined' && (window as any).__iedch_tour_active)) {
+      return
+    }
+
+    if (typeof window !== 'undefined') {
+      (window as any).__iedch_tour_active = true
+    }
+
     const pathname = window.location.pathname
 
     // Si está en la página del detalle del curso, cargar tour de adquisición de curso
@@ -177,6 +186,9 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
         doneBtnText: '¡Entendido! 👍',
         steps: stepsCurso,
         onDestroyed: () => {
+          if (typeof window !== 'undefined') {
+            (window as any).__iedch_tour_active = false;
+          }
           if (isAuto) {
             localStorage.setItem('iedch_curso_detail_tour_completed', 'true')
           }
@@ -272,6 +284,9 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
         doneBtnText: '¡Entendido! 👍',
         steps: stepsProf,
         onDestroyed: () => {
+          if (typeof window !== 'undefined') {
+            (window as any).__iedch_tour_active = false;
+          }
           if (isAuto) {
             localStorage.setItem('iedch_profesor_dashboard_tour_completed', 'true')
           }
@@ -282,13 +297,13 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
       return
     }
 
-    // Si está en la página de subir curso, cargar tour de creación
-    if (pathname.includes('/profesor/subir-curso')) {
+    // Si está en la página de subir o editar curso, cargar tour de creación
+    if (pathname.includes('/profesor/subir-curso') || pathname.includes('/profesor/editar-curso')) {
       const stepsSubir: any[] = [
         {
           popover: {
             title: 'Creador de Cursos Premium 🛠️',
-            description: 'Te damos la bienvenida al panel de creación de cursos. Aquí puedes estructurar tu temario, subir clases, configurar exámenes y más. ¡Veamos cómo funciona!',
+            description: 'Te damos la bienvenida al panel de creación y edición de cursos. Aquí puedes estructurar tu temario, configurar métodos de pago, simuladores, IA de Gamma y evaluaciones. ¡Veamos cómo funciona!',
             position: 'center'
           }
         }
@@ -314,6 +329,102 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
             description: 'El proceso está dividido en cuatro etapas secuenciales: Información básica del curso, definición del Temario, la Evaluación final y el envío a revisión.',
             side: 'bottom',
             align: 'center'
+          }
+        })
+      }
+
+      // Paso del Simulador de Ingresos en Pestaña 1
+      if (document.querySelector('#btn-simulador-ingresos') || document.querySelector('#tab-btn-info')) {
+        stepsSubir.push({
+          element: '#btn-simulador-ingresos',
+          popover: {
+            title: 'Simulador de Ventas e Ingresos 📊',
+            description: 'Calcula tus ganancias estimadas de acuerdo con tu régimen fiscal. Escribe el precio deseado del curso (mínimo $199 MXN) y simula ganancias netas deduciendo comisiones bancarias.',
+            side: 'bottom',
+            align: 'center'
+          },
+          onHighlightStarted: () => {
+            const tabBtn = document.querySelector('#tab-btn-info') as HTMLButtonElement;
+            if (tabBtn) tabBtn.click();
+          }
+        })
+      }
+
+      // Paso de la IA de Gamma en Pestaña 2
+      if (document.querySelector('#tab-btn-modulos')) {
+        stepsSubir.push({
+          element: '#tab-btn-modulos',
+          popover: {
+            title: 'Temario y Clases 📚',
+            description: 'Aquí organizas las clases del curso por módulos. Puedes estructurar tu temario y subir los recursos educativos correspondientes.',
+            side: 'bottom',
+            align: 'center'
+          },
+          onHighlightStarted: () => {
+            const tabBtn = document.querySelector('#tab-btn-modulos') as HTMLButtonElement;
+            if (tabBtn) tabBtn.click();
+          }
+        })
+
+        stepsSubir.push({
+          element: document.querySelector('#btn-gamma-first') ? '#btn-gamma-first' : '#tab-btn-modulos',
+          popover: {
+            title: 'Generación con IA (Gamma) 🪄',
+            description: 'Nuestra plataforma cuenta con la IA de Gamma integrada. Puedes generar presentaciones temáticas completas (en formatos PDF o PPTX) para tus clases en segundos.',
+            side: 'bottom',
+            align: 'center'
+          },
+          onHighlightStarted: () => {
+            const tabBtn = document.querySelector('#tab-btn-modulos') as HTMLButtonElement;
+            if (tabBtn) tabBtn.click();
+          }
+        })
+      }
+
+      // Paso de Carga de Exámenes en Pestaña 3
+      if (document.querySelector('#tab-btn-examen')) {
+        stepsSubir.push({
+          element: '#tab-btn-examen',
+          popover: {
+            title: 'Evaluación y Exámenes 📝',
+            description: 'Define la calificación mínima para que el alumno apruebe el curso y obtenga su constancia de estudios.',
+            side: 'bottom',
+            align: 'center'
+          },
+          onHighlightStarted: () => {
+            const tabBtn = document.querySelector('#tab-btn-examen') as HTMLButtonElement;
+            if (tabBtn) tabBtn.click();
+          }
+        })
+
+        stepsSubir.push({
+          element: document.querySelector('#input-archivo-examen') ? '#input-archivo-examen' : '#tab-btn-examen',
+          popover: {
+            title: 'Cargar Examen desde PDF 📄',
+            description: 'Sube un archivo PDF con tus preguntas de opción múltiple. Nuestra IA se encargará de leerlo y cargar masivamente las preguntas para evitar que las captures manualmente.',
+            side: 'bottom',
+            align: 'center'
+          },
+          onHighlightStarted: () => {
+            const tabBtn = document.querySelector('#tab-btn-examen') as HTMLButtonElement;
+            if (tabBtn) tabBtn.click();
+          }
+        })
+      }
+
+      // Paso de Enviar a Revisión en Pestaña 4
+      if (document.querySelector('#tab-btn-avisos')) {
+        stepsSubir.push({
+          element: document.querySelector('#btn-enviar-revision') ? '#btn-enviar-revision' : '#tab-btn-avisos',
+          popover: {
+            title: 'Enviar a Revisión ✉️',
+            description: 'Al finalizar de estructurar tu curso, escribe avisos o enlaces de videoconferencia en vivo (Zoom, Teams, Meet) y presiona "Guardar curso y Enviar a revisión" para que el administrador lo autorice.',
+            side: 'bottom',
+            align: 'center'
+          },
+          onHighlightStarted: () => {
+            const tabBtn = document.querySelector('#tab-btn-avisos') as HTMLButtonElement;
+            if (tabBtn) tabBtn.click();
           }
         })
       }
@@ -354,6 +465,9 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
         doneBtnText: '¡Entendido! 👍',
         steps: stepsSubir,
         onDestroyed: () => {
+          if (typeof window !== 'undefined') {
+            (window as any).__iedch_tour_active = false;
+          }
           if (isAuto) {
             localStorage.setItem('iedch_subir_curso_tour_completed', 'true')
           }
@@ -468,6 +582,9 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
       doneBtnText: 'Comenzar 🚀',
       steps: steps,
       onDestroyed: () => {
+        if (typeof window !== 'undefined') {
+          (window as any).__iedch_tour_active = false;
+        }
         // Al cerrar o terminar el tour, guardamos que ya se completó
         if (isAuto) {
           localStorage.setItem('iedch_onboarding_completed', 'true')

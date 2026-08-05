@@ -2031,8 +2031,9 @@ const generationId = data.generationId;
 
 
             {/* Navigation Tabs */}
-            <div className={`flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px ${isSavingDraft ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+            <div id="tour-pasos-creacion" className={`flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px ${isSavingDraft ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 <button
+                    id="tab-btn-info"
                     onClick={() => handleTabChange('info')}
                     type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
@@ -2046,6 +2047,7 @@ const generationId = data.generationId;
                 </button>
                 <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
+                    id="tab-btn-modulos"
                     onClick={() => handleTabChange('modulos')}
                     type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
@@ -2059,6 +2061,7 @@ const generationId = data.generationId;
                 </button>
                 <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
+                    id="tab-btn-examen"
                     onClick={() => handleTabChange('examen')}
                     type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
@@ -2072,6 +2075,7 @@ const generationId = data.generationId;
                 </button>
                 <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
+                    id="tab-btn-avisos"
                     onClick={() => handleTabChange('avisos')}
                     type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
@@ -2247,6 +2251,7 @@ const generationId = data.generationId;
                                                     <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-8 w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
                                                 </div>
                                                 <button
+                                                    id="btn-simulador-ingresos"
                                                     type="button"
                                                     onClick={() => setIsSimuladorOpen(true)}
                                                     className="px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-2"
@@ -2747,6 +2752,7 @@ const generationId = data.generationId;
                                                     <label className="block text-xs font-extrabold text-gray-600 uppercase tracking-wider">Recursos del Módulo ({modulo.recursos.length})</label>
                                                     <div className="flex gap-2">
                                                         <button
+                                                            id={index === 0 ? "btn-gamma-first" : undefined}
                                                             type="button"
                                                             onClick={() => {
                                                                 setActiveGammaModuloIdx(index);
@@ -3587,6 +3593,7 @@ const generationId = data.generationId;
                                             <div>
                                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Automatización: Cargar examen PDF para leer preguntas</label>
                                                 <input
+                                                    id="input-archivo-examen"
                                                     type="file"
                                                     accept=".pdf,application/pdf"
                                                     onChange={handleUploadExamenHelper}
@@ -3891,6 +3898,7 @@ const generationId = data.generationId;
                                         Atrás
                                     </button>
                                     <button
+                                        id="btn-enviar-revision"
                                         type="submit"
                                         disabled={saving}
                                         className="flex-grow py-3 px-6 border border-transparent rounded-xl shadow-md text-base font-black text-white bg-blue-600 hover:bg-blue-700 transition disabled:opacity-50 hover:scale-[1.01]"

@@ -243,7 +243,7 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 - **Actualización de Plantilla:** Se modificó la plantilla de ejemplo (ejemplo-examen.html), retirando los ejemplos de preguntas abiertas y añadiendo una nota explícita sobre el uso obligatorio y exclusivo de preguntas de opción múltiple.
 
 ---
-*Última actualización: 4 de Julio de 2026*
+*Última actualización: 4 de Agosto de 2026*
 
 ### 🏢 Academias Reales del Profesor
 - **Visualización Dinámica:** Se reemplazó el listado de academias "quemadas" (hardcodeadas) en el Dashboard del Profesor (`app/profesor/page.tsx`) por las academias reales obtenidas de la base de datos (`ie_academias`).
@@ -705,4 +705,28 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) (Modificado)
   - [app/deseos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/deseos/page.tsx) (Modificado)
   - [app/admin/auditoria/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/auditoria/page.tsx) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 4 de Agosto de 2026*
+
+### 🎨 Tour Interactivo Mejorado de Creación y Edición de Cursos (4 de Agosto de 2026)
+- **Integración de Funcionalidades Clave en el Tour**:
+  - Se modificó la "presentación" (guía interactiva de Onboarding) del panel de creación de cursos para incorporar y detallar paso a paso:
+    1. **Simulador de Ventas e Ingresos**: Se agregó un paso que destaca el botón del simulador en la primera pestaña (`#btn-simulador-ingresos`), explicando al profesor cómo proyectar ganancias.
+    2. **Generación con IA (Gamma)**: Se agregó un paso en la pestaña de temario que destaca el generador de presentaciones con IA (`#btn-gamma-first`), informando sobre la creación de diapositivas automáticas.
+    3. **Carga de Exámenes**: Se agregó un paso en la pestaña de evaluación final que destaca el cargador masivo en PDF (`#input-archivo-examen`), facilitando la carga automática de preguntas por medio de la IA.
+    4. **Guardar y Enviar a Revisión**: Se agregó un paso final en la pestaña de avisos que enfoca el botón de envío a revisión (`#btn-enviar-revision`), explicando la importancia de guardar el progreso y someter el curso a validación del administrador.
+- **Navegación de Pestañas Programática**:
+  - Se implementó un cambio de pestañas automático y programático utilizando el callback `onHighlightStarted` de `driver.js`. Al pasar de un paso a otro, el tour simula el clic correspondiente en el botón de la pestaña superior (por ejemplo, `#tab-btn-info`, `#tab-btn-modulos`, `#tab-btn-examen`, `#tab-btn-avisos`) antes de renderizar y enfocar el spotlight en el elemento objetivo.
+- **Soporte de Pantalla de Edición**:
+  - Se extendió el tour interactivo para que se detecte y se ejecute tanto en la ruta de creación (`/profesor/subir-curso`) como en la de edición (`/profesor/editar-curso/[id]`), mapeando de manera idéntica los selectores y pestañas.
+
+- **Prevención de Superposición de Popovers**:
+  - Se corrigió un bug donde simular clics en pestañas durante el tour interactivo provocaba re-renders en cascada, disparando un inicio duplicado del tour (por ejemplo, mostrando el paso 1 en paralelo con el paso 7).
+  - Se implementó una bandera de control global en el objeto `window` (`window.__iedch_tour_active`) y se añadió una validación para detectar si ya existe un elemento `.driver-popover` en el DOM. Esto evita el inicio automático de tours concurrentes en la misma sesión y libera el estado en el callback `onDestroyed` de todas las configuraciones de `driver.js`.
+- **Archivos Modificados y Creados**:
+  - [components/OnboardingTour.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx) (Modificado)
+  - [app/profesor/subir-curso/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) (Modificado)
+  - [app/profesor/editar-curso/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/%5Bid%5D/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)

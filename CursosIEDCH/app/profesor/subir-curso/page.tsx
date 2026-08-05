@@ -1558,6 +1558,7 @@ export default function SubirCursoPage() {
             {/* Navigation Tabs */}
             <div id="tour-pasos-creacion" className="flex flex-wrap items-center gap-y-2 mb-6 border-b border-gray-200 pb-px">
                 <button
+                    id="tab-btn-info"
                     onClick={() => handleTabChange('info')}
                     type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
@@ -1571,6 +1572,7 @@ export default function SubirCursoPage() {
                 </button>
                 <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
+                    id="tab-btn-modulos"
                     onClick={() => handleTabChange('modulos')}
                     type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
@@ -1584,6 +1586,7 @@ export default function SubirCursoPage() {
                 </button>
                 <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
+                    id="tab-btn-examen"
                     onClick={() => handleTabChange('examen')}
                     type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
@@ -1597,6 +1600,7 @@ export default function SubirCursoPage() {
                 </button>
                 <ArrowRight className="h-5 w-5 text-[#8b5e3c] mx-2 flex-shrink-0" />
                 <button
+                    id="tab-btn-avisos"
                     onClick={() => handleTabChange('avisos')}
                     type="button"
                     className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 rounded-t-xl transition-all ${
@@ -1828,6 +1832,7 @@ export default function SubirCursoPage() {
                                                     <input type="number" step="0.01" name="precio" required min="0" value={formData.precio} onChange={handleChange} className="pl-8 w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="0.00" />
                                                 </div>
                                                 <button
+                                                    id="btn-simulador-ingresos"
                                                     type="button"
                                                     onClick={() => setIsSimuladorOpen(true)}
                                                     className="px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-2"
@@ -2216,6 +2221,7 @@ export default function SubirCursoPage() {
                                                     <label className="block text-xs font-extrabold text-gray-600 uppercase tracking-wider">Recursos del Módulo ({modulo.recursos.length})</label>
                                                     <div className="flex gap-2">
                                                         <button
+                                                            id={index === 0 ? "btn-gamma-first" : undefined}
                                                             type="button"
                                                             onClick={() => {
                                                                 setActiveGammaModuloIdx(index);
@@ -3002,7 +3008,7 @@ export default function SubirCursoPage() {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Subir Evaluación desde PDF (Carga masiva)</label>
-                                                <input type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-200 rounded-xl bg-white p-1" />
+                                                <input id="input-archivo-examen" type="file" accept=".pdf,application/pdf" onChange={handleUploadExamenHelper} disabled={isParsing} className="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-green-700 hover:file:bg-green-100 border border-green-200 rounded-xl bg-white p-1" />
                                                 {isParsing && <p className="text-[10px] font-bold text-green-600 mt-1 animate-pulse italic">Analizando examen PDF...</p>}
                                                 <a href="/ejemplo-examen.html" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline underline-offset-2 transition-colors">
                                                     📄 Ver ejemplo del formato correcto del PDF
@@ -3200,7 +3206,7 @@ export default function SubirCursoPage() {
                                     <h2 className="text-xl font-bold text-gray-900">4. Clase en Vivo / Enlace e Indicaciones</h2>
                                     <p className="text-gray-500 text-xs mt-0.5 font-medium">Especifica links de Zoom, Teams o Meet y avisa a los alumnos sobre fechas de reunión o lecturas importantes.</p>
                                 </div>
-                                <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="flex-shrink-0 whitespace-nowrap px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition-transform transform active:scale-95 flex items-center gap-2 text-sm">
+                                <button id="btn-enviar-revision" type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="flex-shrink-0 whitespace-nowrap px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition-transform transform active:scale-95 flex items-center gap-2 text-sm">
                                     {loading ? 'Registrando curso...' : 'Guardar curso y Enviar a revisión'}
                                 </button>
                             </div>
@@ -3255,7 +3261,7 @@ export default function SubirCursoPage() {
                                 <button type="button" onClick={() => handleTabChange('examen')} className="px-6 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition">
                                     Atrás
                                 </button>
-                                <button type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 flex items-center gap-2">
+                                <button id="btn-enviar-revision-2" type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 flex items-center gap-2">
                                     {loading ? 'Registrando curso...' : 'Guardar curso y Enviar a revisión'}
                                 </button>
                             </div>
