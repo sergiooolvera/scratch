@@ -7,3 +7,7 @@
 ## Optimización y Estructura de Base de Datos
 - Al crear nuevas tablas o agregar relaciones/claves foráneas (`FOREIGN KEY`), se deben definir e implementar siempre índices de rendimiento (`CREATE INDEX IF NOT EXISTS ...`) sobre las columnas correspondientes.
 - Toda nueva migración o cambio en el esquema debe quedar registrado en los archivos SQL correspondientes y actualizar el esquema general (`esquema_produccion.sql`) para asegurar que todos los ambientes (desarrollo y producción) compartan el mismo nivel de optimización.
+
+## Pruebas Automáticas con Playwright
+- **Obligatoriedad de Pruebas E2E:** Toda función nueva o componente/ruta que sea creado o editado DEBE contar con sus respectivas pruebas end-to-end (E2E) escritas o actualizadas en la suite de Playwright (`e2e/`).
+- **Verificación en Ejecución:** Antes de dar por concluida cualquier tarea o cambio en el código, se deben ejecutar y validar con éxito las pruebas de Playwright (`npx playwright test`) para garantizar que no existan regresiones en el sistema.

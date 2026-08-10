@@ -4,6 +4,18 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
 
 ## 🚀 Resumen de Avances Recientes (Agosto 2026)
 
+### 🧪 Política Obligatoria de Pruebas con Playwright y Suite Modular E2E (10 de Agosto de 2026)
+- **Política de Proyecto (.agents/AGENTS.md):** Se formalizó en las reglas del proyecto la norma estricta de que toda función nueva, ruta o modificación a componentes del sistema debe incluir o actualizar sus respectivas pruebas automatizadas end-to-end con Playwright y ejecutarse con éxito antes de concluir la tarea.
+- **Análisis de Funcionalidades:** Se realizó una auditoría completa del historial de avances y del código fuente para desglosar y cubrir todas las funciones existentes del proyecto (Autenticación, Catálogo y Visor del Alumno, Panel de Profesor y Creador de Cursos, Academias y Grupos, Certificados/Constancias y Validador QR, Simulador Fiscal de Finanzas y Comentarios/Sugerencias).
+- **Suite de Pruebas Modular:** Se estructuró la suite de Playwright (`e2e/`) en archivos modulares independientes para facilitar su mantenimiento y ejecución:
+  - `e2e/auth.spec.ts`: Pruebas de inicio de sesión, visibilidad de contraseña y manejo de errores.
+  - `e2e/courses.spec.ts`: Pruebas del catálogo, banner hero, filtrado por categorías y botón de compartir.
+  - `e2e/instructor.spec.ts`: Pruebas del panel de profesor, estadísticas reales, creador/editor de cursos y subidor Bunny.net.
+  - `e2e/academias.spec.ts`: Pruebas del flujo de creación de academias en 4 pasos, edición unificada y grupos.
+  - `e2e/certificates.spec.ts`: Pruebas de validación pública QR (`/validar`) y diseño responsivo de constancias.
+  - `e2e/finances.spec.ts`: Pruebas de la sección de ventas y modal del simulador de ingresos fiscal con sus 4 regímenes.
+  - `e2e/feedback.spec.ts`: Pruebas del botón flotante global, envío de opiniones y bandeja de entrada de administración.
+
 ### 🛠️ Corrección de Compatibilidad de searchParams en Next.js 15 y Despliegue a Producción (10 de Agosto de 2026)
 - **Desempaquetado de Promise en Servidor:** Se actualizó la firma y lógica de la página `MisCursosPage` ([app/mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx)) para declarar `searchParams` como `Promise<{ ... }>` y resolverlo mediante `await searchParams` (`sParams`) antes de acceder a sus propiedades (`q`, `pago_pendiente`, `voucher`), cumpliendo estrictamente con los requerimientos de Next.js 15 y eliminando el error en tiempo de ejecución/ejecución de pruebas.
 - **Despliegue a Producción:** Se fusionaron de forma exitosa las actualizaciones de la rama `staging` a `main` y se realizó el push al repositorio remoto para el despliegue automático en Vercel.
