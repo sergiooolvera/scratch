@@ -3,8 +3,9 @@ import CourseCard from '@/components/CourseCard'
 import { GraduationCap, Search } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function MisCursosPage({ searchParams }: { searchParams: { q?: string, compra_exitosa?: string, pago_pendiente?: string, voucher?: string } }) {
-    const query = searchParams.q?.toLowerCase() || ''
+export default async function MisCursosPage({ searchParams }: { searchParams: Promise<{ q?: string, compra_exitosa?: string, pago_pendiente?: string, voucher?: string }> }) {
+    const sParams = await searchParams
+    const query = sParams?.q?.toLowerCase() || ''
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -89,7 +90,7 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
                     </form>
                 </div>
 
-                {searchParams?.pago_pendiente === 'true' && (
+                {sParams?.pago_pendiente === 'true' && (
                     <div className="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-md">
                         <div className="flex">
                             <div className="ml-3 flex-1 flex flex-col sm:flex-row items-start sm:items-center justify-between">
@@ -97,9 +98,9 @@ export default async function MisCursosPage({ searchParams }: { searchParams: { 
                                     <h3 className="text-sm font-medium text-yellow-800">✅ Tu voucher se generó exitosamente</h3>
                                     <p className="text-sm text-yellow-700 mt-1 max-w-3xl">Si elegiste pagar en OXXO, recuerda que el pago puede tardar de 1 a 2 días hábiles en procesarse en nuestro sistema posterior a liquidarse en la caja. Una vez completado, tu curso aparecerá aquí automáticamente.</p>
                                 </div>
-                                {searchParams.voucher && (
+                                {sParams.voucher && (
                                     <div className="mt-4 sm:mt-0 flex-shrink-0">
-                                        <a href={searchParams.voucher} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-yellow-900 bg-yellow-200 hover:bg-yellow-300 transition-colors shadow-sm">
+                                        <a href={sParams.voucher} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-yellow-900 bg-yellow-200 hover:bg-yellow-300 transition-colors shadow-sm">
                                             Ver e Imprimir Ticket OXXO
                                         </a>
                                     </div>

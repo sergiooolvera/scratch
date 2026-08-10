@@ -2,6 +2,12 @@
 
 Esta bitácora resume los avances realizados recientemente en el proyecto, organizados por áreas clave.
 
+## 🚀 Resumen de Avances Recientes (Agosto 2026)
+
+### 🛠️ Corrección de Compatibilidad de searchParams en Next.js 15 y Despliegue a Producción (10 de Agosto de 2026)
+- **Desempaquetado de Promise en Servidor:** Se actualizó la firma y lógica de la página `MisCursosPage` ([app/mis-cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx)) para declarar `searchParams` como `Promise<{ ... }>` y resolverlo mediante `await searchParams` (`sParams`) antes de acceder a sus propiedades (`q`, `pago_pendiente`, `voucher`), cumpliendo estrictamente con los requerimientos de Next.js 15 y eliminando el error en tiempo de ejecución/ejecución de pruebas.
+- **Despliegue a Producción:** Se fusionaron de forma exitosa las actualizaciones de la rama `staging` a `main` y se realizó el push al repositorio remoto para el despliegue automático en Vercel.
+
 ## 🚀 Resumen de Avances Recientes (Julio 2026)
 
 ### 📊 Integración de Google Analytics 4 (30 de Julio de 2026)
@@ -865,5 +871,42 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [app/academias/[id]/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/academias/%5Bid%5D/page.tsx) (Modificado)
   - [app/dashboard/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/dashboard/page.tsx) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+---
+*Última actualización: 10 de Agosto de 2026*
+
+### 🧪 Automatización de Pruebas E2E con Playwright (10 de Agosto de 2026)
+- **Implementación del Framework de Pruebas**:
+  - Se configuró la suite de pruebas automatizadas **End-to-End (E2E)** con **Playwright** en la rama `staging`.
+  - Se instaló `@playwright/test` y el motor de renderizado Chromium.
+  - Se creó la configuración principal `playwright.config.ts` vinculada al servidor local en `http://localhost:3000`.
+- **Generación de Usuarios de Prueba Dinámicos**:
+  - Se creó y ejecutó el script `seed_test_users.js` en Supabase Auth y en la tabla `ie_profiles` asignando credenciales y roles para:
+    - **Alumno**: `e2e_alumno@iedch.edu.mx` (rol: `alumno`)
+    - **Profesor**: `e2e_profesor@iedch.edu.mx` (rol: `instructor`)
+    - **Admin**: `e2e_admin@iedch.edu.mx` (rol: `admin`)
+- **Estructura y Escenarios de Prueba Implementados (`e2e/`)**:
+  - `e2e/fixtures/auth.fixture.ts`: Fixture reutilizable de autenticación e inyección de sesión.
+  - `e2e/auth.spec.ts`: Pruebas de Login, errores de credenciales, alternancia de contraseña visible.
+  - `e2e/courses.spec.ts`: Pruebas de catálogo de cursos y búsquedas.
+  - `e2e/certificates.spec.ts`: Pruebas de validación de folios y constancias (`/validar`).
+  - `e2e/admin.spec.ts`: Pruebas de seguridad, protección de rutas y permisos de roles (`/admin` y `/profesor`).
+  - `e2e/exams.spec.ts`: Pruebas del panel de cuestionarios y dashboard.
+- **Nuevos Scripts en package.json**:
+  - `npm run test:e2e` (ejecutar pruebas headless)
+  - `npm run test:e2e:ui` (interfaz visual interactiva)
+  - `npm run test:e2e:report` (reporte HTML de ejecuciones)
+- **Archivos Modificados y Creados**:
+  - [playwright.config.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/playwright.config.ts) (Creado)
+  - [seed_test_users.js](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/seed_test_users.js) (Creado)
+  - [e2e/fixtures/auth.fixture.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/fixtures/auth.fixture.ts) (Creado)
+  - [e2e/auth.spec.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/auth.spec.ts) (Creado)
+  - [e2e/courses.spec.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/courses.spec.ts) (Creado)
+  - [e2e/certificates.spec.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/certificates.spec.ts) (Creado)
+  - [e2e/admin.spec.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/admin.spec.ts) (Creado)
+  - [e2e/exams.spec.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/exams.spec.ts) (Creado)
+  - [package.json](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/package.json) (Modificado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
 
 
