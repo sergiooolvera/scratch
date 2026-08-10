@@ -5,6 +5,9 @@
 !.gitignore
 # But DO NOT ignore the CursosIEDCH folder and all its contents
 !/CursosIEDCH/
+!/CursosIEDCH/**
+!CursosIEDCH/playwright.config.ts
+!CursosIEDCH/seed_test_users.js
 
 
 
@@ -102,6 +105,7 @@ firebase_service_account.json
 .vercel
 
 # Ignore local scratch/temporary script files in CursosIEDCH
+!CursosIEDCH/e2e/**
 CursosIEDCH/*.js
 CursosIEDCH/*.ts
 CursosIEDCH/*.sql
