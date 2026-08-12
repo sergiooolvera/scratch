@@ -131,6 +131,7 @@ export async function GET() {
                 payment_status: session.payment_status,
                 customer_email: session.customer_details?.email || session.metadata?.email || 'N/A',
                 customer_name: customerName,
+                user_id: uid || null,
                 curso_id: cid,
                 curso_titulo: cData?.titulo || 'Curso desconocido',
                 profesor_id: cData?.profesor_id || null,
@@ -195,6 +196,7 @@ export async function GET() {
                 payment_status: m.estado === 'aprobado' ? 'paid' : 'unpaid',
                 customer_email: email,
                 customer_name: name,
+                user_id: m.user_id,
                 curso_id: m.curso_id,
                 curso_titulo: curso?.titulo || 'Curso desconocido',
                 profesor_id: curso?.profesor_id || null,
@@ -238,6 +240,7 @@ export async function GET() {
                 payment_status: 'paid',
                 customer_email: email,
                 customer_name: name,
+                user_id: c.user_id,
                 curso_id: c.curso_id,
                 curso_titulo: curso?.titulo || 'Curso desconocido',
                 profesor_nombre: profileNameMap[curso?.profesor_id] || 'Desconocido',
@@ -248,6 +251,64 @@ export async function GET() {
 
         let allTransactions = [...stripeTransactions, ...manualTransactions, ...comprasUnmatched]
             .sort((a, b) => b.created - a.created);
+
+        // Deduplicar transacciones de forma inteligente
+        const uniqueTransactions = [];
+        const stripeKeys = new Set(); // Claves de usuario+curso con pago Stripe
+        
+        // 1. Conservar todos los cobros de Stripe (son cargos independientes a tarjeta)
+        const stripeTxs = allTransactions.filter(t => t.origin === 'Stripe');
+        uniqueTransactions.push(...stripeTxs);
+        stripeTxs.forEach(t => stripeKeys.add(`${t.user_id}_${t.curso_id}`));
+
+        // 2. Procesar pagos manuales
+        const manualTxs = allTransactions.filter(t => t.origin === 'Manual');
+        const manualKeysMap = new Map(); // key -> array de transacciones manuales
+        
+        for (const t of manualTxs) {
+            const key = `${t.user_id}_${t.curso_id}`;
+            
+            // Si ya existe un pago por Stripe del mismo usuario para el mismo curso el mismo día (<24h),
+            // asumimos que el pago manual es un registro duplicado de esa misma compra.
+            if (stripeKeys.has(key)) {
+                const stripeOfSameUser = stripeTxs.find(s => `${s.user_id}_${s.curso_id}` === key);
+                if (stripeOfSameUser) {
+                    const diffTime = Math.abs(t.created - stripeOfSameUser.created);
+                    if (diffTime < 24 * 3600) { // menos de 24 horas de diferencia
+                        continue; // omitir pago manual duplicado
+                    }
+                }
+            }
+            
+            if (!manualKeysMap.has(key)) {
+                manualKeysMap.set(key, [t]);
+            } else {
+                const existingList = manualKeysMap.get(key);
+                // Evitar registros duplicados de pagos manuales creados/aprobados casi al mismo tiempo (<1 hora)
+                const isDuplicate = existingList.some(ext => Math.abs(ext.created - t.created) < 3600);
+                if (!isDuplicate) {
+                    existingList.push(t);
+                }
+            }
+        }
+        
+        // Agregar los pagos manuales filtrados
+        for (const list of manualKeysMap.values()) {
+            uniqueTransactions.push(...list);
+        }
+        
+        // 3. Procesar accesos directos de la BD / Cupones (origen que no sea Stripe ni Manual)
+        const bdTxs = allTransactions.filter(t => t.origin !== 'Stripe' && t.origin !== 'Manual');
+        for (const t of bdTxs) {
+            const key = `${t.user_id}_${t.curso_id}`;
+            // Solo añadir si no existe ya un pago de Stripe o Manual para ese mismo usuario y curso
+            const hasPayment = uniqueTransactions.some(ut => `${ut.user_id}_${ut.curso_id}` === key);
+            if (!hasPayment) {
+                uniqueTransactions.push(t);
+            }
+        }
+
+        allTransactions = uniqueTransactions.sort((a, b) => b.created - a.created);
 
         if (profCursoIds) {
             allTransactions = allTransactions.filter(t => profCursoIds!.has(t.curso_id));

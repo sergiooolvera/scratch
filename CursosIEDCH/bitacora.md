@@ -920,5 +920,23 @@ Esta bitácora resume los avances realizados recientemente en el proyecto, organ
   - [package.json](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/package.json) (Modificado)
   - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
 
+---
+*Última actualización: 12 de Agosto de 2026*
+
+### 🧹 Corrección de Duplicados en Reporte de Ventas y Generación de Reporte HTML (12 de Agosto de 2026)
+- **Deduplicación Inteligente de Transacciones**:
+  - Se modificó la API de consolidación de ventas (`app/api/admin/stripe-sessions/route.ts`) para resolver el problema de registros duplicados en el panel de ventas del instructor.
+  - Se preservan múltiples pagos legítimos de Stripe de manera independiente (por ejemplo, pagos en parcialidades o compras distintas hechas por el mismo alumno).
+  - Se unifican automáticamente solicitudes duplicadas de pagos manuales si se generaron en un lapso menor a una hora.
+  - Se cruzan pasarelas de pago y registros manuales para el mismo usuario y curso en un lapso menor a 24 horas, priorizando la transacción de Stripe sobre el registro manual o de base de datos.
+- **Reporte de Ventas standalone en HTML**:
+  - Se generó el archivo `public/desglose_ventas.html` que consolida de forma detallada y visual las ventas asociadas a los cursos de "Introducción a la Psicología Clínica" y "Taller Práctico de Introducción a la Psicología Clínica".
+  - Se implementó un combo/selector dinámico mediante JavaScript para alternar entre la vista combinada y la de cada curso de forma individual, recalculando los ingresos brutos, transacciones por tipo (Stripe, Manual, BD) y totales automáticamente en tiempo real.
+- **Archivos Modificados y Creados**:
+  - [app/api/admin/stripe-sessions/route.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/admin/stripe-sessions/route.ts) (Modificado)
+  - [public/desglose_ventas.html](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/public/desglose_ventas.html) (Creado)
+  - [bitacora.md](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/bitacora.md) (Modificado)
+
+
 
 
