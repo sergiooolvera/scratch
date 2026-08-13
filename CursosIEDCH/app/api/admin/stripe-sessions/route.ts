@@ -263,7 +263,7 @@ export async function GET() {
 
         // 2. Procesar pagos manuales
         const manualTxs = allTransactions.filter(t => t.origin === 'Manual');
-        const manualKeysMap = new Map(); // key -> array de transacciones manuales
+        const manualKeysMap = new Map<string, any[]>(); // key -> array de transacciones manuales
         
         for (const t of manualTxs) {
             const key = `${t.user_id}_${t.curso_id}`;
@@ -284,10 +284,12 @@ export async function GET() {
                 manualKeysMap.set(key, [t]);
             } else {
                 const existingList = manualKeysMap.get(key);
-                // Evitar registros duplicados de pagos manuales creados/aprobados casi al mismo tiempo (<1 hora)
-                const isDuplicate = existingList.some(ext => Math.abs(ext.created - t.created) < 3600);
-                if (!isDuplicate) {
-                    existingList.push(t);
+                if (existingList) {
+                    // Evitar registros duplicados de pagos manuales creados/aprobados casi al mismo tiempo (<1 hora)
+                    const isDuplicate = existingList.some((ext: any) => Math.abs(ext.created - t.created) < 3600);
+                    if (!isDuplicate) {
+                        existingList.push(t);
+                    }
                 }
             }
         }
