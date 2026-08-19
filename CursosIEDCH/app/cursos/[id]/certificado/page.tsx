@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowLeft, Lock, CreditCard } from 'lucide-react'
 import CertificadoTabWrapper from './CertificadoTabWrapper'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
+import { formatDuracion } from '@/utils/formatters'
 
 export default async function CertificadoPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -171,7 +172,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                         alumnoNombre={alumnoNombre}
                         cursoTitulo={curso.titulo}
                         cursoDescripcion={`La presente capacitación incluyó contenidos orientados al desarrollo de competencias relacionadas con, ${curso.competencias || curso.descripcion || ''}`}
-                        cursoDuracion={curso.duracion && curso.duracion.length <= 30 ? curso.duracion : '40 horas'}
+                        cursoDuracion={formatDuracion(curso.duracion)}
                         fechaAprobacion={fechaFormateada}
                         fechaAprobacionRaw={fechaAprobacionObj.toISOString()}
                         folio={folioVenta}

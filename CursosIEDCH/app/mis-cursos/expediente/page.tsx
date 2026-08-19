@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { FolderHeart, Award, ShieldCheck, Download, GraduationCap } from 'lucide-react'
+import { formatDuracion } from '@/utils/formatters'
 import Link from 'next/link'
 
 export default async function ExpedientePage() {
@@ -121,7 +122,7 @@ export default async function ExpedientePage() {
             id: curso.id,
             titulo: curso.titulo,
             descripcion: curso.descripcion,
-            duracion: curso.duracion || '40 horas',
+            duracion: formatDuracion(curso.duracion || '40'),
             fechaAcreditacion,
             ordenFecha
         }

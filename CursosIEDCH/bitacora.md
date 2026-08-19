@@ -944,3 +944,4 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, organ
 ## 18 de Agosto de 2026
 
 - **Estandarización de Textos:** Se implementó la inserción automática de los textos prefijados para la 'Descripción Completa' y 'Competencias del Curso' en las vistas de presentación (pantalla del curso, tarjetas y expediente) y en el PDF/Vista de las microcredenciales, garantizando uniformidad en todos los cursos sin que los instructores deban teclearlo manualmente.
+- **Control de Duración:** Se modificó el campo de duración en la creación/edición de cursos para aceptar únicamente números y autocompletar la palabra 'Horas'. Se agregó la función 'formatDuracion' en utils para garantizar que en los certificados, curso público, panel de administrador y expediente del alumno se visualice uniformemente 'X Hora(s)' previniendo repeticiones como '10 horas Horas'.

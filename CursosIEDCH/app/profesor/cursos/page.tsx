@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Edit, BookOpen, Clock, Activity, History, Mail, Loader2 } from 'lucide-react'
+import { formatDuracion } from '@/utils/formatters'
 
 export default function ProfesorCursosPage() {
     const [cursos, setCursos] = useState<any[]>([])
@@ -99,7 +100,7 @@ export default function ProfesorCursosPage() {
                                     )}
                                 </div>
                                 <div className="text-sm text-gray-500 space-y-1 mb-6 flex-grow">
-                                    <p className="flex items-center"><Clock className="h-4 w-4 mr-1.5" /> {curso.duracion}</p>
+                                    <p className="flex items-center"><Clock className="h-4 w-4 mr-1.5" /> {formatDuracion(curso.duracion)}</p>
                                     <p className="flex items-center"><Activity className="h-4 w-4 mr-1.5" /> Estado: <span className="ml-1 capitalize text-blue-600 font-medium">{curso.estado}</span></p>
                                     <p className="flex items-center font-semibold text-gray-700 mt-2">${curso.precio} MXN</p>
                                     {(curso.reunion_url || curso.nota_profesor) && (

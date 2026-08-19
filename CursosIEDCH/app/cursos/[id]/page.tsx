@@ -5,6 +5,7 @@ import CourseReviews from './CourseReviews'
 import ShareButton from './ShareButton'
 import { Metadata } from 'next'
 import { headers } from 'next/headers'
+import { formatDuracion } from '@/utils/formatters'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params
@@ -170,7 +171,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                         </div>
                         <div>
                             <h3 className="text-sm font-medium text-gray-500">Duración</h3>
-                            <p className="mt-1 text-sm text-gray-900">{curso.duracion}</p>
+                            <p className="mt-1 text-sm text-gray-900">{formatDuracion(curso.duracion)}</p>
                         </div>
                         <div className="col-span-2">
                             <h3 className="text-sm font-medium text-gray-500">Beneficios</h3>

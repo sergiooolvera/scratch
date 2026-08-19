@@ -2198,8 +2198,11 @@ const generationId = data.generationId;
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-100">
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-1">Duración Estructurada</label>
-                                        <input type="text" name="duracion" required maxLength={30} value={formData.duracion} onChange={handleChange} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
-                                        <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 30 caracteres. Se imprime en el certificado.</p>
+                                        <div className="flex items-center gap-2">
+                                            <input type="number" name="duracion" required min="1" max="999" value={formData.duracion ? String(formData.duracion).replace(/\D/g, '') : ''} onChange={(e) => setFormData({...formData, duracion: e.target.value ? `${e.target.value} ${e.target.value === '1' ? 'Hora' : 'Horas'}` : ''})} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Ej: 10" />
+                                            <span className="text-gray-500 font-medium">Horas</span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 mt-1 italic">Solo ingresa el número. Se imprime en el certificado.</p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-1">Vigencia de la Constancia</label>

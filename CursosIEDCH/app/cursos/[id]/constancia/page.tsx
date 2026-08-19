@@ -11,6 +11,7 @@ import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import MicrocredencialDocument from '@/components/MicrocredencialDocument'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
+import { formatDuracion } from '@/utils/formatters'
 
 export default function ConstanciaPage({ params }: { params: Promise<{ id: string }> }) {
     const [curso, setCurso] = useState<any>(null)
@@ -440,7 +441,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                                         const props = {
                                             alumnoNombre: alumnoNombreCompleto,
                                             cursoTitulo: curso?.titulo || 'Nombre del Curso',
-                                            cursoDuracion: curso?.duracion,
+                                            cursoDuracion: formatDuracion(curso?.duracion),
                                             fechaAprobacion: fechaAp,
                                             folio: String(examen?.id).toUpperCase() || '112233445',
                                             vigenciaStr: `${vigStr} (${vigAnos} ${vigAnos === 1 ? 'año' : 'años'})`,
@@ -464,7 +465,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                                         alumnoNombre={alumnoNombreCompleto}
                                         cursoTitulo={curso?.titulo || 'Nombre del Curso'}
                                         cursoDescripcion={`La presente capacitación incluyó contenidos orientados al desarrollo de competencias relacionadas con, ${curso?.competencias || curso?.descripcion || ''}`}
-                                        cursoDuracion={curso?.duracion}
+                                        cursoDuracion={formatDuracion(curso?.duracion)}
                                         fechaAprobacion={fechaApAbrev}
                                         fechaVigencia={fechaVigAbrev}
                                         folio={String(examen?.id).toUpperCase() || '112233445'}

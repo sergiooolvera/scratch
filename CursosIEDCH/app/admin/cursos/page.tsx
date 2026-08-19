@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, X, FileText, PlayCircle, Trash2, Activity } from 'lucide-react'
+import { formatDuracion } from '@/utils/formatters'
 
 type Curso = any;
 
@@ -666,7 +667,7 @@ export default function AdminCursosPage() {
                             <div className="mb-6 bg-white p-4 rounded-lg border border-gray-200">
                                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Información General</h3>
                                 <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <p><span className="text-gray-500">Duración:</span> {previewCurso.duracion}</p>
+                                    <p><span className="text-gray-500">Duración:</span> {formatDuracion(previewCurso.duracion)}</p>
                                     <p><span className="text-gray-500">Precio:</span> ${previewCurso.precio}</p>
                                     <p className="col-span-2"><span className="text-gray-500">Beneficios:</span> {previewCurso.beneficios}</p>
                                 </div>
