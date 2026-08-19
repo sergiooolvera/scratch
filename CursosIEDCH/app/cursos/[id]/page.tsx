@@ -150,7 +150,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                         <ShareButton title={curso.titulo} />
                     </div>
                 </div>
-                <p className="text-gray-600 mb-6 text-justify">{curso.descripcion}</p>
+                <p className="text-gray-600 mb-6 text-justify">Esta capacitación está orientada a la adquisición y actualización de conocimientos relacionados con, {curso.descripcion}</p>
  
                 <div className="flex flex-col md:flex-row gap-8 mb-8">
                     {/* Información del Curso (izq) */}
@@ -179,7 +179,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                         {curso.competencias && (
                             <div className="col-span-2">
                                 <h3 className="text-sm font-medium text-gray-500">Competencias</h3>
-                                <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap text-justify">{curso.competencias}</p>
+                                <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap text-justify">La presente capacitación incluyó contenidos orientados al desarrollo de competencias relacionadas con, {curso.competencias}</p>
                             </div>
                         )}
                         {!isPagado && (

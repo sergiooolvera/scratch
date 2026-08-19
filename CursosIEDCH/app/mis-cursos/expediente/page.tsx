@@ -166,7 +166,7 @@ export default async function ExpedientePage() {
                                     {curso.titulo}
                                 </h3>
                                 <p className="text-zinc-500 text-sm line-clamp-2 leading-relaxed mb-4">
-                                    {curso.descripcion || 'Sin descripción detallada disponible.'}
+                                    {curso.descripcion ? `Esta capacitación está orientada a la adquisición y actualización de conocimientos relacionados con, ${curso.descripcion}` : 'Sin descripción detallada disponible.'}
                                 </p>
                                 {curso.fechaAcreditacion && (
                                     <div className="text-xs text-zinc-400 font-medium bg-zinc-50 py-2 px-3 rounded-xl inline-block">

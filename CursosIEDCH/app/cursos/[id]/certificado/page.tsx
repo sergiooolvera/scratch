@@ -16,7 +16,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia, mostrar_calificacion_constancia, logo_url, mostrar_logo_constancia, plantilla_constancia').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, competencias, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia, mostrar_calificacion_constancia, logo_url, mostrar_logo_constancia, plantilla_constancia').eq('id', id).single()
     if (!curso) notFound()
 
     const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
@@ -170,7 +170,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
                     <CertificadoTabWrapper
                         alumnoNombre={alumnoNombre}
                         cursoTitulo={curso.titulo}
-                        cursoDescripcion={curso.descripcion || ''}
+                        cursoDescripcion={`La presente capacitación incluyó contenidos orientados al desarrollo de competencias relacionadas con, ${curso.competencias || curso.descripcion || ''}`}
                         cursoDuracion={curso.duracion && curso.duracion.length <= 30 ? curso.duracion : '40 horas'}
                         fechaAprobacion={fechaFormateada}
                         fechaAprobacionRaw={fechaAprobacionObj.toISOString()}

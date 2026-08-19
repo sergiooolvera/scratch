@@ -167,7 +167,7 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
 
                         {/* Descripción */}
                         <p className={isSuper ? 'mt-2 text-sm text-gray-600 line-clamp-3' : 'mt-1.5 max-w-2xl text-sm text-gray-500 line-clamp-2'}>
-                            {course.descripcion}
+                            {course.descripcion ? `Esta capacitación está orientada a la adquisición y actualización de conocimientos relacionados con, ${course.descripcion}` : ''}
                         </p>
 
                         {/* Perfil del Profesor */}

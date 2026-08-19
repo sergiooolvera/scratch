@@ -940,3 +940,7 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, organ
 
 
 
+
+## 18 de Agosto de 2026
+
+- **Estandarización de Textos:** Se implementó la inserción automática de los textos prefijados para la 'Descripción Completa' y 'Competencias del Curso' en las vistas de presentación (pantalla del curso, tarjetas y expediente) y en el PDF/Vista de las microcredenciales, garantizando uniformidad en todos los cursos sin que los instructores deban teclearlo manualmente.

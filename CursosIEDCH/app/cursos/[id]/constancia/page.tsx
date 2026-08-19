@@ -463,7 +463,7 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
                                     <MicrocredencialDocument
                                         alumnoNombre={alumnoNombreCompleto}
                                         cursoTitulo={curso?.titulo || 'Nombre del Curso'}
-                                        cursoDescripcion={curso?.descripcion || ''}
+                                        cursoDescripcion={`La presente capacitación incluyó contenidos orientados al desarrollo de competencias relacionadas con, ${curso?.competencias || curso?.descripcion || ''}`}
                                         cursoDuracion={curso?.duracion}
                                         fechaAprobacion={fechaApAbrev}
                                         fechaVigencia={fechaVigAbrev}
