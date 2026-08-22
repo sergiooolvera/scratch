@@ -8,7 +8,7 @@ test.describe('Módulo de Cursos y Catálogo', () => {
     await expect(page).toHaveTitle(/Cursos|EGAC|IEDCH/i);
     
     // Verificar la presencia del logo o encabezado principal
-    const logo = page.locator('img[alt="Logo"]').first();
+    const logo = page.locator('img[alt*="Logo"]').first();
     await expect(logo).toBeVisible({ timeout: 15000 });
   });
 
