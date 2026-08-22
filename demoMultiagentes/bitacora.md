@@ -48,6 +48,10 @@ Este proyecto es un ejemplo práctico y educativo de un sistema multiagente aut�
      - `PredictorAgent` ([`agents/predictor.py`](file:///c:/Users/sergi/.gemini/antigravity/scratch/demoMultiagentes/agents/predictor.py)): Migrado a DeepSeek como motor primario en predicción preliminar y final.
   3. **Visualización y Veredicto Sintetizado**:
      - Todos los agentes realizan su análisis interno a profundidad vía DeepSeek y presentan el veredicto final sintetizado al inicio del reporte.
+  5. **Manejo Claro de Variables de Entorno**:
+     - Se añadió un aviso explícito en consola en `config.py` cuando `DEEPSEEK_API_KEY` está vacía en `.env` para informar al usuario de que debe agregar su token para evitar el fallback a Gemini.
+
+
 
 
 

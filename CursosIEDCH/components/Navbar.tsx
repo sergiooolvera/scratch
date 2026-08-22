@@ -21,6 +21,8 @@ export default function Navbar() {
     const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false)
     const [isEstudiosMenuOpen, setIsEstudiosMenuOpen] = useState(false)
 
+    if (pathname === '/') return null;
+
     useEffect(() => {
         const fetchUser = async (sessionUser: any) => {
             setUser(sessionUser)

@@ -945,3 +945,11 @@ Esta bitÃ¡cora resume los avances realizados recientemente en el proyecto, organ
 
 - **Estandarización de Textos:** Se implementó la inserción automática de los textos prefijados para la 'Descripción Completa' y 'Competencias del Curso' en las vistas de presentación (pantalla del curso, tarjetas y expediente) y en el PDF/Vista de las microcredenciales, garantizando uniformidad en todos los cursos sin que los instructores deban teclearlo manualmente.
 - **Control de Duración:** Se modificó el campo de duración en la creación/edición de cursos para aceptar únicamente números y autocompletar la palabra 'Horas'. Se agregó la función 'formatDuracion' en utils para garantizar que en los certificados, curso público, panel de administrador y expediente del alumno se visualice uniformemente 'X Hora(s)' previniendo repeticiones como '10 horas Horas'.
+
+### ?? Migración de Landing Page Institucional a CursosIEDCH (18 de Agosto de 2026)
+- **Integración de Diseño:** Se migró el diseño principal del sitio institucional grupoegac.com (originalmente en IEDCH2) directamente a la página principal de CursosIEDCH (pp/page.tsx).
+- **Nuevos Componentes React/Tailwind:** Se crearon los componentes modulares Navbar, HeroSection, PopularCourses, Testimonials y Footer en components/landing/.
+- **Modal de Registro/Login:** Se implementó un modal interactivo (CourseModal) accionado por el botón 'Quiero publicar un curso' que ofrece opciones a Instructores e Instituciones para redirigir al login actual.
+- **Cursos Dinámicos:** La sección 'Cursos populares' fue conectada a la base de datos de Supabase para obtener en tiempo real los últimos 4 cursos publicados y mostrar su información (imagen, título, precio).
+- **Pruebas E2E:** Se creó el archivo de pruebas e2e/landing.spec.ts para verificar la carga correcta del nuevo layout y la funcionalidad del modal.
+

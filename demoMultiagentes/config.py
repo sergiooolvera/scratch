@@ -91,6 +91,9 @@ def generate_agent_response(system_instruction: str, prompt: str, temperature: f
             )
         except Exception as e:
             print(f"[Config API] Error en llamada a DeepSeek API ({e}). Probando fallback con Gemini...")
+    else:
+        print("[Config API] ⚠️  DEEPSEEK_API_KEY está en blanco en .env. Usando fallback con Gemini...")
+
 
     # 2. Fallback con Gemini si DeepSeek no está disponible o falló
     gemini_client = get_gemini_client()

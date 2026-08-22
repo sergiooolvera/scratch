@@ -259,16 +259,57 @@ export default function HomePage() {
           border-color: rgba(16, 185, 129, 1) !important;
           transform: scale(1.02);
         }
+
+        @keyframes championship-glow {
+          0%, 100% {
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(212, 175, 55, 0.05);
+            border-color: rgba(212, 175, 55, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 45px rgba(212, 175, 55, 0.65), inset 0 0 25px rgba(212, 175, 55, 0.2);
+            border-color: rgba(212, 175, 55, 0.85);
+          }
+        }
+        .championship-card {
+          animation: championship-glow 3s infinite ease-in-out;
+          background: linear-gradient(135deg, rgba(20, 20, 25, 0.93) 0%, rgba(35, 30, 20, 0.96) 100%) !important;
+          border: 1px solid rgba(212, 175, 55, 0.45) !important;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .championship-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 15px 50px rgba(212, 175, 55, 0.55) !important;
+          border-color: rgba(212, 175, 55, 0.9) !important;
+        }
+        @keyframes float-trophy {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-12px) rotate(4deg); }
+        }
+        .floating-trophy {
+          animation: float-trophy 4.5s infinite ease-in-out;
+          filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.65));
+        }
+        @keyframes shine-text {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .shine-gold-text {
+          background: linear-gradient(90deg, #ffe066, #f5c71a, #ffe066, #ffffff, #ffe066);
+          background-size: 200% auto;
+          color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          animation: shine-text 6s linear infinite;
+        }
       `}</style>
 
-      {/* Welcome Banner Card */}
-      <div className="glass-panel welcome-banner-card" style={{
-        background: 'var(--welcome-banner-bg)',
-        border: '1px solid var(--welcome-banner-border)',
+      {/* Championship Celebration Banner Card */}
+      <div className="glass-panel welcome-banner-card championship-card" style={{
         marginBottom: '24px',
-        padding: '32px 24px',
+        padding: '40px 32px',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        borderRadius: '24px'
       }}>
         {/* Responsive layout container */}
         <div className="welcome-layout-container" style={{
@@ -281,117 +322,110 @@ export default function HomePage() {
           zIndex: 2,
           position: 'relative'
         }}>
-          {/* Left Side: Title and Buttons */}
-          <div className="welcome-text-column" style={{ maxWidth: '480px', flex: '1 1 320px' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--accent-neon-green)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              Mundial 2026
+          {/* Left Side: Winner details and thanks */}
+          <div className="welcome-text-column" style={{ maxWidth: '540px', flex: '1 1 320px' }}>
+            <span style={{ 
+              fontSize: '0.85rem', 
+              fontWeight: 800, 
+              color: 'var(--accent-gold)', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.15em',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'rgba(212, 175, 55, 0.12)',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: '1px solid rgba(212, 175, 55, 0.25)',
+              marginBottom: '16px'
+            }}>
+              🏆 PODIO FINAL - CLAUSURA 🏆
             </span>
-            <h2 style={{ fontSize: '2.2rem', fontWeight: 900, textTransform: 'uppercase', margin: '4px 0 10px 0', lineHeight: '1.1' }}>
-              Quiniela Mundialista
+            <h2 className="shine-gold-text sports-font" style={{ 
+              fontSize: '2.6rem', 
+              fontWeight: 950, 
+              textTransform: 'uppercase', 
+              margin: '0 0 6px 0', 
+              lineHeight: '1.1',
+              letterSpacing: '0.02em'
+            }}>
+              ¡FELICIDADES LUIS SOTO!
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '24px' }}>
+            <h3 style={{
+              fontSize: '1.25rem',
+              fontWeight: 800,
+              color: '#ffffff',
+              margin: '0 0 18px 0',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em'
+            }}>
+              Ganador Absoluto de la Quiniela Mundialista
+            </h3>
+            
+            <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.98rem', marginBottom: '16px', lineHeight: '1.6' }}>
               {picante(
-                "Registra tus pronósticos de los partidos más importantes del planeta, suma puntos y compite de forma recreativa contra tus amigos por el gran pozo de Frijolitos.",
-                "¡Ponte los tachones y prepárate para la madriza de pronósticos! Junta tus Frijolitos de honor y demuéstrale a estos troncos quién es el verdadero mandamás del balón. 🫘⚽",
+                "Queremos agradecer profundamente a todos los participantes por su increíble entusiasmo, entrega y la excelente vibra recreativa demostrada a lo largo de este torneo mundialista. ¡Hicieron que cada jornada de pronósticos fuera sumamente divertida!",
+                "¡Se acabó el tiro y el veredicto es final! Felicitaciones a Luis Soto por dejar en el camino a toda la perrada. Y a todos ustedes, par de troncos y estrategas de sillón, gracias de corazón por entrarle con tanto entusiasmo y aguantar la carrilla. ¡Se la rifaron de principio a fin! 🫘⚽🔥",
                 spicyMode
               )}
             </p>
+            
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '28px', fontStyle: 'italic', fontWeight: 500 }}>
+              ¡Los esperamos con los brazos abiertos y listos para competir en un próximo gran evento deportivo! Manténganse atentos.
+            </p>
 
-            <div className="welcome-buttons-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {user ? (
-                <Link href="/quiniela" className="btn btn-primary">
-                  <span>{picante("Capturar Pronósticos", "¡Mete tus Marcadores! ⚽", spicyMode)}</span>
-                  <ChevronRight size={16} />
-                </Link>
-              ) : (
-                <Link href="/login" className="btn btn-primary" style={{ padding: '12px 24px' }}>
-                  <span>{picante("Unirme a la Quiniela", "¡Entrar a la Madriza! 🏆", spicyMode)}</span>
-                  <ChevronRight size={16} />
-                </Link>
-              )}
-              
-              <Link href="/ranking" className="btn btn-secondary">
-                {picante("Ver Posiciones", "Tabla del Olimpo 📊", spicyMode)}
-              </Link>
-            </div>
+
           </div>
 
-          {/* Right Side: Premium Glassmorphic Countdown Timer */}
-          <div className="welcome-countdown-card" style={{
-            flex: '1 1 280px',
-            maxWidth: '380px',
-            background: 'var(--countdown-bg)',
+          {/* Right Side: Trophy illustration */}
+          <div className="welcome-countdown-card floating-trophy" style={{
+            flex: '1 1 240px',
+            maxWidth: '320px',
+            background: 'rgba(212, 175, 55, 0.05)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid var(--countdown-border)',
-            borderRadius: '20px',
-            padding: '24px 20px',
-            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(212, 175, 55, 0.25)',
+            borderRadius: '24px',
+            padding: '36px 24px',
+            boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.05)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            borderLeft: '2px solid rgba(16, 185, 129, 0.3)',
-            borderRight: '2px solid rgba(59, 130, 246, 0.3)'
           }}>
-            {!timeLeft.isOver ? (
-              <>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
-                  ⏳ Silbatazo Inicial en:
-                </span>
-                
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', width: '100%' }}>
-                  {/* Days */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
-                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--countdown-number-color)', textShadow: 'var(--countdown-shadow)', lineHeight: 1 }}>
-                      {String(timeLeft.days).padStart(2, '0')}
-                    </span>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Días</span>
-                  </div>
-                  
-                  <span className="sports-font" style={{ fontSize: '1.8rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>:</span>
-                  
-                  {/* Hours */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
-                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--accent-neon-green)', textShadow: '0 0 10px rgba(16,185,129,0.4)', lineHeight: 1 }}>
-                      {String(timeLeft.hours).padStart(2, '0')}
-                    </span>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Horas</span>
-                  </div>
-                  
-                  <span className="sports-font" style={{ fontSize: '1.8rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>:</span>
-                  
-                  {/* Minutes */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
-                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--accent-blue)', textShadow: '0 0 10px rgba(59,130,246,0.4)', lineHeight: 1 }}>
-                      {String(timeLeft.minutes).padStart(2, '0')}
-                    </span>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Min</span>
-                  </div>
-                  
-                  <span className="sports-font" style={{ fontSize: '1.8rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>:</span>
-                  
-                  {/* Seconds */}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
-                    <span className="sports-font" style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--accent-red)', textShadow: '0 0 10px rgba(239,68,68,0.4)', lineHeight: 1 }}>
-                      {String(timeLeft.seconds).padStart(2, '0')}
-                    </span>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '6px' }}>Seg</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div style={{ padding: '10px' }}>
-                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>⚽🏆</span>
-                <span className="sports-font" style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--accent-neon-green)', textTransform: 'uppercase', letterSpacing: '0.03em', display: 'block' }}>
-                  ¡El Mundial ha Iniciado!
-                </span>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginTop: '4px' }}>
-                  Los pronósticos del partido inaugural están bloqueados. ¡Que gane el mejor!
-                </span>
-              </div>
-            )}
+            <div style={{
+              background: 'radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0) 70%)',
+              borderRadius: '50%',
+              padding: '24px',
+              marginBottom: '16px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Trophy size={72} style={{ color: '#f5c71a' }} />
+            </div>
+            <span className="sports-font" style={{ 
+              fontSize: '1.4rem', 
+              fontWeight: 900, 
+              color: '#ffe066', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.05em', 
+              display: 'block' 
+            }}>
+              🏆 LUIS SOTO 🏆
+            </span>
+            <span style={{ 
+              fontSize: '0.78rem', 
+              color: 'rgba(255, 255, 255, 0.7)', 
+              display: 'block', 
+              marginTop: '6px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em'
+            }}>
+              CAMPEÓN ABSOLUTO
+            </span>
           </div>
         </div>
 
@@ -405,7 +439,7 @@ export default function HomePage() {
             bottom: 0,
             zIndex: 1,
             pointerEvents: 'none',
-            opacity: 0.25, // Adjusted for premium visibility
+            opacity: 0.18,
             mixBlendMode: 'normal',
             overflow: 'hidden'
           }}>
@@ -416,7 +450,7 @@ export default function HomePage() {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                filter: 'grayscale(25%) brightness(60%) contrast(110%)' // Slightly desaturated and darkened for high text contrast
+                filter: 'grayscale(35%) brightness(50%) contrast(120%)'
               }}
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';

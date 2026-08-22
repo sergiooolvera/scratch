@@ -12,6 +12,8 @@ export const MobileNav: React.FC = () => {
 
   const isActive = (path: string) => pathname === path;
 
+  if (!profile?.is_admin) return null;
+
   return (
     <nav className="mobile-nav">
       <Link href="/" className={`mobile-nav-item ${isActive('/') ? 'active' : ''}`}>
@@ -19,36 +21,10 @@ export const MobileNav: React.FC = () => {
         <span>Inicio</span>
       </Link>
 
-      {user ? (
-        <Link href="/quiniela" className={`mobile-nav-item ${isActive('/quiniela') ? 'active' : ''}`}>
-          <TableProperties size={20} />
-          <span>Quiniela</span>
-        </Link>
-      ) : (
-        <Link href="/login" className={`mobile-nav-item ${isActive('/login') ? 'active' : ''}`}>
-          <LogIn size={20} />
-          <span>Ingresar</span>
-        </Link>
-      )}
-
-      <Link href="/ranking" className={`mobile-nav-item ${isActive('/ranking') ? 'active' : ''}`}>
-        <Trophy size={20} />
-        <span>Ranking</span>
+      <Link href="/admin" className={`mobile-nav-item ${isActive('/admin') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
+        <ShieldAlert size={20} />
+        <span>Admin</span>
       </Link>
-
-      {user && (
-        <Link href="/promotor" className={`mobile-nav-item ${isActive('/promotor') ? 'active' : ''}`}>
-          <BadgeDollarSign size={20} />
-          <span>Promotor</span>
-        </Link>
-      )}
-
-      {profile?.is_admin && (
-        <Link href="/admin" className={`mobile-nav-item ${isActive('/admin') ? 'active' : ''}`} style={{ color: 'var(--accent-gold)' }}>
-          <ShieldAlert size={20} />
-          <span>Admin</span>
-        </Link>
-      )}
     </nav>
   );
 };

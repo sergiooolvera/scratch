@@ -138,28 +138,6 @@ export const Header: React.FC = () => {
       </Link>
 
       <nav className="nav-links">
-        <Link href="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-          <LayoutDashboard size={18} />
-          <span>Inicio</span>
-        </Link>
-        
-        <Link href="/quiniela" className={`nav-link ${isActive('/quiniela') ? 'active' : ''}`}>
-          <TableProperties size={18} />
-          <span>Mi Quiniela</span>
-        </Link>
-
-        <Link href="/ranking" className={`nav-link ${isActive('/ranking') ? 'active' : ''}`}>
-          <Trophy size={18} />
-          <span>Ranking</span>
-        </Link>
-
-        {user && (
-          <Link href="/promotor" className={`nav-link ${isActive('/promotor') ? 'active' : ''}`}>
-            <BadgeDollarSign size={18} />
-            <span>{profile?.seller_request_status === 'approved' ? 'Mi Red / Promotor' : 'Ser Promotor'}</span>
-          </Link>
-        )}
-
         {profile?.is_admin && (
           <Link href="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`} style={{ border: '1px solid rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.05)' }}>
             <ShieldAlert size={18} style={{ color: 'var(--accent-gold)' }} />
