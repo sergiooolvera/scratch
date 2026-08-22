@@ -50,6 +50,10 @@ Este proyecto es un ejemplo práctico y educativo de un sistema multiagente aut�
      - Todos los agentes realizan su análisis interno a profundidad vía DeepSeek y presentan el veredicto final sintetizado al inicio del reporte.
   5. **Manejo Claro de Variables de Entorno**:
      - Se añadió un aviso explícito en consola en `config.py` cuando `DEEPSEEK_API_KEY` está vacía en `.env` para informar al usuario de que debe agregar su token para evitar el fallback a Gemini.
+  6. **Carga Automática de Claves Reales**:
+     - Se configuró la clave real de la API deportiva de apuestas (`THE_ODDS_API_KEY`) procedente del proyecto `eltipster` en `.env`.
+     - Se implementó en `config.py` la función `get_primary_llm_client()` que detecta e inicializa de manera inteligente el motor LLM principal.
+
 
 
 
