@@ -2,8 +2,14 @@ import os
 import sys
 import json
 import time
+
+# Configurar salida de consola en UTF-8 para Windows
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 from google.genai import types
 from config import get_gemini_client
+
 from agents.unified_analyst import UnifiedAnalystAgent
 from agents.predictor import PredictorAgent
 from agents.devil_advocate import DevilAdvocateAgent
