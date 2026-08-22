@@ -8,6 +8,9 @@
 !/CursosIEDCH/**
 !CursosIEDCH/playwright.config.ts
 !CursosIEDCH/seed_test_users.js
+!/demoMultiagentes/
+!/demoMultiagentes/**
+
 
 
 
