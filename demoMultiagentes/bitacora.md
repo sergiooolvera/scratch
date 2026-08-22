@@ -53,6 +53,9 @@ Este proyecto es un ejemplo práctico y educativo de un sistema multiagente aut�
   6. **Carga Automática de Claves Reales**:
      - Se configuró la clave real de la API deportiva de apuestas (`THE_ODDS_API_KEY`) procedente del proyecto `eltipster` en `.env`.
      - Se implementó en `config.py` la función `get_primary_llm_client()` que detecta e inicializa de manera inteligente el motor LLM principal.
+  7. **Recuperación de Clave DeepSeek Original**:
+     - Se localizó e integró la clave nativa real `DEEPSEEK_API_KEY` procedente del proyecto `rojas y goles` en `.env`.
+
 
 
 
