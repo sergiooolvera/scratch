@@ -52,7 +52,7 @@ export default function CourseModal({ isOpen, setIsOpen }: CourseModalProps) {
 
                 <div className="mt-4 space-y-4">
                   <Link
-                    href="/login"
+                    href="/register?type=instructor"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center p-4 border border-slate-200 rounded-xl hover:border-blue-600 hover:bg-blue-50 transition-all group"
                   >
@@ -66,7 +66,7 @@ export default function CourseModal({ isOpen, setIsOpen }: CourseModalProps) {
                   </Link>
 
                   <Link
-                    href="/login"
+                    href="/register?type=institucion"
                     onClick={() => setIsOpen(false)}
                     className="flex items-center p-4 border border-slate-200 rounded-xl hover:border-indigo-600 hover:bg-indigo-50 transition-all group"
                   >

@@ -1,5 +1,6 @@
 import { Play, ArrowRight, ShieldCheck, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function HeroSection() {
   return (
@@ -23,7 +24,7 @@ export default function HeroSection() {
             </p>
 
             {/* Verifica tu constancia Card */}
-            <div className="bg-indigo-700/80 backdrop-blur-md rounded-2xl p-6 border border-indigo-500/30 flex items-center gap-6 max-w-md group hover:bg-indigo-600/80 transition-colors cursor-pointer">
+            <Link href="/validar" className="bg-indigo-700/80 backdrop-blur-md rounded-2xl p-6 border border-indigo-500/30 flex items-center gap-6 max-w-md group hover:bg-indigo-600/80 transition-colors cursor-pointer block">
               <div className="flex-shrink-0 bg-blue-500 rounded-xl p-3">
                 <ShieldCheck className="w-8 h-8 text-white" />
               </div>
@@ -32,7 +33,7 @@ export default function HeroSection() {
                 <p className="text-indigo-200 text-sm">Ingresa el código único de tu constancia para comprobar su validez.</p>
               </div>
               <ChevronRight className="w-6 h-6 text-indigo-300 group-hover:text-white transition-colors" />
-            </div>
+            </Link>
           </div>
 
           {/* Right Video Content */}

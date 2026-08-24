@@ -27,8 +27,52 @@ test.describe('Landing Page', () => {
 
     // Verificar el Modal
     const modal = page.locator('div[role="dialog"]');
-    await expect(modal.getByRole('heading', { name: '¿Cómo quieres participar?' })).toBeVisible();
-    await expect(modal.getByRole('link', { name: /Soy Instructor/i })).toBeVisible();
-    await expect(modal.getByRole('link', { name: /Soy Institución/i })).toBeVisible();
+    // Verificar los enlaces hacia registro de instructor e institución
+    const linkInstructor = modal.getByRole('link', { name: /Soy Instructor/i });
+    await expect(linkInstructor).toBeVisible();
+    await expect(linkInstructor).toHaveAttribute('href', '/register?type=instructor');
+
+    const linkInstitucion = modal.getByRole('link', { name: /Soy Institución/i });
+    await expect(linkInstitucion).toBeVisible();
+    await expect(linkInstitucion).toHaveAttribute('href', '/register?type=institucion');
+  });
+
+  test('Debe navegar a la página de login sin errores de React Hooks', async ({ page }) => {
+    await page.goto('/');
+    await page.click('text="Iniciar Sesión"');
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+  });
+
+  test('Debe navegar a la página de validación de constancia desde la tarjeta del Hero', async ({ page }) => {
+    await page.goto('/');
+    await page.click('text="Verifica la autenticidad de tu constancia"');
+    await expect(page).toHaveURL(/\/validar/);
+  });
+
+  test('Debe mostrar todas las opciones de categorías en el combobox del buscador', async ({ page }) => {
+    await page.goto('/');
+    const categorySelect = page.locator('select[name="category"]');
+    await expect(categorySelect).toBeVisible();
+    
+    // Verificar que existan las opciones de categorías clave en el select
+    const options = await categorySelect.locator('option').allInnerTexts();
+    expect(options).toContain('Todas las categorías');
+    expect(options).toContain('Salud');
+    expect(options).toContain('Negocios');
+    expect(options).toContain('Tecnología');
+    expect(options).toContain('Desarrollo Personal');
+    expect(options).toContain('Idiomas');
+  });
+
+  test('Debe realizar la búsqueda de cursos públicamente sin pedir inicio de sesión', async ({ page }) => {
+    await page.goto('/');
+    const searchForm = page.locator('form[action="/cursos"]');
+    await searchForm.locator('input[name="q"]').fill('salud');
+    await searchForm.locator('button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/cursos\?q=salud/);
+    await expect(page.locator('h1')).toBeVisible();
+    await expect(page.locator('h1')).toContainText(/Cursos/);
+    await expect(page).not.toHaveURL(/\/login/);
   });
 });

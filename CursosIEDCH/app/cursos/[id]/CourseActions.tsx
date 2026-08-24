@@ -72,6 +72,10 @@ export default function CourseActions({ cursoId, isPagado, pagoCompleto, constan
     }, [])
 
     const handleComprarStrípe = async (cuponCode?: string, esConstancia: boolean = false) => {
+        if (!userId) {
+            router.push(`/login?redirect=/cursos/${cursoId}`)
+            return
+        }
         setLoading(true)
         try {
             const res = await fetch('/api/checkout', {

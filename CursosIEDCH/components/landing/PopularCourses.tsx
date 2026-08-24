@@ -19,32 +19,74 @@ export default async function PopularCourses() {
     .eq('estado', 'aprobado')
     .limit(4)
 
+  // Fetch distinct categories from ie_cursos
+  const { data: dbCursosCategories } = await supabase
+    .from('ie_cursos')
+    .select('categoria')
+    .eq('estado', 'aprobado')
+
+  const baseCategories = [
+    { value: 'todas', label: 'Todas las categorías' },
+    { value: 'salud', label: 'Salud' },
+    { value: 'negocios', label: 'Negocios' },
+    { value: 'tecnologia', label: 'Tecnología' },
+    { value: 'desarrollo', label: 'Desarrollo Personal' },
+    { value: 'idiomas', label: 'Idiomas' },
+    { value: 'arte', label: 'Arte y Diseño' },
+    { value: 'ciencias', label: 'Ciencias' },
+    { value: 'educacion', label: 'Educación' },
+  ]
+
+  const existingValues = new Set(baseCategories.map(c => c.value.toLowerCase()))
+  const extraCategories: { value: string; label: string }[] = []
+
+  if (dbCursosCategories) {
+    dbCursosCategories.forEach(row => {
+      if (row.categoria && row.categoria.trim()) {
+        const val = row.categoria.trim()
+        const valLower = val.toLowerCase()
+        if (!existingValues.has(valLower)) {
+          existingValues.add(valLower)
+          extraCategories.push({ value: valLower, label: val })
+        }
+      }
+    })
+  }
+
+  const allCategories = [...baseCategories, ...extraCategories]
+
   return (
     <section className="pt-2 pb-8 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Search Bar Area */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-8 max-w-4xl mx-auto flex flex-col md:flex-row gap-4 items-center">
+        <form action="/cursos" method="GET" className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-8 max-w-4xl mx-auto flex flex-col md:flex-row gap-4 items-center">
           <div className="flex-grow flex items-center bg-gray-50 rounded-lg px-4 py-3 w-full">
             <Search className="w-5 h-5 text-gray-400 mr-3" />
             <input 
               type="text" 
+              name="q"
               placeholder="Buscar cursos, temas o palabras clave..." 
               className="bg-transparent border-none outline-none w-full text-gray-700"
             />
           </div>
           <div className="flex gap-4 w-full md:w-auto">
-            <select className="bg-gray-50 border-none outline-none text-gray-700 py-3 px-4 rounded-lg flex-grow md:flex-grow-0 cursor-pointer">
-              <option>Todas las categorías</option>
+            <select name="category" className="bg-gray-50 border-none outline-none text-gray-700 py-3 px-4 rounded-lg flex-grow md:flex-grow-0 cursor-pointer text-sm font-medium">
+              {allCategories.map(cat => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
             </select>
-            <select className="bg-gray-50 border-none outline-none text-gray-700 py-3 px-4 rounded-lg flex-grow md:flex-grow-0 cursor-pointer">
-              <option>Academias verificadas</option>
+            <select name="academies" className="bg-gray-50 border-none outline-none text-gray-700 py-3 px-4 rounded-lg flex-grow md:flex-grow-0 cursor-pointer text-sm font-medium">
+              <option value="">Todas las academias</option>
+              <option value="verificadas">Academias verificadas</option>
             </select>
           </div>
-          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-medium w-full md:w-auto transition-colors">
+          <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-medium w-full md:w-auto transition-colors">
             Buscar
           </button>
-        </div>
+        </form>
 
         {/* Section Header */}
         <div className="flex justify-between items-center mb-8">

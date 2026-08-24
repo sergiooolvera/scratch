@@ -157,7 +157,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
     // 3. Filtrar por Categoría seleccionada
     if (activeCategory !== 'todas') {
-        cursosDisponibles = cursosDisponibles.filter(c => (c.categoria || 'desarrollo') === activeCategory)
+        const target = activeCategory.toLowerCase()
+        cursosDisponibles = cursosDisponibles.filter(c => {
+            const cat = (c.categoria || 'desarrollo').toLowerCase()
+            return cat === target || cat.includes(target) || target.includes(cat)
+        })
     }
 
     // Super Cursos primero

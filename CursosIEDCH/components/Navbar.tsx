@@ -21,8 +21,6 @@ export default function Navbar() {
     const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false)
     const [isEstudiosMenuOpen, setIsEstudiosMenuOpen] = useState(false)
 
-    if (pathname === '/') return null;
-
     useEffect(() => {
         const fetchUser = async (sessionUser: any) => {
             setUser(sessionUser)
@@ -87,6 +85,8 @@ export default function Navbar() {
     };
 
     const navBorderClass = getNavbarBorderColor();
+
+    if (pathname === '/') return null;
 
     return (
         <div className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-gray-100/60 py-2.5 px-4 sm:px-6 lg:px-8 print:hidden flex items-center justify-between">
