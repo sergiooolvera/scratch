@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Facebook, Twitter, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react'
+import { Facebook, Instagram, MessageCircle, Mail, MapPin, Phone } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -16,14 +16,32 @@ export default function Footer() {
               Transformando el futuro a través de la educación. Ofrecemos herramientas, validación y certificación para impulsar el desarrollo profesional.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-indigo-600 transition-colors">
+              <a 
+                href="https://www.facebook.com/share/1ATRDoAfoQ/?mibextid=wwXIfr" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                aria-label="Facebook EGAC"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-blue-600 transition-colors"
+              >
                 <Facebook className="w-5 h-5 text-gray-300" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-indigo-600 transition-colors">
+              <a 
+                href="https://www.instagram.com/academy_egac?igsh=MW82OTczb2hoamI5bw%3D%3D&utm_source=qr" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                aria-label="Instagram EGAC"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-600 transition-colors"
+              >
                 <Instagram className="w-5 h-5 text-gray-300" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-indigo-600 transition-colors">
-                <Linkedin className="w-5 h-5 text-gray-300" />
+              <a 
+                href="https://wa.me/527298184978" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                aria-label="WhatsApp EGAC"
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-emerald-600 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5 text-gray-300" />
               </a>
             </div>
           </div>
@@ -32,10 +50,10 @@ export default function Footer() {
             <h4 className="text-lg font-bold mb-6">Plataforma</h4>
             <ul className="space-y-3">
               <li><Link href="/" className="text-gray-400 hover:text-white transition-colors text-sm">Inicio</Link></li>
-              <li><Link href="/#nosotros" className="text-gray-400 hover:text-white transition-colors text-sm">Nosotros</Link></li>
+              <li><Link href="/nosotros" className="text-gray-400 hover:text-white transition-colors text-sm">Nosotros</Link></li>
               <li><Link href="/cursos" className="text-gray-400 hover:text-white transition-colors text-sm">Catálogo de Cursos</Link></li>
               <li><Link href="/validar" className="text-gray-400 hover:text-white transition-colors text-sm">Validar Constancia</Link></li>
-              <li><Link href="/#faq" className="text-gray-400 hover:text-white transition-colors text-sm">Preguntas Frecuentes</Link></li>
+              <li><Link href="/preguntas-frecuentes" className="text-gray-400 hover:text-white transition-colors text-sm">Preguntas Frecuentes</Link></li>
             </ul>
           </div>
 
@@ -45,7 +63,7 @@ export default function Footer() {
               <li><Link href="/login" className="text-gray-400 hover:text-white transition-colors text-sm">Alumnos (Login)</Link></li>
               <li><Link href="/register?type=instructor" className="text-gray-400 hover:text-white transition-colors text-sm">Soy Instructor</Link></li>
               <li><Link href="/register?type=institucion" className="text-gray-400 hover:text-white transition-colors text-sm">Soy Institución</Link></li>
-              <li><Link href="/#alianzas" className="text-gray-400 hover:text-white transition-colors text-sm">Alianzas Estratégicas</Link></li>
+              <li><Link href="/contacto" className="text-gray-400 hover:text-white transition-colors text-sm">Contacto Directo</Link></li>
             </ul>
           </div>
 
@@ -54,15 +72,17 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-indigo-400 mt-0.5" />
-                <span className="text-gray-400 text-sm">Ciudad de México, México</span>
+                <span className="text-gray-400 text-sm">Metepec, Estado de México</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-indigo-400" />
-                <span className="text-gray-400 text-sm">+52 1 55 1234 5678</span>
+                <span className="text-gray-400 text-sm">+52 (729) 818-4978</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-indigo-400" />
-                <span className="text-gray-400 text-sm">contacto@grupoegac.com</span>
+                <a href="mailto:soporte@grupoegac.com" className="text-gray-400 hover:text-white transition-colors text-sm">
+                  soporte@grupoegac.com
+                </a>
               </li>
             </ul>
           </div>

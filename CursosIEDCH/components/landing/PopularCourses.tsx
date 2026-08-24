@@ -7,6 +7,8 @@ import CourseCard from '@/components/CourseCard'
 export default async function PopularCourses() {
   const supabase = await createClient()
 
+  const MAESTRO_ID = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2'
+
   // Fetch published courses, limit to 4 to match the design roughly
   const { data: courses, error } = await supabase
     .from('ie_cursos')
@@ -17,6 +19,7 @@ export default async function PopularCourses() {
       )
     `)
     .eq('estado', 'aprobado')
+    .neq('creado_por', MAESTRO_ID)
     .limit(4)
 
   const formatBadgeDuracion = (duracion?: string | null) => {
@@ -34,6 +37,7 @@ export default async function PopularCourses() {
     .from('ie_cursos')
     .select('categoria')
     .eq('estado', 'aprobado')
+    .neq('creado_por', MAESTRO_ID)
 
   const baseCategories = [
     { value: 'todas', label: 'Todas las categorías' },

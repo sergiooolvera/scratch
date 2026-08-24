@@ -26,6 +26,7 @@ function CursosContent() {
     useEffect(() => {
         const fetchCursos = async () => {
             setLoading(true)
+            const MAESTRO_ID = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2'
             const { data } = await supabase
                 .from('ie_cursos')
                 .select(`
@@ -35,6 +36,7 @@ function CursosContent() {
                     )
                 `)
                 .eq('estado', 'aprobado')
+                .neq('creado_por', MAESTRO_ID)
 
             setRawCursos(data || [])
             setLoading(false)

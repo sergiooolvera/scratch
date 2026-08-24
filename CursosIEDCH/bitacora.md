@@ -172,3 +172,113 @@
 2. **Pruebas E2E (Playwright):**
    - Se añadió el test `Debe contener enlaces válidos y funcionales en el Footer` en [`e2e/landing.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts).
    - Se ejecutaron las pruebas con `npx playwright test e2e/landing.spec.ts` (8 pruebas superadas con éxito).
+
+### Tarea: Integración de las Secciones Nosotros, Preguntas Frecuentes y Contacto desde IEDCH2
+
+#### Diagnóstico del Problema:
+- **Requisito:** La landing page de `CursosIEDCH` carecía de los componentes interactivos de las secciones **Nosotros**, **Preguntas Frecuentes (FAQ)** y **Contacto** provenientes del diseño del proyecto `IEDCH2`.
+
+#### Acciones Realizadas:
+1. **Creación del Componente NosotrosSection (`#nosotros`):**
+   - Implementación del componente [components/landing/NosotrosSection.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/NosotrosSection.tsx).
+   - Incorporación de la Misión, Visión, Valores (*Innovación, Excelencia, Integridad, Humanismo, Colaboración*), Cultura Organizacional y Ecosistema EGAC.
+   - Diseño de la Placa Institucional con datos oficiales (Fundación 10 de diciembre de 2020, Escritura Pública 14,525, Metepec Mex y RFC `IEE201210KE1`).
+2. **Creación del Componente FAQSection (`#faq`):**
+   - Implementación del componente [components/landing/FAQSection.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/FAQSection.tsx).
+   - Incorporación de la barra de búsqueda interactiva en tiempo real por palabras clave.
+   - Alternador por tipo de usuario (*Portal Alumnos* vs *Instructores y Organizaciones*) y acordeones desplegables categorizados.
+3. **Creación del Componente ContactSection (`#contacto`):**
+   - Implementación del componente [components/landing/ContactSection.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/ContactSection.tsx).
+   - Formulario interactivo de envío de mensajes con validación y confirmación visual.
+   - Tarjetas de información oficiales de soporte (`soporte@grupoegac.com`, WhatsApp Business `+52 729 818 4978` y horarios de atención).
+4. **Integración en la Landing Page Principal (`app/page.tsx`):**
+   - Renderizado secuencial de `<NosotrosSection />`, `<FAQSection />` y `<ContactSection />` en [app/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/page.tsx).
+5. **Pruebas Automáticas con Playwright (`e2e/landing.spec.ts`):**
+   - Adición de 3 pruebas E2E para verificar el despliegue de la Placa de Respaldo, la funcionalidad del filtro en FAQ y la interacción del formulario de contacto.
+   - Ejecución y validación exitosa de las 11 pruebas del suite (`npx playwright test e2e/landing.spec.ts`, 100% aprobadas en 18.4s).
+
+### Tarea: Refactorización a Páginas Independientes (`/nosotros`, `/preguntas-frecuentes`, `/contacto`)
+
+#### Diagnóstico del Problema:
+- **Preferencia del Usuario:** En lugar de incrustar todas las secciones en una sola página de aterrizaje tipo One-Page con anclajes hash, se solicitó separar cada sección en su propia página/ruta independiente dentro de Next.js.
+
+#### Acciones Realizadas:
+1. **Creación de Rutas Independientes:**
+   - **`/nosotros`**: Implementación de [app/nosotros/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/nosotros/page.tsx) con la información institucional, Misión, Visión, Valores y la Placa de Respaldo Institucional.
+   - **`/preguntas-frecuentes`**: Implementación de [app/preguntas-frecuentes/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/preguntas-frecuentes/page.tsx) con la barra de búsqueda en tiempo real, filtro por portal y acordeones.
+   - **`/faq`**: Implementación de [app/faq/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/faq/page.tsx) como alias de redirección hacia `/preguntas-frecuentes`.
+   - **`/contacto`**: Implementación de [app/contacto/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/contacto/page.tsx) con el formulario interactivo y tarjetas de atención directa.
+2. **Actualización de Navegación (Navbar & Footer):**
+   - En [components/landing/Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/Navbar.tsx), se cambiaron los enlaces a rutas directas (`/`, `/nosotros`, `/preguntas-frecuentes`, `/contacto`) y se implementó `usePathname()` para resaltar dinámicamente la pestaña activa.
+   - En [components/landing/Footer.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/Footer.tsx), se actualizaron los enlaces del pie de página hacia las nuevas rutas independientes.
+3. **Limpieza de la Página Principal (`app/page.tsx`):**
+   - Se removió el renderizado inline en [app/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/page.tsx) para mantener la vista limpia enfocada en Hero, Cursos Populares y Testimonios.
+4. **Pruebas Automáticas con Playwright (`e2e/landing.spec.ts`):**
+   - Se actualizaron las pruebas E2E para validar la carga de cada ruta independiente y la navegación fluida a través del Navbar.
+   - Resultado de ejecución: **12 passed (24.8s)**, 100% de pruebas superadas exitosamente.
+5. **Ocultación del Navbar secundario del Portal:**
+   - En [components/Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx), se incluyeron las rutas públicas (`/nosotros`, `/preguntas-frecuentes`, `/faq`, `/contacto`) en la lista de exclusión `landingRoutes` para que el Navbar secundario blanco ("EGAC | PORTAL") no se renderice superpuesto en ninguna de las páginas públicas.
+
+### Tarea: Exclusión de Cursos de Prueba del Usuario `maestro@iedch.com` en Vistas Públicas
+
+#### Diagnóstico del Problema:
+- **Requisito del Usuario:** Los cursos de prueba/demo creados o editados por la cuenta `maestro@iedch.com` (`f160fe4d-5461-44c5-b868-51f1f0cae4c2`), como "BioMecanica" y "ALIMENTOS", aparecían públicamente en la sección "Cursos populares" y en el catálogo público `/cursos`.
+
+#### Acciones Realizadas:
+1. **Filtrado en Cursos Populares (`PopularCourses.tsx`):**
+   - En [components/landing/PopularCourses.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx), se aplicó el filtro de consulta `.neq('creado_por', 'f160fe4d-5461-44c5-b868-51f1f0cae4c2')` a la tabla `ie_cursos` para que únicamente se muestren los 4 mejores cursos profesionales de la plataforma.
+2. **Filtrado en Catálogo Público (`app/cursos/page.tsx`):**
+   - En [app/cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/page.tsx), se añadió la exclusión `.neq('creado_por', 'f160fe4d-5461-44c5-b868-51f1f0cae4c2')` en la consulta principal de Supabase.
+3. **Pruebas Automáticas con Playwright (`e2e/landing.spec.ts`):**
+   - Se validaron nuevamente las 12 pruebas del suite de Playwright (`npx playwright test e2e/landing.spec.ts`), obteniendo un resultado limpio de **12 passed (19.9s)**.
+
+### Tarea: Configuración de la Imagen de Fondo en el Hero Section
+
+#### Diagnóstico del Problema:
+- **Requisito del Usuario:** Integrar la imagen corporativa `/cover_bg_1_mexican.png` como fondo de la sección principal Hero (`HeroSection.tsx`).
+
+#### Acciones Realizadas:
+1. **Actualización de HeroSection (`HeroSection.tsx`):**
+   - En [components/landing/HeroSection.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/HeroSection.tsx), se incorporó el componente `<Image src="/cover_bg_1_mexican.png" fill ... />` con `opacity-35` y un degradado suave de fondo `from-[#0b1b36] via-[#0b1b36]/80 to-[#0b1b36]/60`.
+   - Permite apreciar el diseño de fondo mientras mantiene una legibilidad y contraste óptimos para los textos, botones e indicadores del Hero.
+2. **Pruebas Automáticas con Playwright (`e2e/landing.spec.ts`):**
+   - Se ejecutaron las pruebas automatizadas (`npx playwright test e2e/landing.spec.ts`), aprobando **12 de 12 pruebas (19.7s)**.
+
+### Tarea: Redirección del Cierre de Sesión y Enlaces de Inicio a la Raíz (`/`)
+
+#### Diagnóstico del Problema:
+- **Requisito del Usuario:** El evento de cierre de sesión (`SIGNED_OUT`), el clic en el Logo del portal y el icono de Inicio deben dirigir a la raíz del sitio `http://localhost:3000/` (o dominio de producción), en lugar de enviar a `http://localhost:3000/login`.
+
+#### Acciones Realizadas:
+1. **Redirección de Cierre de Sesión en Navbar (`components/Navbar.tsx`):**
+   - En [components/Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx), se cambió `router.push('/login')` por `router.push('/')` en el manejador `SIGNED_OUT`.
+2. **Actualización de Enlaces en Logo e Icono de Inicio:**
+   - Se actualizó el enlace del Logo del portal a `<Link href="/">` en [components/Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx).
+   - Se actualizó el botón con icono de Inicio (Home) a `<Link href="/">`.
+3. **Pruebas Automáticas con Playwright (`e2e/landing.spec.ts` & `e2e/auth.spec.ts`):**
+   - Se modificó `handleLogout` y el evento `SIGNED_OUT` en [components/Navbar.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/Navbar.tsx) para utilizar `window.location.href = '/'`. Esto evita que el `middleware.ts` intercepte una reevaluación no autenticada de `/dashboard` y la redirija a `/login`.
+   - Se validaron los suites completos (`npx playwright test e2e/landing.spec.ts e2e/auth.spec.ts`), superando las **16 pruebas al 100% (31.7s)**.
+
+### Tarea: Integración de los Enlaces Oficiales de Redes Sociales desde `IEDCH2`
+
+#### Diagnóstico del Problema:
+- **Requisito del Usuario:** Actualizar los botones y accesos a redes sociales utilizando las URLs oficiales del proyecto `IEDCH2`.
+
+#### Acciones Realizadas:
+1. **Actualización de Enlaces en Footer y Contacto:**
+   - **Facebook:** `https://www.facebook.com/share/1ATRDoAfoQ/?mibextid=wwXIfr`
+   - **Instagram:** `https://www.instagram.com/academy_egac?igsh=MW82OTczb2hoamI5bw%3D%3D&utm_source=qr`
+   - **WhatsApp Business:** `https://wa.me/527298184978`
+2. **Implementación de Componentes:**
+   - En [components/landing/Footer.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/Footer.tsx), se reemplazó el enlace nulo `#` de LinkedIn por el canal directo de WhatsApp y se configuraron las redes de Facebook e Instagram.
+   - En [components/landing/ContactSection.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/ContactSection.tsx), se agregó el bloque *"Redes Sociales Oficiales"* con botones directos.
+3. **Pruebas Automáticas con Playwright (`e2e/landing.spec.ts`):**
+   - Se validó el suite de Playwright (`npx playwright test e2e/landing.spec.ts`), obteniendo un resultado exitoso de **12 passed (23.2s)**.
+
+
+
+
+
+
+
+

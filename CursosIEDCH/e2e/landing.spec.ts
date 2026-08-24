@@ -95,4 +95,57 @@ test.describe('Landing Page', () => {
     await expect(footer.getByRole('link', { name: 'Aviso de Privacidad' })).toHaveAttribute('href', '/legal/aviso-privacidad');
     await expect(footer.getByRole('link', { name: 'Términos y Condiciones' })).toHaveAttribute('href', '/legal/terminos-uso');
   });
+
+  test('Debe cargar la página independiente /nosotros', async ({ page }) => {
+    await page.goto('/nosotros');
+    await expect(page.getByRole('heading', { name: 'Nuestra Identidad' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Misión' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Visión' })).toBeVisible();
+    await expect(page.locator('text=IEE201210KE1')).toBeVisible();
+  });
+
+  test('Debe cargar la página independiente /preguntas-frecuentes y permitir búsquedas', async ({ page }) => {
+    await page.goto('/preguntas-frecuentes');
+    await expect(page.getByRole('heading', { name: 'Preguntas Frecuentes' })).toBeVisible();
+
+    const searchInput = page.locator('input[placeholder*="Escribe tu duda"]');
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill('oxxo');
+    await expect(page.locator('text=Se encontraron')).toBeVisible();
+    await expect(page.locator('text=¿Puedo pagar en OXXO?')).toBeVisible();
+  });
+
+  test('Debe cargar la página independiente /contacto y permitir enviar mensajes', async ({ page }) => {
+    await page.goto('/contacto');
+    await expect(page.getByRole('heading', { name: 'Ponte en Contacto' })).toBeVisible();
+
+    await page.locator('input#c-name').fill('Usuario de Prueba');
+    await page.locator('input#c-email').fill('prueba@ejemplo.com');
+    await page.locator('input#c-subject').fill('Consulta sobre diplomados');
+    await page.locator('textarea#c-message').fill('Hola, me gustaría recibir más información.');
+
+    await page.getByRole('button', { name: /Enviar Mensaje/i }).click();
+    await expect(page.locator('text=¡Mensaje Enviado!')).toBeVisible();
+  });
+
+  test('Debe navegar desde el Navbar a cada página independiente', async ({ page }) => {
+    await page.goto('/');
+    
+    // Navegar a Nosotros
+    await page.locator('nav').getByRole('link', { name: 'Nosotros' }).click();
+    await expect(page).toHaveURL(/\/nosotros/);
+    await expect(page.getByRole('heading', { name: 'Nuestra Identidad' })).toBeVisible();
+
+    // Navegar a Preguntas Frecuentes
+    await page.locator('nav').getByRole('link', { name: 'Preguntas Frecuentes' }).click();
+    await expect(page).toHaveURL(/\/preguntas-frecuentes/);
+    await expect(page.getByRole('heading', { name: 'Preguntas Frecuentes' })).toBeVisible();
+
+    // Navegar a Contacto
+    await page.locator('nav').getByRole('link', { name: 'Contacto' }).click();
+    await expect(page).toHaveURL(/\/contacto/);
+    await expect(page.getByRole('heading', { name: 'Ponte en Contacto' })).toBeVisible();
+  });
 });
+
+

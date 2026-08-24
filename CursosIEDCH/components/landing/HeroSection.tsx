@@ -5,8 +5,20 @@ import Link from 'next/link'
 export default function HeroSection() {
   return (
     <section id="home" className="relative bg-[#0b1b36] pt-20 pb-10 lg:pt-28 lg:pb-12 overflow-hidden">
-      {/* Background abstract elements if any */}
-      <div className="absolute inset-0 z-0 opacity-20">
+      {/* Background Image & Overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/cover_bg_1_mexican.png"
+          alt="Fondo EGAC"
+          fill
+          className="object-cover opacity-35 object-center"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0b1b36] via-[#0b1b36]/80 to-[#0b1b36]/60" />
+      </div>
+
+      {/* Background abstract elements */}
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-50 transform translate-x-1/3 -translate-y-1/4"></div>
       </div>
 

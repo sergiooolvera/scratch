@@ -41,8 +41,7 @@ export default function Navbar() {
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             fetchUser(session?.user ?? null)
             if (event === 'SIGNED_OUT') {
-                router.refresh()
-                router.push('/login')
+                window.location.href = '/'
             } else if (event === 'SIGNED_IN') {
                 router.refresh()
             }
@@ -66,7 +65,7 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
-        // El onAuthStateChange manejará el router.push y refresh
+        window.location.href = '/'
     }
 
     const navItemClass = (path: string) =>
@@ -86,7 +85,8 @@ export default function Navbar() {
 
     const navBorderClass = getNavbarBorderColor();
 
-    if (pathname === '/') return null;
+    const landingRoutes = ['/', '/nosotros', '/preguntas-frecuentes', '/faq', '/contacto']
+    if (landingRoutes.includes(pathname)) return null;
 
     return (
         <div className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-gray-100/60 py-2.5 px-4 sm:px-6 lg:px-8 print:hidden flex items-center justify-between">
@@ -94,11 +94,11 @@ export default function Navbar() {
                 
                 {/* IZQUIERDA: Logo EGAC | Portal */}
                 <div className="flex-shrink-0 flex items-center z-10">
-                    <a href="https://grupoegac.com" className="flex items-center space-x-2">
+                    <Link href="/" className="flex items-center space-x-2">
                         <img src="/logoegac.jpg" alt="Logo" className="h-13 w-auto object-contain rounded-lg transition-transform duration-200 hover:scale-105" />
                         <span className="hidden sm:inline-block h-8 w-[1px] bg-gray-200 mx-2"></span>
                         <span className="hidden lg:inline text-sm font-bold text-gray-400 uppercase tracking-widest mt-0.5">Portal</span>
-                    </a>
+                    </Link>
                 </div>
 
                 {/* CENTRO: Menú de Navegación (Cápsula flotante compacta para Desktop) */}
@@ -366,7 +366,7 @@ export default function Navbar() {
                                 {profile?.rol || 'Alumno'}
                             </span>
                         </div>
-                        <Link href="/dashboard" className="p-1 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 rounded-full transition-colors border border-slate-200/60 overflow-hidden flex items-center justify-center w-9 h-9" title="Inicio / Dashboard">
+                        <Link href="/" className="p-1 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 rounded-full transition-colors border border-slate-200/60 overflow-hidden flex items-center justify-center w-9 h-9" title="Inicio (Página Principal)">
                             <Home className="h-5 w-5" />
                         </Link>
                         <div id="tour-notificaciones">
