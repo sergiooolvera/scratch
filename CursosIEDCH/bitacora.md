@@ -275,6 +275,21 @@
 3. **Pruebas Automáticas con Playwright (`e2e/landing.spec.ts`):**
    - Se validó el suite de Playwright (`npx playwright test e2e/landing.spec.ts`), obteniendo un resultado exitoso de **12 passed (23.2s)**.
 
+### Tarea: Despliegue a Producción (Merge a `main` y PUSH a Vercel)
+
+#### Diagnóstico del Problema:
+- **Solicitud del Usuario:** Subir todos los cambios, mejoras e integraciones de las páginas `/nosotros`, `/preguntas-frecuentes`, `/contacto`, correcciones de redirección e imagen de fondo a producción.
+
+#### Acciones Realizadas:
+1. **Commit y Push en `staging`:**
+   - Se realizó commit de todos los componentes nuevos, rutas e imágenes en la rama `staging` y se subió con `git push origin staging`.
+2. **Merge y Despliegue en `main`:**
+   - Se cambió a la rama `main` (`git checkout main`) y se fusionaron los cambios de `staging` (`git merge staging`).
+   - Se enviaron los cambios a producción con `git push origin main` desencadenando la compilación y despliegue automático en Vercel.
+3. **Retorno a `staging`:**
+   - Siguiendo la regla del proyecto, se retornó a la rama activa de desarrollo `staging` (`git checkout staging`).
+
+
 
 
 
