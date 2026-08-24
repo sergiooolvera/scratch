@@ -75,4 +75,24 @@ test.describe('Landing Page', () => {
     await expect(page.locator('h1')).toContainText(/Cursos/);
     await expect(page).not.toHaveURL(/\/login/);
   });
+
+  test('Debe navegar a la vista pública de cursos al hacer clic en Explorar todos los cursos', async ({ page }) => {
+    await page.goto('/');
+    const botonExplorar = page.getByRole('link', { name: /Explorar todos los cursos/i });
+    await expect(botonExplorar).toBeVisible();
+    await botonExplorar.click();
+    await expect(page).toHaveURL(/\/cursos/);
+    await expect(page).not.toHaveURL(/\/login/);
+  });
+
+  test('Debe contener enlaces válidos y funcionales en el Footer', async ({ page }) => {
+    await page.goto('/');
+    const footer = page.locator('footer');
+    
+    // Verificar enlaces principales del footer
+    await expect(footer.getByRole('link', { name: 'Catálogo de Cursos' })).toHaveAttribute('href', '/cursos');
+    await expect(footer.getByRole('link', { name: 'Validar Constancia' })).toHaveAttribute('href', '/validar');
+    await expect(footer.getByRole('link', { name: 'Aviso de Privacidad' })).toHaveAttribute('href', '/legal/aviso-privacidad');
+    await expect(footer.getByRole('link', { name: 'Términos y Condiciones' })).toHaveAttribute('href', '/legal/terminos-uso');
+  });
 });

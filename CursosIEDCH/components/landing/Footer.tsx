@@ -31,11 +31,11 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-bold mb-6">Plataforma</h4>
             <ul className="space-y-3">
-              <li><Link href="#home" className="text-gray-400 hover:text-white transition-colors text-sm">Inicio</Link></li>
-              <li><Link href="#nosotros" className="text-gray-400 hover:text-white transition-colors text-sm">Nosotros</Link></li>
-              <li><Link href="#cursos" className="text-gray-400 hover:text-white transition-colors text-sm">Catálogo de Cursos</Link></li>
-              <li><Link href="#validacion" className="text-gray-400 hover:text-white transition-colors text-sm">Validar Constancia</Link></li>
-              <li><Link href="#faq" className="text-gray-400 hover:text-white transition-colors text-sm">Preguntas Frecuentes</Link></li>
+              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors text-sm">Inicio</Link></li>
+              <li><Link href="/#nosotros" className="text-gray-400 hover:text-white transition-colors text-sm">Nosotros</Link></li>
+              <li><Link href="/cursos" className="text-gray-400 hover:text-white transition-colors text-sm">Catálogo de Cursos</Link></li>
+              <li><Link href="/validar" className="text-gray-400 hover:text-white transition-colors text-sm">Validar Constancia</Link></li>
+              <li><Link href="/#faq" className="text-gray-400 hover:text-white transition-colors text-sm">Preguntas Frecuentes</Link></li>
             </ul>
           </div>
 
@@ -45,7 +45,7 @@ export default function Footer() {
               <li><Link href="/login" className="text-gray-400 hover:text-white transition-colors text-sm">Alumnos (Login)</Link></li>
               <li><Link href="/register?type=instructor" className="text-gray-400 hover:text-white transition-colors text-sm">Soy Instructor</Link></li>
               <li><Link href="/register?type=institucion" className="text-gray-400 hover:text-white transition-colors text-sm">Soy Institución</Link></li>
-              <li><Link href="#alianzas" className="text-gray-400 hover:text-white transition-colors text-sm">Alianzas Estratégicas</Link></li>
+              <li><Link href="/#alianzas" className="text-gray-400 hover:text-white transition-colors text-sm">Alianzas Estratégicas</Link></li>
             </ul>
           </div>
 
@@ -74,8 +74,8 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} Grupo EGAC. Todos los derechos reservados.
           </p>
           <div className="flex gap-6 text-sm text-gray-500">
-            <Link href="/privacidad-alaolla.html" className="hover:text-white transition-colors">Aviso de Privacidad</Link>
-            <Link href="#" className="hover:text-white transition-colors">Términos y Condiciones</Link>
+            <Link href="/legal/aviso-privacidad" className="hover:text-white transition-colors">Aviso de Privacidad</Link>
+            <Link href="/legal/terminos-uso" className="hover:text-white transition-colors">Términos y Condiciones</Link>
           </div>
         </div>
       </div>

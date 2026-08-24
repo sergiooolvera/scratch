@@ -104,3 +104,71 @@
    - En [app/cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/page.tsx), se utilizó renderizado de imagen adaptable para prevenir errores runtime ante cualquier URL remota dinámica.
 3. **Verificación:**
    - Se compiló exitosamente la aplicación con `npx next build` y se ejecutaron las pruebas con `npx playwright test e2e/landing.spec.ts` (6 pasadas de 6).
+
+### Tarea: Eliminación de espacio en blanco excesivo en las tarjetas de cursos en Cursos Populares y Catálogo
+
+#### Diagnóstico del Problema:
+- **Causa Raíz:** 
+  1. En [components/landing/PopularCourses.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx), el contenedor flex principal `flex flex-col xl:flex-row gap-6` provocaba que la cuadrícula de tarjetas se estirara verticalmente para igualar la altura del banner lateral "AVAL ACADÉMICO".
+  2. Cada tarjeta poseía `h-full` y los títulos tenían una altura mínima forzada `min-h-[3rem]`, lo cual dejaba un gran hueco blanco vacío entre la etiqueta "Constancia + Microcredencial" y la sección inferior del precio y botón "Ver curso".
+  3. No se estaba mostrando la descripción corta del curso (`course.descripcion`) en las tarjetas de la sección popular.
+
+#### Acciones Realizadas:
+1. **Ajuste de Maquetación y Flexbox en PopularCourses:**
+   - Se añadió `items-start` al contenedor `flex flex-col xl:flex-row gap-6 items-start` para evitar que la fila estire artificialmente las tarjetas.
+   - Se removió `h-full` rígido y `min-h-[3rem]` del título para permitir que las tarjetas ajusten su altura según el contenido de forma armónica.
+   - Se integró la descripción del curso (`course.descripcion`) con `line-clamp-2` para aprovechar el espacio de forma estética e informativa.
+   - Se añadió una línea divisoria `border-t border-gray-100` sobre la barra de precio e inscripción en la tarjeta.
+   - Se ajustó el padding interno y tamaño del icono en el banner "AVAL ACADÉMICO" (`p-6 sm:p-8`, `w-16 h-16 sm:w-20 sm:h-20`) para un balance visual perfecto.
+2. **Optimizaciones Armónicas en Catálogo de Cursos (`app/cursos/page.tsx`):**
+   - Se removió `min-h-[3rem]` en los títulos de [app/cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/page.tsx) y se distribuyó el contenido de las tarjetas con `flex flex-col flex-grow justify-between`.
+3. **Pruebas E2E (Playwright):**
+   - Se ejecutaron las pruebas E2E con `npx playwright test` validando que todos los flujos continúan pasando sin regresiones.
+
+### Tarea: Obtención dinámica de Imágenes y Duración desde BD con Fallback /mundo.jpeg
+
+#### Diagnóstico del Problema:
+- **Causa Raíz:** 
+  1. La duración mostrada en las tarjetas de la landing page estaba harcodeada como `"20 HRS"`, sin consultar la columna `duracion` de la tabla `ie_cursos` de Supabase.
+  2. Al no contar con `imagen_url`, se estaban utilizando imágenes de portada temporales (`/images/cover_bg_...`) en lugar del asset por defecto acordado (`/mundo.jpeg`).
+
+#### Acciones Realizadas:
+1. **Actualización de Consultas a Supabase:**
+   - En [components/landing/PopularCourses.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx) y [app/cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/page.tsx), se incluyó el campo `duracion` dentro del `.select(...)` de la tabla `ie_cursos`.
+2. **Formateo Dinámico de Duración e Imagen Fallback:**
+   - Se creó una función helper `formatBadgeDuracion` para extraer y formatear la duración de la base de datos (p. ej. `"20 HRS"`, `"1 HR"`, etc.).
+   - Se estableció `/mundo.jpeg` (`public/mundo.jpeg`) como la imagen por defecto para cualquier curso que no tenga un `imagen_url` definido en la base de datos.
+3. **Pruebas E2E (Playwright):**
+   - Se ejecutaron las pruebas automatizadas para asegurar la integridad de la landing page y el catálogo público.
+
+### Tarea: Redirección del botón "Explorar todos los cursos" al catálogo público (/cursos)
+
+#### Diagnóstico del Problema:
+- **Causa Raíz:** 
+  1. En [components/landing/PopularCourses.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx), el enlace del botón *"Explorar todos los cursos"* apuntaba a `href="/dashboard"`.
+  2. Al no estar autenticado, la ruta protegida `/dashboard` activaba la redirección de Middleware hacia `/login`.
+
+#### Acciones Realizadas:
+1. **Actualización de Ruta en PopularCourses:**
+   - Se cambió el destino del enlace de `href="/dashboard"` a `href="/cursos"` para dirigir a los usuarios al catálogo público interactivo.
+2. **Pruebas E2E (Playwright):**
+   - Se añadió el test `Debe navegar a la vista pública de cursos al hacer clic en Explorar todos los cursos` en [`e2e/landing.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts).
+   - Se ejecutaron y pasaron exitosamente las 7 pruebas de la landing page.
+
+### Tarea: Corrección de enlaces rotos y desactualizados en el pie de página (Footer)
+
+#### Diagnóstico del Problema:
+- **Causa Raíz:** 
+  1. En [components/landing/Footer.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/Footer.tsx), los enlaces de *"Catálogo de Cursos"* y *"Validar Constancia"* apuntaban a identificadores hash inactivos (`#cursos`, `#validacion`).
+  2. El enlace de *"Aviso de Privacidad"* apuntaba a una URL obsoleta (`/privacidad-alaolla.html`) y *"Términos y Condiciones"* apuntaba a `#`.
+
+#### Acciones Realizadas:
+1. **Actualización de Enlaces en Footer:**
+   - *"Catálogo de Cursos"* -> `/cursos`
+   - *"Validar Constancia"* -> `/validar`
+   - *"Inicio"* -> `/`
+   - *"Aviso de Privacidad"* -> `/legal/aviso-privacidad`
+   - *"Términos y Condiciones"* -> `/legal/terminos-uso`
+2. **Pruebas E2E (Playwright):**
+   - Se añadió el test `Debe contener enlaces válidos y funcionales en el Footer` en [`e2e/landing.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts).
+   - Se ejecutaron las pruebas con `npx playwright test e2e/landing.spec.ts` (8 pruebas superadas con éxito).

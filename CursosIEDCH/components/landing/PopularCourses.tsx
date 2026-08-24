@@ -11,13 +11,23 @@ export default async function PopularCourses() {
   const { data: courses, error } = await supabase
     .from('ie_cursos')
     .select(`
-      id, titulo, descripcion, instructor, precio, estado, es_super_curso, categoria, imagen_url,
+      id, titulo, descripcion, instructor, precio, estado, es_super_curso, categoria, imagen_url, duracion,
       profesor:ie_profiles!creado_por (
         nombre, apellido_paterno, apellido_materno, fotografia_perfil, verificado, rol
       )
     `)
     .eq('estado', 'aprobado')
     .limit(4)
+
+  const formatBadgeDuracion = (duracion?: string | null) => {
+    if (!duracion || !duracion.trim()) return '20 HRS'
+    const numMatch = duracion.match(/\d+/)
+    if (numMatch) {
+      const num = parseInt(numMatch[0], 10)
+      return `${num} ${num === 1 ? 'HR' : 'HRS'}`
+    }
+    return duracion.toUpperCase()
+  }
 
   // Fetch distinct categories from ie_cursos
   const { data: dbCursosCategories } = await supabase
@@ -99,44 +109,46 @@ export default async function PopularCourses() {
               <p className="text-gray-500 mt-1 text-sm md:text-base">Descubre los cursos más elegidos por nuestra comunidad.</p>
             </div>
           </div>
-          <Link href="/dashboard" className="hidden md:flex items-center bg-[#310ea0] hover:bg-[#25097a] text-white px-6 py-3 rounded-xl font-medium transition-colors whitespace-nowrap">
+          <Link href="/cursos" className="hidden md:flex items-center bg-[#310ea0] hover:bg-[#25097a] text-white px-6 py-3 rounded-xl font-medium transition-colors whitespace-nowrap">
             Explorar todos los cursos 
             <ArrowRight className="w-5 h-5 ml-2" />
           </Link>
         </div>
 
-        <div className="flex flex-col xl:flex-row gap-6">
+        <div className="flex flex-col xl:flex-row gap-6 items-start">
           {/* Course Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 flex-grow">
-            {courses && courses.map((course: any, index: number) => {
-              const fallbackImages = ['/images/cover_bg_1.jpg', '/images/cover_bg_2.jpg', '/images/cover_bg_3.jpg', '/images/cover_bg_4.jpg']
-              const imageUrl = course.imagen_url || fallbackImages[index % fallbackImages.length]
+            {courses && courses.map((course: any) => {
+              const imageUrl = course.imagen_url && course.imagen_url.trim() ? course.imagen_url : '/mundo.jpeg'
+              const duracionBadge = formatBadgeDuracion(course.duracion)
 
               return (
-              <div key={course.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col h-full group">
+              <div key={course.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col group">
                 <div className="relative aspect-[16/10]">
-                  {imageUrl ? (
-                    <Image src={imageUrl} alt={course.titulo} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                      <span className="text-slate-400">Sin imagen</span>
-                    </div>
-                  )}
+                  <Image src={imageUrl} alt={course.titulo} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute top-3 left-3 bg-[#310ea0]/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center tracking-wider">
                     <Clock className="w-3 h-3 mr-1" />
-                    <span>20 HRS</span>
+                    <span>{duracionBadge}</span>
                   </div>
                 </div>
                 
-                <div className="p-5 flex flex-col flex-grow">
-                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] leading-snug">{course.titulo}</h3>
-                  
-                  <div className="flex items-center gap-1.5 mb-4 text-[11px] text-gray-500 w-max">
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>Constancia + Microcredencial</span>
+                <div className="p-5 flex flex-col flex-grow justify-between">
+                  <div>
+                    <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 leading-snug">{course.titulo}</h3>
+                    
+                    {course.descripcion && (
+                      <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">
+                        {course.descripcion}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-1.5 mb-4 text-[11px] text-gray-500 w-max">
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Constancia + Microcredencial</span>
+                    </div>
                   </div>
 
-                  <div className="mt-auto flex items-center justify-between pt-3">
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                     <span className="font-extrabold text-[#310ea0] text-lg">
                       {course.precio > 0 ? `$${course.precio} MXN` : 'Gratis'}
                     </span>
@@ -151,16 +163,16 @@ export default async function PopularCourses() {
           </div>
 
           {/* Aval Académico Banner */}
-          <div className="bg-gradient-to-b from-[#f99300] to-[#f59e0b] rounded-2xl p-8 text-white flex flex-col items-center justify-center text-center shadow-xl shadow-orange-500/20 xl:w-[320px] flex-shrink-0">
+          <div className="bg-gradient-to-b from-[#f99300] to-[#f59e0b] rounded-2xl p-6 sm:p-8 text-white flex flex-col items-center justify-center text-center shadow-xl shadow-orange-500/20 xl:w-[320px] flex-shrink-0">
             <div className="mb-4">
-              <svg className="w-24 h-24 text-white opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <svg className="w-16 h-16 sm:w-20 sm:h-20 text-white opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 14v7" />
               </svg>
             </div>
             <h2 className="text-3xl font-black mb-3 leading-tight tracking-wide">AVAL<br/>ACADÉMICO</h2>
-            <p className="text-orange-50 text-[15px] mb-8 leading-relaxed">
+            <p className="text-orange-50 text-[15px] mb-6 leading-relaxed">
               Nuestros cursos cuentan con respaldo de instituciones educativas y organismos especializados.
             </p>
             <button className="bg-white text-orange-600 font-bold px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-orange-50 transition-colors w-full">

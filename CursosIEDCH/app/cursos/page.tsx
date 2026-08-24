@@ -29,7 +29,7 @@ function CursosContent() {
             const { data } = await supabase
                 .from('ie_cursos')
                 .select(`
-                    id, titulo, descripcion, instructor, precio, estado, es_super_curso, categoria, imagen_url, created_at,
+                    id, titulo, descripcion, instructor, precio, estado, es_super_curso, categoria, imagen_url, duracion, created_at,
                     profesor:ie_profiles!creado_por (
                         nombre, apellido_paterno, apellido_materno, fotografia_perfil, verificado, rol
                     )
@@ -188,12 +188,12 @@ function CursosContent() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {cursosFiltrados.map((course: any, index: number) => {
-                            const fallbackImages = ['/images/cover_bg_1.jpg', '/images/cover_bg_2.jpg', '/images/cover_bg_3.jpg', '/images/cover_bg_4.jpg']
-                            const imageUrl = course.imagen_url || fallbackImages[index % fallbackImages.length]
+                        {cursosFiltrados.map((course: any) => {
+                            const imageUrl = course.imagen_url && course.imagen_url.trim() ? course.imagen_url : '/mundo.jpeg'
+                            const badgeDuracion = course.duracion ? course.duracion.toUpperCase() : (course.categoria?.toUpperCase() || 'CURSO')
 
                             return (
-                                <div key={course.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col h-full group">
+                                <div key={course.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col group">
                                     <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
                                         <img 
                                             src={imageUrl} 
@@ -202,25 +202,27 @@ function CursosContent() {
                                         />
                                         <div className="absolute top-3 left-3 bg-[#0b1b36]/90 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center tracking-wider">
                                             <Clock className="w-3 h-3 mr-1 text-indigo-300" />
-                                            <span>{course.categoria || 'CURSO'}</span>
+                                            <span>{badgeDuracion}</span>
                                         </div>
                                     </div>
 
-                                    <div className="p-5 flex flex-col flex-grow">
-                                        <h3 className="font-bold text-slate-900 mb-2 line-clamp-2 min-h-[3rem] leading-snug group-hover:text-indigo-600 transition-colors">
-                                            {course.titulo}
-                                        </h3>
-                                        
-                                        <p className="text-xs text-slate-500 line-clamp-2 mb-4">
-                                            {course.descripcion || 'Sin descripción disponible.'}
-                                        </p>
+                                    <div className="p-5 flex flex-col flex-grow justify-between">
+                                        <div>
+                                            <h3 className="font-bold text-slate-900 mb-2 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors">
+                                                {course.titulo}
+                                            </h3>
+                                            
+                                            <p className="text-xs text-slate-500 line-clamp-2 mb-3">
+                                                {course.descripcion || 'Sin descripción disponible.'}
+                                            </p>
 
-                                        <div className="flex items-center gap-1.5 mb-4 text-[11px] text-slate-500 w-max">
-                                            <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                                            <span>Constancia + Microcredencial</span>
+                                            <div className="flex items-center gap-1.5 mb-4 text-[11px] text-slate-500 w-max">
+                                                <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                                <span>Constancia + Microcredencial</span>
+                                            </div>
                                         </div>
 
-                                        <div className="mt-auto flex items-center justify-between pt-3 border-t border-slate-100">
+                                        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                                             <span className="font-extrabold text-indigo-600 text-lg">
                                                 {course.precio > 0 ? `$${course.precio} MXN` : 'Gratis'}
                                             </span>
