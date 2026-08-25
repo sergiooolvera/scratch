@@ -195,7 +195,7 @@ function CursosContent() {
                             const badgeDuracion = course.duracion ? course.duracion.toUpperCase() : (course.categoria?.toUpperCase() || 'CURSO')
 
                             return (
-                                <div key={course.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col group">
+                                <div key={course.id} className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col group ${course.es_super_curso ? 'sm:col-span-2 lg:col-span-2' : ''}`}>
                                     <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
                                         <img 
                                             src={imageUrl} 

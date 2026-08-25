@@ -287,13 +287,36 @@
    - Se cambió a la rama `main` (`git checkout main`) y se fusionaron los cambios de `staging` (`git merge staging`).
    - Se enviaron los cambios a producción con `git push origin main` desencadenando la compilación y despliegue automático en Vercel.
 3. **Retorno a `staging`:**
-   - Siguiendo la regla del proyecto, se retornó a la rama activa de desarrollo `staging` (`git checkout staging`).
+    - Siguiendo la regla del proyecto, se retornó a la rama activa de desarrollo `staging` (`git checkout staging`).
 
+### Tarea: Análisis y Guía para Cambio de Dominio a grupoegac.com e Impacto en Pagos (Stripe & Supabase)
 
+#### Diagnóstico del Problema:
+- **Requisito del Usuario:** Asignar el dominio `grupoegac.com` al proyecto `cursos-iedch` (actualmente en `cursos.grupoegac.com` y con `grupoegac.com` vinculado temporalmente al proyecto `iedch-2`), y evaluar si este cambio afectará el procesamiento de pagos.
 
+#### Análisis Realizado:
+1. **Paso a Paso en Vercel:**
+   - Desvincular `grupoegac.com` y `www.grupoegac.com` del proyecto `iedch-2`.
+   - Asignar `grupoegac.com` como dominio principal en `cursos-iedch`.
+   - Configurar `cursos.grupoegac.com` como redirección HTTP 301 permanente hacia `grupoegac.com`.
+   - Actualizar `NEXT_PUBLIC_APP_URL` a `https://grupoegac.com`.
+2. **Evaluación de Impacto en Pagos y Autenticación:**
+   - **Pagos con Tarjeta (Stripe Checkout):** No se ven interrumpidos. El código lee `referer` de la petición HTTP para generar la URL de retorno (`success_url`), redirigiendo correctamente a `grupoegac.com/api/checkout/verify`.
+   - **Pagos en OXXO (Stripe Webhook):** Stripe notifica cobros en OXXO mediante llamadas `POST` asíncronas a `/api/webhook`. Las redirecciones 301 no conservan payloads de peticiones `POST`. Se documentó actualizar la URL del Webhook en el Dashboard de Stripe a `https://grupoegac.com/api/webhook` en cuanto se disponga de acceso.
+   - **Pagos Manuales / SPEI:** 100% funcionales dentro del sistema.
+   - **Supabase Auth / OAuth:** Se requiere agregar `https://grupoegac.com/**` en `Redirect URLs` de Supabase para evitar discrepancias de cookies tras login social.
+3. **Entregable:**
+   - Se creó el artefacto `plan_cambio_dominio.md` con la guía paso a paso y la matriz de impacto.
 
+### Tarea: Ajuste de Layout en Grid para Super Cursos
 
+#### Diagn�stico del Problema:
+- **Requisito:** Los cursos marcados como 'Super Curso' deben destacarse ocupando el espacio de dos tarjetas (2 columnas) en las vistas de cat�logo y landing.
+- **Causa Ra�z:** El grid asignaba col-span-1 por defecto a todos los elementos en app/cursos/page.tsx y components/landing/PopularCourses.tsx.
 
-
-
+#### Acciones Realizadas:
+1. **Ajuste CSS de Tailwind:**
+   - Se a�adi� condicionalmente las clases `sm:col-span-2 lg:col-span-2` a los contenedores si `es_super_curso` es verdadera.
+2. **Pruebas E2E (Playwright):**
+   - Se ejecutaron las pruebas con npx playwright test.
 
