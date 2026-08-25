@@ -320,3 +320,5 @@
 2. **Pruebas E2E (Playwright):**
    - Se ejecutaron las pruebas con npx playwright test.
 
+
+- Se actualiz la consulta en PopularCourses.tsx para ordenar los cursos: primero los supercursos (del ms actual al ms viejo) y despus los normales (del ms actual al ms viejo).

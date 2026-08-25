@@ -13,13 +13,15 @@ export default async function PopularCourses() {
   const { data: courses, error } = await supabase
     .from('ie_cursos')
     .select(`
-      id, titulo, descripcion, instructor, precio, estado, es_super_curso, categoria, imagen_url, duracion,
+      id, titulo, descripcion, instructor, precio, estado, es_super_curso, categoria, imagen_url, duracion, created_at,
       profesor:ie_profiles!creado_por (
         nombre, apellido_paterno, apellido_materno, fotografia_perfil, verificado, rol
       )
     `)
     .eq('estado', 'aprobado')
     .neq('creado_por', MAESTRO_ID)
+    .order('es_super_curso', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(4)
 
   const formatBadgeDuracion = (duracion?: string | null) => {
