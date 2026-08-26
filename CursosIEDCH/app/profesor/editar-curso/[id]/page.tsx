@@ -13,6 +13,8 @@ import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 import SimuladorIngresosModal from '@/components/SimuladorIngresosModal'
 import SubidorBunny from '@/components/SubidorBunny'
+import TemarioEditor, { ModuloTemario } from '@/components/TemarioEditor'
+import CompetenciasEditor from '@/components/CompetenciasEditor'
 
 type Recurso = {
     id?: string;
@@ -153,6 +155,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
+    const [temario, setTemario] = useState<ModuloTemario[]>([])
     const [estadoActual, setEstadoActual] = useState('')
     const [tieneBorrador, setTieneBorrador] = useState(false)
     const [requierePagoCompleto, setRequierePagoCompleto] = useState(false)
@@ -536,6 +539,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 const lUrl = borrador.logo_url !== undefined ? borrador.logo_url : curso.logo_url;
                 setLogoUrl(lUrl)
                 setLogoPreviewUrl(lUrl)
+                const temarioBorrador = borrador.temario !== undefined ? borrador.temario : curso.temario;
+                setTemario(Array.isArray(temarioBorrador) ? temarioBorrador : [])
                 const imgUrl = (borrador as any).imagen_url !== undefined ? (borrador as any).imagen_url : (curso as any).imagen_url;
                 setImagenUrl(imgUrl)
                 setImagenPreviewUrl(imgUrl)
@@ -704,6 +709,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
             setImagenPreviewUrl((curso as any).imagen_url)
             setMostrarLogoConstancia(curso.mostrar_logo_constancia !== undefined ? curso.mostrar_logo_constancia : false)
             setPlantillaConstancia('modelo1')
+            setTemario(Array.isArray(curso.temario) ? curso.temario : [])
 
             // Módulos
             const { data: mods } = await supabase
@@ -1327,10 +1333,11 @@ const generationId = data.generationId;
                 setSaving(false)
                 return
             }
-            if (!formData.competencias?.trim()) {
+            const compList = (formData.competencias || '').split('\n').map(c => c.trim()).filter(c => c.length > 0);
+            if (compList.length < 3) {
                 setModalMessage({
-                    title: 'Faltan Campos',
-                    content: 'Error: Por favor escribe las competencias del curso.',
+                    title: 'Competencias Insuficientes',
+                    content: 'Error: Por favor define al menos 3 competencias para el curso (máximo 5).',
                     type: 'error'
                 });
                 setSaving(false)
@@ -1620,6 +1627,7 @@ const generationId = data.generationId;
                 imagen_url: imagenUrl,
                 mostrar_logo_constancia: mostrarLogoConstancia,
                 plantilla_constancia: plantillaConstancia,
+                temario: temario,
                 modulos: modulosFinales.map(m => ({
                     id: m.id,
                     titulo: m.titulo,
@@ -1734,6 +1742,7 @@ const generationId = data.generationId;
                     imagen_url: imagenUrl,
                     mostrar_logo_constancia: mostrarLogoConstancia,
                     plantilla_constancia: plantillaConstancia,
+                    temario: temario,
                     cambios_pendientes: null, // Clear draft upon official publication
                     estado: esBorrador ? 'borrador' : 'pendiente'
                 })
@@ -2183,12 +2192,25 @@ const generationId = data.generationId;
                                     <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 60 caracteres. Se renderizará en el certificado del alumno.</p>
                                 </div>
                                 <div>
+                                    <TemarioEditor
+                                        temario={temario}
+                                        onChange={setTemario}
+                                        disabled={saving}
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
                                     <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Competencias del Curso</label>
-                                    <textarea name="competencias" required value={formData.competencias} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
+                                    <CompetenciasEditor
+                                        value={formData.competencias}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, competencias: val }))}
+                                        disabled={saving}
+                                        minCompetencias={3}
+                                        maxCompetencias={5}
+                                        maxChars={80}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Beneficios / ¿Qué aprenderá el alumno?</label>

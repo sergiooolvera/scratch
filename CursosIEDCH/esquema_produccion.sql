@@ -90,7 +90,8 @@ CREATE TABLE IF NOT EXISTS public.ie_cursos (
     mostrar_logo_constancia boolean DEFAULT false,
     plantilla_constancia text DEFAULT 'modelo1'::text,
     aplicar_iva boolean DEFAULT false,
-    competencias text
+    competencias text,
+    temario jsonb DEFAULT '[]'::jsonb
 );
 
 -- Tabla de Configuración de Comisiones
@@ -652,3 +653,7 @@ USING (
         WHERE rol = 'admin' OR rol = 'adminjr'
     )
 );
+
+-- Índice de rendimiento para temario en ie_cursos
+CREATE INDEX IF NOT EXISTS idx_ie_cursos_temario ON public.ie_cursos USING gin (temario);
+

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Search, BadgeCheck, FileText, Calendar, User, ShieldCheck, AlertCircle, Clock, Award } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
+import CompetenciasDisplay from '@/components/CompetenciasDisplay'
 
 function ValidacionContent() {
     const supabase = createClient()
@@ -348,13 +349,8 @@ function ValidacionContent() {
                                     </div>
 
                                     {resultado.competencias && (
-                                        <div className="col-span-1">
-                                            <dt className="text-sm font-medium text-gray-500 flex items-center mb-1">
-                                                <Award className="w-4 h-4 mr-1.5" /> Competencia
-                                            </dt>
-                                            <dd className="text-lg font-medium text-gray-800 border-b pb-4 whitespace-pre-wrap text-justify">
-                                                {resultado.competencias}
-                                            </dd>
+                                        <div className="col-span-1 border-b pb-4">
+                                            <CompetenciasDisplay competencias={resultado.competencias} />
                                         </div>
                                     )}
 

@@ -6,6 +6,7 @@ import ShareButton from './ShareButton'
 import { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { formatDuracion } from '@/utils/formatters'
+import CompetenciasDisplay from '@/components/CompetenciasDisplay'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params
@@ -178,9 +179,29 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                             <p className="mt-1 text-sm text-gray-900 text-justify">{curso.beneficios}</p>
                         </div>
                         {curso.competencias && (
-                            <div className="col-span-2">
-                                <h3 className="text-sm font-medium text-gray-500">Competencias</h3>
-                                <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap text-justify">La presente capacitación incluyó contenidos orientados al desarrollo de competencias relacionadas con, {curso.competencias}</p>
+                            <div className="col-span-2 pt-2 border-t border-gray-100">
+                                <CompetenciasDisplay competencias={curso.competencias} />
+                            </div>
+                        )}
+                        {Array.isArray(curso.temario) && curso.temario.length > 0 && (
+                            <div className="col-span-2 pt-2 border-t border-gray-100">
+                                <h3 className="text-sm font-semibold text-gray-700 mb-2">Temario del Curso</h3>
+                                <div className="space-y-2.5">
+                                    {curso.temario.map((mod: any, idx: number) => (
+                                        <div key={idx} className="bg-gray-50/80 border border-gray-200 rounded-xl p-3.5">
+                                            <h4 className="font-bold text-sm text-gray-800">
+                                                Módulo {idx + 1}: {mod.titulo || 'Módulo'}
+                                            </h4>
+                                            {Array.isArray(mod.temas) && mod.temas.length > 0 && (
+                                                <ul className="mt-2 pl-4 list-disc space-y-1 text-xs text-gray-600">
+                                                    {mod.temas.filter((t: string) => t && t.trim()).map((tema: string, tIdx: number) => (
+                                                        <li key={tIdx}>{tema}</li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                         {!isPagado && (

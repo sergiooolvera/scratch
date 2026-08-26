@@ -280,7 +280,8 @@ export default function AdminCursosPage() {
             modalidad: curso.cambios_pendientes?.modalidad,
             limite_inscripcion: curso.cambios_pendientes?.limite_inscripcion ? new Date(curso.cambios_pendientes.limite_inscripcion).toISOString().split('T')[0] : null,
             modulos: (curso.cambios_pendientes?.modulos || []).map(normalizeDraftModule),
-            examen: curso.cambios_pendientes?.examen ? normalizeExam(curso.cambios_pendientes.examen, curso.cambios_pendientes.examen.preguntas || []) : null
+            examen: curso.cambios_pendientes?.examen ? normalizeExam(curso.cambios_pendientes.examen, curso.cambios_pendientes.examen.preguntas || []) : null,
+            temario: curso.cambios_pendientes?.temario || []
         })
         setAuditOriginal(null)
         setLoadingAudit(true)
@@ -428,7 +429,8 @@ export default function AdminCursosPage() {
             modalidad: curso.modalidad,
             limite_inscripcion: curso.limite_inscripcion ? new Date(curso.limite_inscripcion).toISOString().split('T')[0] : null,
             modulos: normalizedModules,
-            examen: normalizeExam(finalExam, finalQuestions)
+            examen: normalizeExam(finalExam, finalQuestions),
+            temario: (curso as any).temario || []
         })
         setLoadingAudit(false)
     }
@@ -470,6 +472,53 @@ export default function AdminCursosPage() {
                 <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Nuevo</p>
                     <p className={`text-sm whitespace-pre-wrap break-words ${changed ? 'font-semibold text-amber-900' : 'text-gray-900'}`}>{textValue(draftValue)}</p>
+                </div>
+            </div>
+        )
+    }
+
+    const renderTemarioCompare = () => {
+        const origTemario: any[] = auditOriginal?.temario || []
+        const draftTemario: any[] = auditDraft?.temario || []
+        const changed = !sameValue(origTemario, draftTemario)
+
+        const renderTemarioList = (temarioList: any[]) => {
+            if (!temarioList || temarioList.length === 0) {
+                return <p className="text-sm text-gray-500 italic">Sin temario capturado</p>
+            }
+            return (
+                <div className="space-y-2">
+                    {temarioList.map((m: any, idx: number) => {
+                        const temasValidos = (m.temas || []).filter((t: string) => t && t.trim())
+                        return (
+                            <div key={idx} className="p-2.5 bg-white border border-gray-200 rounded-lg text-xs shadow-sm">
+                                <p className="font-bold text-gray-800">Módulo {idx + 1}: {m.titulo || 'Sin título'}</p>
+                                {temasValidos.length > 0 ? (
+                                    <ul className="mt-1.5 pl-3.5 list-disc text-gray-600 space-y-0.5">
+                                        {temasValidos.map((t: string, tIdx: number) => (
+                                            <li key={tIdx} className="text-xs">{t}</li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-[11px] text-gray-400 italic mt-0.5">Sin temas agregados</p>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+            )
+        }
+
+        return (
+            <div className={`grid grid-cols-1 md:grid-cols-[180px_1fr_1fr] gap-3 p-3 border rounded-lg ${changed ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+                <div className="text-xs font-bold uppercase tracking-wide text-gray-500">Temario (Módulos y Temas)</div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Original</p>
+                    {renderTemarioList(origTemario)}
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Nuevo</p>
+                    {renderTemarioList(draftTemario)}
                 </div>
             </div>
         )
@@ -673,6 +722,30 @@ export default function AdminCursosPage() {
                                 </div>
                             </div>
 
+                            {/* Temario Estructurado */}
+                            {Array.isArray((previewCurso as any).temario) && (previewCurso as any).temario.length > 0 && (
+                                <div className="mb-6 bg-white p-4 rounded-lg border border-gray-200">
+                                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Temario del Curso</h3>
+                                    <div className="space-y-2">
+                                        {(previewCurso as any).temario.map((m: any, idx: number) => {
+                                            const temasValidos = (m.temas || []).filter((t: string) => t && t.trim());
+                                            return (
+                                                <div key={idx} className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs">
+                                                    <p className="font-bold text-sm text-gray-800">Módulo {idx + 1}: {m.titulo || 'Sin título'}</p>
+                                                    {temasValidos.length > 0 && (
+                                                        <ul className="mt-1.5 pl-3.5 list-disc text-gray-600 space-y-0.5">
+                                                            {temasValidos.map((t: string, tIdx: number) => (
+                                                                <li key={tIdx}>{t}</li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Contenido (Módulos o Legacy Single URL) */}
                             <div className="mb-6 bg-white p-4 rounded-lg border border-gray-200">
                                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Contenido (Videos / Documentos)</h3>
@@ -758,6 +831,7 @@ export default function AdminCursosPage() {
                                             <p className="text-xs text-gray-500 mt-1">Las filas en amarillo indican valores distintos entre la versión publicada y el borrador.</p>
                                         </div>
                                         {renderFieldCompare('Título', 'titulo')}
+                                        {renderTemarioCompare()}
                                         {renderFieldCompare('Descripción', 'descripcion')}
                                         {renderFieldCompare('Competencias', 'competencias')}
                                         {renderFieldCompare('Beneficios', 'beneficios')}

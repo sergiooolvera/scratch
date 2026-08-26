@@ -10,6 +10,8 @@ import CertificadoModelo3 from '@/components/CertificadoModelo3'
 import ResponsiveCertificateWrapper from '@/components/ResponsiveCertificateWrapper'
 import SimuladorIngresosModal from '@/components/SimuladorIngresosModal'
 import SubidorBunny from '@/components/SubidorBunny'
+import TemarioEditor, { ModuloTemario } from '@/components/TemarioEditor'
+import CompetenciasEditor from '@/components/CompetenciasEditor'
 
 type Recurso = {
     id?: string;
@@ -140,6 +142,7 @@ export default function SubirCursoPage() {
     })
 
     const [vigenciaAnos, setVigenciaAnos] = useState<number>(3)
+    const [temario, setTemario] = useState<ModuloTemario[]>([])
 
     // Modules state
     const [modulos, setModulos] = useState<Modulo[]>([{
@@ -1071,10 +1074,11 @@ export default function SubirCursoPage() {
                 setLoading(false)
                 return
             }
-            if (!formData.competencias?.trim()) {
+            const compList = (formData.competencias || '').split('\n').map(c => c.trim()).filter(c => c.length > 0);
+            if (compList.length < 3) {
                 setModalMessage({
-                    title: 'Faltan Campos',
-                    content: 'Error: Por favor escribe las competencias del curso.',
+                    title: 'Competencias Insuficientes',
+                    content: 'Error: Por favor define al menos 3 competencias para el curso (máximo 5).',
                     type: 'error'
                 });
                 setLoading(false)
@@ -1322,7 +1326,8 @@ export default function SubirCursoPage() {
             logo_url: logoUrl,
             imagen_url: portadaUrl,
             mostrar_logo_constancia: mostrarLogoConstancia,
-            plantilla_constancia: plantillaConstancia
+            plantilla_constancia: plantillaConstancia,
+            temario: temario
         }
 
         const { data: cursoGuardado, error: errorCurso } = await supabase.from('ie_cursos').insert(cursoDraftObj).select().single()
@@ -1708,12 +1713,25 @@ export default function SubirCursoPage() {
                                     <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 60 caracteres. Se renderizará en el certificado del alumno.</p>
                                 </div>
                                 <div>
+                                    <TemarioEditor
+                                        temario={temario}
+                                        onChange={setTemario}
+                                        disabled={loading}
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
                                     <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Describe los temas que cubre el curso..." />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Competencias del Curso</label>
-                                    <textarea name="competencias" required value={formData.competencias} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Describe las competencias que desarrollará el alumno..." />
+                                    <CompetenciasEditor
+                                        value={formData.competencias}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, competencias: val }))}
+                                        disabled={loading}
+                                        minCompetencias={3}
+                                        maxCompetencias={5}
+                                        maxChars={80}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Beneficios / ¿Qué aprenderá el alumno?</label>

@@ -310,13 +310,13 @@
 
 ### Tarea: Ajuste de Layout en Grid para Super Cursos
 
-#### Diagn�stico del Problema:
-- **Requisito:** Los cursos marcados como 'Super Curso' deben destacarse ocupando el espacio de dos tarjetas (2 columnas) en las vistas de cat�logo y landing.
-- **Causa Ra�z:** El grid asignaba col-span-1 por defecto a todos los elementos en app/cursos/page.tsx y components/landing/PopularCourses.tsx.
+#### Diagn�stico del Problema:
+- **Requisito:** Los cursos marcados como 'Super Curso' deben destacarse ocupando el espacio de dos tarjetas (2 columnas) en las vistas de cat�logo y landing.
+- **Causa Ra�z:** El grid asignaba col-span-1 por defecto a todos los elementos en app/cursos/page.tsx y components/landing/PopularCourses.tsx.
 
 #### Acciones Realizadas:
 1. **Ajuste CSS de Tailwind:**
-   - Se a�adi� condicionalmente las clases `sm:col-span-2 lg:col-span-2` a los contenedores si `es_super_curso` es verdadera.
+   - Se a�adi� condicionalmente las clases `sm:col-span-2 lg:col-span-2` a los contenedores si `es_super_curso` es verdadera.
 2. **Pruebas E2E (Playwright):**
    - Se ejecutaron las pruebas con npx playwright test.
 
@@ -336,3 +336,83 @@
 2. **Pruebas E2E (Playwright):**
    - Se agregó y ejecutó la prueba en [landing.spec.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts) para validar que ninguna tarjeta en la sección 'Cursos populares' contenga la clase col-span-2.
    - Todas las pruebas de Playwright pasaron exitosamente (13/13 en landing y 3/3 en courses).
+
+
+---
+
+## Fecha: 2026-08-26
+### Tarea: Implementación de campo interactivo de Temario en Crear y Editar Cursos
+
+#### Contexto y Requerimiento:
+- Se solicitó agregar un campo estructurado de **Temario** (módulos y temas) en la sección de información básica del curso, posicionado inmediatamente después del campo *Título del Curso* y antes de *Descripción Completa*, tanto en la vista de creación de cursos (`/profesor/subir-curso`) como en la vista de edición (`/profesor/editar-curso/[id]`).
+- El diseño visual cuenta con acordeón para cada módulo, inputs editables de títulos, viñetas (`•`) y listas dinámicas de temas, botones de agregar/eliminar módulo y agregar/eliminar tema, y botones de colapsar/expandir.
+
+#### Cambios Realizados:
+1. **Base de Datos y Esquema SQL:**
+   - Creado script de migración `agregar_temario_cursos.sql` para agregar la columna `temario jsonb DEFAULT '[]'::jsonb` en `public.ie_cursos` junto con un índice GIN de rendimiento `idx_ie_cursos_temario`.
+   - Actualizado `esquema_produccion.sql` para incluir la columna `temario` en la tabla `ie_cursos` y el índice de rendimiento correspondiente.
+2. **Componente Reutilizable:**
+   - Creado `components/TemarioEditor.tsx` con interfaz `ModuloTemario` (`titulo`, `temas`, `abierto`), soporte completo para colapsar/expandir, inputs con estado sincronizado y acciones de agregar/eliminar temas y módulos.
+3. **Formularios de Subir y Editar Curso:**
+   - `app/profesor/subir-curso/page.tsx`: Se integró el estado `temario`, el componente `TemarioEditor` tras el título del curso y la persistencia en el objeto de inserción `cursoDraftObj` en `ie_cursos`.
+   - `app/profesor/editar-curso/[id]/page.tsx`: Se integró el estado `temario`, la carga reactiva desde `curso.cambios_pendientes.temario` (si hay borrador) o `curso.temario`, y el guardado tanto en borrador como en actualización directa.
+4. **Auditoría de Administrador y Detalle Público:**
+   - `app/admin/cursos/page.tsx`: Se incorporó `renderTemarioCompare` para comparar cambios en el temario entre la versión original y la nueva versión propuesta en el modal de auditoría.
+   - `app/api/admin/aprobar-borrador/route.ts`: Persistencia asegurada del campo `temario` al aprobar borradores.
+   - `app/cursos/[id]/page.tsx`: Renderizado estructurado del Temario del Curso en la ficha pública del curso.
+5. **Pruebas Automatizadas (Playwright):**
+   - Actualizado `e2e/instructor.spec.ts` con validaciones de visibilidad de Temario, creación de módulos, asignación de títulos y adición de temas.
+   - Ejecutadas con éxito las pruebas: 40 tests pasados (`npx playwright test`).
+
+- **Ajuste de Visualización en Auditoría de Administrador (/admin/cursos):**
+  - Se reordenó la fila de comparación de Temario en el modal de auditoría de borrador para ubicarse inmediatamente después del campo **Título**, facilitando su visibilidad inmediata sin requerir scroll extenso.
+  - Se optimizó el renderizado de `renderTemarioCompare` para mostrar siempre la fila comparativa con las tarjetas y viñetas de cada módulo y tema.
+  - Se agregó soporte para previsualizar el temario estructurado en el modal de previsualización general de cursos del Administrador.
+  - Pruebas E2E de administración actualizadas y validadas con éxito.
+
+---
+
+## Fecha: 2026-08-26
+### Tarea: Implementación de Selector de Competencias con Verbos Taxonómicos (Bloom) en Crear y Editar Cursos
+
+#### Contexto y Requerimiento:
+- Se transformó la captura de *Competencias a desarrollar* en la creación (`/profesor/subir-curso`) y edición (`/profesor/editar-curso/[id]`) de cursos.
+- Anteriormente se utilizaba un área de texto libre; ahora se implementó un flujo interactivo guiado por verbos pedagógicos de acción (Taxonomía de Bloom), donde el usuario puede seleccionar un verbo de una barra o menú desplegable para insertarlo automáticamente en la competencia y redactar el resultado de aprendizaje esperado.
+- Reglas pedagógicas y límites:
+  - Mínimo 3 competencias y máximo 5 competencias por curso.
+  - Contador de caracteres en tiempo real por competencia (`XX/80`).
+  - Botones de navegación horizontal (`<` y `>`) para explorar los chips de verbos.
+  - Menú desplegable clasificado por categorías taxonómicas (Conocimiento, Comprensión, Aplicación, Análisis, Evaluación, Creación).
+  - Filas numeradas con botón de papelera para eliminar o limpiar, y botón ancho inferior `+ Agregar competencia`.
+  - Compatibilidad total con la base de datos `ie_cursos.competencias` (almacenamiento en texto multilinea).
+
+#### Cambios Realizados:
+1. **Componente Reutilizable:**
+   - Creado [`components/CompetenciasEditor.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CompetenciasEditor.tsx) con la lógica interactiva, carrusel de verbos, dropdown taxonómico, parsing bidireccional, límites de 3 a 5 competencias y contador de caracteres.
+2. **Formularios de Creación y Edición:**
+   - [`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx): Integrado `CompetenciasEditor` y validación de mínimo 3 competencias completadas antes de publicar.
+   - [`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx): Integrado `CompetenciasEditor` y validación de mínimo 3 competencias en la edición directa y de borradores.
+3. **Pruebas Automatizadas (Playwright):**
+   - Actualizado [`e2e/instructor.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/instructor.spec.ts) con 2 nuevos tests E2E:
+     - Verificación del renderizado de la sección, instrucciones, chips de verbos taxonómicos y contador.
+     - Verificación de inserción de verbos con un clic, captura de competencias, límite de 5 competencias y eliminación de filas.
+   - Ejecución y validación exitosa de la suite completa de Playwright: **43 de 43 pruebas pasaron (100% éxito)**.
+
+### Tarea: Adopción del Modelo Estructurado de "Competencias abordadas" en Vistas Públicas y de Validación
+
+#### Contexto y Requerimiento:
+- Se rediseñó la presentación de competencias en la página de validación pública ([/validar](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/validar/page.tsx)) y en el detalle de cursos ([/cursos/[id]](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/page.tsx)).
+- Se pasó de un bloque de texto plano a un diseño estructurado con:
+  - Encabezado con ícono `Bookmark` y título **"Competencias abordadas"**.
+  - Texto introductorio: *"La presente capacitación incluyó contenidos orientados al desarrollo de competencias relacionadas con:"*.
+  - Círculos azules oscuros con números blancos (`1`, `2`, `3`...) y líneas divisorias sutiles entre cada competencia.
+
+#### Cambios Realizados:
+1. **Componente Reutilizable:**
+   - Creado [`components/CompetenciasDisplay.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CompetenciasDisplay.tsx) con la función `parseCompetenciasList` para segmentar cadenas de texto multilínea y renderizar el formato con círculos numerados.
+2. **Integración en Vistas:**
+   - [`app/validar/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/validar/page.tsx): Integrado `CompetenciasDisplay` en la ficha de constancia verificada.
+   - [`app/cursos/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/page.tsx): Integrado `CompetenciasDisplay` en la ficha pública del curso.
+3. **Pruebas y Verificación:**
+   - Compilación Next.js validada con éxito (`npm run build`).
+   - Suite Playwright ejecutada: **43 de 43 pruebas pasadas con 100% de éxito**.

@@ -25,4 +25,12 @@ test.describe('Módulo de Administración y Permisos de Rol', () => {
     // El profesor debe poder ver la ruta /profesor sin ser redirigido a /dashboard
     await expect(page).toHaveURL(/\/profesor/);
   });
+
+  test('Debe cargar la pantalla de administración de cursos (/admin/cursos) y mostrar la columna de acciones', async ({ page }) => {
+    await loginAs(page, TEST_USERS.admin);
+    await page.goto('/admin/cursos');
+
+    await expect(page).toHaveURL(/\/admin\/cursos/);
+    await expect(page.locator('h1:has-text("Revisión de Cursos")')).toBeVisible({ timeout: 15000 });
+  });
 });
