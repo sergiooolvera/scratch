@@ -129,7 +129,7 @@ export default async function PopularCourses() {
               const duracionBadge = formatBadgeDuracion(course.duracion)
 
               return (
-              <div key={course.id} className={`bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col group ${course.es_super_curso ? 'sm:col-span-2 lg:col-span-2' : ''}`}>
+              <div key={course.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col group">
                 <div className="relative aspect-[16/10]">
                   <Image src={imageUrl} alt={course.titulo} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute top-3 left-3 bg-[#310ea0]/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center tracking-wider">

@@ -322,3 +322,17 @@
 
 
 - Se actualiz la consulta en PopularCourses.tsx para ordenar los cursos: primero los supercursos (del ms actual al ms viejo) y despus los normales (del ms actual al ms viejo).
+
+### Tarea: Unificación de Espacio de Tarjetas de Cursos (1 Espacio)
+
+#### Diagnóstico del Problema:
+- **Requisito del Usuario:** Los cursos en la sección de 'Cursos populares' y catálogo deben ocupar solo 1 espacio (1 columna) de forma uniforme, sin hacer diferencias de tamaño (col-span-2) para los cursos marcados como supercursos.
+- **Causa Raíz:** Los elementos contenían condicionalmente las clases sm:col-span-2 lg:col-span-2 cuando es_super_curso era verdadero.
+
+#### Acciones Realizadas:
+1. **Ajuste en componentes:**
+   - En [PopularCourses.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx), se removió la clase sm:col-span-2 lg:col-span-2, asegurando que cada tarjeta ocupe exactamente 1 espacio de columna dentro de la cuadrícula.
+   - En [app/cursos/page.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/page.tsx), se removió la clase condicional para mantener coherencia en la vista de catálogo general.
+2. **Pruebas E2E (Playwright):**
+   - Se agregó y ejecutó la prueba en [landing.spec.ts](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts) para validar que ninguna tarjeta en la sección 'Cursos populares' contenga la clase col-span-2.
+   - Todas las pruebas de Playwright pasaron exitosamente (13/13 en landing y 3/3 en courses).

@@ -146,6 +146,20 @@ test.describe('Landing Page', () => {
     await expect(page).toHaveURL(/\/contacto/);
     await expect(page.getByRole('heading', { name: 'Ponte en Contacto' })).toBeVisible();
   });
+
+  test('Las tarjetas de Cursos Populares deben ocupar 1 solo espacio (sin diferencia de supercursos)', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Cursos populares' })).toBeVisible();
+
+    const courseCards = page.locator('section:has-text("Cursos populares") .group');
+    const count = await courseCards.count();
+    
+    for (let i = 0; i < count; i++) {
+      const card = courseCards.nth(i);
+      const classAttribute = await card.getAttribute('class');
+      expect(classAttribute).not.toContain('col-span-2');
+    }
+  });
 });
 
 
