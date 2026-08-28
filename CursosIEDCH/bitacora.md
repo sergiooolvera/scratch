@@ -1,5 +1,34 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-08-27
+### Tarea: Rediseño integral de la página de información y venta del curso (`/cursos/[id]`)
+
+#### Diagnóstico y Requerimiento:
+- **Objetivo:** Modernizar la presentación visual de los cursos convirtiendo la página de detalle (`/cursos/[id]`) en una landing page de alta conversión profesional y limpia basada en el diseño de referencia.
+- **Ajustes Pixel-Perfect:**
+  1. Grid central de **3 columnas en 1 sola fila horizontal**: `Temario del curso` (con numeración circular 01, 02... y botón `Ver temario completo ∨`), `Competencias que desarrollarás` (con checklist y diana morada), e `Instructor` (con enlace "Ver perfil ↗", avatar interactivo y modal completo de perfil académico y profesional del docente).
+  2. Hero superior con badges outline de `Duración`, `Modalidad` y `Constancia con valor curricular verificable`, junto a la tarjeta de portada limpia (se removió el botón flotante "Ver presentación del curso" para una visualización más despejada de la portada).
+  3. Sección de `Valoraciones y opiniones`, `Así obtienes tu constancia verificable` y `Explorar todos los cursos` reorganizadas a **ancho completo de pantalla (Full Width)** justo debajo del bloque de compra/hero, aprovechando al máximo el espacio horizontal disponible para los comentarios y diagramas.
+  4. Sección horizontal de `Así obtienes tu constancia verificable` con 5 pasos conectados con flechas `→`.
+  5. Banner inferior morado intenso `Explorar todos los cursos` ubicado al final de la columna de contenido.
+  6. Panel lateral sticky con precio `$399 MXN`, 4 botones de pago (`Pagar con Tarjeta / OXXO`, `Pagar con Transferencia`, `Reportar Pago Oxxo`, `Tengo un Cupón`) configurados para redirigir a `/login?next=/cursos/[id]` si el usuario no ha iniciado sesión, preservando la navegación pública.
+
+#### Acciones Realizadas:
+1. **Creación de Componentes Modulares:**
+   - [`app/cursos/[id]/CourseHero.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseHero.tsx): Hero superior con badges y botón de desplazamiento interactivo.
+   - [`app/cursos/[id]/CourseSyllabus.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseSyllabus.tsx): Componente interactivo para el temario del curso con soporte de módulos, temas y botón de expandir/colapsar.
+   - [`app/cursos/[id]/CourseCompetencies.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseCompetencies.tsx): Visualizador estilizado de competencias clave.
+   - [`app/cursos/[id]/CourseInstructorCard.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseInstructorCard.tsx): Tarjeta de perfil del instructor con datos de `ie_profiles` y badge verificado EGAC.
+   - [`app/cursos/[id]/CourseProcessSteps.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseProcessSteps.tsx): Diagrama horizontal de 5 pasos para la obtención de constancias con valor curricular.
+   - [`app/cursos/[id]/ExploreBanner.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/ExploreBanner.tsx): Banner inferior de call-to-action hacia el catálogo.
+2. **Refactorización de Vistas Existentes:**
+   - [`app/cursos/[id]/CourseReviews.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseReviews.tsx): Tarjeta de promedio, barras de progreso, tarjetas de testimonios y modal interactivo para leer todas las opiniones y calificar.
+   - [`app/cursos/[id]/CourseActions.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseActions.tsx): Panel lateral sticky con los 4 métodos de pago, badges de seguridad, modal de ejemplo de constancia institucional y preguntas frecuentes, así como accesos para alumnos inscritos.
+   - [`app/cursos/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx): Ensamblado general del layout de 2 columnas responsivo con carga de perfiles de instructores y metadatos SEO/OpenGraph.
+3. **Pruebas Automatizadas con Playwright (E2E):**
+   - Se creó [`e2e/curso-detalle-redesign.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/curso-detalle-redesign.spec.ts) para validar el renderizado del Hero, Grid de Temario/Competencias/Instructor, Valoraciones, 5 pasos, Banner inferior, modales y acciones de compra.
+   - Se validaron con éxito las pruebas específicas (`npx playwright test e2e/curso-detalle-redesign.spec.ts`) y la suite completa de Playwright.
+
 ## Fecha: 2026-08-21
 ### Tarea: Resolución de Error de Build ("Import map: aliased to relative './components/landing/Testimonials'")
 

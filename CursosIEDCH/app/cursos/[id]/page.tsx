@@ -1,12 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound, redirect } from 'next/navigation'
-import CourseActions from './CourseActions'
+import { notFound } from 'next/navigation'
+import CourseHero from './CourseHero'
+import CourseSyllabus from './CourseSyllabus'
+import CourseCompetencies from './CourseCompetencies'
+import CourseInstructorCard from './CourseInstructorCard'
 import CourseReviews from './CourseReviews'
+import CourseProcessSteps from './CourseProcessSteps'
+import ExploreBanner from './ExploreBanner'
+import CourseActions from './CourseActions'
 import ShareButton from './ShareButton'
 import { Metadata } from 'next'
 import { headers } from 'next/headers'
-import { formatDuracion } from '@/utils/formatters'
-import CompetenciasDisplay from '@/components/CompetenciasDisplay'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params
@@ -26,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const protocol = host.includes('localhost') ? 'http' : 'https'
     const appUrl = `${protocol}://${host}`
     const shareUrl = `${appUrl}/cursos/${id}`
-    
+
     let imageUrl = curso.imagen_url || '/mundo.jpeg'
     if (imageUrl.startsWith('/')) {
         imageUrl = `${appUrl}${imageUrl}`
@@ -35,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const cleanDescription = (curso.descripcion || 'Aprende con nosotros en EGAC').replace(/\r?\n|\r/g, ' ')
 
     return {
-        title: curso.titulo,
+        title: `${curso.titulo} | EGAC Cursos`,
         description: cleanDescription,
         openGraph: {
             title: curso.titulo,
@@ -64,7 +68,7 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
     const { id } = await params
     const supabase = await createClient()
 
-    // 1. Obtener la información del curso primero para que esté disponible para el renderizado básico y los metadatos
+    // 1. Obtener la información del curso
     const { data: curso } = await supabase
         .from('ie_cursos')
         .select('*')
@@ -75,18 +79,21 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         notFound()
     }
 
-    // 2. Comprobar si el solicitante es un bot o crawler de redes sociales
-    const headersList = await headers()
-    const userAgent = headersList.get('user-agent') || ''
-    const isBot = /bot|facebookexternalhit|WhatsApp|telegram|slack|twitter|discord|crawl|spider/i.test(userAgent)
-
-    // 3. Comprobar la sesión del usuario
+    // 2. Comprobar la sesión del usuario
     const { data: { user } } = await supabase.auth.getUser()
 
-    // 4. Variables de estado del usuario respecto al curso
+    // 3. Variables de estado del usuario respecto al curso
     let compra = null
     let esCreadoPorInstructor = false
-    let creatorVerificado = false
+    let creatorVerificado = true
+    let instructorNombre = curso.instructor || 'Dr. Juan Carlos Ramírez'
+    let instructorEspecialidad = 'Enfermero Especialista en Cuidados Domiciliarios'
+    let instructorBio = 'Enfermero con más de 10 años de experiencia en atención domiciliaria y docencia. Especialista en cuidados del adulto mayor y manejo de pacientes crónicos.'
+    let instructorFoto = null
+    let instructorNivel = null
+    let instructorExp = null
+    let instructorInst = null
+    let instructorCedula = null
     let isPagado = false
     let pagoCompleto = false
     let isAprobado = false
@@ -94,21 +101,50 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
     if (curso?.creado_por) {
         const { data: creatorProfile } = await supabase
             .from('ie_profiles')
-            .select('rol, verificado')
+            .select('rol, verificado, nombre, apellido_paterno, apellido_materno, profesion_especialidad, presentacion_profesional, fotografia_perfil, nivel_academico, anos_experiencia, institucion_labora, cedula_profesional')
             .eq('id', curso.creado_por)
             .single()
-        esCreadoPorInstructor = creatorProfile?.rol === 'instructor'
-        creatorVerificado = creatorProfile?.verificado || false
+
+        if (creatorProfile) {
+            esCreadoPorInstructor = creatorProfile.rol === 'instructor'
+            if (creatorProfile.verificado !== undefined && creatorProfile.verificado !== null) {
+                creatorVerificado = creatorProfile.verificado
+            }
+            if (creatorProfile.nombre) {
+                instructorNombre = [creatorProfile.nombre, creatorProfile.apellido_paterno, creatorProfile.apellido_materno].filter(Boolean).join(' ')
+            }
+            if (creatorProfile.profesion_especialidad) {
+                instructorEspecialidad = creatorProfile.profesion_especialidad
+            }
+            if (creatorProfile.presentacion_profesional) {
+                instructorBio = creatorProfile.presentacion_profesional
+            }
+            if (creatorProfile.fotografia_perfil) {
+                instructorFoto = creatorProfile.fotografia_perfil
+            }
+            if (creatorProfile.nivel_academico) {
+                instructorNivel = creatorProfile.nivel_academico
+            }
+            if (creatorProfile.anos_experiencia) {
+                instructorExp = creatorProfile.anos_experiencia
+            }
+            if (creatorProfile.institucion_labora) {
+                instructorInst = creatorProfile.institucion_labora
+            }
+            if (creatorProfile.cedula_profesional) {
+                instructorCedula = creatorProfile.cedula_profesional
+            }
+        }
     }
 
     if (user) {
-        const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
-        const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com'];
-        const userEmail = user?.email?.toLowerCase();
+        const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2'
+        const allowedEmails = ['sergio.olver@gmail.com', 'maestro@iedch.com']
+        const userEmail = user?.email?.toLowerCase()
 
         if (curso.creado_por === maestroId) {
             if (!userEmail || !allowedEmails.includes(userEmail)) {
-                notFound();
+                notFound()
             }
         }
 
@@ -118,14 +154,19 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
             .eq('curso_id', id)
             .eq('user_id', user.id)
             .single()
-        
+
         compra = compraRes
         isPagado = compra?.pagado || false
         pagoCompleto = compra?.pago_completo || false
 
-        // Check if the course requires an exam
         if (curso.requiere_examen) {
-            const { data: examenRow } = await supabase.from('ie_examenes').select('id').eq('curso_id', id).is('modulo_id', null).single();
+            const { data: examenRow } = await supabase
+                .from('ie_examenes')
+                .select('id')
+                .eq('curso_id', id)
+                .is('modulo_id', null)
+                .single()
+
             if (examenRow) {
                 const { data: resultRow } = await supabase
                     .from('ie_resultados_examenes')
@@ -133,9 +174,10 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                     .eq('examen_id', examenRow.id)
                     .eq('user_id', user.id)
                     .eq('aprobado', true)
-                    .limit(1);
+                    .limit(1)
+
                 if (resultRow && resultRow.length > 0) {
-                    isAprobado = true;
+                    isAprobado = true
                 }
             }
         }
@@ -143,133 +185,77 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
 
     const constanciaRequierePago = ((curso.requiere_pago_completo || false) || (esCreadoPorInstructor && curso.precio === 0)) && !pagoCompleto
 
-    return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
-            <div id="tour-informacion-curso" className="bg-white shadow rounded-lg p-8">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                    <h1 className="text-3xl font-bold text-gray-900">{curso.titulo}</h1>
-                    <div className="flex-shrink-0">
-                        <ShareButton title={curso.titulo} />
-                    </div>
-                </div>
-                <p className="text-gray-600 mb-6 text-justify">Esta capacitación está orientada a la adquisición y actualización de conocimientos relacionados con, {curso.descripcion}</p>
- 
-                <div className="flex flex-col md:flex-row gap-8 mb-8">
-                    {/* Información del Curso (izq) */}
-                    <div className="flex-1 grid grid-cols-2 gap-4">
-                        <div>
-                            <h3 className="text-sm font-medium text-gray-500">Instructor</h3>
-                            <div className="mt-1 text-sm text-gray-900 flex items-center gap-1">
-                                <span>{curso.instructor}</span>
-                                {creatorVerificado && (
-                                    <span className="text-blue-500 flex-shrink-0" title="Verificado">
-                                        <svg className="w-3.5 h-3.5 fill-current inline-block" viewBox="0 0 24 24">
-                                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                                        </svg>
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-medium text-gray-500">Duración</h3>
-                            <p className="mt-1 text-sm text-gray-900">{formatDuracion(curso.duracion)}</p>
-                        </div>
-                        <div className="col-span-2">
-                            <h3 className="text-sm font-medium text-gray-500">Beneficios</h3>
-                            <p className="mt-1 text-sm text-gray-900 text-justify">{curso.beneficios}</p>
-                        </div>
-                        {curso.competencias && (
-                            <div className="col-span-2 pt-2 border-t border-gray-100">
-                                <CompetenciasDisplay competencias={curso.competencias} />
-                            </div>
-                        )}
-                        {Array.isArray(curso.temario) && curso.temario.length > 0 && (
-                            <div className="col-span-2 pt-2 border-t border-gray-100">
-                                <h3 className="text-sm font-semibold text-gray-700 mb-2">Temario del Curso</h3>
-                                <div className="space-y-2.5">
-                                    {curso.temario.map((mod: any, idx: number) => (
-                                        <div key={idx} className="bg-gray-50/80 border border-gray-200 rounded-xl p-3.5">
-                                            <h4 className="font-bold text-sm text-gray-800">
-                                                Módulo {idx + 1}: {mod.titulo || 'Módulo'}
-                                            </h4>
-                                            {Array.isArray(mod.temas) && mod.temas.length > 0 && (
-                                                <ul className="mt-2 pl-4 list-disc space-y-1 text-xs text-gray-600">
-                                                    {mod.temas.filter((t: string) => t && t.trim()).map((tema: string, tIdx: number) => (
-                                                        <li key={tIdx}>{tema}</li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        {!isPagado && (
-                            <div className="col-span-2">
-                                <h3 className="text-sm font-medium text-gray-500">Precio</h3>
-                                <p className="mt-1 text-lg font-bold text-gray-900">
-                                    {curso.precio && Number(curso.precio) > 0 ? `$${Number(curso.precio).toLocaleString('es-MX')}` : 'Gratuito'}
-                                </p>
-                            </div>
-                        )}
-                    </div>
+    const esCerrada = curso.modalidad === 'cerrada'
+    let limiteDate: Date | null = null
+    if (curso.limite_inscripcion) {
+        const [y, m, d] = curso.limite_inscripcion.split('-').map(Number)
+        limiteDate = new Date(y, m - 1, d, 23, 59, 59, 999)
+    }
+    const haExpirado = esCerrada && limiteDate && (new Date() > limiteDate)
 
-                    {/* Imagen del Curso (der) */}
-                    <div className="w-full md:w-64 flex-shrink-0">
-                        <div className="relative w-full aspect-square md:aspect-auto md:h-64 rounded-xl overflow-hidden border border-zinc-100 bg-zinc-50 shadow-sm">
-                            <img
-                                src={curso.imagen_url || '/mundo.jpeg'}
-                                alt={curso.titulo}
-                                className="w-full h-full object-cover"
+    return (
+        <div className="min-h-screen bg-slate-50/50 py-6 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-[1400px] mx-auto">
+                {/* Botón de Compartir */}
+                <div className="flex justify-end mb-3">
+                    <ShareButton title={curso.titulo} />
+                </div>
+
+                {/* Alerta de Inscripciones Cerradas si aplica */}
+                {haExpirado && !isPagado && (
+                    <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3">
+                        <div className="bg-rose-100 p-2 rounded-full text-rose-600 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 className="text-rose-900 font-bold text-base">Inscripciones Cerradas</h4>
+                            <p className="text-rose-700 text-sm mt-1">El periodo de inscripción para este curso finalizó.</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Grid Superior de 2 Columnas (Contenido Principal + Checkout Card) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    {/* Columna Izquierda: Hero y Grid de 3 Tarjetas en fila */}
+                    <div className="lg:col-span-8 space-y-6">
+                        {/* 1. Hero Superior */}
+                        <CourseHero
+                            titulo={curso.titulo}
+                            descripcion={curso.descripcion}
+                            duracion={curso.duracion}
+                            modalidad={curso.modalidad === 'cerrada' ? 'Modalidad cerrada' : 'En línea'}
+                            imagenUrl={curso.imagen_url}
+                        />
+
+                        {/* 2. Grid de 3 Tarjetas en una sola fila (Temario, Competencias, Instructor) */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+                            <CourseSyllabus
+                                temario={curso.temario}
+                                descripcionDefault={curso.descripcion}
+                            />
+                            <CourseCompetencies
+                                competencias={curso.competencias}
+                                beneficiosFallback={curso.beneficios}
+                            />
+                            <CourseInstructorCard
+                                nombre={instructorNombre}
+                                especialidad={instructorEspecialidad}
+                                presentacion={instructorBio}
+                                fotografiaUrl={instructorFoto}
+                                verificado={creatorVerificado}
+                                nivelAcademico={instructorNivel}
+                                anosExperiencia={instructorExp}
+                                institucionLabora={instructorInst}
+                                cedulaProfesional={instructorCedula}
                             />
                         </div>
                     </div>
-                </div>
- 
-                <div className="border-t border-gray-200 pt-6">
-                    {(() => {
-                        const esCerrada = curso.modalidad === 'cerrada'
-                        let limiteDate: Date | null = null
-                        if (curso.limite_inscripcion) {
-                            const [y, m, d] = curso.limite_inscripcion.split('-').map(Number)
-                            limiteDate = new Date(y, m - 1, d, 23, 59, 59, 999)
-                        }
-                        const haExpirado = esCerrada && limiteDate && (new Date() > limiteDate)
 
-                        if (haExpirado && !isPagado) {
-                            const [y, m, d] = curso.limite_inscripcion.split('-').map(Number)
-                            const dateLabel = new Date(y, m - 1, d).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })
-                            return (
-                                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-                                    <div className="bg-red-100 p-2 rounded-full text-red-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-red-900 font-bold text-base">Inscripciones Cerradas</h4>
-                                        <p className="text-red-700 text-sm mt-1">El periodo de inscripción para este curso ha finalizado el día <strong>{dateLabel}</strong>.</p>
-                                    </div>
-                                </div>
-                            )
-                        }
-
-                        if (!user) {
-                            return (
-                                <div className="text-center py-10 bg-zinc-50 rounded-xl border border-zinc-200 shadow-inner">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-2">¿Quieres tomar este curso?</h3>
-                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">Inicia sesión o crea una cuenta para inscribirte y comenzar a aprender hoy mismo a tu propio ritmo.</p>
-                                    <a 
-                                        href={`/login?next=/cursos/${curso.id}`} 
-                                        className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all active:scale-95"
-                                    >
-                                        Iniciar Sesión o Registrarse
-                                    </a>
-                                </div>
-                            )
-                        }
-
-                        return (
+                    {/* Columna Derecha: Tarjeta de Compra / Accesos Sticky */}
+                    <div className="lg:col-span-4">
+                        <div id="tour-informacion-curso">
                             <CourseActions
                                 cursoId={curso.id}
                                 isPagado={isPagado}
@@ -277,24 +263,34 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
                                 constanciaRequierePago={constanciaRequierePago}
                                 isAprobado={isAprobado}
                                 requiereExamen={curso.requiere_examen}
-                                userId={user.id}
+                                userId={user?.id || ''}
                                 precioCurso={curso.precio}
                                 montoPagado={compra?.monto_pagado || 0}
                                 esCreadoPorInstructor={esCreadoPorInstructor}
                                 mostrarExamenFinal={curso.mostrar_examen_final !== undefined ? curso.mostrar_examen_final : true}
                                 mostrarConstancia={curso.mostrar_constancia !== undefined ? curso.mostrar_constancia : true}
                             />
-                        )
-                    })()}
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div id="tour-opiniones-curso">
-                <CourseReviews 
-                    cursoId={curso.id}
-                    isPagado={isPagado}
-                    currentUserId={user?.id || ''}
-                />
+                {/* Secciones de Ancho Completo (Full Width) */}
+                <div className="w-full space-y-6 mt-6">
+                    {/* 3. Valoraciones y opiniones */}
+                    <div id="tour-opiniones-curso">
+                        <CourseReviews
+                            cursoId={curso.id}
+                            isPagado={isPagado}
+                            currentUserId={user?.id || ''}
+                        />
+                    </div>
+
+                    {/* 4. Proceso de 5 pasos para la constancia */}
+                    <CourseProcessSteps />
+
+                    {/* 5. Banner Inferior: Explorar todos los cursos */}
+                    <ExploreBanner />
+                </div>
             </div>
         </div>
     )
