@@ -1,5 +1,16 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-08-28
+### Tarea: Despliegue a Producción del Rediseño Integral de Cursos (`/cursos/[id]`)
+
+#### Diagnóstico y Acciones:
+- **Solicitud del Usuario:** Desplegar todos los cambios validados a producción.
+- **Validación Previa:** Ejecutada y aprobada la suite completa de Playwright (**47 de 47 pruebas superadas**, 100% verde).
+- **Gestión de Ramas Git:**
+  1. Commit y push de todos los componentes nuevos, pruebas E2E y refactorizaciones en la rama `staging` (`git push origin staging`).
+  2. Cambio a la rama `main` (`git checkout main`), merge directo de `staging` (`git merge staging`) y push a producción (`git push origin main`), activando el build y despliegue automático en Vercel.
+  3. Retorno a la rama activa de desarrollo `staging` (`git checkout staging`).
+
 ## Fecha: 2026-08-27
 ### Tarea: Rediseño integral de la página de información y venta del curso (`/cursos/[id]`)
 
