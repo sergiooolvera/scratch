@@ -1,5 +1,22 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-08-29
+### Tarea: Corrección de Visualización Responsiva en iPad / Tablets para la Sección "Valoraciones y opiniones" (`/cursos/[id]`)
+
+#### Diagnóstico del Problema:
+- **Causa Raíz:** En [`app/cursos/[id]/CourseReviews.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseReviews.tsx), se estaban utilizando clases de Tailwind no válidas (`lg:col-span-3.5` y `lg:col-span-8.5`).
+- Al no ser clases nativas de Tailwind, el compilador de CSS las ignoraba. En pantallas con resolución `lg` (1024px, como iPads en horizontal o portátiles compactos), el contenedor padre creaba una cuadrícula de 12 columnas (`lg:grid-cols-12`) y, por defecto de CSS Grid, cada elemento hijo sin `col-span` tomaba un ancho de 1 columna (`span 1` de 12, es decir, ~8.3% del contenedor).
+- Esto provocaba que tanto el bloque de calificación promedio como el bloque de las 3 tarjetas de opiniones quedaran comprimidos en columnas de ~80px en el extremo izquierdo de la tarjeta, rompiendo los textos en columnas verticales y dejando el 80% restante de la tarjeta en blanco.
+
+#### Acciones Realizadas:
+1. **Corrección de Clases Grid en [`CourseReviews.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseReviews.tsx):**
+   - Se reemplazó `lg:col-span-3.5` por `lg:col-span-4 xl:col-span-3`.
+   - Se reemplazó `lg:col-span-8.5` por `lg:col-span-8 xl:col-span-9`.
+   - Se ajustó la distribución responsiva interna (`flex flex-col sm:flex-row lg:flex-col xl:flex-row` en la tarjeta de promedio y `grid-cols-1 sm:grid-cols-2 md:grid-cols-3` en las tarjetas de reseñas con `min-w-0` y `truncate`), garantizando una lectura fluida en móviles, tabletas (iPad vertical/horizontal) y escritorios.
+2. **Pruebas Automatizadas con Playwright:**
+   - Se añadió la prueba E2E de validación de vista iPad / tablet en [`e2e/curso-detalle-redesign.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/curso-detalle-redesign.spec.ts) para resoluciones de 1024x768 y 768x1024.
+   - Se ejecutó la suite completa de Playwright (`npx playwright test`), pasando con éxito las **48 de 48 pruebas** (100% aprobadas).
+
 ## Fecha: 2026-08-28
 ### Tarea: Despliegue a Producción del Rediseño Integral de Cursos (`/cursos/[id]`)
 

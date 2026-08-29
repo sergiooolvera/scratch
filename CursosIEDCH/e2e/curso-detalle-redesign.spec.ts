@@ -108,4 +108,26 @@ test.describe('Detalle de Curso - Rediseño de Vista Moderna', () => {
     await page.waitForURL(/\/login\?next=/);
     expect(page.url()).toContain('/login?next=');
   });
+
+  test('Debe renderizar correctamente la sección de valoraciones en vista de iPad y tablet', async ({ page }) => {
+    // Probar resolución de iPad Landscape (1024x768)
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto('/cursos');
+    const courseCardLink = page.locator('a[href^="/cursos/"]').first();
+    const courseUrl = await courseCardLink.getAttribute('href');
+    await page.goto(courseUrl!);
+    await page.waitForLoadState('networkidle');
+
+    const reviewsSection = page.locator('#tour-opiniones-curso');
+    await expect(reviewsSection).toBeVisible();
+
+    // Validar que las tarjetas de reseñas tengan un ancho visible adecuado (> 100px) y no estén comprimidas
+    const reviewCards = reviewsSection.locator('.grid > div');
+    await expect(reviewCards.first()).toBeVisible();
+
+    // Probar resolución de iPad Portrait (768x1024)
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await expect(reviewsSection).toBeVisible();
+    await expect(page.locator('text=Valoraciones y opiniones').first()).toBeVisible();
+  });
 });

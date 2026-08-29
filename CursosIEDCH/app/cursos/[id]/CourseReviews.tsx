@@ -155,7 +155,7 @@ export default function CourseReviews({ cursoId, isPagado, currentUserId }: { cu
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
                 {/* Lado izquierdo: Calificación y barras de progreso compactas */}
-                <div className="lg:col-span-3.5 xl:col-span-3 flex sm:flex-row lg:flex-col xl:flex-row items-center gap-4 p-4 rounded-xl bg-slate-50/70 border border-slate-200/60 justify-between shrink-0">
+                <div className="lg:col-span-4 xl:col-span-3 flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center gap-4 p-4 rounded-xl bg-slate-50/70 border border-slate-200/60 justify-between shrink-0">
                     {/* Número grande y estrellas */}
                     <div className="text-center sm:text-left lg:text-center xl:text-left shrink-0">
                         <div className="text-3xl sm:text-4xl font-black text-[#1e1b4b] tracking-tight leading-none mb-1">
@@ -195,15 +195,15 @@ export default function CourseReviews({ cursoId, isPagado, currentUserId }: { cu
                 </div>
 
                 {/* Lado derecho: Tarjetas de Reseñas ocupando todo el ancho restante */}
-                <div className="lg:col-span-8.5 xl:col-span-9 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div className="lg:col-span-8 xl:col-span-9 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
                     {featuredReviews.map((rev, idx) => (
                         <div
                             key={idx}
-                            className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/70 flex flex-col justify-between hover:bg-white hover:shadow-xs transition-all"
+                            className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/70 flex flex-col justify-between hover:bg-white hover:shadow-xs transition-all min-w-0"
                         >
                             <div>
                                 <div className="flex items-center justify-between gap-1 mb-2">
-                                    <span className="font-extrabold text-xs text-[#1e1b4b]">
+                                    <span className="font-extrabold text-xs text-[#1e1b4b] truncate">
                                         {rev.nombre}
                                     </span>
                                     <div className="flex text-amber-400 gap-0.5 shrink-0">
