@@ -16,6 +16,10 @@
 2. **Pruebas Automatizadas con Playwright:**
    - Se añadió la prueba E2E de validación de vista iPad / tablet en [`e2e/curso-detalle-redesign.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/curso-detalle-redesign.spec.ts) para resoluciones de 1024x768 y 768x1024.
    - Se ejecutó la suite completa de Playwright (`npx playwright test`), pasando con éxito las **48 de 48 pruebas** (100% aprobadas).
+3. **Despliegue a Producción:**
+   - Se realizó commit y push en la rama `staging`.
+   - Se fusionó `staging` en `main` y se envió (`git push origin main`), activando el despliegue automático en producción en Vercel.
+   - Se regresó el entorno de trabajo a la rama activa `staging`.
 
 ## Fecha: 2026-08-28
 ### Tarea: Despliegue a Producción del Rediseño Integral de Cursos (`/cursos/[id]`)
