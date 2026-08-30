@@ -83,12 +83,17 @@ function LoginForm() {
                         <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                             Te damos la bienvenida
                         </h2>
-                        <p className="mt-2 text-sm text-gray-600">
-                            ¿No tienes cuenta?{' '}
-                            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-                                Regístrate gratis ahora
+                        <div className="mt-3">
+                            <Link 
+                                href="/register" 
+                                className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100/80 border border-blue-200 rounded-xl text-sm transition-all group"
+                            >
+                                <span className="text-gray-700 font-medium">
+                                    ¿No tienes cuenta? <strong className="font-semibold text-blue-600 group-hover:text-blue-800 ml-1">Regístrate gratis ahora</strong>
+                                </span>
+                                <ArrowRight className="h-4 w-4 text-blue-600 transform group-hover:translate-x-1 transition-transform" />
                             </Link>
-                        </p>
+                        </div>
                     </div>
 
                     <div className="mt-8">

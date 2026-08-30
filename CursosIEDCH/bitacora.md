@@ -1,5 +1,20 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-08-30
+### Tarea: Resaltar opción de Registro ("Regístrate gratis ahora") en la vista de Login (`/login`)
+
+#### Diagnóstico del Problema:
+- **Requerimiento:** El usuario solicitó hacer más llamativo y visible el enlace de "¿No tienes cuenta? Regístrate gratis ahora" en la pantalla de inicio de sesión para mejorar el registro de alumnos.
+- **Implementación previa:** Era un párrafo de texto simple con un enlace azul (`text-blue-600`) alineado debajo del título, que se perdía visualmente.
+
+#### Acciones Realizadas:
+1. **Rediseño de Enlace a Botón Secundario en [`app/login/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/login/page.tsx):**
+   - Se transformó el párrafo original por un contenedor interactivo (`Link`) con comportamiento de botón destacado secundario.
+   - Se configuró un fondo azul muy suave (`bg-blue-50`), borde sutil (`border-blue-200`), esquinas redondeadas (`rounded-xl`), y padding adecuado para simular una tarjeta interactiva.
+   - Se añadió el icono `ArrowRight` a la derecha con un efecto hover animado (`group-hover:translate-x-1 transition-transform`) y cambio de fondo interactivo (`hover:bg-blue-100/80`) para incentivar la acción de registro.
+2. **Pruebas Automatizadas con Playwright:**
+   - Se ejecutó la suite de autenticación de Playwright (`npx playwright test e2e/auth.spec.ts`), validando con éxito las 4 pruebas del módulo (100% aprobadas).
+
 ## Fecha: 2026-08-29
 ### Tarea: Corrección de Visualización Responsiva en iPad / Tablets para la Sección "Valoraciones y opiniones" (`/cursos/[id]`)
 
