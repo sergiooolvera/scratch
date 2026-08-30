@@ -10,8 +10,13 @@ import Script from 'next/script'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Portal Cursos Grupo EGAC',
+  title: 'Grupo EGAC- Academy',
   description: 'Sistema Nacional de Evaluación y Registro Laboral',
+  icons: {
+    icon: '/mundo.jpeg',
+    shortcut: '/mundo.jpeg',
+    apple: '/mundo.jpeg',
+  },
   other: {
     google: 'notranslate',
   }

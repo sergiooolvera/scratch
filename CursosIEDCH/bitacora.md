@@ -492,3 +492,22 @@
 3. **Pruebas y Verificación:**
    - Compilación Next.js validada con éxito (`npm run build`).
    - Suite Playwright ejecutada: **43 de 43 pruebas pasadas con 100% de éxito**.
+
+---
+
+## Fecha: 2026-08-30
+### Tarea: Actualización de Metadatos del Sitio (Título y Favicon)
+
+#### Contexto y Requerimiento:
+- Se solicitó cambiar el título del sitio de "Portal Cursos Grupo EGAC" a "Grupo EGAC- Academy".
+- Se solicitó establecer como icono o favicon del sitio la imagen `/mundo.jpeg` (ubicada en `public/mundo.jpeg`).
+
+#### Cambios Realizados:
+1. **Actualización de Metadatos en Layout Principal (`app/layout.tsx`):**
+   - En [app/layout.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/layout.tsx), se modificó el objeto de metadatos (`metadata`) cambiando el valor de `title` a `'Grupo EGAC- Academy'`.
+   - Se añadió la propiedad `icons` con rutas para `icon`, `shortcut` y `apple` apuntando a `/mundo.jpeg`.
+2. **Desactivación del Favicon por Defecto:**
+   - Se renombró el archivo `app/favicon.ico` a `app/favicon.ico.bak` para evitar que el comportamiento por defecto de Next.js sobrescriba el icono configurado en los metadatos o interfiera en navegadores y buscadores.
+3. **Pruebas Automatizadas (Playwright):**
+   - Se ejecutó la suite completa de pruebas locales para garantizar que los cambios no introdujeran regresiones en el sistema.
+
