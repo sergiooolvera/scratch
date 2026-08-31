@@ -1,6 +1,26 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-08-31
+### Tarea: Integración del número oficial de WhatsApp Business (729 818 4978)
+
+#### Diagnóstico del Problema:
+- **Requerimiento:** Implantar el número oficial de WhatsApp Business: `Tel: (729 818 4978)`.
+- **Análisis:** 
+  - El botón flotante (FAB) de WhatsApp en la landing page ([`components/landing/Testimonials.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/Testimonials.tsx)) apuntaba a un enlace dummy `https://wa.me/5211234567890`.
+  - El número en el footer ([`components/landing/Footer.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/Footer.tsx)) era un texto estático que requería enlace directo interactivo a WhatsApp Business `https://wa.me/527298184978`.
+  - En la vista de curso ([`app/cursos/[id]/CourseActions.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/CourseActions.tsx)), el modal de soporte carecía de acceso directo por WhatsApp.
+
+#### Acciones Realizadas:
+1. **Actualización de Botón Flotante (FAB):**
+   - En [`components/landing/Testimonials.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/Testimonials.tsx), se actualizó el enlace hacia `https://wa.me/527298184978`.
+2. **Enlace Interactivo en Footer:**
+   - En [`components/landing/Footer.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/Footer.tsx), se convirtió el elemento de teléfono en un enlace interactivo directo a `https://wa.me/527298184978`.
+3. **Botón de WhatsApp en Modal de Soporte del Curso:**
+   - En [`app/cursos/[id]/CourseActions.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/CourseActions.tsx), se añadió un botón directo de WhatsApp Business (`+52 729 818 4978`) en la sección de dudas y soporte.
+4. **Pruebas Automatizadas con Playwright:**
+   - Se añadió una prueba E2E en [`e2e/landing.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts) para validar la presencia del FAB, los enlaces y la información de contacto de WhatsApp Business.
+   - Se ejecutó la suite completa de Playwright para garantizar cero regresiones.
+
 ### Tarea: Despliegue a Producción (Eliminación de Beneficios y Reordenamiento de Formularios de Cursos)
 
 #### Diagnóstico y Acciones:

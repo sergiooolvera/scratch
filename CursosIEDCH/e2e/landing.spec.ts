@@ -160,6 +160,27 @@ test.describe('Landing Page', () => {
       expect(classAttribute).not.toContain('col-span-2');
     }
   });
+
+  test('Debe mostrar y enlazar correctamente el número de WhatsApp Business oficial (729 818 4978)', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Verificar botón flotante (FAB) de WhatsApp
+    const fabWhatsApp = page.locator('a[href*="wa.me/527298184978"]').first();
+    await expect(fabWhatsApp).toBeVisible();
+    await expect(fabWhatsApp).toContainText('Escríbenos por WhatsApp');
+
+    // 2. Verificar enlace e ícono de WhatsApp en el Footer
+    const footerWhatsApp = page.locator('footer a[href*="wa.me/527298184978"]');
+    await expect(footerWhatsApp.first()).toBeVisible();
+    await expect(page.locator('footer')).toContainText('+52 (729) 818-4978');
+
+    // 3. Verificar en página /contacto
+    await page.goto('/contacto');
+    const contactWhatsApp = page.locator('section#contacto a[href*="wa.me/527298184978"]');
+    await expect(contactWhatsApp.first()).toBeVisible();
+    await expect(page.locator('section#contacto')).toContainText('WhatsApp Business');
+    await expect(page.locator('section#contacto')).toContainText('+52 (729) 818-4978');
+  });
 });
 
 

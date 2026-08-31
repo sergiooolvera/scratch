@@ -14,6 +14,7 @@ import {
     ShieldCheck,
     Award,
     Headphones,
+    MessageCircle,
     Lock,
     PlayCircle,
     FileCheck,
@@ -687,9 +688,18 @@ export default function CourseActions({
                                 <p className="font-bold text-slate-900 mb-1">¿La constancia es válida ante instituciones?</p>
                                 <p>Sí, cuenta con valor curricular, registro institucional y folio con código QR verificable en línea las 24 horas.</p>
                             </div>
-                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                <p className="font-bold text-slate-900 mb-1">¿Necesitas ayuda personalizada?</p>
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                                <p className="font-bold text-slate-900">¿Necesitas ayuda personalizada?</p>
                                 <p>Escríbenos a nuestro equipo de atención y soporte académico en cualquiera de nuestros canales oficiales de EGAC.</p>
+                                <a
+                                    href="https://wa.me/527298184978"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-colors shadow-xs"
+                                >
+                                    <MessageCircle className="w-4 h-4" />
+                                    WhatsApp Business: +52 (729) 818-4978
+                                </a>
                             </div>
                         </div>
                     </div>

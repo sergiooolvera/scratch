@@ -78,7 +78,7 @@ export default function Testimonials() {
       </div>
 
       {/* WhatsApp FAB */}
-      <a href="https://wa.me/5211234567890" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 bg-white rounded-full p-2 pr-6 shadow-xl border border-gray-100 flex items-center gap-3 hover:shadow-2xl hover:scale-105 transition-all z-50 group">
+      <a href="https://wa.me/527298184978" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 bg-white rounded-full p-2 pr-6 shadow-xl border border-gray-100 flex items-center gap-3 hover:shadow-2xl hover:scale-105 transition-all z-50 group">
         <div className="bg-green-500 w-12 h-12 rounded-full flex items-center justify-center">
           <MessageCircle className="w-6 h-6 text-white" />
         </div>
