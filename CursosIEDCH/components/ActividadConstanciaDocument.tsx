@@ -121,7 +121,7 @@ export default function ActividadConstanciaDocument({
                     </div>
                     <div className="border-t-2 border-black pt-2">
                         <p className="font-serif font-bold text-black uppercase text-[12px] tracking-widest leading-loose whitespace-nowrap">
-                            Lic. Juan Manuel De la luz Sierra
+                            CEO. Juan Manuel de la luz Sierra
                         </p>
                         <p className="text-[14px] font-sans text-black font-semibold">
                             Director General

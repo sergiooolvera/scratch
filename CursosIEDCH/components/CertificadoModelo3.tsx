@@ -158,7 +158,7 @@ export default function CertificadoModelo3({
                     </div>
                     <div className="border-t border-gray-400 w-full pt-1.5">
                         <p className="font-sans font-bold text-[#0B1A3F] text-[12px] tracking-wide leading-tight">
-                            Lic. Juan Manuel De la luz Sierra
+                            CEO. Juan Manuel de la luz Sierra
                         </p>
                         <p className="text-[11px] font-semibold text-gray-700 font-sans leading-tight mt-0.5">
                             Director General

@@ -1,6 +1,28 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-08-31
+### Tarea: Actualización de Nombre y Cargo en Constancias y Microcredenciales a "CEO. Juan Manuel de la luz Sierra"
+
+#### Diagnóstico del Problema:
+- **Requerimiento:** Modificar la firma y titulación de "Lic. Juan Manuel, De la luz Sierra" a "CEO. Juan Manuel de la luz Sierra" en todas las plantillas y documentos oficiales de constancias y microcredenciales del sistema.
+- **Componentes Identificados:**
+  1. [`components/ActividadConstanciaDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/ActividadConstanciaDocument.tsx): Constancias de actividades institucionales.
+  2. [`components/CertificadoDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoDocument.tsx): Constancia Modelo 1 (predeterminado).
+  3. [`components/CertificadoModelo2.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo2.tsx): Constancia Modelo 2.
+  4. [`components/CertificadoModelo3.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo3.tsx): Constancia Modelo 3.
+  5. [`components/MicrocredencialDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/MicrocredencialDocument.tsx): Reverso legal y firma de la microcredencial digital.
+
+#### Acciones Realizadas:
+1. **Actualización de Plantillas de Constancias y Microcredenciales:**
+   - Se actualizó el texto de la firma en [`components/ActividadConstanciaDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/ActividadConstanciaDocument.tsx) a `CEO. Juan Manuel de la luz Sierra`.
+   - Se actualizó la firma en [`components/CertificadoDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoDocument.tsx) a `CEO. Juan Manuel de la luz Sierra`.
+   - Se actualizó la firma en [`components/CertificadoModelo2.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo2.tsx) a `CEO. Juan Manuel de la luz Sierra`.
+   - Se actualizó la firma en [`components/CertificadoModelo3.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo3.tsx) a `CEO. Juan Manuel de la luz Sierra`.
+   - Se actualizó el bloque de firma de Director General en el reverso de [`components/MicrocredencialDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/MicrocredencialDocument.tsx) a `CEO. Juan Manuel de la luz Sierra`.
+2. **Pruebas Automatizadas con Playwright:**
+   - Se ampliaron las pruebas en [`e2e/certificates.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/certificates.spec.ts).
+   - Se ejecutó la suite completa de Playwright (`npx playwright test`), obteniendo **56 de 56 pruebas aprobadas al 100%**.
+
 ### Tarea: Despliegue a Producción (Selector y Menú de Módulos Enfocados para Temario y Clases)
 
 #### Diagnóstico y Acciones:

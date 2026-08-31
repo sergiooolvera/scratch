@@ -202,7 +202,7 @@ export default function MicrocredencialDocument({
                                 DIRECTOR GENERAL
                             </p>
                             <p className="text-[10.5px] font-bold text-slate-900 uppercase tracking-wide mt-1.5 leading-none">
-                                LIC. JUAN MANUEL DE LA LUZ SIERRA
+                                CEO. Juan Manuel de la luz Sierra
                             </p>
                         </div>
                     </div>

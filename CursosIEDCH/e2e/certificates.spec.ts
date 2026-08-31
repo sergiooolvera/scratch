@@ -20,4 +20,10 @@ test.describe('Módulo de Validación de Constancias y Certificados', () => {
     const errorMessage = page.locator('text=/No se encontró|inválido|no existe|inválida/i').first();
     await expect(errorMessage).toBeVisible({ timeout: 15000 });
   });
+
+  test('Debe mostrar el pie de página institucional en la página de validación', async ({ page }) => {
+    await page.goto('/validar');
+    const footerText = page.locator('text=/El Instituto Educativo de Especialdiades para la Conducta/i').first();
+    await expect(footerText).toBeVisible({ timeout: 10000 });
+  });
 });
