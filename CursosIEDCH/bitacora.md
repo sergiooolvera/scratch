@@ -1,6 +1,16 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-08-31
+### Tarea: Despliegue a Producción (Actualización de Firma en Constancias y Microcredenciales a "CEO. Juan Manuel de la luz Sierra")
+
+#### Diagnóstico y Acciones:
+- **Solicitud del Usuario:** Desplegar todos los cambios validados a producción.
+- **Validación Previa:** Ejecutada y aprobada la suite completa de Playwright (**56 de 56 pruebas aprobadas al 100%**).
+- **Gestión de Ramas Git:**
+  1. Commit y push en la rama `staging` (`git push origin staging`).
+  2. Merge en la rama `main` (`git checkout main`, `git merge staging`) y push a producción (`git push origin main`), activando el despliegue automático en Vercel.
+  3. Retorno a la rama activa de desarrollo `staging` (`git checkout staging`).
+
 ### Tarea: Actualización de Nombre y Cargo en Constancias y Microcredenciales a "CEO. Juan Manuel de la luz Sierra"
 
 #### Diagnóstico del Problema:
