@@ -1,6 +1,16 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-08-31
+### Tarea: Despliegue a Producción (Integración del número oficial de WhatsApp Business)
+
+#### Diagnóstico y Acciones:
+- **Solicitud del Usuario:** Desplegar todos los cambios validados a producción.
+- **Validación Previa:** Ejecutada y aprobada la suite completa de Playwright (**51 de 51 pruebas aprobadas al 100%**).
+- **Gestión de Ramas Git:**
+  1. Push en la rama `staging` (`git push origin staging`).
+  2. Merge en la rama `main` (`git checkout main`, `git merge staging`) y push a producción (`git push origin main`), activando el despliegue automático en Vercel.
+  3. Retorno a la rama activa de desarrollo `staging` (`git checkout staging`).
+
 ### Tarea: Integración del número oficial de WhatsApp Business (729 818 4978)
 
 #### Diagnóstico del Problema:
