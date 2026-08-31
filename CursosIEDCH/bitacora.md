@@ -1,6 +1,40 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
-## Fecha: 2026-08-30
+## Fecha: 2026-08-31
+### Tarea: Reordenamiento de Campos Principales en Formularios de Cursos (1. Título, 2. Descripción, 3. Temario, 4. Competencias)
+
+#### Diagnóstico del Problema:
+- **Requerimiento:** Establecer una secuencia lógica y fluida de llenado para el docente al crear y editar cursos:
+  1) Título del curso
+  2) Descripción del curso
+  3) Temario (Módulos y temas)
+  4) Competencias (Competencias pedagógicas estructuradas)
+
+#### Acciones Realizadas:
+1. **Reorganización en Crear Curso ([`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)):**
+   - Se reubicó el componente `TemarioEditor` para posicionarse inmediatamente después del campo de `Descripción Completa` y antes de `CompetenciasEditor`.
+2. **Reorganización en Editar Curso ([`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx)):**
+   - Se adaptó la misma estructura secuencial (Título -> Descripción -> Temario -> Competencias).
+3. **Reorganización en Auditoría de Administración ([`app/admin/cursos/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/cursos/page.tsx)):**
+   - Se ajustó el orden de comparación de borradores para reflejar esta jerarquía.
+4. **Pruebas Automatizadas con Playwright:**
+   - Se creó una prueba específica en [`e2e/instructor.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/instructor.spec.ts) para validar el orden exacto de los campos en el formulario.
+
+### Tarea: Eliminación de la sección redundante "Beneficios / ¿Qué aprenderá el alumno?" en Crear y Editar Cursos
+
+#### Diagnóstico del Problema:
+- **Contexto:** El formulario de creación (`/profesor/subir-curso`) y edición (`/profesor/editar-curso/[id]`) mantenía un campo libre textarea para "Beneficios / ¿Qué aprenderá el alumno?".
+- **Problema:** Dicho campo resultaba redundante tras la implementación del módulo pedagógico de "Competencias a desarrollar" (con taxonomía de Bloom y estructuración por filas) y contenía validaciones requeridas que bloqueaban el guardado si no se llenaba dicho campo.
+
+#### Acciones Realizadas:
+1. **Eliminación de la UI en Crear y Editar Curso:**
+   - Se removió el elemento `<textarea name="beneficios" ... />` y su etiqueta correspondiente en [`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx).
+   - Se removió el elemento `<textarea name="beneficios" ... />` y su etiqueta correspondiente en [`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx).
+2. **Eliminación de Validaciones Bloqueantes:**
+   - Se suprimió la comprobación `if (!formData.beneficios?.trim())` tanto en la creación de cursos como en la actualización de propuestas/borradores de edición.
+3. **Pruebas Automatizadas con Playwright:**
+   - Se incorporó la prueba de regresión en [`e2e/instructor.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/instructor.spec.ts) para verificar la ausencia del campo redundante y validar el correcto funcionamiento del formulario del profesor.
+
 ### Tarea: Resaltar opción de Registro ("Regístrate gratis ahora") en la vista de Login (`/login`)
 
 #### Diagnóstico del Problema:

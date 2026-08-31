@@ -831,8 +831,8 @@ export default function AdminCursosPage() {
                                             <p className="text-xs text-gray-500 mt-1">Las filas en amarillo indican valores distintos entre la versión publicada y el borrador.</p>
                                         </div>
                                         {renderFieldCompare('Título', 'titulo')}
-                                        {renderTemarioCompare()}
                                         {renderFieldCompare('Descripción', 'descripcion')}
+                                        {renderTemarioCompare()}
                                         {renderFieldCompare('Competencias', 'competencias')}
                                         {renderFieldCompare('Beneficios', 'beneficios')}
                                         {renderFieldCompare('Duración', 'duracion')}

@@ -1343,15 +1343,7 @@ const generationId = data.generationId;
                 setSaving(false)
                 return
             }
-            if (!formData.beneficios?.trim()) {
-                setModalMessage({
-                    title: 'Faltan Campos',
-                    content: 'Error: Por favor especifica los beneficios del curso.',
-                    type: 'error'
-                });
-                setSaving(false)
-                return
-            }
+
             if (!formData.duracion?.trim()) {
                 setModalMessage({
                     title: 'Faltan Campos',
@@ -2192,15 +2184,15 @@ const generationId = data.generationId;
                                     <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 60 caracteres. Se renderizará en el certificado del alumno.</p>
                                 </div>
                                 <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
+                                    <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
+                                </div>
+                                <div>
                                     <TemarioEditor
                                         temario={temario}
                                         onChange={setTemario}
                                         disabled={saving}
                                     />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
-                                    <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
                                 </div>
                                 <div>
                                     <CompetenciasEditor
@@ -2212,10 +2204,7 @@ const generationId = data.generationId;
                                         maxChars={80}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Beneficios / ¿Qué aprenderá el alumno?</label>
-                                    <textarea name="beneficios" required value={formData.beneficios} onChange={handleChange} rows={3} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" />
-                                </div>
+
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-100">
                                     <div>

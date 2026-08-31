@@ -39,7 +39,18 @@ test.describe('Módulo de Profesor y Creación/Edición de Cursos', () => {
     await expect(recursoOrModulo).toBeVisible({ timeout: 15000 });
   });
 
-  test('Debe mostrar el campo Temario después del Título del Curso y permitir agregar módulos y temas', async ({ page }) => {
+  test('Debe mostrar los campos de información básica en el orden solicitado: 1) Título, 2) Descripción, 3) Temario, 4) Competencias', async ({ page }) => {
+    await loginAs(page, TEST_USERS.profesor);
+    await page.goto('/profesor/subir-curso');
+
+    const labels = page.locator('label:has-text("Título del Curso"), label:has-text("Descripción Completa"), label:has-text("Temario"), label:has-text("Competencias a desarrollar")');
+    await expect(labels.nth(0)).toContainText('Título del Curso');
+    await expect(labels.nth(1)).toContainText('Descripción Completa');
+    await expect(labels.nth(2)).toContainText('Temario');
+    await expect(labels.nth(3)).toContainText('Competencias a desarrollar');
+  });
+
+  test('Debe permitir agregar módulos y temas en el Temario', async ({ page }) => {
     await loginAs(page, TEST_USERS.profesor);
     await page.goto('/profesor/subir-curso');
 
@@ -130,5 +141,13 @@ test.describe('Módulo de Profesor y Creación/Edición de Cursos', () => {
       await trashButtons.last().click();
       expect(await compInputs.count()).toBe(countBeforeDelete - 1);
     }
+  });
+
+  test('No debe mostrar el campo redundante "Beneficios / ¿Qué aprenderá el alumno?" en el formulario de creación de curso', async ({ page }) => {
+    await loginAs(page, TEST_USERS.profesor);
+    await page.goto('/profesor/subir-curso');
+
+    await expect(page.locator('label:has-text("Beneficios / ¿Qué aprenderá el alumno?")')).toHaveCount(0);
+    await expect(page.locator('textarea[name="beneficios"]')).toHaveCount(0);
   });
 });
