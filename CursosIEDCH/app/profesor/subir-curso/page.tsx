@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code, X } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code, X, Layers, Eye } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -145,6 +145,7 @@ export default function SubirCursoPage() {
     const [temario, setTemario] = useState<ModuloTemario[]>([])
 
     // Modules state
+    const [selectedModuloIdx, setSelectedModuloIdx] = useState<number | 'all'>(0)
     const [modulos, setModulos] = useState<Modulo[]>([{
         titulo: '',
         recursos: [],
@@ -520,6 +521,7 @@ export default function SubirCursoPage() {
                     }))
                 })));
             }
+            setSelectedModuloIdx(0);
             setTieneBorradorLocal(false);
             setBorradorInicializado(true);
             setMensaje('Borrador restaurado con éxito. Puedes seguir editando.');
@@ -531,6 +533,7 @@ export default function SubirCursoPage() {
 
     const descartarBorradorLocal = () => {
         localStorage.removeItem('curso_nuevo_borrador');
+        setSelectedModuloIdx(0);
         setTieneBorradorLocal(false);
         setBorradorInicializado(true);
         setSessionGeneratedIds([]);
@@ -629,6 +632,7 @@ export default function SubirCursoPage() {
     }, [router, supabase])
 
     const handleAgregarModulo = () => {
+        const nuevoIndex = modulos.length
         setModulos([...modulos, {
             titulo: '',
             recursos: [],
@@ -646,10 +650,20 @@ export default function SubirCursoPage() {
             tiempoExamen: 20,
             intentosPermitidos: 2
         }])
+        setSelectedModuloIdx(nuevoIndex)
     }
 
     const handleEliminarModulo = (index: number) => {
         setModulos(modulos.filter((_, i) => i !== index))
+        setSelectedModuloIdx(prev => {
+            if (prev === 'all') return 'all'
+            if (typeof prev === 'number') {
+                if (prev >= modulos.length - 1) return Math.max(0, modulos.length - 2)
+                if (prev > index) return prev - 1
+                return prev
+            }
+            return 0
+        })
     }
 
     const handleModuloChange = (index: number, field: keyof Modulo, value: any) => {
@@ -662,16 +676,22 @@ export default function SubirCursoPage() {
 
     const handleMoverModulo = (index: number, direccion: 'subir' | 'bajar') => {
         const nuevosModulos = [...modulos]
+        let nuevoIndex = index
         if (direccion === 'subir' && index > 0) {
             const temp = nuevosModulos[index]
             nuevosModulos[index] = nuevosModulos[index - 1]
             nuevosModulos[index - 1] = temp
+            nuevoIndex = index - 1
         } else if (direccion === 'bajar' && index < nuevosModulos.length - 1) {
             const temp = nuevosModulos[index]
             nuevosModulos[index] = nuevosModulos[index + 1]
             nuevosModulos[index + 1] = temp
+            nuevoIndex = index + 1
         }
         setModulos(nuevosModulos)
+        if (selectedModuloIdx !== 'all') {
+            setSelectedModuloIdx(nuevoIndex)
+        }
     }
 
     // Gamma Helper functions
@@ -1109,6 +1129,8 @@ export default function SubirCursoPage() {
             for (let i = 0; i < modulos.length; i++) {
                 const m = modulos[i];
                 if (!m.titulo) {
+                    setActiveTab('modulos');
+                    setSelectedModuloIdx(i);
                     setModalMessage({
                         title: 'Faltan Campos',
                         content: `Error: Por favor especifica el título del módulo ${i + 1}.`,
@@ -1122,6 +1144,8 @@ export default function SubirCursoPage() {
                 for (let rIdx = 0; rIdx < m.recursos.length; rIdx++) {
                     const rec = m.recursos[rIdx];
                     if (!rec.titulo) {
+                        setActiveTab('modulos');
+                        setSelectedModuloIdx(i);
                         setModalMessage({
                             title: 'Título de Recurso Obligatorio',
                             content: `Error: Por favor escribe un título para el recurso ${rIdx + 1} del módulo "${m.titulo}".`,
@@ -1131,6 +1155,8 @@ export default function SubirCursoPage() {
                         return
                     }
                     if (rec.tipo === 'video' && !rec.url_contenido) {
+                        setActiveTab('modulos');
+                        setSelectedModuloIdx(i);
                         setModalMessage({
                             title: 'Enlace Obligatorio',
                             content: `Error: Por favor escribe el enlace de video para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
@@ -1140,6 +1166,8 @@ export default function SubirCursoPage() {
                         return
                     }
                     if (rec.tipo !== 'video' && !rec.archivoPdf) {
+                        setActiveTab('modulos');
+                        setSelectedModuloIdx(i);
                         setModalMessage({
                             title: 'Archivo Obligatorio',
                             content: `Error: Por favor sube un archivo (PDF/PPT/HTML) para el recurso "${rec.titulo}" del módulo "${m.titulo}".`,
@@ -1153,6 +1181,8 @@ export default function SubirCursoPage() {
                 // If module requires exam, validate questions
                 if (m.requiereExamen) {
                     if (m.examenPreguntas.length === 0) {
+                        setActiveTab('modulos');
+                        setSelectedModuloIdx(i);
                         setModalMessage({
                             title: 'Examen Vacío',
                             content: `Error: El módulo "${m.titulo}" requiere examen pero no tiene preguntas.`,
@@ -1163,6 +1193,8 @@ export default function SubirCursoPage() {
                     }
                     const tieneOpcionMultiple = m.examenPreguntas.some(p => p.tipo_pregunta !== 'respuesta_libre');
                     if (!tieneOpcionMultiple) {
+                        setActiveTab('modulos');
+                        setSelectedModuloIdx(i);
                         setModalMessage({
                             title: 'Falta Pregunta de Opción Múltiple',
                             content: `Error: El examen del módulo "${m.titulo}" debe tener al menos una pregunta de opción múltiple para calificarlo de forma automatizada.`,
@@ -1174,6 +1206,8 @@ export default function SubirCursoPage() {
                     for (let pIdx = 0; pIdx < m.examenPreguntas.length; pIdx++) {
                         const p = m.examenPreguntas[pIdx];
                         if (!p.pregunta) {
+                            setActiveTab('modulos');
+                            setSelectedModuloIdx(i);
                             setModalMessage({
                                 title: 'Pregunta Incompleta',
                                 content: `Error: Completa la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
@@ -1184,6 +1218,8 @@ export default function SubirCursoPage() {
                         }
                         if (p.tipo_pregunta !== 'respuesta_libre') {
                             if (!p.opcion_a || !p.opcion_b || !p.respuesta_correcta) {
+                                setActiveTab('modulos');
+                                setSelectedModuloIdx(i);
                                 setModalMessage({
                                     title: 'Opciones Incompletas',
                                     content: `Error: Completa al menos las opciones A y B, y la respuesta correcta para la pregunta ${pIdx + 1} en el examen del módulo "${m.titulo}".`,
@@ -2243,8 +2279,162 @@ export default function SubirCursoPage() {
                                 </button>
                             </div>
 
+                            {/* Selector y Navegación de Módulos */}
+                            <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-purple-50/60 border border-blue-100 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3.5">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
+                                            <Layers className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                Navegación de Módulos
+                                                <span className="text-xs font-semibold px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full">
+                                                    {modulos.length} {modulos.length === 1 ? 'módulo' : 'módulos'}
+                                                </span>
+                                            </h3>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {selectedModuloIdx === 'all' 
+                                                    ? 'Vista general: mostrando todos los módulos' 
+                                                    : `Editando enfocado: Módulo ${(typeof selectedModuloIdx === 'number' ? selectedModuloIdx : 0) + 1} de ${modulos.length}`}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                        {/* Combo Desplegable */}
+                                        <div className="relative flex-1 sm:w-80 min-w-[240px]">
+                                            <select
+                                                id="select-modulo-activo"
+                                                value={selectedModuloIdx}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setSelectedModuloIdx(val === 'all' ? 'all' : parseInt(val, 10));
+                                                }}
+                                                className="w-full bg-white border border-blue-200 text-gray-800 text-xs font-bold rounded-xl px-3 py-2.5 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+                                            >
+                                                <option value="all">📑 Ver todos los módulos ({modulos.length})</option>
+                                                <optgroup label="Módulos individuales">
+                                                    {modulos.map((m, idx) => {
+                                                        const cantRecursos = m.recursos?.length || 0;
+                                                        const tieneExamen = m.requiereExamen;
+                                                        const tieneTarea = m.requiereTarea;
+                                                        const tieneJuego = m.requierePuzzle;
+                                                        const etiquetas = [
+                                                            `${cantRecursos} ${cantRecursos === 1 ? 'recurso' : 'recursos'}`,
+                                                            tieneExamen ? 'Examen' : null,
+                                                            tieneTarea ? 'Tarea' : null,
+                                                            tieneJuego ? 'Juego' : null
+                                                        ].filter(Boolean).join(', ');
+
+                                                        return (
+                                                            <option key={idx} value={idx}>
+                                                                {`Módulo ${idx + 1}: ${m.titulo ? (m.titulo.length > 35 ? m.titulo.substring(0, 35) + '...' : m.titulo) : '(Sin título)'} — (${etiquetas})`}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </optgroup>
+                                            </select>
+                                        </div>
+
+                                        {/* Botón rápido Modo Enfoque / Ver Todos */}
+                                        <button
+                                            type="button"
+                                            id="btn-toggle-modo-vista"
+                                            onClick={() => setSelectedModuloIdx(prev => prev === 'all' ? 0 : 'all')}
+                                            className={`px-3.5 py-2.5 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer ${
+                                                selectedModuloIdx === 'all'
+                                                    ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                                                    : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50/50'
+                                            }`}
+                                            title={selectedModuloIdx === 'all' ? 'Cambiar a vista enfocada de 1 módulo' : 'Ver todos los módulos en cascada'}
+                                        >
+                                            <Eye className="h-4 w-4" />
+                                            <span>{selectedModuloIdx === 'all' ? 'Modo Enfoque' : 'Ver Todos'}</span>
+                                        </button>
+
+                                        {/* Botón rápido Añadir Módulo */}
+                                        <button
+                                            type="button"
+                                            id="btn-agregar-modulo-top"
+                                            onClick={handleAgregarModulo}
+                                            className="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm whitespace-nowrap cursor-pointer"
+                                            title="Añadir un nuevo módulo al curso"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                            <span>Nuevo Módulo</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Barra de Píldoras Rápidas */}
+                                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 scrollbar-thin scrollbar-thumb-gray-200">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedModuloIdx('all')}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer ${
+                                            selectedModuloIdx === 'all'
+                                                ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-600 ring-offset-1'
+                                                : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
+                                        }`}
+                                    >
+                                        📑 Todos ({modulos.length})
+                                    </button>
+
+                                    {modulos.map((m, idx) => {
+                                        const isSelected = selectedModuloIdx === idx;
+                                        const tieneActividades = m.requiereExamen || m.requiereTarea || m.requierePuzzle;
+                                        return (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => setSelectedModuloIdx(idx)}
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-600 ring-offset-1'
+                                                        : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-700 border border-gray-200'
+                                                }`}
+                                                title={m.titulo || `Módulo ${idx + 1}`}
+                                            >
+                                                <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-black ${
+                                                    isSelected ? 'bg-white text-blue-600' : 'bg-blue-100 text-blue-700'
+                                                }`}>
+                                                    {idx + 1}
+                                                </span>
+                                                <span className="max-w-[130px] truncate">
+                                                    {m.titulo ? m.titulo : `Módulo ${idx + 1}`}
+                                                </span>
+                                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                                                    isSelected ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    {m.recursos?.length || 0}
+                                                </span>
+                                                {tieneActividades && (
+                                                    <span className={`h-2 w-2 rounded-full ${
+                                                        isSelected ? 'bg-amber-300' : 'bg-amber-500'
+                                                    }`} title="Tiene examen, tarea o juego" />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+
+                                    <button
+                                        type="button"
+                                        onClick={handleAgregarModulo}
+                                        className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-dashed border-emerald-300 whitespace-nowrap transition flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <Plus className="h-3 w-3" /> Añadir
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="space-y-6">
-                                {modulos.map((modulo, index) => (
+                                {(selectedModuloIdx === 'all'
+                                    ? modulos.map((m, idx) => ({ modulo: m, index: idx }))
+                                    : (modulos[selectedModuloIdx as number]
+                                        ? [{ modulo: modulos[selectedModuloIdx as number], index: selectedModuloIdx as number }]
+                                        : (modulos.length > 0 ? [{ modulo: modulos[0], index: 0 }] : []))
+                                ).map(({ modulo, index }) => (
                                     <div key={index} className="bg-white border-2 border-zinc-150 p-6 rounded-2xl relative shadow-md hover:border-zinc-200 transition-all duration-300 ease-in-out">
                                         <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
                                             <div className="flex items-center gap-2 cursor-pointer group" onClick={() => toggleModuloCollapsed(index)}>
@@ -3042,9 +3232,61 @@ export default function SubirCursoPage() {
                                     </div>
                                 ))}
 
-                                <button type="button" onClick={handleAgregarModulo} className="w-full py-4 border-2 border-dashed border-zinc-300 rounded-2xl text-zinc-500 font-bold hover:border-blue-500 hover:text-blue-600 transition flex justify-center items-center gap-2">
-                                    <Plus className="h-5 w-5" /> Añadir Módulo
-                                </button>
+                                {/* Botón Añadir Módulo (en modo Ver Todos) */}
+                                {selectedModuloIdx === 'all' && (
+                                    <button 
+                                        type="button" 
+                                        onClick={handleAgregarModulo} 
+                                        className="w-full py-4 border-2 border-dashed border-zinc-300 rounded-2xl text-zinc-500 font-bold hover:border-blue-500 hover:text-blue-600 transition flex justify-center items-center gap-2 cursor-pointer"
+                                    >
+                                        <Plus className="h-5 w-5" /> Añadir Módulo
+                                    </button>
+                                )}
+
+                                {/* Barra de Navegación Inferior entre Módulos (en modo individual) */}
+                                {selectedModuloIdx !== 'all' && (
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border border-gray-200 p-4 rounded-2xl shadow-sm">
+                                        <button
+                                            type="button"
+                                            id="btn-modulo-prev"
+                                            disabled={selectedModuloIdx === 0}
+                                            onClick={() => setSelectedModuloIdx(prev => typeof prev === 'number' && prev > 0 ? prev - 1 : 0)}
+                                            className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                                                selectedModuloIdx === 0
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 shadow-sm'
+                                            }`}
+                                        >
+                                            <ArrowLeft className="h-4 w-4" /> Módulo Anterior {typeof selectedModuloIdx === 'number' && selectedModuloIdx > 0 ? `(#${selectedModuloIdx})` : ''}
+                                        </button>
+
+                                        <div className="text-xs font-bold text-gray-500">
+                                            Módulo <span className="text-blue-600 font-extrabold">{(typeof selectedModuloIdx === 'number' ? selectedModuloIdx : 0) + 1}</span> de <span className="text-gray-800 font-extrabold">{modulos.length}</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            {typeof selectedModuloIdx === 'number' && selectedModuloIdx < modulos.length - 1 ? (
+                                                <button
+                                                    type="button"
+                                                    id="btn-modulo-next"
+                                                    onClick={() => setSelectedModuloIdx(prev => typeof prev === 'number' && prev < modulos.length - 1 ? prev + 1 : prev)}
+                                                    className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                                                >
+                                                    Siguiente Módulo (#{selectedModuloIdx + 2}) <ArrowRight className="h-4 w-4" />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    id="btn-modulo-add-next"
+                                                    onClick={handleAgregarModulo}
+                                                    className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                                                >
+                                                    <Plus className="h-4 w-4" /> Añadir Siguiente Módulo
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex justify-between pt-4 border-t border-gray-100">

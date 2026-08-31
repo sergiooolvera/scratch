@@ -1,6 +1,30 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-08-31
+### Tarea: Selector y Menú de Módulos Enfocados para "Temario y Clases" (Subir y Editar Curso)
+
+#### Diagnóstico del Problema:
+- **Requerimiento:** Al gestionar cursos con múltiples módulos (10, 15 o más), la sección de "2. Temario y Clases" se volvía excesivamente larga y engorrosa en pantalla. Se solicitó un menú/combo y selector para poder elegir y trabajar enfocado en un solo módulo a la vez, con la opción de ver todos cuando sea necesario.
+- **Análisis de Diseño (Grill-Me):**
+  - Implementación de un selector dual: Combo desplegable superior con resumen contextual de cada módulo + barra de píldoras rápidas horizontales + botón de alternar "Modo Enfoque" / "Ver Todos".
+  - Auto-selección y foco automático al presionar "+ Añadir Módulo".
+  - Sincronización inteligente de índices al subir/bajar módulos y al eliminarlos.
+  - Barra de navegación inferior contextual ("← Módulo Anterior", indicador "Módulo X de Y", "Siguiente Módulo →" / "Añadir Siguiente Módulo").
+  - Validación con auto-enfoque: si falta un campo obligatorio en un módulo que no está actualmente visible en pantalla, el sistema cambia a la pestaña de módulos y enfoca el módulo correspondiente para alertar al profesor.
+
+#### Acciones Realizadas:
+1. **Creación de Curso ([`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)):**
+   - Se añadió el estado `selectedModuloIdx` (`number | 'all'`).
+   - Se integró el encabezado con selector desplegable estilizado (`#select-modulo-activo`), barra de píldoras con badges de contenido y actividades, y botón de cambio de vista (`#btn-toggle-modo-vista`).
+   - Se implementó la renderización selectiva mediante `modulosParaMostrar` y la barra de navegación contextual inferior (`#btn-modulo-prev`, `#btn-modulo-next`).
+   - Se conectó el auto-enfoque en las validaciones de `guardarCurso`.
+2. **Edición de Curso ([`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx)):**
+   - Se incorporó la misma arquitectura de navegación enfocada y selector dual para cursos existentes.
+   - Sincronización completa con los borradores automáticos y la persistencia de datos.
+3. **Pruebas Automatizadas con Playwright ([`e2e/profesor-selector-modulos.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/profesor-selector-modulos.spec.ts)):**
+   - Se crearon 4 pruebas E2E que validan la visualización del selector, adición con auto-foco, alternancia entre módulos vía píldoras/botones inferiores, y alternancia entre vista enfocada y vista general.
+   - Se ejecutó la suite completa de Playwright (**55 de 55 pruebas aprobadas al 100%**).
+
 ### Tarea: Despliegue a Producción (Integración del número oficial de WhatsApp Business)
 
 #### Diagnóstico y Acciones:
