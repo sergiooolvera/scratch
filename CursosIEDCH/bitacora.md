@@ -658,4 +658,8 @@
    - Se añadió un nuevo caso de prueba E2E: *'Debe mostrar el botón flotante al hacer scroll hacia abajo y regresar a la navegación de módulos al hacer clic'*.
    - Se ejecutaron las pruebas automatizadas con Playwright, obteniendo **5 de 5 pruebas pasadas (100% de éxito)**.
 
+4. **Despliegue a Producción:**
+   - Cambios fusionados a la rama `main` y desplegados exitosamente en Vercel ([https://www.grupoegac.com](https://www.grupoegac.com)).
+
+
 
