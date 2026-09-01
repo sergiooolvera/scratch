@@ -223,6 +223,29 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
     const [collapsedTareas, setCollapsedTareas] = useState<Record<number, boolean>>({})
     const [collapsedPuzzles, setCollapsedPuzzles] = useState<Record<number, boolean>>({})
     const [collapsedCuestionarios, setCollapsedCuestionarios] = useState<Record<number, boolean>>({})
+    const [mostrarBotonFlotanteModulos, setMostrarBotonFlotanteModulos] = useState(false)
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 280) {
+                setMostrarBotonFlotanteModulos(true);
+            } else {
+                setMostrarBotonFlotanteModulos(false);
+            }
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToNavegacionModulos = () => {
+        const el = document.getElementById('seccion-navegacion-modulos');
+        if (el) {
+            const yOffset = -90;
+            const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    };
 
     const toggleModuloCollapsed = (index: number) => {
         setCollapsedModulos(prev => ({
@@ -2816,7 +2839,7 @@ const generationId = data.generationId;
                             </div>
 
                             {/* Selector y Navegación de Módulos */}
-                            <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-purple-50/60 border border-blue-100 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3.5">
+                            <div id="seccion-navegacion-modulos" className="scroll-mt-24 bg-gradient-to-r from-blue-50/90 via-indigo-50/60 to-purple-50/60 border border-blue-100 p-4 sm:p-5 rounded-2xl shadow-sm space-y-3.5">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                                     <div className="flex items-center gap-2.5">
                                         <div className="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
@@ -4600,6 +4623,31 @@ const generationId = data.generationId;
                     onChangePrecio={(p) => setFormData(prev => ({ ...prev, precio: p }))}
                     onChangeAplicarIva={(a) => setAplicarIva(a)}
                 />
+            )}
+
+            {/* Botón flotante para regresar a Navegación de Módulos */}
+            {activeTab === 'modulos' && (
+                <div 
+                    className={`fixed bottom-20 right-6 z-40 transition-all duration-300 ${
+                        mostrarBotonFlotanteModulos 
+                            ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' 
+                            : 'opacity-0 translate-y-6 scale-90 pointer-events-none'
+                    }`}
+                >
+                    <button
+                        type="button"
+                        id="btn-flotante-subir-modulos"
+                        onClick={scrollToNavegacionModulos}
+                        className="flex items-center gap-2.5 px-4 sm:px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-full shadow-2xl hover:shadow-blue-500/40 border border-white/30 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer group"
+                        title="Regresar a la navegación de módulos"
+                    >
+                        <div className="p-1 bg-white/20 rounded-full group-hover:bg-white/30 transition shadow-inner">
+                            <ArrowUp className="h-4 w-4 text-white" />
+                        </div>
+                        <Layers className="h-4 w-4 hidden sm:inline text-blue-100" />
+                        <span>Navegación de Módulos</span>
+                    </button>
+                </div>
             )}
         </div>
     )

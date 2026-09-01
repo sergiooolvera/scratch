@@ -635,19 +635,27 @@
 
 ---
 
-## Fecha: 2026-08-30
-### Tarea: Actualización de Metadatos del Sitio (Título y Favicon)
+---
+
+## Fecha: 2026-09-01
+### Tarea: Botón Flotante de Retorno a la Navegación de Módulos (Subir y Editar Curso)
 
 #### Contexto y Requerimiento:
-- Se solicitó cambiar el título del sitio de "Portal Cursos Grupo EGAC" a "Grupo EGAC- Academy".
-- Se solicitó establecer como icono o favicon del sitio la imagen `/mundo.jpeg` (ubicada en `public/mundo.jpeg`).
+- Al capturar o editar cursos en la sección **2. Temario y Clases**, la longitud del formulario aumenta significativamente cuando se configuran múltiples recursos (videos, PDFs, PPTs, HTMLs), tareas, exámenes modulares con preguntas múltiples/abiertas, cuestionarios y juegos interactivos (puzzles, ahorcados, sopas de letras, anagramas).
+- Se implementó un botón flotante accesible e intuitivo que aparece dinámicamente cuando el usuario se desplaza verticalmente por el contenido, permitiéndole regresar suave y rápidamente a la barra superior de **Navegación de Módulos** con un solo clic.
 
 #### Cambios Realizados:
-1. **Actualización de Metadatos en Layout Principal (`app/layout.tsx`):**
-   - En [app/layout.tsx](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/layout.tsx), se modificó el objeto de metadatos (`metadata`) cambiando el valor de `title` a `'Grupo EGAC- Academy'`.
-   - Se añadió la propiedad `icons` con rutas para `icon`, `shortcut` y `apple` apuntando a `/mundo.jpeg`.
-2. **Desactivación del Favicon por Defecto:**
-   - Se renombró el archivo `app/favicon.ico` a `app/favicon.ico.bak` para evitar que el comportamiento por defecto de Next.js sobrescriba el icono configurado en los metadatos o interfiera en navegadores y buscadores.
-3. **Pruebas Automatizadas (Playwright):**
-   - Se ejecutó la suite completa de pruebas locales para garantizar que los cambios no introdujeran regresiones en el sistema.
+1. **Página de Subir Curso ([`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)):**
+   - Se añadió el atributo `id="seccion-navegacion-modulos"` y la clase `scroll-mt-24` al contenedor superior de Navegación de Módulos.
+   - Se incorporó un estado `mostrarBotonFlotanteModulos` con un `useEffect` que escucha el scroll de la ventana (activándose a partir de 280px de desplazamiento vertical).
+   - Se añadió la función `scrollToNavegacionModulos` con cálculo de offset ergonómico para garantizar un scroll suave (`behavior: 'smooth'`).
+   - Se renderizó el botón flotante con diseño moderno (`gradient`, sombra profunda, animación de aparición/desaparición con opacidad y traslación, ícono `ArrowUp`, ícono `Layers` y texto "Navegación de Módulos") posicionado en `fixed bottom-20 right-6 z-40` para convivir armónicamente con el botón de sugerencias del layout.
+
+2. **Página de Editar Curso ([`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx)):**
+   - Se aplicó la misma arquitectura y comportamiento que en Subir Curso para mantener consistencia total.
+
+3. **Pruebas Automatizadas con Playwright ([`e2e/profesor-selector-modulos.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/profesor-selector-modulos.spec.ts)):**
+   - Se añadió un nuevo caso de prueba E2E: *'Debe mostrar el botón flotante al hacer scroll hacia abajo y regresar a la navegación de módulos al hacer clic'*.
+   - Se ejecutaron las pruebas automatizadas con Playwright, obteniendo **5 de 5 pruebas pasadas (100% de éxito)**.
+
 

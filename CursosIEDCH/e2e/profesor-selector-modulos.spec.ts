@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { TEST_USERS, loginAs } from './fixtures/auth.fixture';
 
 test.describe('Navegación y Selector de Módulos en Subir/Editar Curso', () => {
@@ -15,7 +15,7 @@ test.describe('Navegación y Selector de Módulos en Subir/Editar Curso', () => 
 
   test('Debe mostrar la barra de navegación de módulos con su selector desplegable y píldoras rápidas', async ({ page }) => {
     // Verificar encabezado de navegación de módulos
-    await expect(page.locator('text=Navegación de Módulos')).toBeVisible();
+    await expect(page.locator('#seccion-navegacion-modulos h3:has-text("Navegación de Módulos")')).toBeVisible();
     
     // Verificar presencia del combo desplegable
     const selectModulo = page.locator('#select-modulo-activo');
@@ -91,5 +91,32 @@ test.describe('Navegación y Selector de Módulos en Subir/Editar Curso', () => 
     await btnToggle.click();
     await expect(page.locator('text=Editando enfocado: Módulo 1')).toBeVisible();
     await expect(page.locator('#select-modulo-activo')).toHaveValue('0');
+  });
+
+  test('Debe mostrar el botón flotante al hacer scroll hacia abajo y regresar a la navegación de módulos al hacer clic', async ({ page }) => {
+    // El elemento de navegación de módulos debe tener el id asignado
+    const seccionNav = page.locator('#seccion-navegacion-modulos');
+    await expect(seccionNav).toBeVisible();
+
+    const btnFlotante = page.locator('#btn-flotante-subir-modulos');
+    await expect(btnFlotante).toBeAttached();
+
+    // Al inicio (arriba), el botón flotante tiene opacidad 0 o clase pointer-events-none
+    // Hacemos scroll hacia abajo para simular que el profesor está editando contenido extenso
+    await page.evaluate(() => window.scrollTo(0, 800));
+    await page.waitForTimeout(300);
+
+    // El botón flotante debe ser visible
+    await expect(btnFlotante).toBeVisible();
+    await expect(btnFlotante).toContainText('Navegación de Módulos');
+
+    // Hacemos clic en el botón flotante
+    await btnFlotante.click();
+    await page.waitForTimeout(600);
+
+    // Debe haber subido de nuevo hacia la sección de navegación
+    const scrollY = await page.evaluate(() => window.scrollY);
+    expect(scrollY).toBeLessThan(400);
+    await expect(seccionNav).toBeInViewport();
   });
 });
