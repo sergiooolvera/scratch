@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code, X, Layers, Eye } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code, X, Layers, Eye, Video } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -26,6 +26,8 @@ type Modulo = {
     id?: string;
     titulo: string;
     recursos: Recurso[];
+    reunion_url?: string;
+    nota_profesor?: string;
     requiereExamen: boolean;
     examenMinAprobacion: number;
     examenPreguntas: PreguntaParsed[];
@@ -149,6 +151,8 @@ export default function SubirCursoPage() {
     const [modulos, setModulos] = useState<Modulo[]>([{
         titulo: '',
         recursos: [],
+        reunion_url: '',
+        nota_profesor: '',
         requiereExamen: false,
         examenMinAprobacion: 80,
         examenPreguntas: [],
@@ -348,6 +352,8 @@ export default function SubirCursoPage() {
             sessionGeneratedIds,
             modulos: modulos.map(m => ({
                 titulo: m.titulo,
+                reunion_url: m.reunion_url || '',
+                nota_profesor: m.nota_profesor || '',
                 requiereExamen: m.requiereExamen,
                 examenMinAprobacion: m.examenMinAprobacion,
                 examenPreguntas: m.examenPreguntas,
@@ -432,6 +438,8 @@ export default function SubirCursoPage() {
                 sessionGeneratedIds,
                 modulos: modulos.map(m => ({
                     titulo: m.titulo,
+                    reunion_url: m.reunion_url || '',
+                    nota_profesor: m.nota_profesor || '',
                     requiereExamen: m.requiereExamen,
                     examenMinAprobacion: m.examenMinAprobacion,
                     examenPreguntas: m.examenPreguntas,
@@ -504,6 +512,8 @@ export default function SubirCursoPage() {
             if (borrador.modulos !== undefined) {
                 setModulos(borrador.modulos.map((m: any) => ({
                     titulo: m.titulo || '',
+                    reunion_url: m.reunion_url || '',
+                    nota_profesor: m.nota_profesor || '',
                     requiereExamen: !!m.requiereExamen,
                     examenMinAprobacion: m.examenMinAprobacion || 80,
                     examenPreguntas: m.examenPreguntas || [],
@@ -579,6 +589,8 @@ export default function SubirCursoPage() {
         setModulos([{
             titulo: '',
             recursos: [],
+            reunion_url: '',
+            nota_profesor: '',
             requiereExamen: false,
             examenMinAprobacion: 80,
             examenPreguntas: [],
@@ -659,6 +671,8 @@ export default function SubirCursoPage() {
         setModulos([...modulos, {
             titulo: '',
             recursos: [],
+            reunion_url: '',
+            nota_profesor: '',
             requiereExamen: false,
             examenMinAprobacion: 80,
             examenPreguntas: [],
@@ -1446,7 +1460,9 @@ export default function SubirCursoPage() {
                     titulo: currentMod.titulo || 'Módulo sin título',
                     url_contenido: legacyUrl || '',
                     orden: i + 1,
-                    requiere_cuestionario: !!currentMod.requiereCuestionario
+                    requiere_cuestionario: !!currentMod.requiereCuestionario,
+                    reunion_url: currentMod.reunion_url?.trim() || null,
+                    nota_profesor: currentMod.nota_profesor?.trim() || null
                 })
                 .select()
                 .single()
@@ -3252,6 +3268,59 @@ export default function SubirCursoPage() {
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Modular Virtual Class / Live Meeting Box */}
+                                        <div className="mt-4 pt-4 border-t border-zinc-100">
+                                            <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className="text-sm font-bold text-blue-950 flex items-center gap-2">
+                                                        <Video className="h-4 w-4 text-blue-600" />
+                                                        Clase Virtual o Enlace Externo (Zoom, Meet, Teams) (Opcional)
+                                                    </h4>
+                                                    {(modulo.reunion_url || modulo.nota_profesor) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleModuloChange(index, 'reunion_url', '');
+                                                                handleModuloChange(index, 'nota_profesor', '');
+                                                            }}
+                                                            className="text-[10px] text-red-500 hover:text-red-700 font-bold cursor-pointer"
+                                                        >
+                                                            ✕ LIMPIAR ENLACE Y NOTA
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-blue-800/80">
+                                                    Si este módulo incluye una sesión en vivo o enlace externo, configúralo aquí para tus alumnos.
+                                                </p>
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                                            Enlace de Videoconferencia Directo
+                                                        </label>
+                                                        <input
+                                                            type="url"
+                                                            placeholder="https://zoom.us/j/... o https://meet.google.com/..."
+                                                            value={modulo.reunion_url || ''}
+                                                            onChange={(e) => handleModuloChange(index, 'reunion_url', e.target.value)}
+                                                            className="w-full text-xs rounded-lg border-gray-300 p-2.5 border bg-white text-black shadow-sm focus:border-blue-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                                            Nota del Profesor / Aviso Especial de la Clase Virtual
+                                                        </label>
+                                                        <textarea
+                                                            rows={2}
+                                                            placeholder="Ej: Próxima clase virtual el lunes a las 5:00 PM con ID y contraseña..."
+                                                            value={modulo.nota_profesor || ''}
+                                                            onChange={(e) => handleModuloChange(index, 'nota_profesor', e.target.value)}
+                                                            className="w-full text-xs rounded-lg border-gray-300 p-2.5 border bg-white text-black shadow-sm focus:border-blue-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
 
@@ -3556,68 +3625,40 @@ export default function SubirCursoPage() {
                                     Atrás
                                 </button>
                                 <button type="button" onClick={() => handleTabChange('avisos')} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
-                                    Siguiente: Avisos y Enlaces
+                                    Siguiente: Avisos y Enviar a Revisión
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Tab 4: Avisos e Historial (Clases en vivo y notas) */}
-                    <div className={activeTab === 'avisos' ? 'space-y-6 block' : 'hidden'}>
+                    {/* Tab 4: Avisos e Indicaciones Finales */}
+                    <div id="seccion-paso-4" className={activeTab === 'avisos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div className="flex justify-between items-start gap-4">
                                 <div className="flex-1">
-                                    <h2 className="text-xl font-bold text-gray-900">4. Clase en Vivo / Enlace e Indicaciones</h2>
-                                    <p className="text-gray-500 text-xs mt-0.5 font-medium">Especifica links de Zoom, Teams o Meet y avisa a los alumnos sobre fechas de reunión o lecturas importantes.</p>
+                                    <h2 className="text-xl font-bold text-gray-900">4. Avisos, Notas y Enviar a Revisión</h2>
+                                    <p className="text-gray-500 text-xs mt-0.5 font-medium">Revisa las indicaciones finales para tus estudiantes y envía tu curso a revisión para su aprobación.</p>
                                 </div>
                                 <button id="btn-enviar-revision" type="submit" disabled={loading || isParsing || (requiereExamen && preguntasExtraidas.length === 0)} className="flex-shrink-0 whitespace-nowrap px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition-transform transform active:scale-95 flex items-center gap-2 text-sm">
                                     {loading ? 'Registrando curso...' : 'Guardar curso y Enviar a revisión'}
                                 </button>
                             </div>
 
-                            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 shadow-sm space-y-6">
+                            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 shadow-sm space-y-4">
                                 <h3 className="text-md font-bold text-blue-950 flex items-center gap-2">
-                                    <Activity className="h-5 w-5 text-blue-600" />
-                                    Clase en Vivo y Enlace Especial (Opcional)
+                                    <MessageSquare className="h-5 w-5 text-blue-600" />
+                                    Aviso General del Instructor para los Estudiantes (Opcional)
                                 </h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="flex justify-between items-center mb-1">
-                                            <label className="block text-sm font-semibold text-gray-700">Enlace de la Videoconferencia</label>
-                                            {formData.reunion_url && (
-                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, reunion_url: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
-                                                    ✕ LIMPIAR ENLACE
-                                                </button>
-                                            )}
-                                        </div>
-                                        <input 
-                                            type="url" 
-                                            name="reunion_url" 
-                                            value={formData.reunion_url} 
-                                            onChange={handleChange} 
-                                            placeholder="https://zoom.us/j/... o https://meet.google.com/..." 
-                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" 
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1 italic">Este link se mostrará destacado para los alumnos dentro del salón de clases.</p>
-                                    </div>
-                                    <div>
-                                        <div className="flex justify-between items-center mb-1">
-                                            <label className="block text-sm font-semibold text-gray-700">Nota del Instructor para los Estudiantes</label>
-                                            {formData.nota_profesor && (
-                                                <button type="button" onClick={() => setFormData(prev => ({ ...prev, reunion_url: '' }))} className="text-[10px] text-red-500 hover:text-red-700 font-bold">
-                                                    ✕ QUITAR NOTA
-                                                </button>
-                                            )}
-                                        </div>
-                                        <textarea 
-                                            name="nota_profesor" 
-                                            value={formData.nota_profesor} 
-                                            onChange={handleChange} 
-                                            rows={4} 
-                                            placeholder="Escribe indicaciones sobre las clases, fechas de entrega o saludos para tus alumnos..." 
-                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" 
-                                        />
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nota o Saludo de Bienvenida</label>
+                                    <textarea 
+                                        name="nota_profesor" 
+                                        value={formData.nota_profesor} 
+                                        onChange={handleChange} 
+                                        rows={4} 
+                                        placeholder="Escribe un mensaje de bienvenida, recomendaciones generales de estudio o indicaciones del curso..." 
+                                        className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" 
+                                    />
                                 </div>
                             </div>
 

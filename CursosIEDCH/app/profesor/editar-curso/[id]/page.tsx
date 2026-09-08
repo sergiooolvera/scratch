@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code, X, Layers, Eye } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, History, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code, X, Layers, Eye, Video } from 'lucide-react'
 import Link from 'next/link'
 import { moduloTieneExamenContestado } from './actions'
 import { notifyAdminsOnCourseEdit } from '@/app/actions/notifications'
@@ -31,6 +31,8 @@ type Modulo = {
     titulo: string;
     orden?: number;
     recursos: Recurso[];
+    reunion_url?: string;
+    nota_profesor?: string;
     requiereExamen: boolean;
     examenMinAprobacion: number;
     examenPreguntas: PreguntaParsed[];
@@ -338,6 +340,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 modulos: modulos.map((m, idx) => ({
                     id: m.id,
                     titulo: m.titulo,
+                    reunion_url: m.reunion_url || '',
+                    nota_profesor: m.nota_profesor || '',
                     url_contenido: m.recursos.length > 0 ? m.recursos[0].url_contenido : '',
                     recursos: m.recursos.map((r: any) => ({
                         id: r.id,
@@ -606,6 +610,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                              id: m.id,
                              titulo: m.titulo,
                              recursos,
+                             reunion_url: m.reunion_url || '',
+                             nota_profesor: m.nota_profesor || '',
                              requiereExamen: !!m.examen,
                              examenMinAprobacion: m.examen?.min_aprobacion || 80,
                              seguridadAumentada: m.examen?.seguridad_aumentada || false,
@@ -809,6 +815,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                         id: m.id,
                         titulo: m.titulo,
                         recursos,
+                        reunion_url: m.reunion_url || '',
+                        nota_profesor: m.nota_profesor || '',
                         requiereExamen: !!exmMod,
                         examenMinAprobacion: exmMod?.min_aprobacion || 80,
                         seguridadAumentada: exmMod?.seguridad_aumentada || false,
@@ -895,6 +903,8 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
         setModulos([...modulos, {
             titulo: '',
             recursos: [],
+            reunion_url: '',
+            nota_profesor: '',
             requiereExamen: false,
             examenMinAprobacion: 80,
             examenPreguntas: [],
@@ -1642,7 +1652,9 @@ const generationId = data.generationId;
                 maxCambiosPantalla: currentMod.maxCambiosPantalla,
                 conTiempo: currentMod.conTiempo,
                 tiempoExamen: currentMod.tiempoExamen,
-                intentosPermitidos: currentMod.intentosPermitidos
+                intentosPermitidos: currentMod.intentosPermitidos,
+                reunion_url: currentMod.reunion_url || '',
+                nota_profesor: currentMod.nota_profesor || ''
             });
         }
 
@@ -1680,6 +1692,8 @@ const generationId = data.generationId;
                 modulos: modulosFinales.map(m => ({
                     id: m.id,
                     titulo: m.titulo,
+                    reunion_url: m.reunion_url || '',
+                    nota_profesor: m.nota_profesor || '',
                     url_contenido: m.recursos.length > 0 ? m.recursos[0].url_contenido : '',
                     recursos: m.recursos.map((r: any) => ({
                         id: r.id,
@@ -1814,7 +1828,9 @@ const generationId = data.generationId;
                     titulo: mod.titulo || 'Módulo sin título',
                     url_contenido: mod.recursos.length > 0 ? mod.recursos[0].url_contenido : '',
                     orden: mod.orden,
-                    requiere_cuestionario: !!mod.requiereCuestionario
+                    requiere_cuestionario: !!mod.requiereCuestionario,
+                    reunion_url: mod.reunion_url?.trim() || null,
+                    nota_profesor: mod.nota_profesor?.trim() || null
                 };
                 
                 let moduloId = mod.id;
@@ -3805,6 +3821,59 @@ const generationId = data.generationId;
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Modular Virtual Class / Live Meeting Box */}
+                                        <div className="mt-4 pt-4 border-t border-zinc-100">
+                                            <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className="text-sm font-bold text-blue-950 flex items-center gap-2">
+                                                        <Video className="h-4 w-4 text-blue-600" />
+                                                        Clase Virtual o Enlace Externo (Zoom, Meet, Teams) (Opcional)
+                                                    </h4>
+                                                    {(modulo.reunion_url || modulo.nota_profesor) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleModuloChange(index, 'reunion_url', '');
+                                                                handleModuloChange(index, 'nota_profesor', '');
+                                                            }}
+                                                            className="text-[10px] text-red-500 hover:text-red-700 font-bold cursor-pointer"
+                                                        >
+                                                            ✕ LIMPIAR ENLACE Y NOTA
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-blue-800/80">
+                                                    Si este módulo incluye una sesión en vivo o enlace externo, configúralo aquí para tus alumnos.
+                                                </p>
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                                            Enlace de Videoconferencia Directo
+                                                        </label>
+                                                        <input
+                                                            type="url"
+                                                            placeholder="https://zoom.us/j/... o https://meet.google.com/..."
+                                                            value={modulo.reunion_url || ''}
+                                                            onChange={(e) => handleModuloChange(index, 'reunion_url', e.target.value)}
+                                                            className="w-full text-xs rounded-lg border-gray-300 p-2.5 border bg-white text-black shadow-sm focus:border-blue-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                                            Nota del Profesor / Aviso Especial de la Clase Virtual
+                                                        </label>
+                                                        <textarea
+                                                            rows={2}
+                                                            placeholder="Ej: Próxima clase virtual el lunes a las 5:00 PM con ID y contraseña..."
+                                                            value={modulo.nota_profesor || ''}
+                                                            onChange={(e) => handleModuloChange(index, 'nota_profesor', e.target.value)}
+                                                            className="w-full text-xs rounded-lg border-gray-300 p-2.5 border bg-white text-black shadow-sm focus:border-blue-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
 
@@ -4177,42 +4246,12 @@ const generationId = data.generationId;
                         </div>
                     </div>
 
-                    {/* Tab 4: Avisos e Historial */}
-                    <div className={activeTab === 'avisos' ? 'space-y-6 block' : 'hidden'}>
+                    {/* Tab 4: Historial de Cambios y Envío a Revisión */}
+                    <div id="seccion-paso-4" className={activeTab === 'avisos' ? 'space-y-6 block' : 'hidden'}>
                         <div className="space-y-6">
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">4. Avisos, Videoconferencias e Historial de Cambios</h2>
-                                <p className="text-gray-500 text-xs mt-0.5">Configura notificaciones automáticas para los alumnos y define el motivo de esta actualización.</p>
-                            </div>
-
-                            <div className="bg-blue-50/50 border border-blue-200 rounded-2xl p-6 shadow-md space-y-4">
-                                <h3 className="text-md font-bold text-blue-950 flex items-center gap-2">
-                                    <Activity className="h-5 w-5 text-blue-500" />
-                                    Clase Virtual o Enlace Externo (Zoom, Meet, Teams)
-                                </h3>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Enlace de Videoconferencia Directo</label>
-                                    <input
-                                        type="url"
-                                        name="reunion_url"
-                                        value={formData.reunion_url || ''}
-                                        onChange={handleChange}
-                                        placeholder="https://zoom.us/j/..."
-                                        className="w-full text-sm rounded-xl border-gray-300 p-3 border bg-white text-black shadow-sm focus:border-blue-500"
-                                    />
-                                    <p className="text-[10px] text-gray-500 mt-1">Este enlace se le enviará automáticamente a los correos de tus alumnos inscritos y pagados al ser aprobado.</p>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Nota del Profesor / Aviso Especial</label>
-                                    <textarea
-                                        name="nota_profesor"
-                                        value={formData.nota_profesor || ''}
-                                        onChange={handleChange}
-                                        rows={3}
-                                        placeholder="Ej: Próxima clase virtual el lunes a las 5:00 PM..."
-                                        className="w-full text-sm rounded-xl border-gray-300 p-3 border bg-white text-black shadow-sm focus:border-blue-500"
-                                    />
-                                </div>
+                                <h2 className="text-xl font-bold text-gray-900">4. Avisos, Notas y Enviar a Revisión</h2>
+                                <p className="text-gray-500 text-xs mt-0.5">Registra la nota para el historial académico y envía las actualizaciones a revisión.</p>
                             </div>
 
                             <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-6 space-y-4 shadow-sm">

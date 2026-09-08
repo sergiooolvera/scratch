@@ -6,8 +6,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-01-27.acacia' as any,
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
 // Usamos supabase-js client con la llave de servicio para saltar RLS
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,22 +13,29 @@ const supabaseAdmin = createClient(
 );
 
 export async function POST(req: Request) {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
     const body = await req.text();
-    const signature = req.headers.get("Stripe-Signature") as string;
+    const signature = req.headers.get("stripe-signature") || req.headers.get("Stripe-Signature") || "";
 
     let event: Stripe.Event;
 
     try {
         if (!webhookSecret) {
+            console.error("[STRIPE_WEBHOOK_ERROR] La variable STRIPE_WEBHOOK_SECRET no está definida en las variables de entorno.");
             return new NextResponse("Webhook secret missing in env", { status: 400 });
+        }
+        if (!signature) {
+            console.error("[STRIPE_WEBHOOK_ERROR] No se recibió el encabezado stripe-signature en la petición.");
+            return new NextResponse("Missing stripe-signature header", { status: 400 });
         }
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: any) {
-        console.error(`Webhook Error: ${err.message}`);
+        console.error(`[STRIPE_WEBHOOK_ERROR] Falló la verificación de firma constructEvent: ${err.message}`);
         return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
     }
 
     const session = event.data.object as Stripe.Checkout.Session;
+
 
     const fulfillOrder = async (session: Stripe.Checkout.Session) => {
         const userId = session.metadata?.user_id;

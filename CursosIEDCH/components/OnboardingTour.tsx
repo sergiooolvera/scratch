@@ -91,6 +91,11 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
   }, [rol])
 
   const startTour = (isAuto = false) => {
+    // Si estamos en un entorno de pruebas automatizadas (Playwright/WebDriver) y es autoinicio, no interrumpir
+    if (isAuto && typeof window !== 'undefined' && (window.navigator?.webdriver || window.location.search.includes('e2e=true'))) {
+      return
+    }
+
     // Si ya existe un popover de driver.js en el DOM o una bandera global indica que está activo, no hacer nada
     if (document.querySelector('.driver-popover') || (typeof window !== 'undefined' && (window as any).__iedch_tour_active)) {
       return

@@ -88,7 +88,9 @@ export async function POST(req: Request) {
                     titulo: m.titulo,
                     url_contenido: m.url_contenido,
                     orden: m.orden,
-                    requiere_cuestionario: !!m.requiereCuestionario
+                    requiere_cuestionario: !!m.requiereCuestionario,
+                    reunion_url: m.reunion_url || null,
+                    nota_profesor: m.nota_profesor || null
                 }
 
                 if (m.id) {

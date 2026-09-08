@@ -1,5 +1,95 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-09-08
+### Tarea: Despliegue a Producción de Clases Virtuales Modulares, Visualización en Panel Admin y Ajustes en Reproductor de Alumnos
+
+#### Diagnóstico y Acciones Realizadas:
+- **Solicitud del Usuario:** Subir todos los cambios validados a producción.
+- **Validaciones Previas:**
+  - Suite de pruebas automatizadas con Playwright ejecutada y aprobada con éxito (**100% de tests aprobados**).
+  - Verificación estática con TypeScript (`npx tsc --noEmit`): 0 errores.
+  - Compilación de producción con Turbopack (`npm run build`): Compilado y empaquetado al 100% (51 páginas y endpoints estáticos/dinámicos generados).
+- **Alcance del Despliegue:**
+  1. Reubicación de Clases Virtuales / Enlaces Externos (Zoom, Meet, Teams) y notas pedagógicas al Paso 2 (*Temario y Clases*) por cada módulo en `subir-curso` y `editar-curso`.
+  2. Remoción de videoconferencias globales del Paso 4 (*Avisos y Revisión*).
+  3. Modificación del esquema de base de datos (`ie_curso_modulos.reunion_url` y `ie_curso_modulos.nota_profesor`) con índice de rendimiento optimizado `idx_ie_curso_modulos_reunion_url`.
+  4. Sincronización en edición de cursos y panel administrativo para la auditoría, comparativa y aprobación de borradores con clases virtuales modulares.
+  5. Visualización destacada de clases virtuales y notas por módulo en el reproductor del alumno (`PlaylistClient.tsx`).
+  6. Optimización en `OnboardingTour.tsx` para evitar interrupciones por tours interactivos en entornos de pruebas automatizadas con Playwright/WebDriver.
+  7. Protección en `middleware.ts` y manejo seguro de firmas en `/api/webhook` de Stripe.
+- **Gestión de Ramas Git:**
+  1. Commit y push a la rama `staging`.
+  2. Fusión (`git merge staging`) y push a la rama `main`, activando el despliegue automático en Vercel.
+  3. Retorno a la rama activa de desarrollo `staging`.
+
+### Tarea: Diagnóstico de Error en Visor de Presentaciones y Mantenimiento del Flujo de Gamma para Edición por el Profesor
+
+#### Diagnóstico y Decisión:
+- **Síntoma:** En el reproductor del alumno (`/cursos/[id]/contenido`), el visor de Microsoft Office Online arrojaba un error al intentar cargar una URL de exportación de Gamma expirada (`https://assets.api.gamma.app/export/...`).
+- **Flujo de Trabajo del Profesor:** El profesor requiere poder acceder y editar la presentación generada directamente en Gamma (`gammaUrl`) o descargarla y subir su versión modificada.
+- **Acción:** Se mantuvo el flujo original en [`app/api/profesor/gamma/status/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/profesor/gamma/status/route.ts), garantizando que el profesor conserve acceso directo a `gammaUrl` y `exportUrl` para la edición y personalización de sus presentaciones generadas con IA.
+- **Validación:** Pruebas E2E y TypeScript validadas al 100%.
+
+## Fecha: 2026-09-07
+### Tarea: Reubicación de Clases Virtuales / Enlace Externo (Zoom, Meet, Teams) por Módulo en "Temario y Clases" (Paso 2) y Remoción de "Avisos y Revisión" (Paso 4)
+
+#### Diagnóstico del Problema:
+- **Requerimiento:** Mover la configuración de clases virtuales/enlaces externos (Zoom, Meet, Teams) y notas específicas de videoconferencia desde el Paso 4 (*"Avisos, Notas y Enviar a Revisión"*) al Paso 2 (*"Temario y Clases"*), permitiendo que el profesor configure opcionalmente un enlace y aviso por cada módulo individual.
+- **Componentes Afectados:**
+  1. Base de datos: Nueva columna `reunion_url` y `nota_profesor` en la tabla `ie_curso_modulos`, con índice de rendimiento `idx_ie_curso_modulos_reunion_url`.
+  2. Scripts SQL y esquema de producción: [`agregar_reunion_url_a_modulos.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_reunion_url_a_modulos.sql), [`supabase/migrations/20260901075000_agregar_reunion_url_a_modulos.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/supabase/migrations/20260901075000_agregar_reunion_url_a_modulos.sql) y [`esquema_produccion.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql).
+  3. Formulario del Profesor para Crear Cursos: [`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx).
+  4. Formulario del Profesor para Editar Cursos: [`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx).
+  5. Panel Administrativo y Aprobación de Borradores: [`app/admin/cursos/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/cursos/page.tsx) y [`app/api/admin/aprobar-borrador/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/admin/aprobar-borrador/route.ts).
+  6. Visualizador y Reproductor del Alumno: [`app/cursos/[id]/contenido/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/contenido/page.tsx) y [`app/cursos/[id]/contenido/PlaylistClient.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/contenido/PlaylistClient.tsx).
+
+#### Acciones Realizadas:
+1. **Base de Datos y Esquema:**
+   - Se agregaron las columnas `reunion_url text` y `nota_profesor text` a la tabla `ie_curso_modulos`.
+   - Se creó el índice `idx_ie_curso_modulos_reunion_url` y se actualizó `esquema_produccion.sql`.
+2. **Formularios de Creación y Edición del Profesor (`subir-curso` y `editar-curso`):**
+   - Se añadió en el Paso 2 (*Temario y Clases*) una tarjeta modular para configurar el enlace de videoconferencia (`reunion_url`) y notas del instructor (`nota_profesor`) por módulo, con botón para limpiar rápidamente los campos.
+   - Se eliminó del Paso 4 la sección global de videoconferencias, renombrando el paso a *"4. Avisos, Notas y Enviar a Revisión"*.
+   - Se corrigió [`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx) para incluir `reunion_url` y `nota_profesor` en el arreglo de `modulosFinales` dentro de `guardarCurso`, garantizando que el payload del borrador (`cambios_pendientes.modulos`) guarde adecuadamente los enlaces configurados por el profesor.
+3. **Panel Administrativo y Backend:**
+   - Se corrigieron las funciones `normalizeDraftModule` y `normalizedModules` en [`app/admin/cursos/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/cursos/page.tsx) para mapear e incluir `reunion_url` y `nota_profesor` en la vista comparativa de borradores de módulos.
+   - Se actualizó el endpoint de aprobación `/api/admin/aprobar-borrador` para persistir `reunion_url` y `nota_profesor` en `ie_curso_modulos`.
+   - Se actualizó la vista de auditoría de módulos en el panel de administración.
+4. **Reproductor del Estudiante (`PlaylistClient.tsx`):**
+   - Se integró la tarjeta destacada de Clase Virtual / Videoconferencia y Nota Modular del Profesor cuando el módulo activo cuenta con estos datos.
+   - Se incorporó un badge indicador de "Clase Virtual" con enlace directo en la lista de temas del curso (sidebar).
+5. **Pruebas Automatizadas con Playwright:**
+   - Se creó [`e2e/profesor-clase-virtual-modulos.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/profesor-clase-virtual-modulos.spec.ts) verificando la presencia modular en el Paso 2 y la remoción en el Paso 4.
+   - Se ejecutaron las pruebas E2E con éxito (**aprobadas al 100%**).
+
+## Fecha: 2026-09-04
+### Tarea: Configuración y Validación de Compra Real en Producción ($10.00 MXN - Curso "ALIMENTOS")
+
+#### Diagnóstico y Resultado de Pruebas:
+- **Prueba Realizada:** Procesamiento de pago real de $10.00 MXN en Stripe Producción (`grupoegac.com`) para la cuenta `sergio.olver@gmail.com` en el curso "ALIMENTOS".
+- **Verificación de Flujo Completo:**
+  1. **Stripe Checkout:** Transacción exitosa (`pi_3UC31sKqGRBtPX4z04FHHH2t`, estado `Succeeded`).
+  2. **Vercel / Webhook:** Endpoint `/api/webhook` respondió con código `HTTP 200 OK`.
+  3. **Base de Datos Supabase:** Fila insertada correctamente en `ie_compras` (ID: `49d74330-3220-4aa4-9b74-d255096b77f0`, `monto_pagado: 10`, `pagado: true`, `pago_completo: true`).
+  4. **Frontend / Alumno:** Redirección exitosa a `/mis-cursos?compra_exitosa=true` otorgando acceso inmediato y habilitando el botón **"Ir a Curso"**.
+
+### Tarea: Limpieza y Eliminación de Cursos Comprados para Pruebas (Usuario `sergio.olver@gmail.com`)
+
+#### Diagnóstico del Problema:
+- **Solicitud del Usuario:** Eliminar los cursos comprados del usuario `sergio.olver@gmail.com` para realizar pruebas con el flujo de compras del sistema.
+- **Identificación en Base de Datos:**
+  - Correo electrónico de prueba: `sergio.olver@gmail.com` (UUID: `5302e955-6014-4e6b-8065-95254b393229`).
+
+#### Acciones Realizadas:
+1. **Verificación y Consulta en Supabase:**
+   - Se consultaron las compras e inscripciones asociadas a `sergio.olver@gmail.com` en las tablas `ie_compras`, `ie_pagos_manuales` y `ie_progreso_modulos`.
+2. **Eliminación de Registros de Prueba:**
+   - **`ie_compras`:** Se eliminaron **9 registros** de compras aprobadas/completadas.
+   - **`ie_pagos_manuales`:** Se eliminaron **7 registros** de comprobantes de pago manuales.
+   - **`ie_progreso_modulos`:** Se eliminaron **3 registros** de avance en módulos.
+3. **Resultado:**
+   - La cuenta `sergio.olver@gmail.com` quedó limpia y lista para realizar nuevas pruebas de compra en el ambiente de desarrollo (`staging`).
+
 ## Fecha: 2026-08-31
 ### Tarea: Despliegue a Producción (Actualización de Firma en Constancias y Microcredenciales a "CEO. Juan Manuel de la luz Sierra")
 
@@ -625,33 +715,40 @@
 
 #### Cambios Realizados:
 1. **Componente Reutilizable:**
-   - Creado [`components/CompetenciasDisplay.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CompetenciasDisplay.tsx) con la función `parseCompetenciasList` para segmentar cadenas de texto multilínea y renderizar el formato con círculos numerados.
-2. **Integración en Vistas:**
-   - [`app/validar/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/validar/page.tsx): Integrado `CompetenciasDisplay` en la ficha de constancia verificada.
-   - [`app/cursos/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/[id]/page.tsx): Integrado `CompetenciasDisplay` en la ficha pública del curso.
-3. **Pruebas y Verificación:**
-   - Compilación Next.js validada con éxito (`npm run build`).
-   - Suite Playwright ejecutada: **43 de 43 pruebas pasadas con 100% de éxito**.
+   - Creado [`components/CompetenciasDisplay.tsx`](file://
 
 ---
 
----
+## Fecha: 2026-09-04
+### Tarea: Diagnóstico y Habilitación de Curso tras Pago Exitoso en Stripe (Alumna Sarai Guadalupe Ramirez Valdes)
 
-## Fecha: 2026-09-01
-### Tarea: Botón Flotante de Retorno a la Navegación de Módulos (Subir y Editar Curso)
+#### Diagnóstico del Problema:
+- **Consulta del usuario:** ¿Por qué no se habilitó el curso para esta alumna si el pago fue exitoso?
+- **Identificación de la transacción en Stripe:**
+  - **Payment Intent:** `pi_3UBwrvKqGRBtPX4z1BCjIeCi`
+  - **Checkout Session:** `cs_live_a1ju58tLyH2eDnqNiZXqKv7Vey8GYtiNHF1zPWqRo9uRt1noJey7MZ8dJV`
+  - **Cliente:** `sarairamirezvaldes24@gmail.com` (Sarai Guadalupe Ramirez Valdes, ID: `2f23fa78-2f76-41f3-881e-3cf0e27e8385`)
+  - **Curso:** `CAP-Integración Profesional al Entorno Clinico` (ID: `bf2b42fb-221e-4cd8-989f-592f5de46b3b`)
+  - **Estado en Stripe:** `paid` (Succeeded) por $300.00 MXN.
+- **Causa Raíz:**
+  1. El flujo automático del sistema registra las compras cuando el navegador del usuario es redirigido desde la pantalla de confirmación de Stripe a `/api/checkout/verify?session_id=...`.
+  2. Si la alumna cierra el navegador inmediatamente tras el pago o no se completa el redirect, el registro en la tabla `ie_compras` de Supabase no se crea al instante.
+  3. El proceso secundario de sincronización (`/api/cron/sync-stripe`) es un demonio (Cron) que corre periódicamente en Vercel, por lo cual la transacción aún no se había recuperado antes de la consulta.
 
-#### Contexto y Requerimiento:
-- Al capturar o editar cursos en la sección **2. Temario y Clases**, la longitud del formulario aumenta significativamente cuando se configuran múltiples recursos (videos, PDFs, PPTs, HTMLs), tareas, exámenes modulares con preguntas múltiples/abiertas, cuestionarios y juegos interactivos (puzzles, ahorcados, sopas de letras, anagramas).
-- Se implementó un botón flotante accesible e intuitivo que aparece dinámicamente cuando el usuario se desplaza verticalmente por el contenido, permitiéndole regresar suave y rápidamente a la barra superior de **Navegación de Módulos** con un solo clic.
+#### Acciones Realizadas:
+1. **Verificación en Stripe & Supabase:**
+   - Se consultó el estado del PaymentIntent y la Checkout Session mediante la API de Stripe, confirmando el status `paid` y los metadatos completos (`user_id`, `curso_id`, `monto_pagado`).
+   - Se verificó que en Supabase la usuaria no tenía aún registrada la fila correspondiente en `ie_compras`.
+2. **Habilitación Inmediata del Curso:**
+   - Se ejecutó el script de actualización en la base de datos registrando la compra activa (`pagado: true`, `pago_completo: true`, `monto_pagado: 300`) en la tabla `ie_compras` para la alumna.
+   - Se confirmó que el curso ya quedó **100% disponible y habilitado** para la alumna en su panel de `/mis-cursos`.
 
-#### Cambios Realizados:
-1. **Página de Subir Curso ([`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)):**
-   - Se añadió el atributo `id="seccion-navegacion-modulos"` y la clase `scroll-mt-24` al contenedor superior de Navegación de Módulos.
-   - Se incorporó un estado `mostrarBotonFlotanteModulos` con un `useEffect` que escucha el scroll de la ventana (activándose a partir de 280px de desplazamiento vertical).
-   - Se añadió la función `scrollToNavegacionModulos` con cálculo de offset ergonómico para garantizar un scroll suave (`behavior: 'smooth'`).
-   - Se renderizó el botón flotante con diseño moderno (`gradient`, sombra profunda, animación de aparición/desaparición con opacidad y traslación, ícono `ArrowUp`, ícono `Layers` y texto "Navegación de Módulos") posicionado en `fixed bottom-20 right-6 z-40` para convivir armónicamente con el botón de sugerencias del layout.
+3. **Optimización y Corrección del Webhook de Stripe (`/api/webhook`):**
+   - **Evaluación dinámica del Secret:** Se modificó [`app/api/webhook/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/webhook/route.ts) para evaluar `process.env.STRIPE_WEBHOOK_SECRET?.trim()` dinámicamente dentro de la función `POST`, aplicando `.trim()` para eliminar cualquier espacio en blanco o salto de línea invisible al final de la variable.
+   - **Formateo de la Firma:** Se aseguró la extracción del encabezado `stripe-signature` de forma insensible a mayúsculas/minúsculas.
+   - **Exclusión en Middleware:** Se actualizó el `matcher` de [`middleware.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/middleware.ts) agregando `api/webhook` a las excepciones, evitando intercepciones innecesarias de Supabase SSR en las notificaciones del Webhook de Stripe.
 
-2. **Página de Editar Curso ([`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx)):**
+:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx)):**
    - Se aplicó la misma arquitectura y comportamiento que en Subir Curso para mantener consistencia total.
 
 3. **Pruebas Automatizadas con Playwright ([`e2e/profesor-selector-modulos.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/profesor-selector-modulos.spec.ts)):**

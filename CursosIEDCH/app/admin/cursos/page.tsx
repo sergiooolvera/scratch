@@ -261,7 +261,9 @@ export default function AdminCursosPage() {
         puzzleRespuesta: m?.puzzleRespuesta || (m?.tareaTipo === 'puzzle' ? m?.tareaPuzzleRespuesta : '') || '',
         puzzlePuzzles: m?.puzzlePuzzles || (m?.tareaTipo === 'puzzle' ? m?.tareaPuzzles : null) || [],
         requiereCuestionario: !!m?.requiereCuestionario,
-        cuestionarioPreguntas: m?.cuestionarioPreguntas || []
+        cuestionarioPreguntas: m?.cuestionarioPreguntas || [],
+        reunion_url: m?.reunion_url || '',
+        nota_profesor: m?.nota_profesor || ''
     })
 
     const normalizeExam = (exam: any, preguntas: any[] = []) => exam ? ({
@@ -406,7 +408,9 @@ export default function AdminCursosPage() {
                     id: q.id,
                     pregunta: q.pregunta,
                     orden: q.orden
-                }))
+                })),
+                reunion_url: m.reunion_url || '',
+                nota_profesor: m.nota_profesor || ''
             }
         })
 
@@ -622,6 +626,15 @@ export default function AdminCursosPage() {
                             ))}
                         </div>
                     ) : <p className="text-xs text-gray-500 italic">No requiere cuestionario</p>}
+                </div>
+                <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Clase Virtual / Enlace de Reunión</p>
+                    {mod.reunion_url || mod.nota_profesor ? (
+                        <div className="bg-blue-50/50 p-2.5 rounded-lg border border-blue-100 text-xs space-y-1">
+                            {mod.reunion_url && <p className="text-blue-700 font-semibold break-all">🔗 {mod.reunion_url}</p>}
+                            {mod.nota_profesor && <p className="text-gray-600 italic whitespace-pre-wrap">{mod.nota_profesor}</p>}
+                        </div>
+                    ) : <p className="text-xs text-gray-500 italic">Sin clase virtual configurada</p>}
                 </div>
             </div>
         )

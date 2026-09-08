@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ContentViewer from './ContentViewer'
-import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock, Maximize2, Minimize2, Gamepad2, Link, ExternalLink } from 'lucide-react'
+import { PlayCircle, FileText, CheckCircle, Award, HelpCircle, AlertCircle, Sparkles, Lock, X, Shield, Clock, Maximize2, Minimize2, Gamepad2, Link, ExternalLink, Video, Info } from 'lucide-react'
 import { notifyProfesorTaskSubmission } from '@/app/actions/taskNotifications'
 import { createClient } from '@/lib/supabase/client'
 import confetti from 'canvas-confetti'
@@ -25,6 +25,8 @@ type Modulo = {
     requiere_cuestionario?: boolean;
     cuestionarioPreguntas?: any[];
     cuestionarioRespuestas?: any[];
+    reunion_url?: string;
+    nota_profesor?: string;
 }
 
 type ExamenModular = {
@@ -1442,6 +1444,40 @@ export default function PlaylistClient({
                         ) : (
                             /* Normal module visual content view */
                             <div className="w-full space-y-6">
+                                {/* Modular Live Class & Instructor Note */}
+                                {(currentItem.reunion_url || currentItem.nota_profesor) && (
+                                    <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {currentItem.reunion_url && (
+                                            <div className={`bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${!currentItem.nota_profesor ? 'md:col-span-2' : ''}`}>
+                                                <div>
+                                                    <h3 className="text-base font-bold flex items-center gap-2 mb-1">
+                                                        <Video className="h-5 w-5 text-blue-200" /> Clase Virtual / En Vivo
+                                                    </h3>
+                                                    <p className="text-blue-100 text-xs">Sesión de videoconferencia para este módulo (Zoom, Meet, Teams).</p>
+                                                </div>
+                                                <a 
+                                                    href={currentItem.reunion_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 bg-white text-blue-700 px-4 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition shadow-sm text-xs whitespace-nowrap shrink-0"
+                                                >
+                                                    <ExternalLink className="h-4 w-4" /> Unirse a la clase
+                                                </a>
+                                            </div>
+                                        )}
+                                        {currentItem.nota_profesor && (
+                                            <div className={`bg-white border-2 border-orange-100 rounded-2xl p-5 shadow-sm ${!currentItem.reunion_url ? 'md:col-span-2' : ''}`}>
+                                                <h3 className="text-orange-600 text-sm font-bold flex items-center gap-2 mb-1.5">
+                                                    <Info className="h-4 w-4" /> Nota del Profesor para este Módulo
+                                                </h3>
+                                                <p className="text-gray-700 text-xs leading-relaxed whitespace-pre-wrap">
+                                                    {currentItem.nota_profesor}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Removed resource tabs as requested */}
 
                                 <div className="mb-2">
@@ -2287,8 +2323,22 @@ export default function PlaylistClient({
                                             </div>
                                         )}
 
-                                        {((item.id && (tareasDef[item.id] || puzzlesDef[item.id])) || (item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) || hasExam) && (
+                                        {((item.id && (tareasDef[item.id] || puzzlesDef[item.id])) || (item.requiere_cuestionario && item.cuestionarioPreguntas && item.cuestionarioPreguntas.length > 0) || hasExam || item.reunion_url) && (
                                             <div className={`pl-12 pr-4 pb-3 pt-1 flex flex-col items-start gap-1.5 ${isActive ? 'bg-blue-50/75' : 'bg-white'}`}>
+                                                {item.reunion_url && (
+                                                    <a
+                                                        href={item.reunion_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
+                                                        title="Clase Virtual en Vivo"
+                                                    >
+                                                        <Video className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-600" />
+                                                        <span>Clase Virtual</span>
+                                                        <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                                                    </a>
+                                                )}
                                                 {hasExam && (
                                                     <span 
                                                         onClick={(e) => {

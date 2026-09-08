@@ -173,7 +173,9 @@ CREATE TABLE IF NOT EXISTS public.ie_curso_modulos (
     url_contenido text NOT NULL,
     orden integer NOT NULL DEFAULT 1,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
-    requiere_cuestionario boolean DEFAULT false
+    requiere_cuestionario boolean DEFAULT false,
+    reunion_url text,
+    nota_profesor text
 );
 
 -- Preguntas de Cuestionarios por Módulo
@@ -656,4 +658,7 @@ USING (
 
 -- Índice de rendimiento para temario en ie_cursos
 CREATE INDEX IF NOT EXISTS idx_ie_cursos_temario ON public.ie_cursos USING gin (temario);
+
+-- Índice de rendimiento para clases virtuales por módulo
+CREATE INDEX IF NOT EXISTS idx_ie_curso_modulos_reunion_url ON public.ie_curso_modulos (reunion_url) WHERE reunion_url IS NOT NULL;
 
