@@ -34,7 +34,7 @@ export default function RootLayout({
         <main>{children}</main>
         
         {/* Botón Flotante de Comentarios y Sugerencias */}
-        <div className="fixed bottom-6 right-6 z-40">
+        <div className="fixed bottom-6 left-6 z-40">
           <Link
             href="/comentarios"
             id="btn-comentarios-sugerencias"

@@ -9,10 +9,12 @@ test.describe('Módulo de Comentarios, Sugerencias y Retroalimentación', () => 
     await expect(page.locator('textarea')).toBeVisible();
   });
 
-  test('Debe mostrar el botón flotante global de comentarios en el portal', async ({ page }) => {
+  test('Debe mostrar el botón flotante global de comentarios en el lado izquierdo del portal', async ({ page }) => {
     await page.goto('/');
-    const floatingButton = page.locator('a[href="/comentarios"], button:has-text("Comentarios")').first();
+    const floatingButton = page.locator('#btn-comentarios-sugerencias');
     await expect(floatingButton).toBeVisible({ timeout: 15000 });
+    const container = floatingButton.locator('..');
+    await expect(container).toHaveClass(/left-6/);
   });
 
   test('Debe autocompletar el perfil si el usuario está autenticado', async ({ page }) => {

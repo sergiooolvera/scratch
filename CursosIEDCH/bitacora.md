@@ -1,6 +1,16 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-09-08
+### Tarea: Reubicación del Botón Flotante de Comentarios y Sugerencias al Lado Izquierdo
+
+#### Diagnóstico y Acciones Realizadas:
+- **Solicitud del Usuario:** Mover el botón de "Comentarios y sugerencias" al lado izquierdo de la pantalla.
+- **Componentes Modificados:**
+  1. [`app/layout.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/layout.tsx): Se actualizó la posición del contenedor flotante de `fixed bottom-6 right-6 z-40` a `fixed bottom-6 left-6 z-40`.
+  2. [`e2e/feedback.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/feedback.spec.ts): Se actualizó la prueba E2E para verificar que el botón flotante de comentarios se ubique en el lado izquierdo (`left-6`).
+- **Validación:**
+  - Pruebas automatizadas E2E ejecutadas y aprobadas con Playwright.
+
 ### Tarea: Despliegue a Producción de Clases Virtuales Modulares, Visualización en Panel Admin y Ajustes en Reproductor de Alumnos
 
 #### Diagnóstico y Acciones Realizadas:
