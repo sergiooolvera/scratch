@@ -16,6 +16,13 @@
 
 #### Pruebas E2E y Validación:
 - [`e2e/courses.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/courses.spec.ts): Se incorporó y validó con éxito la prueba automatizada con Playwright (`npx playwright test e2e/courses.spec.ts`).
+- **Suite Completa:** 61 de 61 pruebas automatizadas con Playwright aprobadas al 100%.
+
+#### Despliegue a Producción:
+- **Gestión de Ramas Git:**
+  1. Commit y push a la rama `staging`.
+  2. Fusión (`git merge staging`) y push a la rama `main`, activando el despliegue automático en producción en Vercel.
+  3. Retorno a la rama activa de desarrollo `staging`.
 
 ## Fecha: 2026-09-11
 ### Tarea: Estilizado con Fondo Tenue en Cajas de Texto para la Creación y Edición de Cursos
