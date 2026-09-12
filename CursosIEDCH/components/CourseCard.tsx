@@ -220,9 +220,20 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
                 {/* Visualización del Precio */}
                 <div className="flex items-center justify-between px-1 mb-1">
                     <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Inversión</span>
-                    <span className="text-base font-extrabold text-indigo-700">
-                        {course.precio && Number(course.precio) > 0 ? `$${Number(course.precio).toLocaleString('es-MX')} MXN` : 'Gratuito'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        {course.precio && Number(course.precio) > 0 ? (
+                            <>
+                                <span className="text-xs font-semibold text-orange-500 line-through">
+                                    ${Math.round(Number(course.precio) * 1.2).toLocaleString('es-MX')} MXN
+                                </span>
+                                <span className="text-base font-extrabold text-indigo-700">
+                                    ${Number(course.precio).toLocaleString('es-MX')} MXN
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-base font-extrabold text-indigo-700">Gratuito</span>
+                        )}
+                    </div>
                 </div>
 
                 <Link

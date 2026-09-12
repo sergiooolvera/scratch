@@ -225,9 +225,20 @@ function CursosContent() {
                                         </div>
 
                                         <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                                            <span className="font-extrabold text-indigo-600 text-lg">
-                                                {course.precio > 0 ? `$${course.precio} MXN` : 'Gratis'}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                {course.precio > 0 ? (
+                                                    <>
+                                                        <span className="text-xs font-semibold text-orange-500 line-through">
+                                                            ${Math.round(course.precio * 1.2).toLocaleString('es-MX')} MXN
+                                                        </span>
+                                                        <span className="font-extrabold text-indigo-600 text-lg">
+                                                            ${course.precio} MXN
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <span className="font-extrabold text-indigo-600 text-lg">Gratis</span>
+                                                )}
+                                            </div>
                                             <Link 
                                                 href={`/cursos/${course.id}`} 
                                                 className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 border border-indigo-600 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1"

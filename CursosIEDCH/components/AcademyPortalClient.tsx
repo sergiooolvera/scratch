@@ -415,9 +415,20 @@ export default function AcademyPortalClient({
                                                 </div>
 
                                                 <div className="flex items-center justify-between border-t border-zinc-100 pt-3.5 mt-4">
-                                                    <span className="font-black text-indigo-650 text-sm">
-                                                        {curso.precio > 0 ? `$${curso.precio} MXN` : 'Gratis'}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        {curso.precio > 0 ? (
+                                                            <>
+                                                                <span className="text-xs font-semibold text-orange-500 line-through">
+                                                                    ${Math.round(curso.precio * 1.2).toLocaleString('es-MX')} MXN
+                                                                </span>
+                                                                <span className="font-black text-indigo-650 text-sm">
+                                                                    ${curso.precio} MXN
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="font-black text-indigo-650 text-sm">Gratis</span>
+                                                        )}
+                                                    </div>
                                                     <Link 
                                                         href={`/cursos/${curso.id}`}
                                                         className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer shadow-sm shadow-indigo-600/10"

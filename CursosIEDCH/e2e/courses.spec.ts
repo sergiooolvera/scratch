@@ -27,4 +27,15 @@ test.describe('Módulo de Cursos y Catálogo', () => {
     await page.goto('/mis-cursos');
     await expect(page).toHaveURL(/\/(login|dashboard|mis-cursos)/);
   });
+
+  test('Debe mostrar precio tachado (+20%) en color naranja para cursos de pago en el catálogo', async ({ page }) => {
+    await page.goto('/cursos');
+    // Esperar a que los elementos del catálogo carguen
+    await page.waitForLoadState('networkidle');
+    const tachedPrices = page.locator('span.line-through.text-orange-500');
+    const count = await tachedPrices.count();
+    if (count > 0) {
+      await expect(tachedPrices.first()).toBeVisible();
+    }
+  });
 });

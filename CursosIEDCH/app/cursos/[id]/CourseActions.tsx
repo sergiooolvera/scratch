@@ -336,13 +336,18 @@ export default function CourseActions({
                         <p className="text-xs font-semibold text-slate-700">
                             Acceso al programa completo
                         </p>
-                        <div className="flex items-baseline gap-1.5">
+                        <div className="flex items-baseline gap-2 flex-wrap">
                             <span className="text-3xl sm:text-4xl font-black text-[#1e1b4b] tracking-tight">
                                 ${valorPrecio.toLocaleString('es-MX')}
                             </span>
                             <span className="text-sm font-bold text-slate-500">
                                 MXN
                             </span>
+                            {valorPrecio > 0 && (
+                                <span className="text-sm sm:text-base font-bold text-orange-500 line-through">
+                                    ${Math.round(valorPrecio * 1.2).toLocaleString('es-MX')} MXN
+                                </span>
+                            )}
                         </div>
                     </div>
 

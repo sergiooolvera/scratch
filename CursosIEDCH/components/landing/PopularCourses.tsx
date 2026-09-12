@@ -155,9 +155,20 @@ export default async function PopularCourses() {
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <span className="font-extrabold text-[#310ea0] text-lg">
-                      {course.precio > 0 ? `$${course.precio} MXN` : 'Gratis'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {course.precio > 0 ? (
+                        <>
+                          <span className="text-xs font-semibold text-orange-500 line-through">
+                            ${Math.round(course.precio * 1.2).toLocaleString('es-MX')} MXN
+                          </span>
+                          <span className="font-extrabold text-[#310ea0] text-lg">
+                            ${course.precio} MXN
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-extrabold text-[#310ea0] text-lg">Gratis</span>
+                      )}
+                    </div>
                     <Link href={`/cursos/${course.id}`} className="text-xs font-bold text-[#310ea0] hover:bg-indigo-50 border border-[#310ea0] px-4 py-2 rounded-lg transition-colors">
                       Ver curso
                     </Link>

@@ -1,5 +1,22 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-09-11
+### Tarea: Inclusión de Precio Tachado (20% Adicional en Color Naranja) para Cursos Publicados
+
+#### Diagnóstico y Requerimiento:
+- **Solicitud del Usuario:** Mostrar un precio tachado (correspondiente a un 20% adicional del precio actual) en color naranja (`text-orange-500 line-through`) para los cursos publicados en la plataforma.
+- **Lógica Aplicada:** Para todo curso con `precio > 0`, se calcula el precio de lista original como `Math.round(precio * 1.20)` y se muestra con formato de moneda en pesos mexicanos (`$ MXN`) en color naranja tachado junto al precio final de venta.
+
+#### Componentes y Vistas Modificados:
+1. [`components/CourseCard.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx): Tarjetas principales de catálogo y dashboard.
+2. [`components/landing/PopularCourses.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx): Cuadrícula de cursos populares en la Landing Page.
+3. [`app/cursos/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/page.tsx): Catálogo de cursos público.
+4. [`app/cursos/[id]/CourseActions.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/CourseActions.tsx): Barra lateral de pago e información en la vista pública de detalle del curso.
+5. [`components/AcademyPortalClient.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AcademyPortalClient.tsx): Tarjetas de cursos publicadas dentro de los portales de las academias.
+
+#### Pruebas E2E y Validación:
+- [`e2e/courses.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/courses.spec.ts): Se agregó una prueba E2E automatizada que verifica la visibilidad y renderizado del precio de lista tachado en color naranja en los cursos publicados.
+
 ## Fecha: 2026-09-08
 ### Tarea: Reubicación del Botón Flotante de Comentarios y Sugerencias al Lado Izquierdo
 
