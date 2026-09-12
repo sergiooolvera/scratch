@@ -1776,12 +1776,12 @@ export default function SubirCursoPage() {
                             <div className="grid grid-cols-1 gap-6">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Título del Curso</label>
-                                    <input type="text" name="titulo" required maxLength={60} value={formData.titulo} onChange={handleChange} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Ej. Fundamentos de la Práctica Médica Moderna" />
+                                    <input type="text" name="titulo" required maxLength={60} value={formData.titulo} onChange={handleChange} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 border p-3 text-black bg-slate-50 focus:bg-white transition-colors" placeholder="Ej. Fundamentos de la Práctica Médica Moderna" />
                                     <p className="text-[10px] text-gray-500 mt-1 italic">Máx. 60 caracteres. Se renderizará en el certificado del alumno.</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción Completa</label>
-                                    <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Describe los temas que cubre el curso..." />
+                                    <textarea name="descripcion" required value={formData.descripcion} onChange={handleChange} rows={4} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 border p-3 text-black bg-slate-50 focus:bg-white transition-colors" placeholder="Describe los temas que cubre el curso..." />
                                 </div>
                                 <div>
                                     <TemarioEditor
@@ -1806,7 +1806,7 @@ export default function SubirCursoPage() {
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-1">Duración Estructurada</label>
                                         <div className="flex items-center gap-2">
-                                            <input type="number" name="duracion" required min="1" max="999" value={formData.duracion ? String(formData.duracion).replace(/\D/g, '') : ''} onChange={(e) => setFormData({...formData, duracion: e.target.value ? `${e.target.value} ${e.target.value === '1' ? 'Hora' : 'Horas'}` : ''})} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white" placeholder="Ej: 10" />
+                                            <input type="number" name="duracion" required min="1" max="999" value={formData.duracion ? String(formData.duracion).replace(/\D/g, '') : ''} onChange={(e) => setFormData({...formData, duracion: e.target.value ? `${e.target.value} ${e.target.value === '1' ? 'Hora' : 'Horas'}` : ''})} className="w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 border p-3 text-black bg-slate-50 focus:bg-white transition-colors" placeholder="Ej: 10" />
                                             <span className="text-gray-500 font-medium">Horas</span>
                                         </div>
                                         <p className="text-[10px] text-gray-500 mt-1 italic">Solo ingresa el número. Se imprime en el certificado.</p>
@@ -1816,7 +1816,7 @@ export default function SubirCursoPage() {
                                         <select
                                             value={vigenciaAnos}
                                             onChange={(e) => setVigenciaAnos(Number(e.target.value))}
-                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 border p-3 text-black bg-slate-50 focus:bg-white transition-colors"
                                         >
                                             <option value={1}>1 año</option>
                                             <option value={2}>2 años</option>
@@ -1830,7 +1830,7 @@ export default function SubirCursoPage() {
                                         <select
                                             value={formData.categoria}
                                             onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
-                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 border p-3 text-black bg-slate-50 focus:bg-white transition-colors"
                                         >
                                             <option value="salud">🩺 Salud</option>
                                             <option value="negocios">💼 Negocios</option>
@@ -1849,7 +1849,7 @@ export default function SubirCursoPage() {
                                             name="modalidad"
                                             value={formData.modalidad}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-3 text-black bg-white"
+                                            className="w-full rounded-xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 border p-3 text-black bg-slate-50 focus:bg-white transition-colors"
                                         >
                                             <option value="abierta">Abierta (El alumno puede inscribirse cuando quiera)</option>
                                             <option value="cerrada">Cerrada (Inscripción en un lapso de tiempo)</option>

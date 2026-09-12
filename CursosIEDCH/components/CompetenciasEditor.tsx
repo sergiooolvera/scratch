@@ -411,7 +411,7 @@ export default function CompetenciasEditor({
                             className="flex items-center gap-2 group"
                         >
                             {/* Caja de captura de competencia */}
-                            <div className={`flex-1 flex items-center bg-white border rounded-xl px-3.5 py-2.5 shadow-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 ${
+                            <div className={`flex-1 flex items-center bg-slate-50 focus-within:bg-white border rounded-xl px-3.5 py-2.5 shadow-sm transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 ${
                                 isOverLimit ? 'border-red-300 ring-1 ring-red-200' : 'border-gray-200'
                             }`}>
                                 <span className="text-sm font-bold text-gray-700 mr-2 shrink-0 select-none">

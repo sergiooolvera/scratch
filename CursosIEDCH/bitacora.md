@@ -1,6 +1,25 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-09-11
+### Tarea: Estilizado con Fondo Tenue en Cajas de Texto para la Creación y Edición de Cursos
+
+#### Diagnóstico y Requerimiento:
+- **Solicitud del Usuario:** Aplicar un color tenue a las cajas de texto (inputs, textareas y selects) en las pantallas de creación (`/profesor/subir-curso`) y edición (`/profesor/editar-curso/[id]`) de cursos.
+- **Análisis de UI/UX:** Las cajas de texto anteriores utilizaban un fondo blanco plano (`bg-white`), lo cual sobre fondo claro ofrecía un contraste limitado para delimitar las zonas de captura.
+- **Solución Implementada:**
+  - Se aplicó una tonalidad suave y tenue de fondo (`bg-slate-50` / `bg-slate-50/90`) a los inputs de texto, áreas de texto (textareas), selecciones desplegables (selects) y componentes modulares de edición.
+  - Al recibir el foco por interacción del usuario (`focus:bg-white` y `focus-within:bg-white`), la caja de texto realiza una transición fluida a fondo blanco limpio con un delicado aro de enfoque en tono índigo (`focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors`).
+
+#### Componentes y Vistas Modificados:
+1. [`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx): Pantalla de creación de cursos para profesores (Título, Descripción, Duración, Vigencia, Categoría, Modalidad).
+2. [`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx): Pantalla de edición de cursos existentes.
+3. [`components/CompetenciasEditor.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CompetenciasEditor.tsx): Editor de competencias a desarrollar con verbos taxonómicos de Bloom (cajas de texto numeradas con `bg-slate-50 focus-within:bg-white`).
+4. [`components/TemarioEditor.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/TemarioEditor.tsx): Editor de temario (títulos de módulos y nombres de temas con `bg-slate-50/80 focus:bg-white`).
+
+#### Pruebas E2E y Validación:
+- [`e2e/instructor.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/instructor.spec.ts): Verificación con la suite automatizada de Playwright para instructor/profesor.
+
+## Fecha: 2026-09-11
 ### Tarea: Inclusión de Precio Tachado (20% Adicional en Color Naranja) para Cursos Publicados
 
 #### Diagnóstico y Requerimiento:

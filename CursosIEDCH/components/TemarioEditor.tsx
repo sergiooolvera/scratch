@@ -133,7 +133,7 @@ export default function TemarioEditor({ temario = [], onChange, disabled = false
                                             disabled={disabled}
                                             onChange={(e) => handleActualizarTituloModulo(modIdx, e.target.value)}
                                             placeholder="Título del módulo"
-                                            className="w-full text-sm text-gray-800 bg-transparent border border-transparent hover:border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-1 focus:ring-indigo-500 rounded-lg px-2.5 py-1 transition font-medium placeholder:font-normal placeholder-gray-400 outline-none"
+                                            className="w-full text-sm text-gray-800 bg-slate-50 border border-gray-200/80 hover:border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 rounded-lg px-2.5 py-1.5 transition font-medium placeholder:font-normal placeholder-gray-400 outline-none"
                                         />
                                     </div>
                                     <div className="flex items-center gap-1">
@@ -173,7 +173,7 @@ export default function TemarioEditor({ temario = [], onChange, disabled = false
                                                         disabled={disabled}
                                                         onChange={(e) => handleActualizarTema(modIdx, temaIdx, e.target.value)}
                                                         placeholder={`Tema ${temaIdx + 1}`}
-                                                        className="flex-1 text-sm text-gray-700 bg-transparent border border-transparent hover:border-gray-200 focus:border-indigo-500 focus:bg-gray-50/50 focus:ring-1 focus:ring-indigo-500 rounded-lg px-2 py-1 transition placeholder-gray-400 outline-none"
+                                                        className="flex-1 text-sm text-gray-700 bg-slate-50/90 border border-gray-200/80 hover:border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 rounded-lg px-2.5 py-1.5 transition placeholder-gray-400 outline-none"
                                                     />
                                                     <button
                                                         type="button"
