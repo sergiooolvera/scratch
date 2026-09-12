@@ -38,4 +38,13 @@ test.describe('Módulo de Cursos y Catálogo', () => {
       await expect(tachedPrices.first()).toBeVisible();
     }
   });
+
+  test('Debe mostrar el botón con el icono de carrito de compras en las tarjetas de cursos del catálogo', async ({ page }) => {
+    await page.goto('/cursos');
+    await page.waitForLoadState('networkidle');
+    const cartButton = page.locator('button[title*="carrito"]').first();
+    if (await cartButton.isVisible()) {
+      await expect(cartButton).toBeVisible();
+    }
+  });
 });

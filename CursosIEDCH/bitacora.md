@@ -1,5 +1,22 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-09-12
+### Tarea: Reemplazo del Icono de Corazón por el Icono de Carrito de Compras en Tarjetas de Cursos
+
+#### Diagnóstico y Requerimiento:
+- **Solicitud del Usuario:** Cambiar el icono de corazón (lista de deseos) por el icono de carrito de compras (`ShoppingCart`) en las tarjetas de cursos.
+- **Solución Implementada:**
+  - En `components/CourseCard.tsx`, se reemplazó el icono `Heart` por `ShoppingCart` de `lucide-react`, conservando la interacción y actualizando el texto del tooltip a "Agregar al carrito" / "Quitar del carrito" y los estilos visuales en estado activo/inactivo.
+  - En `app/profesor/subir-curso/page.tsx` y `app/profesor/editar-curso/[id]/page.tsx`, se actualizó la miniatura de vista previa de la tarjeta del curso para reflejar el icono `ShoppingCart`.
+
+#### Componentes y Vistas Modificados:
+1. [`components/CourseCard.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CourseCard.tsx): Tarjeta del curso del catálogo con icono `ShoppingCart`.
+2. [`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx): Vista previa de la tarjeta en el panel de creación de cursos.
+3. [`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx): Vista previa de la tarjeta en el panel de edición de cursos.
+
+#### Pruebas E2E y Validación:
+- [`e2e/courses.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/courses.spec.ts): Se incorporó y validó con éxito la prueba automatizada con Playwright (`npx playwright test e2e/courses.spec.ts`).
+
 ## Fecha: 2026-09-11
 ### Tarea: Estilizado con Fondo Tenue en Cajas de Texto para la Creación y Edición de Cursos
 

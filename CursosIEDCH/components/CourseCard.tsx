@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Sparkles, User, Heart } from 'lucide-react'
+import { Sparkles, User, ShoppingCart } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import CreatorProfileModal from './CreatorProfileModal'
 
@@ -133,10 +133,10 @@ export default function CourseCard({ course, isPagado }: { course: Course; isPag
             {!isPagado && (
                 <button
                     onClick={toggleWish}
-                    className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/80 hover:bg-white text-gray-400 hover:text-rose-500 shadow-md backdrop-blur-xs transition-all duration-200 hover:scale-110 active:scale-95 border border-zinc-100"
-                    title={isWished ? 'Quitar de mi lista' : 'Agregar a mi lista'}
+                    className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/80 hover:bg-white text-gray-400 hover:text-indigo-600 shadow-md backdrop-blur-xs transition-all duration-200 hover:scale-110 active:scale-95 border border-zinc-100"
+                    title={isWished ? 'Quitar del carrito' : 'Agregar al carrito'}
                 >
-                    <Heart className={`h-4.5 w-4.5 transition-colors ${isWished ? 'fill-rose-500 text-rose-500' : 'text-zinc-400'}`} />
+                    <ShoppingCart className={`h-4.5 w-4.5 transition-colors ${isWished ? 'fill-indigo-100 text-indigo-600' : 'text-zinc-400'}`} />
                 </button>
             )}
             {isSuper && (

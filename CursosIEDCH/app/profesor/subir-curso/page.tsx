@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, Heart, Star, Image as ImageIcon, Play, Presentation, Code, X, Layers, Eye, Video } from 'lucide-react'
+import { Trash2, FileText, CheckCircle, Activity, Plus, Layout, BookOpen, BrainCircuit, MessageSquare, Sparkles, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Calculator, ChevronDown, ChevronUp, Gamepad2, ShoppingCart, Star, Image as ImageIcon, Play, Presentation, Code, X, Layers, Eye, Video } from 'lucide-react'
 import CertificadoDocument from '@/components/CertificadoDocument'
 import CertificadoModelo2 from '@/components/CertificadoModelo2'
 import CertificadoModelo3 from '@/components/CertificadoModelo3'
@@ -2131,7 +2131,7 @@ export default function SubirCursoPage() {
                                                             </div>
                                                         )}
                                                         <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-xs rounded-full p-1 shadow-xs">
-                                                            <Heart className="w-3.5 h-3.5 text-gray-400" />
+                                                            <ShoppingCart className="w-3.5 h-3.5 text-gray-400" />
                                                         </div>
                                                     </div>
                                                     <div className="p-4 flex-grow flex flex-col text-left">
