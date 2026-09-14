@@ -16,8 +16,11 @@
 4. [`components/ActividadConstanciaDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/ActividadConstanciaDocument.tsx): `h-[85px] mb-1 translate-x-[30px]`.
 5. [`components/MicrocredencialDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/MicrocredencialDocument.tsx): `h-[65px] mb-1 translate-x-[20px]`.
 
-#### Pruebas E2E y Validación:
-- Suite de pruebas de certificados ejecutada con Playwright (`npx playwright test e2e/certificates.spec.ts`), obteniendo **100% de pruebas aprobadas con éxito**.ebas aprobadas con éxito**.
+#### Despliegue a Producción:
+- **Gestión de Ramas Git:**
+  1. Commit y push de los cambios en la rama `staging` (`git push origin staging`).
+  2. Fusión en la rama `main` (`git checkout main`, `git merge staging`) y envío a producción (`git push origin main`), activando el despliegue automático en Vercel.
+  3. Retorno al entorno de desarrollo en la rama `staging` (`git checkout staging`).
 
 ## Fecha: 2026-09-14
 ### Tarea: Cambio de Tono Visual a Naranja Tenue Warm en Cajas de Texto de Cursos
