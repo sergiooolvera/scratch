@@ -112,14 +112,15 @@ export default function ActividadConstanciaDocument({
             </div>
 
             {/* Signature Area */}
-            <div className="absolute bottom-[50px] left-0 right-0 flex flex-col items-center w-full z-30">
-                <div className="w-[480px] text-center">
+            <div className="absolute bottom-[40px] left-0 right-0 flex flex-col items-center w-full z-30">
+                <div className="w-[480px] text-center relative flex flex-col items-center">
                     {/* Firma del director */}
-                    <div className="h-[80px] mb-1">
-                        {/* Espacio para la firma, se podría agregar imagen real si existe */}
-                        <img src="/firma.png" alt="Firma Director" className="mx-auto h-full object-contain opacity-80" />
-                    </div>
-                    <div className="border-t-2 border-black pt-2">
+                    <img
+                        src="/firma.png"
+                        alt="Firma Director"
+                        className="h-[85px] object-contain mb-1 translate-x-[30px] mix-blend-multiply relative z-0"
+                    />
+                    <div className="border-t-2 border-black w-full pt-2 relative z-10">
                         <p className="font-serif font-bold text-black uppercase text-[12px] tracking-widest leading-loose whitespace-nowrap">
                             CEO. Juan Manuel de la luz Sierra
                         </p>

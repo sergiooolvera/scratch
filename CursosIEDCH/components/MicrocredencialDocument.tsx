@@ -188,16 +188,14 @@ export default function MicrocredencialDocument({
                     </div>
 
                     {/* Right Column: Signature Block */}
-                    <div className="flex flex-col items-center w-[300px] text-center">
+                    <div className="flex flex-col items-center w-[300px] text-center relative">
                         {/* Signature Image */}
-                        <div className="h-[42px] flex items-center justify-center">
-                            <img
-                                src="/firma.png"
-                                alt="Firma Director General"
-                                className="h-[52px] object-contain opacity-95 -translate-y-3"
-                            />
-                        </div>
-                        <div className="border-t border-black w-full pt-1.5 mt-1">
+                        <img
+                            src="/firma.png"
+                            alt="Firma Director General"
+                            className="h-[65px] object-contain mix-blend-multiply relative z-0 mb-1 translate-x-[20px]"
+                        />
+                        <div className="border-t border-black w-full pt-1.5 mt-1 relative z-10">
                             <p className="text-[10px] font-bold text-slate-900 uppercase tracking-widest leading-none">
                                 DIRECTOR GENERAL
                             </p>

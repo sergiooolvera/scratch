@@ -151,12 +151,14 @@ export default function CertificadoModelo3({
             </div>
 
             {/* Signature Area */}
-            <div className="absolute bottom-[55px] left-0 right-0 flex flex-col items-center w-full z-30">
-                <div className="w-[480px] text-center">
-                    <div className="h-[65px] mb-1">
-                        <img src="/firma.png" alt="Firma Director" className="mx-auto h-full object-contain" />
-                    </div>
-                    <div className="border-t border-gray-400 w-full pt-1.5">
+            <div className="absolute bottom-[45px] left-0 right-0 flex flex-col items-center w-full z-30">
+                <div className="w-[480px] text-center relative flex flex-col items-center">
+                    <img
+                        src="/firma.png"
+                        alt="Firma Director"
+                        className="h-[85px] object-contain mb-1 translate-x-[30px] mix-blend-multiply relative z-0"
+                    />
+                    <div className="border-t border-gray-400 w-full pt-1.5 relative z-10">
                         <p className="font-sans font-bold text-[#0B1A3F] text-[12px] tracking-wide leading-tight">
                             CEO. Juan Manuel de la luz Sierra
                         </p>

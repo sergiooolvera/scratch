@@ -1,6 +1,25 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-09-14
+### Tarea: Elevación Vertical de la Firma para Descanso Limpio sobre la Línea de Firma
+
+#### Diagnóstico y Requerimiento:
+- **Solicitud del Usuario:** Elevar ligeramente la firma hacia arriba para que no "muerda" o se cruce por debajo de la línea de firma horizontal.
+- **Solución Implementada:**
+  - Se eliminó el margen inferior negativo (`-mb-4`) y se reemplazó por un margen positivo suave (`mb-1`).
+  - Con esto, la firma se eleva aproximadamente 16px, haciendo que la base del trazo descanse limpia y elegantemente justo por encima de la línea de firma `____` sin chocar ni cruzarla.
+
+#### Componentes Modificados:
+1. [`components/CertificadoDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoDocument.tsx): `h-[85px] mb-1 translate-x-[30px]`.
+2. [`components/CertificadoModelo2.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo2.tsx): `h-[85px] mb-1 translate-x-[30px]`.
+3. [`components/CertificadoModelo3.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CertificadoModelo3.tsx): `h-[85px] mb-1 translate-x-[30px]`.
+4. [`components/ActividadConstanciaDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/ActividadConstanciaDocument.tsx): `h-[85px] mb-1 translate-x-[30px]`.
+5. [`components/MicrocredencialDocument.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/MicrocredencialDocument.tsx): `h-[65px] mb-1 translate-x-[20px]`.
+
+#### Pruebas E2E y Validación:
+- Suite de pruebas de certificados ejecutada con Playwright (`npx playwright test e2e/certificates.spec.ts`), obteniendo **100% de pruebas aprobadas con éxito**.ebas aprobadas con éxito**.
+
+## Fecha: 2026-09-14
 ### Tarea: Cambio de Tono Visual a Naranja Tenue Warm en Cajas de Texto de Cursos
 
 #### Diagnóstico y Requerimiento:

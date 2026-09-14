@@ -150,21 +150,23 @@ export default function CertificadoDocument({
 
                 {/* Signature Area */}
                 <div className="flex flex-col items-center z-20 mt-auto">
-                    <img
-                        src="/firma.png"
-                        alt="Firma Director"
-                        className="h-[60px] object-contain mb-1"
-                    />
-                    <div className="border-t border-black w-[500px] pt-1.5 text-center">
-                        <p className="text-[11px] font-sans text-black">
-                            CEO. Juan Manuel de la luz Sierra
-                        </p>
-                        <p className="text-[12px] font-bold font-sans text-black">
-                            Director General
-                        </p>
-                        <p className="text-[9px] font-sans text-black mt-0.5 leading-tight">
-                            Instituto Educativo de Especialdiades para la Conducta y el Desarrollo Humano S.C.
-                        </p>
+                    <div className="relative flex flex-col items-center">
+                        <img
+                            src="/firma.png"
+                            alt="Firma Director"
+                            className="h-[85px] object-contain mb-1 translate-x-[30px] mix-blend-multiply relative z-0"
+                        />
+                        <div className="border-t border-black w-[500px] pt-1.5 text-center relative z-10">
+                            <p className="text-[11px] font-sans text-black">
+                                CEO. Juan Manuel de la luz Sierra
+                            </p>
+                            <p className="text-[12px] font-bold font-sans text-black">
+                                Director General
+                            </p>
+                            <p className="text-[9px] font-sans text-black mt-0.5 leading-tight">
+                                Instituto Educativo de Especialdiades para la Conducta y el Desarrollo Humano S.C.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
