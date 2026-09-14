@@ -1,5 +1,20 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-09-14
+### Tarea: Cambio de Tono Visual a Naranja Tenue Warm en Cajas de Texto de Cursos
+
+#### Diagnóstico y Requerimiento:
+- **Solicitud del Usuario:** Cambiar el matiz frío/azul previo por un tono cálido en la gama naranja tenue (`bg-orange-50`), garantizando una diferenciación visual clara y atractiva tanto en dispositivos móviles como en escritorios.
+- **Solución Implementada:**
+  - Se aplicó el fondo `bg-orange-50` (`#fff7ed`) y bordes suaves `border-orange-200` (`#fed7aa`) a todas las cajas de texto en creación (`/profesor/subir-curso`) y edición (`/profesor/editar-curso/[id]`), así como en `CompetenciasEditor` y `TemarioEditor`.
+  - Al interactuar (`focus:bg-white` y `focus:border-orange-500`), el campo pasa limpiamente a blanco con un aro de enfoque en tono naranja cálido (`focus:ring-2 focus:ring-orange-500/20`), ofreciendo una excelente legibilidad y estética coherente.
+
+#### Componentes Modificados:
+1. [`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx)
+2. [`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx)
+3. [`components/CompetenciasEditor.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/CompetenciasEditor.tsx)
+4. [`components/TemarioEditor.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/TemarioEditor.tsx)
+
 ## Fecha: 2026-09-12
 ### Tarea: Reemplazo del Icono de Corazón por el Icono de Carrito de Compras en Tarjetas de Cursos
 
