@@ -21,6 +21,12 @@
 - **Playwright E2E:** 4 de 4 pruebas aprobadas con éxito en `e2e/certificates.spec.ts`.
 - **Prueba en BD:** Validación simulada con la alumna Evelyn Cristal Rosas y el curso CAP, confirmando que `cursoPagoRequerido` evalúa a `false` y la constancia queda **DESBLOQUEADA**.
 
+#### Despliegue a Producción:
+- **Gestión de Ramas Git:**
+  1. Commit y push de la corrección a la rama `staging`.
+  2. Fusión (`merge`) de `staging` hacia `main` y push a GitHub (`git push origin main`), detonando el despliegue automático en Vercel para producción.
+  3. Retorno a la rama de trabajo `staging` (`git checkout staging`).
+
 ## Fecha: 2026-09-14
 ### Tarea: Elevación Vertical de la Firma para Descanso Limpio sobre la Línea de Firma
 
