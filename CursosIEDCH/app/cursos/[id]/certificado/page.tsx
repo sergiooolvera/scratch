@@ -17,7 +17,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
     }
 
     // Verify course & exam
-    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, competencias, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia, mostrar_calificacion_constancia, logo_url, mostrar_logo_constancia, plantilla_constancia').eq('id', id).single()
+    const { data: curso } = await supabase.from('ie_cursos').select('id, titulo, descripcion, competencias, duracion, vigencia_anos, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia, mostrar_calificacion_constancia, logo_url, mostrar_logo_constancia, plantilla_constancia, precio').eq('id', id).single()
     if (!curso) notFound()
 
     const maestroId = 'f160fe4d-5461-44c5-b868-51f1f0cae4c2';
@@ -54,7 +54,7 @@ export default async function CertificadoPage({ params }: { params: Promise<{ id
         .eq('curso_id', id)
         .eq('user_id', user.id)
         .single()
-    const cursoPagoRequerido = (curso.requiere_pago_completo || false) || esCreadoPorInstructor
+    const cursoPagoRequerido = (curso.requiere_pago_completo || false) || (esCreadoPorInstructor && (curso.precio === 0 || curso.precio === null))
     const pagoCompleto = cursoPagoRequerido ? (compra?.pago_completo || false) : true
 
     let fechaAprobacionObj: Date;

@@ -26,4 +26,9 @@ test.describe('Módulo de Validación de Constancias y Certificados', () => {
     const footerText = page.locator('text=/El Instituto Educativo de Especialdiades para la Conducta/i').first();
     await expect(footerText).toBeVisible({ timeout: 10000 });
   });
+
+  test('Debe redirigir al login al intentar acceder al certificado sin sesión', async ({ page }) => {
+    await page.goto('/cursos/bf2b42fb-221e-4cd8-989f-592f5de46b3b/certificado');
+    await expect(page).toHaveURL(/.*\/login.*/, { timeout: 15000 });
+  });
 });

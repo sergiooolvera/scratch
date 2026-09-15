@@ -84,11 +84,11 @@ export default function ConstanciaPage({ params }: { params: Promise<{ id: strin
             }
             setCreadorEsInstitucion(esCreadoPorInstitucion)
 
-            // Solo bloquear si el CURSO requiere pago completo O es de un instructor Y el alumno no lo pagó completo
-            const cursoPagoRequerido = (cur?.requiere_pago_completo || false) || esCreadoPorInstructor
+            // Solo bloquear si el CURSO requiere pago completo O es de un instructor con precio 0 Y el alumno no lo pagó completo
+            const cursoPagoRequerido = (cur?.requiere_pago_completo || false) || (esCreadoPorInstructor && (cur?.precio === 0 || cur?.precio === null))
             const alumnoPageCompleto = compra.pago_completo || false
             setPagoCompleto(!cursoPagoRequerido || alumnoPageCompleto) // true = puede ver constancia
-            setPrecioCurso(esCreadoPorInstructor ? 199 : cur?.precio)
+            setPrecioCurso((esCreadoPorInstructor && (cur?.precio === 0 || cur?.precio === null)) ? 199 : cur?.precio)
             setCursoId(id)
             setUserId(user.id)
 

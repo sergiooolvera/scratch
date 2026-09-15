@@ -31,7 +31,7 @@ export default async function ExpedientePage() {
     // 2. Obtener los detalles de los cursos comprados
     const { data: cursos } = await supabase
         .from('ie_cursos')
-        .select('id, titulo, descripcion, duracion, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia')
+        .select('id, titulo, descripcion, duracion, requiere_pago_completo, requiere_examen, creado_por, mostrar_constancia, precio')
         .in('id', comprasIds)
 
     if (!cursos || cursos.length === 0) {
@@ -80,7 +80,7 @@ export default async function ExpedientePage() {
         // Validar si requiere pago completo (rol creador es instructor, o requiere_pago_completo del curso es true)
         const creador = creadores?.find(p => p.id === curso.creado_por)
         const esCreadoPorInstructor = creador?.rol === 'instructor'
-        const cursoPagoRequerido = (curso.requiere_pago_completo || false) || esCreadoPorInstructor
+        const cursoPagoRequerido = (curso.requiere_pago_completo || false) || (esCreadoPorInstructor && (curso.precio === 0 || curso.precio === null))
         const pagoCompleto = cursoPagoRequerido ? (compra.pago_completo || false) : true
 
         if (!pagoCompleto) return null

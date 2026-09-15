@@ -1,5 +1,26 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-09-15
+### Tarea: Corrección de Validación de Pago Completo Obligatorio para Cursos de Instructores
+
+#### Diagnóstico y Requerimiento:
+- **Problema Detectado:** Alumnos que adquirieron un curso de pago con cupón de descuento no podían descargar su constancia (mostrando pantalla de "Constancia pendiente de pago") a pesar de que el instructor tenía desmarcado el checkbox **"Pago Completo Obligatorio"** en la configuración del curso.
+- **Causa Raíz:** En las vistas `app/cursos/[id]/certificado/page.tsx`, `app/cursos/[id]/constancia/page.tsx` y `app/mis-cursos/expediente/page.tsx`, la variable `cursoPagoRequerido` contenía la condición `|| esCreadoPorInstructor`. Esto forzaba a que cualquier curso creado por un instructor exigiera pago completo siempre, anulando e ignorando el estado de la casilla `requiere_pago_completo`.
+- **Solución Implementada:**
+  - Se unificó la lógica en todas las páginas con la regla definida en `app/cursos/[id]/page.tsx`: solo se exige pago completo si `curso.requiere_pago_completo` está activado (`true`) O si es un curso de instructor con precio gratuito (`curso.precio === 0 || curso.precio === null`) donde la constancia se cobra por separado.
+  - Al respetar el checkbox desmarcado (`requiere_pago_completo: false`), los alumnos inscritos con cupones en cursos de instructores pueden descargar su constancia sin bloqueos indebidos.
+
+#### Componentes Modificados:
+1. [`app/cursos/[id]/certificado/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/certificado/page.tsx): Se incluyó `precio` en la consulta y se ajustó `cursoPagoRequerido`.
+2. [`app/cursos/[id]/constancia/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/constancia/page.tsx): Se ajustó `cursoPagoRequerido` y cálculo de `setPrecioCurso`.
+3. [`app/mis-cursos/expediente/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/expediente/page.tsx): Se incluyó `precio` en la consulta y se ajustó `cursoPagoRequerido`.
+4. [`e2e/certificates.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/certificates.spec.ts): Se añadió prueba de protección de ruta para certificados.
+
+#### Pruebas E2E y Validación:
+- **TypeScript:** Verificación de tipos con `npx tsc --noEmit` superada sin errores.
+- **Playwright E2E:** 4 de 4 pruebas aprobadas con éxito en `e2e/certificates.spec.ts`.
+- **Prueba en BD:** Validación simulada con la alumna Evelyn Cristal Rosas y el curso CAP, confirmando que `cursoPagoRequerido` evalúa a `false` y la constancia queda **DESBLOQUEADA**.
+
 ## Fecha: 2026-09-14
 ### Tarea: Elevación Vertical de la Firma para Descanso Limpio sobre la Línea de Firma
 
