@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+
 import CourseHero from './CourseHero'
 import CourseSyllabus from './CourseSyllabus'
 import CourseCompetencies from './CourseCompetencies'
@@ -158,8 +159,15 @@ export default async function CursoDetailPage({ params }: { params: Promise<{ id
         compra = compraRes
         isPagado = compra?.pagado || false
         pagoCompleto = compra?.pago_completo || false
+    }
 
+    if (curso.estado === 'archivado' && !isPagado) {
+        redirect('/cursos?archivado=true')
+    }
+
+    if (user) {
         if (curso.requiere_examen) {
+
             const { data: examenRow } = await supabase
                 .from('ie_examenes')
                 .select('id')

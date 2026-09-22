@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Eye, X, FileText, PlayCircle, Trash2, Activity } from 'lucide-react'
+import { Eye, X, FileText, PlayCircle, Trash2, Activity, Archive, RotateCcw } from 'lucide-react'
 import { formatDuracion } from '@/utils/formatters'
 
 type Curso = any;
@@ -11,8 +11,10 @@ export default function AdminCursosPage() {
     const [cursos, setCursos] = useState<Curso[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
+    const [filtroEstado, setFiltroEstado] = useState<'todos' | 'aprobado' | 'archivado' | 'pendiente' | 'rechazado'>('todos')
     const [procesandoAccion, setProcesandoAccion] = useState<string | null>(null)
     const [userEmail, setUserEmail] = useState<string | null>(null)
+
 
     // Preview Modal state
     const [previewCurso, setPreviewCurso] = useState<Curso | null>(null)
@@ -138,7 +140,36 @@ export default function AdminCursosPage() {
         }
     }
 
+    const handleArchivarCurso = async (cursoId: string) => {
+        const confirmar = window.confirm("¿Estás seguro de que deseas archivar este curso? Dejará de mostrarse en los catálogos públicos, pero los usuarios que lo compraron seguirán teniendo acceso.");
+        if (!confirmar) return;
+
+        const { error } = await supabase.from('ie_cursos').update({ estado: 'archivado' }).eq('id', cursoId);
+
+        if (error) {
+            alert("Error al archivar el curso: " + error.message);
+        } else {
+            alert("El curso ha sido archivado exitosamente.");
+            setCursos(cursos.map(c => c.id === cursoId ? { ...c, estado: 'archivado' } : c));
+        }
+    }
+
+    const handleDesarchivarCurso = async (cursoId: string) => {
+        const confirmar = window.confirm("¿Estás seguro de que deseas desarchivar este curso? Se mostrará nuevamente en los catálogos públicos.");
+        if (!confirmar) return;
+
+        const { error } = await supabase.from('ie_cursos').update({ estado: 'aprobado' }).eq('id', cursoId);
+
+        if (error) {
+            alert("Error al desarchivar el curso: " + error.message);
+        } else {
+            alert("El curso ha sido desarchivado exitosamente.");
+            setCursos(cursos.map(c => c.id === cursoId ? { ...c, estado: 'aprobado' } : c));
+        }
+    }
+
     const handleAprobarCambios = async (cursoId: string, draft: any) => {
+
         const confirmar = window.confirm("¿Aprobar y publicar estos cambios? Reemplazarán la versión actual del curso en el catálogo.");
         if (!confirmar) return;
 
@@ -699,8 +730,9 @@ export default function AdminCursosPage() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8 relative">
-            <h1 className="text-2xl font-bold mb-6">Revisión de Cursos</h1>
-            <div className="mb-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Revisión de Cursos</h1>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+
                 <input
                     type="text"
                     placeholder="Buscar curso por título o instructor..."
@@ -708,7 +740,30 @@ export default function AdminCursosPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full md:w-1/3 px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm text-black bg-white"
                 />
+
+                <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 p-1.5 rounded-lg border border-gray-200">
+                    {[
+                        { key: 'todos', label: 'Todos' },
+                        { key: 'aprobado', label: 'Aprobados' },
+                        { key: 'archivado', label: 'Archivados' },
+                        { key: 'pendiente', label: 'Pendientes' },
+                        { key: 'rechazado', label: 'Rechazados' },
+                    ].map((tab) => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setFiltroEstado(tab.key as any)}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                                filtroEstado === tab.key
+                                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
             </div>
+
 
             {/* Modal Preview */}
             {previewCurso && (
@@ -895,18 +950,18 @@ export default function AdminCursosPage() {
             )}
 
             {/* Main Table */}
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+            <div className="bg-white shadow rounded-xl border border-gray-200 overflow-hidden">
+                <div className="overflow-auto max-h-[calc(100vh-250px)]">
+                    <table className="min-w-full divide-y divide-gray-200 border-separate border-spacing-0">
+                        <thead className="bg-gray-50 sticky top-0 z-20 shadow-sm">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Curso</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Instructor</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Super Curso</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado actual</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Revisar Contenido</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
+                            <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Curso</th>
+                            <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200 max-w-[200px]">Instructor / Autor</th>
+                            <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Precio</th>
+                            <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Super</th>
+                            <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Estado actual</th>
+                            <th className="px-4 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200">Revisar Contenido</th>
+                            <th className="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 border-b border-gray-200 sticky right-0 z-30 border-l border-gray-200 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">Acción</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -921,25 +976,32 @@ export default function AdminCursosPage() {
                             c.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             c.instructor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             c.creador?.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
-                        ).filter(c => c.estado !== 'eliminado').map(c => (
-                            <tr key={c.id}>
-                                <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs sm:max-w-sm whitespace-normal break-words">{c.titulo}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.creador?.nombre || c.instructor}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.precio}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <label className="inline-flex items-center gap-2 select-none">
+                        ).filter(c => c.estado !== 'eliminado')
+                        .filter(c => filtroEstado === 'todos' || c.estado === filtroEstado)
+                        .map(c => (
+                            <tr key={c.id} className="hover:bg-gray-50/70 transition-colors">
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900 max-w-[220px] sm:max-w-xs whitespace-normal break-words border-b border-gray-100">{c.titulo}</td>
+                                <td className="px-4 py-3 text-xs text-gray-600 max-w-[200px] whitespace-normal break-words leading-snug border-b border-gray-100">{c.creador?.nombre || c.instructor}</td>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 border-b border-gray-100">${c.precio}</td>
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 border-b border-gray-100">
+                                    <label className="inline-flex items-center gap-1.5 select-none cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={!!c.es_super_curso}
                                             onChange={(e) => handleSuperCursoToggle(c.id, e.target.checked)}
-                                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
                                         />
                                         <span className="text-xs font-semibold text-gray-700">Super</span>
                                     </label>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${c.estado === 'aprobado' ? 'bg-green-100 text-green-800' : c.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                                        {c.estado}
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 border-b border-gray-100">
+                                    <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
+                                        c.estado === 'aprobado' ? 'bg-green-100 text-green-800 border-green-200' :
+                                        c.estado === 'archivado' ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                                        c.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                        'bg-red-100 text-red-800 border-red-200'
+                                    }`}>
+                                        {c.estado === 'archivado' ? 'Archivado' : c.estado}
                                     </span>
                                     {c.cambios_pendientes && (
                                         <span className="block mt-1 px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
@@ -947,7 +1009,7 @@ export default function AdminCursosPage() {
                                         </span>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                <td className="px-4 py-3 whitespace-nowrap text-center border-b border-gray-100">
                                     <button
                                         onClick={() => c.cambios_pendientes ? handleOpenAudit(c) : handleOpenPreview(c)}
                                         className="inline-flex items-center px-3 py-1.5 border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-md text-xs font-medium transition-colors"
@@ -955,19 +1017,41 @@ export default function AdminCursosPage() {
                                         <Eye className="h-4 w-4 mr-1" /> {c.cambios_pendientes ? 'Ver Cambios' : 'Ver Módulos'}
                                     </button>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-500">
-                                    <div className="flex flex-col gap-1.5 min-w-[160px]">
+                                <td className="px-4 py-3 text-sm text-gray-500 sticky right-0 bg-white z-10 border-b border-l border-gray-200 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
+                                    <div className="flex flex-col gap-1.5 min-w-[150px]">
                                         <div className="flex items-center gap-2 w-full">
                                             {!c.cambios_pendientes && (
-                                                <select
-                                                    value={c.estado}
-                                                    onChange={(e) => handleEstadoChange(c.id, e.target.value)}
-                                                    className="block flex-1 pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
-                                                >
-                                                    <option value="pendiente">Pendiente</option>
-                                                    <option value="aprobado">Aprobado</option>
-                                                    <option value="rechazado">Rechazado</option>
-                                                </select>
+                                                <>
+                                                    {c.estado === 'aprobado' && (
+                                                        <button
+                                                            onClick={() => handleArchivarCurso(c.id)}
+                                                            className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors"
+                                                            title="Archivar curso (dejará de mostrarse en catálogos)"
+                                                        >
+                                                            <Archive className="h-3.5 w-3.5" /> Archivar
+                                                        </button>
+                                                    )}
+                                                    {c.estado === 'archivado' && (
+                                                        <button
+                                                            onClick={() => handleDesarchivarCurso(c.id)}
+                                                            className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors"
+                                                            title="Desarchivar curso (volverá a mostrarse en catálogos)"
+                                                        >
+                                                            <RotateCcw className="h-3.5 w-3.5" /> Desarchivar
+                                                        </button>
+                                                    )}
+                                                    {c.estado !== 'aprobado' && c.estado !== 'archivado' && (
+                                                        <select
+                                                            value={c.estado}
+                                                            onChange={(e) => handleEstadoChange(c.id, e.target.value)}
+                                                            className="block flex-1 pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-black bg-white"
+                                                        >
+                                                            <option value="pendiente">Pendiente</option>
+                                                            <option value="aprobado">Aprobado</option>
+                                                            <option value="rechazado">Rechazado</option>
+                                                        </select>
+                                                    )}
+                                                </>
                                             )}
                                             <button
                                                 onClick={() => handleEliminarCurso(c.id)}
@@ -999,13 +1083,14 @@ export default function AdminCursosPage() {
                             </tr>
                         ))}
                         {cursos.length === 0 && !loading && (
-                            <tr><td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">No hay cursos creados</td></tr>
+                            <tr><td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500 bg-white">No hay cursos creados</td></tr>
                         )}
-                        {loading && <tr><td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">Cargando...</td></tr>}
+                        {loading && <tr><td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500 bg-white">Cargando...</td></tr>}
                     </tbody>
                  </table>
                  </div>
              </div>
+
         </div>
     )
 }

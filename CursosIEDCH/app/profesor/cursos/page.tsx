@@ -101,7 +101,8 @@ export default function ProfesorCursosPage() {
                                 </div>
                                 <div className="text-sm text-gray-500 space-y-1 mb-6 flex-grow">
                                     <p className="flex items-center"><Clock className="h-4 w-4 mr-1.5" /> {formatDuracion(curso.duracion)}</p>
-                                    <p className="flex items-center"><Activity className="h-4 w-4 mr-1.5" /> Estado: <span className="ml-1 capitalize text-blue-600 font-medium">{curso.estado}</span></p>
+                                    <p className="flex items-center"><Activity className="h-4 w-4 mr-1.5" /> Estado: <span className={`ml-1 capitalize font-medium ${curso.estado === 'archivado' ? 'text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200' : 'text-blue-600'}`}>{curso.estado}</span></p>
+
                                     <p className="flex items-center font-semibold text-gray-700 mt-2">${curso.precio} MXN</p>
                                     {(curso.reunion_url || curso.nota_profesor) && (
                                         <p className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full inline-block mt-2">

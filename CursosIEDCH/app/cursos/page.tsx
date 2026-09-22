@@ -127,7 +127,13 @@ function CursosContent() {
 
             {/* Secciones de Buscador y Resultados */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+                {searchParams.get('archivado') === 'true' && (
+                    <div className="mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-800 rounded-xl shadow-sm">
+                        <p className="font-semibold text-sm">⚠️ El curso que intentaste consultar se encuentra archivado y no acepta nuevas inscripciones.</p>
+                    </div>
+                )}
                 {/* Formulario de Búsqueda y Filtros */}
+
                 <form action="/cursos" method="GET" className="bg-white rounded-2xl shadow-md border border-slate-200 p-4 mb-8 flex flex-col md:flex-row gap-4 items-center">
                     <div className="flex-grow flex items-center bg-slate-50 rounded-xl px-4 py-3 w-full border border-slate-200">
                         <Search className="w-5 h-5 text-slate-400 mr-3 flex-shrink-0" />

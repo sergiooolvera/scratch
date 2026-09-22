@@ -1,5 +1,39 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-09-21
+### Tarea: Implementación de Archivar/Desarchivar Cursos y Optimización de Layout de Tabla Admin
+
+#### Diagnóstico y Requerimiento:
+- **Solicitud del Usuario:** 
+  1. En `/admin/cursos`, agregar botones para Archivar y Desarchivar cursos.
+  2. Solucionar el problema de desplazamiento horizontal excesivo provocado por nombres muy largos de profesores/autores (ej. *"UNIDAD MULTIDISCIPLINARIA DE SALD Y DESARROLLO HUMANO"*), obligando al administrador a scrollear hasta el fondo para deslizar la barra y encontrar los botones de acción.
+- **Solución Implementada:**
+  - **Base de Datos:** Se creó el script SQL `agregar_estado_archivado.sql` que actualiza la restricción `ie_cursos_estado_check` para permitir `'archivado'` como estado válido en `ie_cursos`, y se añadió el índice de rendimiento `idx_ie_cursos_estado` sobre la columna `estado`. Se actualizaron también `esquema_produccion.sql` y `crear_indices_rendimiento.sql`.
+  - **Administración (`/admin/cursos`):** 
+    - Se agregaron botones de filtro por estado (Todos, Aprobados, Archivados, Pendientes, Rechazados).
+    - Se implementaron botones **Archivar** (en estado `'aprobado'`) y **Desarchivar** (en estado `'archivado'`) con diálogos de confirmación modal.
+    - Se fijó la columna de **Acción** a la derecha (`sticky right-0 bg-white z-10 border-l border-gray-200 shadow-sm`), manteniendo SIEMPRE visibles los botones de Archivar/Desarchivar, Ver Módulos y Eliminar.
+    - Se limitó el ancho del nombre de autor/instructor a `max-w-[200px] whitespace-normal break-words` para envolver los nombres largos limpiamente.
+    - Se añadió scroll vertical interno con cabecera pegajosa (`sticky top-0 z-20`) y padding compacto (`px-4 py-3`).
+  - **Acceso a Catálogos:** Las consultas en `/cursos`, Dashboard y Academias continúan filtrando solo cursos `aprobado`. Si un usuario no inscrito ingresa por URL directa a un curso archivado (`/cursos/[id]`), se le redirige a `/cursos?archivado=true` con un aviso informativo.
+  - **Mis Cursos (`/mis-cursos`):** Se actualizó la consulta a `.in('estado', ['aprobado', 'archivado'])`, garantizando acceso continuo a compradores de cursos archivados.
+
+#### Componentes y Archivos Modificados:
+1. [`agregar_estado_archivado.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_estado_archivado.sql): Migración SQL para el estado 'archivado' e índice de rendimiento.
+2. [`esquema_produccion.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql): Actualización del esquema general con índice y restricción.
+3. [`crear_indices_rendimiento.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/crear_indices_rendimiento.sql): Registro del índice `idx_cursos_estado`.
+4. [`app/admin/cursos/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/cursos/page.tsx): Interfaz administrativa con filtros, columna pegajosa a la derecha y autor a 200px.
+5. [`app/mis-cursos/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/mis-cursos/page.tsx): Consulta expandida a cursos aprobados y archivados para compradores.
+6. [`app/cursos/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/%5Bid%5D/page.tsx): Redirección a `/cursos?archivado=true` para no compradores.
+7. [`app/cursos/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/cursos/page.tsx): Banner informativo para cursos archivados.
+8. [`app/profesor/cursos/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/cursos/page.tsx): Distintivo para cursos archivados en vista de profesor.
+9. [`e2e/admin-archivar-curso.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/admin-archivar-curso.spec.ts): Pruebas E2E de la funcionalidad y maquetado.
+
+#### Pruebas E2E y Validación:
+- **Playwright E2E:** 2 de 2 pruebas pasadas con éxito en `e2e/admin-archivar-curso.spec.ts`.
+- **Regresión:** 4 de 4 pruebas pasadas con éxito en `e2e/admin.spec.ts`.
+
+
 ## Fecha: 2026-09-15
 ### Tarea: Corrección de Validación de Pago Completo Obligatorio para Cursos de Instructores
 

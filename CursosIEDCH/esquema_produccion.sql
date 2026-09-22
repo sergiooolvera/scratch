@@ -659,6 +659,14 @@ USING (
 -- Índice de rendimiento para temario en ie_cursos
 CREATE INDEX IF NOT EXISTS idx_ie_cursos_temario ON public.ie_cursos USING gin (temario);
 
+-- Índice de rendimiento para estado en ie_cursos
+CREATE INDEX IF NOT EXISTS idx_ie_cursos_estado ON public.ie_cursos (estado);
+
+-- Restricción de estado en ie_cursos
+ALTER TABLE public.ie_cursos DROP CONSTRAINT IF EXISTS ie_cursos_estado_check;
+ALTER TABLE public.ie_cursos ADD CONSTRAINT ie_cursos_estado_check CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'borrador', 'eliminado', 'archivado'));
+
 -- Índice de rendimiento para clases virtuales por módulo
 CREATE INDEX IF NOT EXISTS idx_ie_curso_modulos_reunion_url ON public.ie_curso_modulos (reunion_url) WHERE reunion_url IS NOT NULL;
+
 
