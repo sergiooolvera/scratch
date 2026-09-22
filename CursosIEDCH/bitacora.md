@@ -1,6 +1,32 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-09-21
+### Tarea: Implementación de Modal Interactivo de Aval Académico en Página Principal e Integración con Catálogo de Cursos
+
+#### Diagnóstico y Requerimiento:
+- **Solicitud del Usuario:** En la página principal "Inicio" (`/`), hacer que la tarjeta/sección "Aval Académico" sea interactiva y despliegue un modal con la información institucional detallada (fiel al diseño provisto).
+- **Acción del Botón:** Dentro del modal, el botón **"Ver cursos con aval académico"** debe dirigir al usuario al catálogo general de cursos (`/cursos`).
+
+#### Solución Implementada:
+- **Componente Modal (`AvalAcademicoModal.tsx`):** Se creó [`components/landing/AvalAcademicoModal.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/AvalAcademicoModal.tsx) replicando de forma fiel la estructura visual:
+  - Encabezado con ícono de graduación en naranja, título "Aval académico" y descripción destacada de instituciones educativas.
+  - Ilustración de alta definición generada por IA ([`mapa_americas_aval.jpg`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/public/images/mapa_americas_aval.jpg)) de la silueta del continente americano en tono lila/lavanda con 3 nodos blancos interconectados por líneas curvadas en la esquina superior derecha del modal.
+  - Tarjeta de Respaldo Académico destacando al *Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C.* con la píldora de 3 ítems (*Valor curricular • Respaldo académico • Constancia verificable*).
+  - Sección *"¿Qué significa para el estudiante?"* con 3 tarjetas informativas en icono naranja y nota aclaratoria sobre las fichas de los cursos.
+  - Botón principal en gradiente naranja *"Ver cursos con aval académico →"* enlazado a `/cursos` y botón secundario *"Cerrar"*.
+- **Componente Banner Interactivo (`AvalAcademicoBanner.tsx`):** Se creó [`components/landing/AvalAcademicoBanner.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/AvalAcademicoBanner.tsx) para controlar la apertura y cierre del modal y habilitar hover/click en toda la tarjeta.
+- **Integración:** En [`components/landing/PopularCourses.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx), se reemplazó el banner estático previo por el nuevo componente interactivo `AvalAcademicoBanner`.
+- **Pruebas E2E de Playwright (`e2e/landing.spec.ts`):** Se agregó una prueba automatizada en [`e2e/landing.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts) que valida el flujo completo (apertura del modal al hacer clic en el banner o botón "Conoce más", verificación del contenido e institución, y navegación exitosa a `/cursos`).
+
+#### Componentes y Archivos Modificados:
+1. [`components/landing/AvalAcademicoModal.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/AvalAcademicoModal.tsx): Componente modal del Aval Académico.
+2. [`components/landing/AvalAcademicoBanner.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/AvalAcademicoBanner.tsx): Banner cliente con trigger para abrir el modal.
+3. [`components/landing/PopularCourses.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx): Renderización del banner interactivo.
+4. [`e2e/landing.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts): Pruebas E2E de interacción y navegación.
+
+---
+
+## Fecha: 2026-09-21
 ### Tarea: Implementación de Archivar/Desarchivar Cursos y Optimización de Layout de Tabla Admin
 
 #### Diagnóstico y Requerimiento:

@@ -181,6 +181,36 @@ test.describe('Landing Page', () => {
     await expect(page.locator('section#contacto')).toContainText('WhatsApp Business');
     await expect(page.locator('section#contacto')).toContainText('+52 (729) 818-4978');
   });
+
+  test('Debe abrir el modal de Aval Académico al hacer clic en la tarjeta o botón y dirigir al catálogo de cursos', async ({ page }) => {
+    await page.goto('/');
+
+    // Buscar la sección o tarjeta del banner Aval Académico
+    const bannerAval = page.locator('text=AVAL ACADÉMICO').first();
+    await expect(bannerAval).toBeVisible();
+
+    // Hacer clic en "Conoce más" dentro del banner
+    const botonConoceMas = page.getByRole('button', { name: /Conoce más/i });
+    await botonConoceMas.click();
+
+    // Verificar que el modal se muestre
+    const modal = page.locator('div[role="dialog"]');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('#modal-title')).toContainText('Aval');
+    await expect(modal.locator('#modal-title')).toContainText('académico');
+    await expect(modal.locator('text=Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C.')).toBeVisible();
+    await expect(modal.getByText('Valor curricular', { exact: true })).toBeVisible();
+    await expect(modal.getByText('Respaldo académico', { exact: true }).first()).toBeVisible();
+    await expect(modal.getByText('Constancia verificable', { exact: true })).toBeVisible();
+
+    // Verificar el botón "Ver cursos con aval académico"
+    const botonVerCursos = modal.getByRole('link', { name: /Ver cursos con aval académico/i });
+    await expect(botonVerCursos).toBeVisible();
+    await botonVerCursos.click();
+
+    // Verificar redirección al catálogo general de cursos
+    await expect(page).toHaveURL(/\/cursos/);
+  });
 });
 
 
