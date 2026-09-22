@@ -23,6 +23,13 @@
 2. [`components/landing/AvalAcademicoBanner.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/AvalAcademicoBanner.tsx): Banner cliente con trigger para abrir el modal.
 3. [`components/landing/PopularCourses.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/PopularCourses.tsx): Renderización del banner interactivo.
 4. [`e2e/landing.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts): Pruebas E2E de interacción y navegación.
+5. [`public/images/mapa_americas_aval.jpg`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/public/images/mapa_americas_aval.jpg): Ilustración del mapa del continente americano en tono lila/lavanda.
+
+#### Despliegue a Producción:
+- **Gestión de Ramas Git:**
+  1. Commit y push de la función en la rama `staging`.
+  2. Fusión (`git merge staging`) y push a la rama `main`, activando el despliegue automático en Vercel para producción.
+  3. Retorno a la rama activa de desarrollo `staging` (`git checkout staging`).
 
 ---
 
