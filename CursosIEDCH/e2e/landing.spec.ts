@@ -211,6 +211,30 @@ test.describe('Landing Page', () => {
     // Verificar redirección al catálogo general de cursos
     await expect(page).toHaveURL(/\/cursos/);
   });
+
+  test('Debe visualizarse correctamente el modal de Aval Académico en pantalla móvil (375x667) con botón de cierre e icono visibles', async ({ page }) => {
+    // Configurar viewport de celular (pantalla pequeña)
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+
+    const bannerAval = page.locator('text=AVAL ACADÉMICO').first();
+    await expect(bannerAval).toBeVisible();
+
+    const botonConoceMas = page.getByRole('button', { name: /Conoce más/i });
+    await botonConoceMas.click();
+
+    const modal = page.locator('div[role="dialog"]');
+    await expect(modal).toBeVisible();
+
+    // Verificar visibilidad del título, icono de cierre X y botón de acción en móvil
+    await expect(modal.locator('#modal-title')).toBeVisible();
+    await expect(modal.getByRole('button', { name: 'Cerrar modal' })).toBeVisible();
+    await expect(modal.getByRole('link', { name: /Ver cursos con aval académico/i })).toBeVisible();
+
+    // Cerrar el modal mediante el botón X
+    await modal.getByRole('button', { name: 'Cerrar modal' }).click();
+    await expect(modal).not.toBeVisible();
+  });
 });
 
 
