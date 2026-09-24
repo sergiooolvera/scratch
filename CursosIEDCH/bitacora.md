@@ -8,9 +8,9 @@
 - **Acción del Botón:** Dentro del modal, el botón **"Ver cursos con aval académico"** debe dirigir al usuario al catálogo general de cursos (`/cursos`).
 
 #### Solución Implementada:
-- **Componente Modal (`AvalAcademicoModal.tsx`):** Se creó [`components/landing/AvalAcademicoModal.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/AvalAcademicoModal.tsx) replicando de forma fiel la estructura visual:
-  - Encabezado con ícono de graduación en naranja, título "Aval académico" y descripción destacada de instituciones educativas.
-  - Ilustración de alta definición generada por IA ([`mapa_americas_aval.jpg`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/public/images/mapa_americas_aval.jpg)) de la silueta del continente americano en tono lila/lavanda con 3 nodos blancos interconectados por líneas curvadas en la esquina superior derecha del modal.
+- **Componente Modal (`AvalAcademicoModal.tsx`):** Se creó y optimizó [`components/landing/AvalAcademicoModal.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/AvalAcademicoModal.tsx) replicando de forma fiel la estructura visual:
+  - **Ajuste Responsivo para Celulares**: Se incorporó altura máxima relativa (`max-h-[88vh] sm:max-h-[90vh]`), scroll vertical interno suave (`overflow-y-auto custom-scrollbar`) y centrado vertical automático (`my-auto`). Esto garantiza que en pantallas móviles pequeñas de smartphone (iOS/Android), el modal no sufra desbordamientos superiores ni recortes.
+  - **Botonería e Iconos Visibles**: Se reposicionó el botón de cierre `X` (`top-3 right-3 sm:top-5 sm:right-5 z-30`) y se ajustó la ilustración del mapa decorativo ([`mapa_americas_aval.jpg`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/public/images/mapa_americas_aval.jpg)), manteniendo siempre 100% visible el encabezado, título, badges y botones de acción.
   - Tarjeta de Respaldo Académico destacando al *Instituto Educativo de Especialidades para la Conducta y el Desarrollo Humano S.C.* con la píldora de 3 ítems (*Valor curricular • Respaldo académico • Constancia verificable*).
   - Sección *"¿Qué significa para el estudiante?"* con 3 tarjetas informativas en icono naranja y nota aclaratoria sobre las fichas de los cursos.
   - Botón principal en gradiente naranja *"Ver cursos con aval académico →"* enlazado a `/cursos` y botón secundario *"Cerrar"*.
