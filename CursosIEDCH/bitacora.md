@@ -24,6 +24,12 @@
    - Valida la ausencia de la imagen anterior de los niños, la correcta presencia del elemento `<video>` con sus atributos `src` y `poster`, y la interacción del botón de reproducción.
    - Ejecución y validación exitosa de los 17 tests de la suite (`npx playwright test e2e/landing.spec.ts`).
 
+#### Despliegue a Producción:
+- **Gestión de Ramas Git:**
+  1. Commit y push de la función en la rama `staging` (`git push origin staging`).
+  2. Fusión (`git merge staging`) y push a la rama `main` (`git push origin main`), activando el despliegue automático en Vercel para producción.
+  3. Retorno a la rama activa de desarrollo `staging` (`git checkout staging`).
+
 ---
 
 ## Fecha: 2026-09-21
