@@ -235,6 +235,34 @@ test.describe('Landing Page', () => {
     await modal.getByRole('button', { name: 'Cerrar modal' }).click();
     await expect(modal).not.toBeVisible();
   });
+
+  test('Debe mostrar el video institucional en la portada en lugar de la imagen de niños y permitir su reproducción', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Verificar que la imagen previa de los niños no esté presente en el Hero
+    await expect(page.locator('#home img[src*="cover_bg_1.jpg"]')).toHaveCount(0);
+
+    // 2. Verificar que el elemento video esté presente con la fuente videoegac.mp4 y poster
+    const videoLocator = page.locator('#home video');
+    await expect(videoLocator).toBeVisible();
+    await expect(videoLocator).toHaveAttribute('src', '/videoegac.mp4');
+    await expect(videoLocator).toHaveAttribute('poster', '/images/videoegac_poster.jpg');
+
+    // 3. Verificar que el botón de reproducción esté visible
+    const playBtn = page.getByRole('button', { name: /Reproducir video de Grupo EGAC/i });
+    await expect(playBtn).toBeVisible();
+
+    // 4. Hacer clic en reproducir y verificar que el video comience a reproducirse y los controles se activen
+    await playBtn.click();
+    await page.waitForTimeout(500);
+
+    const isPlaying = await page.evaluate(() => {
+      const v = document.querySelector('#home video') as HTMLVideoElement | null;
+      return v !== null && !v.paused;
+    });
+    expect(isPlaying).toBe(true);
+    await expect(videoLocator).toHaveAttribute('controls', '');
+  });
 });
 
 

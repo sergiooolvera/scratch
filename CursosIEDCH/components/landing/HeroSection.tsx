@@ -1,8 +1,21 @@
-import { Play, ArrowRight, ShieldCheck, ChevronRight } from 'lucide-react'
+'use client'
+
+import { useState, useRef } from 'react'
+import { Play, ShieldCheck, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
 export default function HeroSection() {
+  const [hasStarted, setHasStarted] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const handlePlay = () => {
+    if (videoRef.current) {
+      videoRef.current.play()
+      setHasStarted(true)
+    }
+  }
+
   return (
     <section id="home" className="relative bg-[#0b1b36] pt-20 pb-10 lg:pt-28 lg:pb-12 overflow-hidden">
       {/* Background Image & Overlay */}
@@ -51,31 +64,38 @@ export default function HeroSection() {
           {/* Right Video Content */}
           <div className="relative">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 aspect-video bg-gray-900 group">
-              <Image 
-                src="/images/cover_bg_1.jpg" 
-                alt="Video Thumbnail" 
-                fill 
-                className="object-cover opacity-60"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-              
-              <div className="absolute inset-0 flex items-center justify-center">
-                <button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full p-5 shadow-lg shadow-indigo-600/50 transform group-hover:scale-110 transition-all">
-                  <Play className="w-10 h-10 ml-1" fill="currentColor" />
-                </button>
-              </div>
+              <video
+                ref={videoRef}
+                src="/videoegac.mp4"
+                poster="/images/videoegac_poster.jpg"
+                playsInline
+                preload="metadata"
+                controls={hasStarted}
+                onEnded={() => setHasStarted(false)}
+                className="w-full h-full object-cover"
+                aria-label="Video institucional de Grupo EGAC"
+              >
+                Tu navegador no soporta la reproducción de video.
+              </video>
 
-              <div className="absolute top-6 left-6 flex items-center gap-3">
-                <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 flex items-center gap-2">
-                   <span className="font-bold text-white tracking-wider">GRUPO EGAC</span>
-                   <ShieldCheck className="w-4 h-4 text-blue-400" />
+              {!hasStarted && (
+                <div 
+                  onClick={handlePlay}
+                  className="absolute inset-0 bg-black/25 hover:bg-black/35 transition-colors flex items-center justify-center cursor-pointer group/btn"
+                >
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handlePlay()
+                    }}
+                    aria-label="Reproducir video de Grupo EGAC"
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full p-5 shadow-2xl shadow-indigo-600/60 transform group-hover/btn:scale-110 transition-transform flex items-center justify-center"
+                  >
+                    <Play className="w-10 h-10 ml-1 fill-white" />
+                  </button>
                 </div>
-              </div>
-
-              <div className="absolute bottom-6 left-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Bienvenido a EGAC</h3>
-                <p className="text-gray-300 max-w-sm text-sm">Conoce nuestra misión, visión y el impacto que generamos.</p>
-              </div>
+              )}
             </div>
           </div>
 

@@ -1,5 +1,31 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-10-27
+### Tarea: Sustitución de Imagen de Portada por Video Institucional `videoegac.mp4` en el Hero de la Landing Page
+
+#### Diagnóstico y Requerimiento:
+- **Solicitud del Usuario:** En la portada principal de la plataforma (`/`), sustituir la imagen previa de los niños (`/images/cover_bg_1.jpg`) por el video corporativo subido a `public/videoegac.mp4`.
+- **Análisis Técnico y UX:**
+  - El video institucional `public/videoegac.mp4` tiene una duración de ~21 segundos, resolución 848x480 (16:9) y contiene pista de audio con el mensaje corporativo de Grupo EGAC (*"¿Quiénes somos? Ecosistema Global de Acreditación y Certificación"*).
+  - La imagen previa estática con niños en un laptop de plantilla generaba superposición redundante con las insignias y textos del Hero.
+  - Para ofrecer una experiencia fluida, rápida y sin retardos ni pantallas negras en dispositivos móviles (iOS/Android) o navegadores de escritorio, se generó un póster optimizado a partir del frame inicial del video (`public/images/videoegac_poster.jpg`).
+  - Se estructuró un reproductor interactivo en el componente Hero que despliega el póster institucional de bienvenida con botón de reproducción centralizado (`Play`). Al hacer clic, se inicia la reproducción fluida del video con audio y se activan los controles nativos del navegador (`controls`) permitiendo pausar, adelantar, ajustar volumen y maximizar en pantalla completa. Al finalizar el video, el reproductor regresa limpiamente al estado inicial.
+
+#### Solución Implementada:
+1. **Actualización de [`HeroSection.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/landing/HeroSection.tsx):**
+   - Se convirtió en componente cliente (`'use client'`).
+   - Se integró la etiqueta `<video>` con `src="/videoegac.mp4"`, `poster="/images/videoegac_poster.jpg"`, `playsInline` y `preload="metadata"`.
+   - Se añadió control interactivo de inicio de reproducción (`hasStarted`) para mostrar los controles nativos una vez que el usuario presiona el botón central "Reproducir".
+   - Se removió la imagen estática `/images/cover_bg_1.jpg` y las etiquetas superpuestas que colisionaban con el texto original del video institucional.
+2. **Generación de Imagen Poster (`public/images/videoegac_poster.jpg`):**
+   - Fotograma representativo y nítido a 848x480 que garantiza tiempos de carga inmediatos y estética profesional antes de iniciar la reproducción.
+3. **Pruebas Automatizadas E2E ([`e2e/landing.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/landing.spec.ts)):**
+   - Se agregó la prueba `Debe mostrar el video institucional en la portada en lugar de la imagen de niños y permitir su reproducción`.
+   - Valida la ausencia de la imagen anterior de los niños, la correcta presencia del elemento `<video>` con sus atributos `src` y `poster`, y la interacción del botón de reproducción.
+   - Ejecución y validación exitosa de los 17 tests de la suite (`npx playwright test e2e/landing.spec.ts`).
+
+---
+
 ## Fecha: 2026-09-21
 ### Tarea: Implementación de Modal Interactivo de Aval Académico en Página Principal e Integración con Catálogo de Cursos
 
