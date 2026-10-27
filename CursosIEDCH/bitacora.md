@@ -989,7 +989,10 @@
    - Se creó una nueva suite de pruebas E2E en [`e2e/profesor-revision-cuestionarios.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/profesor-revision-cuestionarios.spec.ts).
    - Pruebas ejecutadas con Playwright:
      - `e2e/profesor-revision-cuestionarios.spec.ts`: **3 de 3 pasadas (100% éxito)**.
-     - `e2e/instructor.spec.ts`: **9 de 9 pasadas (100% éxito sin regresiones)**.
+5. **Despliegue a Producción:**
+   - Cambios fusionados y subidos a la rama `main` de GitHub (`7745da4`), activando el despliegue automático en Vercel para producción ([https://www.grupoegac.com](https://www.grupoegac.com)).
+   - Entorno de trabajo devuelto a la rama `staging`.
+
 
 
 
