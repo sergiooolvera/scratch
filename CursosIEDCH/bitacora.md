@@ -959,5 +959,38 @@
 4. **Despliegue a Producción:**
    - Cambios fusionados a la rama `main` y desplegados exitosamente en Vercel ([https://www.grupoegac.com](https://www.grupoegac.com)).
 
+---
+
+## Fecha: 2026-10-27
+### Tarea: Corrección y Enriquecimiento de la Vista de Revisión de Cuestionarios Abiertos del Profesor
+
+#### Diagnóstico del Problema:
+- **Reporte del Usuario:** El usuario reportó no ver los cuestionarios de preguntas abiertas desde su cuenta de docente (`profesor@iedch.edu.mx` en el curso `CAP-Integración Profesional al Entorno Clínico`), mostrando una captura de pantalla donde la vista indicaba: *"Cuestionarios del curso: Este curso no tiene entregas de cuestionarios todavía."* y ningún detalle ni pregunta a la derecha.
+- **Causa Raíz Identificada:**
+  1. **Lógica Exclusiva de Entregas Recibidas:** La ruta [`app/profesor/revision-cuestionarios/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/revision-cuestionarios/page.tsx) únicamente consultaba `ie_cuestionario_respuestas`. Al no haber respuestas enviadas aún por los alumnos (ya que las preguntas se crearon el 24 de septiembre y los alumnos cursaron a principios de septiembre), el array de entregas estaba vacío y la interfaz no mostraba los cuestionarios configurados ni las preguntas activas del curso.
+  2. **Invisibilidad de Preguntas y Estado de Alumnos:** El docente no disponía de ningún medio para verificar las preguntas abiertas que había configurado en los módulos de su curso ni de conocer qué alumnos estaban inscritos pendientes de responder.
+  3. **Discrepancia en Políticas RLS de Postgres:** La migración anterior de `ie_cuestionario_preguntas` e `ie_cuestionario_respuestas` solo contemplaba los roles `'admin'` y `'profesor'`, omitiendo el rol oficial `'instructor'` (así como `'capacitador'` e `'institucion'`) asignado en `ie_profiles`.
+  4. **Falta de Índices de Rendimiento en Esquema:** No se encontraban registrados los índices en `esquema_produccion.sql` para las claves foráneas de cuestionarios abiertos (`modulo_id`, `pregunta_id`, `user_id`, `created_at`).
+
+#### Acciones Realizadas:
+1. **Enriquecimiento del Backend (`app/profesor/revision-cuestionarios/page.tsx`):**
+   - Se extendió la consulta para obtener los módulos con cuestionario activo (`requiere_cuestionario: true`) y sus preguntas asociadas desde [`ie_cuestionario_preguntas`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql#L182).
+   - Se consultaron las compras pagadas (`ie_compras`) y los perfiles de los alumnos inscritos para suministrar un conteo y listado de alumnos del curso.
+   - Se estructuró y envió la información completa en el prop `cuestionariosInfo` hacia el cliente.
+2. **Rediseño Completo de la Experiencia Docente (`RevisionCuestionariosClient.tsx`):**
+   - **Resumen Métrico del Curso:** Al seleccionar un curso, muestra de inmediato un badge de estado ("Cuestionario Abierto Configurado y Activo"), total de preguntas activas, total de alumnos inscritos, cuestionarios por evaluar y evaluados.
+   - **Tarjeta de Módulo con Preguntas:** Permite alternar y hacer clic en *"Ver Preguntas"* para previsualizar al instante todas las preguntas configuradas en el panel lateral derecho con botón directo para editarlas en el curso.
+   - **Estado Informativo Transparente:** Si aún no hay respuestas enviadas, se muestra un banner explicativo claro: *"Cuestionario Activo — En espera de respuestas de alumnos. Actualmente ninguno de tus alumnos inscritos ha enviado sus respuestas aún. En cuanto un alumno responda, su entrega aparecerá aquí automáticamente."* junto al listado de alumnos inscritos con badge de *"Pendiente de entrega"*.
+   - **Flujo de Calificación Intacto:** Cuando existen entregas, se mantiene la selección fluida para evaluar pregunta por pregunta con badges y retroalimentación personalizada.
+3. **Optimización de Base de Datos y Esquema:**
+   - Se creó el archivo de migración [`fix_cuestionarios_rls_indices.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/fix_cuestionarios_rls_indices.sql) con índices de rendimiento y políticas RLS actualizadas con soporte para los roles `'admin', 'instructor', 'profesor', 'capacitador', 'institucion'`.
+   - Se actualizó [`esquema_produccion.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql) con los índices y políticas completas.
+4. **Pruebas Automatizadas con Playwright:**
+   - Se creó una nueva suite de pruebas E2E en [`e2e/profesor-revision-cuestionarios.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/profesor-revision-cuestionarios.spec.ts).
+   - Pruebas ejecutadas con Playwright:
+     - `e2e/profesor-revision-cuestionarios.spec.ts`: **3 de 3 pasadas (100% éxito)**.
+     - `e2e/instructor.spec.ts`: **9 de 9 pasadas (100% éxito sin regresiones)**.
+
+
 
 

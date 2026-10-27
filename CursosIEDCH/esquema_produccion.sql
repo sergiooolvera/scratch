@@ -669,4 +669,71 @@ ALTER TABLE public.ie_cursos ADD CONSTRAINT ie_cursos_estado_check CHECK (estado
 -- Índice de rendimiento para clases virtuales por módulo
 CREATE INDEX IF NOT EXISTS idx_ie_curso_modulos_reunion_url ON public.ie_curso_modulos (reunion_url) WHERE reunion_url IS NOT NULL;
 
+-- Índices de rendimiento para Cuestionarios Abiertos
+CREATE INDEX IF NOT EXISTS idx_ie_cuestionario_preguntas_modulo_id ON public.ie_cuestionario_preguntas(modulo_id);
+CREATE INDEX IF NOT EXISTS idx_ie_cuestionario_respuestas_pregunta_id ON public.ie_cuestionario_respuestas(pregunta_id);
+CREATE INDEX IF NOT EXISTS idx_ie_cuestionario_respuestas_user_id ON public.ie_cuestionario_respuestas(user_id);
+CREATE INDEX IF NOT EXISTS idx_ie_cuestionario_respuestas_created_at ON public.ie_cuestionario_respuestas(created_at);
+
+-- Habilitar RLS en Cuestionarios Abiertos
+ALTER TABLE public.ie_cuestionario_preguntas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ie_cuestionario_respuestas ENABLE ROW LEVEL SECURITY;
+
+-- Políticas para ie_cuestionario_preguntas
+DROP POLICY IF EXISTS "Docentes y Admins gestionan preguntas de cuestionario" ON public.ie_cuestionario_preguntas;
+DROP POLICY IF EXISTS "Cualquier usuario autenticado puede ver las preguntas" ON public.ie_cuestionario_preguntas;
+
+CREATE POLICY "Docentes y Admins gestionan preguntas de cuestionario" 
+ON public.ie_cuestionario_preguntas 
+FOR ALL 
+TO authenticated 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.ie_profiles 
+    WHERE id = auth.uid() AND rol IN ('admin', 'instructor', 'profesor', 'capacitador', 'institucion')
+  )
+);
+
+CREATE POLICY "Cualquier usuario autenticado puede ver las preguntas" 
+ON public.ie_cuestionario_preguntas 
+FOR SELECT 
+TO authenticated 
+USING (true);
+
+-- Políticas para ie_cuestionario_respuestas
+DROP POLICY IF EXISTS "Docentes y Admins gestionan respuestas de cuestionario" ON public.ie_cuestionario_respuestas;
+DROP POLICY IF EXISTS "Usuarios pueden ver sus propias respuestas" ON public.ie_cuestionario_respuestas;
+DROP POLICY IF EXISTS "Usuarios pueden insertar sus propias respuestas" ON public.ie_cuestionario_respuestas;
+DROP POLICY IF EXISTS "Usuarios pueden actualizar sus propias respuestas si no tienen calificacion" ON public.ie_cuestionario_respuestas;
+
+CREATE POLICY "Docentes y Admins gestionan respuestas de cuestionario" 
+ON public.ie_cuestionario_respuestas 
+FOR ALL 
+TO authenticated 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.ie_profiles 
+    WHERE id = auth.uid() AND rol IN ('admin', 'instructor', 'profesor', 'capacitador', 'institucion')
+  )
+);
+
+CREATE POLICY "Usuarios pueden ver sus propias respuestas" 
+ON public.ie_cuestionario_respuestas 
+FOR SELECT 
+TO authenticated 
+USING (user_id = auth.uid());
+
+CREATE POLICY "Usuarios pueden insertar sus propias respuestas" 
+ON public.ie_cuestionario_respuestas 
+FOR INSERT 
+TO authenticated 
+WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Usuarios pueden actualizar sus propias respuestas si no tienen calificacion" 
+ON public.ie_cuestionario_respuestas 
+FOR UPDATE 
+TO authenticated 
+USING (user_id = auth.uid() AND calificacion IS NULL);
+
+
 
