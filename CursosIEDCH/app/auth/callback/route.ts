@@ -33,6 +33,41 @@ export async function GET(request: Request) {
     }
   }
 
-  // Redirigir al login si hay un error o no viene código
-  return NextResponse.redirect(`${origin}/login?error=No+se+pudo+verificar+tu+enlace`)
+  const errorMsg = searchParams.get('error_description') || searchParams.get('error')
+  if (errorMsg) {
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(errorMsg)}`)
+  }
+
+  // Si no viene código ni token_hash en los query params, es muy probable que Supabase
+  // haya enviado los tokens en el fragmento hash (#access_token=...&type=recovery),
+  // el cual por especificación HTTP nunca viaja al servidor en la cabecera de la petición.
+  // Retornamos un HTML ligero que permite al navegador leer el hash y redirigir al destino (ej: /update-password)
+  const safeNext = next.startsWith('/') ? next : `/${next}`
+  const html = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Verificando enlace...</title>
+  </head>
+  <body style="font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f9fafb;">
+    <div style="text-align: center; color: #4b5563;">
+      <p style="font-size: 1.125rem; font-weight: 500;">Procesando tu solicitud...</p>
+    </div>
+    <script>
+      (function() {
+        var hash = window.location.hash || '';
+        var next = ${JSON.stringify(safeNext)};
+        if (hash.includes('access_token') || hash.includes('type=recovery') || next === '/update-password') {
+          window.location.replace(next + hash);
+        } else {
+          window.location.replace('/login?error=No+se+pudo+verificar+tu+enlace');
+        }
+      })();
+    </script>
+  </body>
+</html>`
+
+  return new NextResponse(html, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  })
 }

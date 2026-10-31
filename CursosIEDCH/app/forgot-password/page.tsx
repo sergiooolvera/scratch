@@ -14,6 +14,9 @@ export default function ForgotPasswordPage() {
     const traducirErrorAuth = (msg: string) => {
         const m = msg.toLowerCase()
         if (m.includes('user not found')) return 'Usuario no encontrado.'
+        if (m.includes('over_email_send_rate_limit') || m.includes('security purposes') || m.includes('rate limit')) {
+            return 'Por motivos de seguridad, debes esperar un momento antes de solicitar otro enlace.'
+        }
         return msg
     }
 
@@ -23,14 +26,20 @@ export default function ForgotPasswordPage() {
         setMessage('')
         setLoading(true)
 
+        // Normalizar origin: Si el usuario accede desde www.grupoegac.com, normalizar a https://grupoegac.com
+        // para que coincida exactamente con la lista de Redirect URLs autorizada en Supabase
+        const origin = typeof window !== 'undefined'
+            ? window.location.origin.replace('://www.', '://')
+            : 'https://grupoegac.com'
+
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
+            redirectTo: `${origin}/auth/callback?next=/update-password`,
         })
 
         if (error) {
             setError(traducirErrorAuth(error.message))
         } else {
-            setMessage('Te hemos enviado un enlace para restablecer tu contraseña.')
+            setMessage('Te hemos enviado un enlace para restablecer tu contraseña. Revisa también tu carpeta de spam.')
         }
         setLoading(false)
     }

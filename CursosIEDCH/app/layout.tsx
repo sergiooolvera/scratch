@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   }
 }
 
+import AuthRecoveryHandler from '@/components/AuthRecoveryHandler'
+
 export default function RootLayout({
   children,
 }: {
@@ -30,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="es" translate="no" className="notranslate">
       <body className={inter.className}>
+        <AuthRecoveryHandler />
         <Navbar />
         <main>{children}</main>
         

@@ -1,5 +1,39 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-10-31
+### Tarea: Corrección Integral y Blindaje del Flujo de Recuperación de Contraseña
+
+#### Diagnóstico del Problema:
+- **Reporte:** Usuarios reportaron que al hacer clic en el enlace del correo de "Restablecer Contraseña", la función no permitía cambiar la contraseña y redirigía a la página principal sin mostrar el formulario de actualización.
+- **Análisis de la Causa Raíz:**
+  1. **Discrepancia de Dominio / URL de Redirección:** En la vista [`app/forgot-password/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/forgot-password/page.tsx), se solicitaba `redirectTo: ${window.location.origin}/auth/callback?next=/update-password`. Cuando un usuario ingresaba desde `https://www.grupoegac.com` (con subdominio `www`), Supabase Auth rechazaba dicho `redirectTo` al no estar explícitamente en la lista blanca de *Redirect URLs* de Supabase Dashboard, degradando silenciosamente la redirección al *Site URL* por defecto (`https://grupoegac.com`).
+  2. **Pérdida del Fragmento Hash en el Servidor (`/auth/callback`):** Al procesar el token de recuperación, Supabase envía al navegador una respuesta 303 hacia `redirect_to#access_token=...&type=recovery`. Por especificación HTTP, los fragmentos hash (`#...`) se procesan exclusivamente en el cliente y **nunca** viajan en las cabeceras HTTP hacia el servidor. Al ser [`app/auth/callback/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/auth/callback/route.ts) una función de servidor (`Route Handler`), `code` y `token_hash` venían nulos en los search params, provocando que la ruta rechazara la petición y redirigiera forzosamente a `/login?error=No+se+pudo+verificar+tu+enlace`.
+  3. **Inexistencia de Captura de Evento de Recuperación en la Raíz:** Si la redirección caía en `https://grupoegac.com#access_token=...&type=recovery`, la página de inicio no tenía ningún manejador para interceptar `#type=recovery` o el evento `PASSWORD_RECOVERY`, dejando al usuario varado en la portada sin saber cómo cambiar su contraseña.
+  4. **Falta de Validación de Sesión en `/update-password`:** [`app/update-password/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/update-password/page.tsx) no validaba activamente si existía una sesión válida o token de recuperación al cargar, ni gestionaba códigos PKCE en query params o estados de carga.
+
+#### Solución Implementada:
+1. **Normalización del Origin en [`app/forgot-password/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/forgot-password/page.tsx):**
+   - Se implementó la normalización automática del dominio removiendo `www.` (`.replace('://www.', '://')`) en entornos de producción, garantizando que el `redirectTo` siempre coincida con la URL autorizada en Supabase (`https://grupoegac.com/auth/callback?next=/update-password`), o `localhost` en entornos de desarrollo local.
+   - Se añadieron traducciones en español para errores de rate limiting por seguridad (`over_email_send_rate_limit`).
+2. **Preservación de Fragmento Hash en [`app/auth/callback/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/auth/callback/route.ts):**
+   - Cuando no vengan `code` ni `token_hash` en query params (flujo de verificación de hash en cliente), el handler responde con un documento HTML ligero y seguro que lee `window.location.hash` en el navegador y ejecuta `window.location.replace(next + hash)`, preservando intactos los tokens de autenticación para [`app/update-password/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/update-password/page.tsx).
+3. **Manejador Global de Recuperación ([`components/AuthRecoveryHandler.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/AuthRecoveryHandler.tsx)):**
+   - Componente cliente integrado en [`app/layout.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/layout.tsx) que escucha tanto fragmentos en la URL (`#type=recovery` y `#access_token=...`) como el evento oficial `PASSWORD_RECOVERY` de Supabase Auth.
+   - Si un usuario hace clic en un enlace de correo ya enviado previamente que lo envió a la raíz `https://grupoegac.com`, es redirigido automáticamente a `/update-password` con sus credenciales de recuperación, rescatando enlaces existentes.
+4. **Blindaje de la Vista [`app/update-password/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/update-password/page.tsx):**
+   - Verificación de sesión en montaje: soporta intercambio de código PKCE (`exchangeCodeForSession(code)`), escucha del evento `PASSWORD_RECOVERY` y validación de tokens en hash.
+   - Estado de carga elegante (`validatingSession`) mientras Supabase inicializa la sesión en segundo plano.
+   - Vista amigable para enlaces expirados o inválidos (`!hasValidSession`) con botón de acceso directo para solicitar un nuevo enlace en `/forgot-password`.
+   - Traducción al español de todos los posibles errores de autenticación (sesión faltante, contraseña idéntica a la anterior, longitud mínima de 6 caracteres).
+5. **Pruebas Automatizadas E2E ([`e2e/auth.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/auth.spec.ts)):**
+   - Se añadieron 3 nuevas pruebas E2E cubriendo:
+     - Carga de la página `/forgot-password` y envío de solicitud de enlace.
+     - Detección de enlace expirado/inválido en `/update-password` sin sesión activa.
+     - Detección y redirección automática desde la raíz ante la presencia de un hash de recuperación.
+   - Validación exitosa de los 7 tests de la suite (`npx playwright test e2e/auth.spec.ts`).
+
+---
+
 ## Fecha: 2026-10-27
 ### Tarea: Sustitución de Imagen de Portada por Video Institucional `videoegac.mp4` en el Hero de la Landing Page
 
