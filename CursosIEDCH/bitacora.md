@@ -1,6 +1,27 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-10-31
+### Tarea: Diagnóstico y Restablecimiento de Credenciales para `profesor@iedch.edu.mx`
+
+#### Diagnóstico del Problema:
+- **Reporte del Usuario:** El usuario reportó que la cuenta `profesor@iedch.edu.mx` tenía la contraseña `password123`, pero no permitía iniciar sesión (*"Invalid login credentials"*).
+- **Análisis de la Causa Raíz:**
+  1. Se verificó en la base de datos de autenticación de Supabase la existencia del usuario oficial `profesor@iedch.edu.mx` (`ID: 679c0e2c-0d02-4b2d-8d62-fb12fb42a3db`), cuyo perfil en `ie_profiles` corresponde al instructor oficial (`EGAC ACADEMICO`) con cursos asignados (ej. *CAP-Integración Profesional al Entorno Clínico*).
+  2. El registro en `auth.users` mostraba una actualización reciente (`updated_at: 2026-10-31T04:24:42Z`), producida durante las pruebas del flujo de recuperación de contraseña de la madrugada, lo que sobrescribió la contraseña previa y dejó inactiva la clave `password123`.
+  3. Se detectó además una cuenta registrada con un error tipográfico común (`porfesor@iedch.edu.mx`).
+
+#### Solución Implementada:
+1. **Restablecimiento de Credenciales:**
+   - Mediante la API administrativa de Supabase (`supabase.auth.admin.updateUserById`), se restableció la contraseña de `profesor@iedch.edu.mx` a `password123` y se ratificó el estado confirmado del correo (`email_confirm: true`).
+   - Se configuró preventivamente la misma contraseña en el registro con errata tipográfica (`porfesor@iedch.edu.mx`) para evitar fallos por errores involuntarios de tipeo.
+2. **Validación de Inicio de Sesión y Perfil:**
+   - Se ejecutó un test de autenticación cliente con `signInWithPassword`, confirmando el inicio de sesión exitoso y la obtención íntegra de la sesión y perfil activo (`rol: instructor`).
+3. **Verificación de Pruebas E2E:**
+   - Se ejecutó la suite de Playwright (`npx playwright test e2e/auth.spec.ts`), validando con éxito los 7 casos de prueba sin regresiones.
+
+---
+
+## Fecha: 2026-10-31
 ### Tarea: Corrección Integral y Blindaje del Flujo de Recuperación de Contraseña
 
 #### Diagnóstico del Problema:
