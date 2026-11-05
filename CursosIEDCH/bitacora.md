@@ -33,6 +33,12 @@
    - Verificación de rechazo de reportes OXXO no autorizados en `/api/report-payment-auto`.
    - Ejecución exitosa de la suite Playwright (5/5 tests aprobados).
 
+4. **Despliegue a Producción:**
+   - Verificación exitosa de pruebas E2E con Playwright (`npx playwright test e2e/notificar-profesor-inscripcion.spec.ts`) y compilación limpia con `npm run build`.
+   - Envío de cambios a la rama `staging` (`git push origin staging`).
+   - Fusión hacia la rama `main` (`git checkout main`, `git merge staging`) y push a GitHub (`git push origin main`), activando la compilación y despliegue automático en producción en Vercel.
+   - Retorno a la rama de desarrollo `staging`.
+
 ---
 
 ## Fecha: 2026-10-31
