@@ -1,5 +1,40 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-11-05
+### Tarea: Notificación por Correo Electrónico al Profesor ante Nuevas Inscripciones (vía Resend)
+
+#### Diagnóstico y Requerimiento:
+- **Requerimiento del Usuario:** Notificar al profesor asignado a un curso mediante correo electrónico cada vez que un alumno se inscriba. Se confirmó el uso de **Resend** como proveedor de envío.
+- **Análisis Previo:**
+  1. En el sistema ya se creaban notificaciones internas en la base de datos (`ie_notificaciones`), pero no se emitía ningún correo electrónico al profesor ante una compra o inscripción.
+  2. Se validó la configuración de credenciales de Resend en el entorno (`.env.local`), confirmando que el dominio remitente verificado en la cuenta es `grupoegac.com` (con remitente institucional `soporte@grupoegac.com`).
+  3. Existían remitentes de prueba temporales (`sistema@tusistema.com`) en [`app/api/approve-payment/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts) que provocaban fallos potenciales al intentar enviar correos con dominios no verificados.
+
+#### Solución Implementada:
+1. **Creación del Módulo Centralizado de Notificación al Profesor ([`lib/teacher-notifications.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/teacher-notifications.ts)):**
+   - Función `notifyTeacherOnEnrollment` que obtiene la información del curso (`ie_cursos`), el profesor asignado (`creado_por` en `ie_profiles` y `auth.users`), y el alumno inscrito.
+   - **Mecanismo de Idempotencia:** Consulta previa en `ie_auditoria_logs` para evitar duplicación de correos si coinciden eventos concurrentes (ej. redirección inmediata de checkout y webhook simultáneos).
+   - **Plantilla HTML Responsiva:** Diseño profesional con branding institucional de Grupo EGAC, tarjeta con datos del alumno (nombre, correo, fecha y método de inscripción), y botón directo al panel del profesor (`/profesor`).
+   - Registro de auditoría posterior en `ie_auditoria_logs` con el ID del mensaje devuelto por Resend (`EMAIL_PROFESOR_NUEVO_ALUMNO`).
+   - Manejo seguro de errores que evita interrumpir o bloquear el flujo de inscripción del alumno en caso de fallos externos de red.
+
+2. **Integración en todos los flujos de inscripción de la plataforma:**
+   - **Stripe Webhook ([`app/api/webhook/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/webhook/route.ts)):** Envío de correo al profesor cuando se confirma el pago de una sesión de Stripe.
+   - **Aprobación Manual de Pagos ([`app/api/approve-payment/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts)):** Envío de correo al profesor al validar una transferencia y corrección del remitente de Resend (`soporte@grupoegac.com`).
+   - **Validación Automática de Comprobantes ([`app/api/report-payment-auto/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/report-payment-auto/route.ts)):** Notificación por email cuando el alumno sube un ticket desde "Reportar Pago Oxxo" o transferencia bancaria, otorgando acceso inmediato y enviando el correo con el método especificado (`Depósito en OXXO (Ticket subido)`).
+   - **Inscripción a Cursos Gratuitos / Cupones del 100% ([`app/api/checkout/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/checkout/route.ts)):** Envío de correo al profesor al registrar inscripciones directas sin costo.
+   - **Verificación de Redirección de Checkout ([`app/api/checkout/verify/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/checkout/verify/route.ts)):** Respaldo de notificación en caso de que la redirección procese la compra antes de la entrega del webhook.
+
+3. **Pruebas Automatizadas E2E con Playwright ([`e2e/notificar-profesor-inscripcion.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/notificar-profesor-inscripcion.spec.ts)):**
+   - Validación de manejo seguro de cursos inexistentes o sin profesor.
+   - Verificación de redirección en `/api/checkout/verify`.
+   - Verificación de rechazo por falta de autenticación en `/api/approve-payment`.
+   - Verificación de validación de firma criptográfica en el webhook `/api/webhook`.
+   - Verificación de rechazo de reportes OXXO no autorizados en `/api/report-payment-auto`.
+   - Ejecución exitosa de la suite Playwright (5/5 tests aprobados).
+
+---
+
 ## Fecha: 2026-10-31
 ### Tarea: Diagnóstico y Restablecimiento de Credenciales para `profesor@iedch.edu.mx`
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
+import { notifyTeacherOnEnrollment } from '@/lib/teacher-notifications'
 // @ts-ignore
 import pdf from 'pdf-parse'
 
@@ -152,6 +153,15 @@ export async function POST(req: Request) {
                 })
 
             if (insertError) throw insertError
+
+            // Notificar al profesor vía correo electrónico con Resend
+            notifyTeacherOnEnrollment({
+                cursoId,
+                alumnoId: userId,
+                metodoPago: metodo === 'oxxo' ? 'Depósito en OXXO (Ticket subido)' : 'Transferencia bancaria (Comprobante subido)',
+                supabaseAdminClient: supabaseAdmin,
+                createInAppNotification: true,
+            }).catch(emailErr => console.error('[REPORT_PAYMENT_AUTO_TEACHER_EMAIL_ERROR]', emailErr));
         } else {
             if (esConstancia) {
                 const { error: updateCompraError } = await supabaseAdmin

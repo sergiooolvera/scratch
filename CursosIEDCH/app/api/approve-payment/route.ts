@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
+import { notifyTeacherOnEnrollment } from '@/lib/teacher-notifications'
 
 export async function POST(req: Request) {
     try {
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
             if (resendApiKey && userEmail && resend) {
                 try {
                     await resend.emails.send({
-                        from: 'Grupo Egac <sistema@tusistema.com>', // Cambia esto por tu dominio verificado en Resend
+                        from: process.env.RESEND_FROM_EMAIL || 'Grupo EGAC <soporte@grupoegac.com>',
                         to: userEmail,
                         subject: `¡Pago Aprobado! Ya tienes acceso a: ${cursoTitulo}`,
                         html: `
@@ -90,6 +91,16 @@ export async function POST(req: Request) {
                         mensaje: `¡Felicidades! ${msgBase}`,
                         enlace: `/profesor/ventas`
                     });
+
+                    // Notificar al profesor vía correo electrónico con Resend
+                    notifyTeacherOnEnrollment({
+                        cursoId,
+                        alumnoId: userId,
+                        alumnoEmail: userEmail,
+                        alumnoNombre: userName,
+                        metodoPago: 'Transferencia bancaria / Pago manual',
+                        supabaseAdminClient: supabaseAdmin,
+                    }).catch(emailErr => console.error('[APPROVE_PAYMENT_TEACHER_EMAIL_ERROR]', emailErr));
                 }
 
                 if (rolesAuth) {
@@ -164,7 +175,7 @@ export async function POST(req: Request) {
             if (resendApiKey && userEmail && resend) {
                 try {
                     await resend.emails.send({
-                        from: 'Grupo Egac <sistema@tusistema.com>', // Cambia esto
+                        from: process.env.RESEND_FROM_EMAIL || 'Grupo EGAC <soporte@grupoegac.com>',
                         to: userEmail,
                         subject: `Aviso sobre tu pago del curso: ${cursoTitulo}`,
                         html: `

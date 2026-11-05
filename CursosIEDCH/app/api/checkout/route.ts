@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { notifyTeacherOnEnrollment } from '@/lib/teacher-notifications'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-01-27.acacia' as any,
@@ -153,6 +154,16 @@ export async function POST(req: Request) {
                     monto_pagado: montoPrevio,
                     ...(referredById ? { referred_by: referredById } : {}),
                 })
+
+                // Notificar al profesor vía correo electrónico con Resend
+                notifyTeacherOnEnrollment({
+                    cursoId,
+                    alumnoId: userId,
+                    alumnoEmail: user.email,
+                    metodoPago: usoCupon ? `Cupón 100% (${cuponCodigo})` : 'Inscripción Gratuita',
+                    supabaseAdminClient: adminSupabase,
+                    createInAppNotification: true,
+                }).catch(emailErr => console.error('[FREE_CHECKOUT_TEACHER_EMAIL_ERROR]', emailErr));
             } else if (esConstancia) {
                 await adminSupabase.from('ie_compras')
                     .update({ pago_completo: true })

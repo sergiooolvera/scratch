@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { notifyTeacherOnEnrollment } from '@/lib/teacher-notifications'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-01-27.acacia' as any,
@@ -57,8 +58,19 @@ export async function GET(req: Request) {
                         ...(referredBy ? { referred_by: referredBy } : {}),
                     })
 
-                    if (error) console.error('Error registrando compra en DB:', error)
-                    else console.log('Compra validada y registrada correctamente vía redirección.')
+                    if (error) {
+                        console.error('Error registrando compra en DB:', error)
+                    } else {
+                        console.log('Compra validada y registrada correctamente vía redirección.')
+                        // Notificar al profesor vía correo electrónico con Resend
+                        notifyTeacherOnEnrollment({
+                            cursoId,
+                            alumnoId: userId,
+                            metodoPago: 'Stripe (Verificado)',
+                            supabaseAdminClient: supabaseAdmin,
+                            createInAppNotification: true,
+                        }).catch(emailErr => console.error('[VERIFY_TEACHER_EMAIL_ERROR]', emailErr));
+                    }
                 } else {
                     // Si ya existe, actualizar campos faltantes (referred_by puede llegar después)
                     const updates: Record<string, any> = {}

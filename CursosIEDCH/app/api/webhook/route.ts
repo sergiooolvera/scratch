@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { notifyTeacherOnEnrollment } from "@/lib/teacher-notifications";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-01-27.acacia' as any,
@@ -167,6 +168,16 @@ export async function POST(req: Request) {
                         mensaje: `¡Felicidades! ${mensaje}`,
                         enlace: `/profesor/ventas`
                     });
+
+                    // Notificar al profesor por correo electrónico vía Resend
+                    notifyTeacherOnEnrollment({
+                        cursoId,
+                        alumnoId: userId,
+                        alumnoEmail: emailAlumno,
+                        monto: montoPagado,
+                        metodoPago: 'Stripe (Pago en línea)',
+                        supabaseAdminClient: supabaseAdmin,
+                    }).catch(emailErr => console.error('[WEBHOOK_TEACHER_EMAIL_ERROR]', emailErr));
                 }
 
                 // Notificar a admins y financieros
