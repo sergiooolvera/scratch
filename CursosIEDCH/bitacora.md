@@ -27,6 +27,11 @@
    - Se añadió prueba de regresión para validar el renderizado del catálogo y precios en pesos mexicanos.
    - Se ejecutaron las suites de `e2e/courses.spec.ts` (6 pruebas exitosas) y `e2e/instructor.spec.ts` (9 pruebas exitosas) garantizando la estabilidad total del sistema.
 
+#### Procedimiento de Despliegue a Producción:
+- Envío de cambios a la rama `staging` (`git push origin staging`).
+- Fusión hacia la rama `main` (`git checkout main`, `git merge staging`) y push a GitHub (`git push origin main`), activando la compilación y despliegue automático en producción en Vercel.
+- Retorno a la rama de desarrollo `staging`.
+
 ## Fecha: 2026-11-05
 ### Tarea: Notificación por Correo Electrónico al Profesor ante Nuevas Inscripciones (vía Resend)
 
