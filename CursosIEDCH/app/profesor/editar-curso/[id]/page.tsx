@@ -316,7 +316,7 @@ export default function EditarCursoPage({ params }: { params: Promise<{ id: stri
                 competencias: formData.competencias,
                 beneficios: formData.beneficios,
                 duracion: formData.duracion,
-                precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio) * 1.16,
+                precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio),
                 instructor: formData.instructor,
                 vigencia_anos: vigenciaAnos,
                 requiere_pago_completo: requierePagoCompleto,

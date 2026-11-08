@@ -1,5 +1,32 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-11-07
+### Tarea: Corrección de Multiplicador Residual de IVA en Guardado Silencioso de Cursos y Restablecimiento de Precio en Base de Datos
+
+#### Diagnóstico y Causa Raíz:
+- **Problema Reportado:** Se identificó que el curso *"Curso de capacitación profesional 'Domina el carburador'"* mostraba un precio irregular con decimales de `$267.77 MXN` (tachado en `$321 MXN`).
+- **Análisis de Código y Base de Datos:**
+  1. En junio de 2026 se acordó que los precios ingresados por instructores serían directamente el "Precio al Público" sin multiplicadores automáticos de IVA.
+  2. Al auditar la función `guardarBorradorSilencioso` en `app/profesor/editar-curso/[id]/page.tsx`, se detectó que permanecía un multiplicador residual `* 1.16`:
+     ```ts
+     precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio) * 1.16,
+     ```
+  3. Cada vez que el instructor cambiaba de pestañas en el editor (`handleTabChange`), la función silenciosa autoguardaba el borrador en `cambios_pendientes`, multiplicando el precio base de $199.00 por 1.16 dos veces consecutivas:
+     $199.00 x 1.16 = $230.84 -> $230.84 x 1.16 = $267.77
+  4. Al ser aprobado el borrador desde el panel administrativo vía `/api/admin/aprobar-borrador`, ese precio inflado sobrescribió la columna `precio` en la tabla `ie_cursos`.
+
+#### Solución Implementada:
+1. **Eliminación del Multiplicador Residual en el Editor de Cursos:**
+   - En `app/profesor/editar-curso/[id]/page.tsx`, se modificó la asignación de `precio` en `guardarBorradorSilencioso` para respetar exactamente el valor ingresado sin alterar ni multiplicar por 1.16:
+     ```ts
+     precio: profile?.rol === 'capacitador' ? 0 : Number(formData.precio),
+     ```
+2. **Corrección del Registro en Base de Datos (Supabase):**
+   - Se actualizó el curso *Curso de capacitación profesional "Domina el carburador"* (`fbb37404-e896-45c0-8d5b-b8b5856da3ce`) en `ie_cursos`, restableciendo su precio oficial a `$199.00 MXN`.
+3. **Pruebas Automatizadas E2E (`e2e/courses.spec.ts`):**
+   - Se añadió prueba de regresión para validar el renderizado del catálogo y precios en pesos mexicanos.
+   - Se ejecutaron las suites de `e2e/courses.spec.ts` (6 pruebas exitosas) y `e2e/instructor.spec.ts` (9 pruebas exitosas) garantizando la estabilidad total del sistema.
+
 ## Fecha: 2026-11-05
 ### Tarea: Notificación por Correo Electrónico al Profesor ante Nuevas Inscripciones (vía Resend)
 

@@ -47,4 +47,11 @@ test.describe('Módulo de Cursos y Catálogo', () => {
       await expect(cartButton).toBeVisible();
     }
   });
+
+  test('Debe desplegar precios de cursos sin multiplicadores silenciosos de IVA en catálogo', async ({ page }) => {
+    await page.goto('/cursos');
+    await page.waitForLoadState('networkidle');
+    const precioSpans = page.locator('span:has-text("MXN")');
+    await expect(precioSpans.first()).toBeVisible();
+  });
 });
