@@ -2412,7 +2412,7 @@ const generationId = data.generationId;
                                                     className="px-4 py-3 bg-blue-50 text-blue-600 rounded-xl font-medium border border-blue-100 hover:bg-blue-100 transition-colors flex items-center gap-2"
                                                 >
                                                     <Calculator size={18} />
-                                                    Simular ventas
+                                                    Simular Ganancias
                                                 </button>
                                             </div>
                                         </div>

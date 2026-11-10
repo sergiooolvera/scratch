@@ -1,6 +1,50 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-11-10
+### Tarea: Nuevo Simulador de Ingresos 2026 (Esquema 70/30 y Rediseño Visual)
+
+#### Requerimiento y Análisis:
+- **Requerimiento del Usuario:** Actualizar el simulador de ingresos en `/profesor/subir-curso` y `/profesor/editar-curso/[id]` con las nuevas fórmulas de los tres libros de Excel 2026 agregados a `public/`:
+  - [`public/Simulador_Ganancias_Instructor_Persona_Fisica_2026_VER_1_2.xlsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/public/Simulador_Ganancias_Instructor_Persona_Fisica_2026_VER_1_2.xlsx)
+  - [`public/Simulador_Ganancias_Instructor_Persona_Moral_2026_VER_1_2.xlsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/public/Simulador_Ganancias_Instructor_Persona_Moral_2026_VER_1_2.xlsx)
+  - [`public/Simulador_Ganancias_Instructor_Persona_Fisica_SIN_RFC_2026.xlsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/public/Simulador_Ganancias_Instructor_Persona_Fisica_SIN_RFC_2026.xlsx)
+- **Definiciones de Negocio Confirmadas:**
+  - Mantener el simulador únicamente como modal dentro de Subir Curso y Editar Curso.
+  - Utilizar siempre el nuevo reparto oficial **70% Instructor / 30% EGAC** sobre la base distribuible, sin usar porcentajes anteriores guardados en BD.
+  - Enlazar el botón verde **Solicito acompañamiento contable** al WhatsApp Business oficial (`https://wa.me/527298184978`) con mensaje contextual prellenado, eliminando los botones previos de *"Aplicar Precio al Curso"* y *"Cancelar"*.
+
+#### Solución Implementada:
+1. **Motor de Cálculo Fiscal y Financiero ([`lib/simulador-ganancias.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/simulador-ganancias.ts)):**
+   - Implementación pura de [`calcularSimulacionGanancias`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/simulador-ganancias.ts#L102-L163) con los tres regímenes oficiales (`PERSONA_FISICA`, `PERSONA_MORAL`, `SIN_RFC`):
+     - Desglose unitario de IVA (`16%`) a partir del precio de lista (`precio / 1.16`).
+     - Deducción de pasarela Stripe (`3.6%` sobre venta bruta con IVA + `$3.00 MXN` por alumno + `16%` IVA sobre la comisión).
+     - Base distribuible (`Venta Bruta Subtotal - Total Deducción Stripe`) repartida en **30% EGAC** (+ `16%` IVA de comisión EGAC) y **70% Instructor**.
+     - Retenciones fiscales 2026: **2.5% ISR** s/subtotal y **50% IVA** s/IVA trasladado para **Persona física** y **Persona moral**; **20% ISR** s/subtotal y **100% IVA** s/IVA trasladado para **Sin RFC**.
+     - Cálculo de liquidación neta en banco, ganancia neta por alumno y porcentaje neto sobre ventas brutas.
+2. **Rediseño de la Interfaz del Simulador ([`components/SimuladorIngresosModal.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx)):**
+   - Encabezado **"Simula tus ingresos"** con selector en tarjetas para los 3 regímenes (**Persona física**, **Persona moral**, **Sin RFC**).
+   - Controles deslizantes interactivos e inputs sincronizados para volumen de alumnos (`1` a `5,000`, inicial `20`) y precio del curso (`$200` a `$10,000` en pasos de `$50`, sincronizado con el precio ingresado en el formulario si es `>= $200`).
+   - Tarjeta de resumen verde con **Tu estimación (Ingreso neto estimado)**, **Ventas brutas**, chip `{alumnos} alumnos × ${precio}` y anillo circular SVG con porcentaje sobre ventas.
+   - Acordeón colapsable **"Ver desglose de tu ingreso"** con tooltips interactivos `(i)` detallando pasarela Stripe, participación EGAC 70/30 e impuestos/retenciones.
+   - Botón CTA verde **"Solicito acompañamiento contable"** hacia WhatsApp oficial y notas aclaratorias fiscales.
+3. **Actualización de Etiquetas y Guía Interactiva:**
+   - Se actualizó el texto del botón `#btn-simulador-ingresos` de *"Simular ventas"* a **"Simular Ganancias"** en [`app/profesor/subir-curso/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/subir-curso/page.tsx) y [`app/profesor/editar-curso/[id]/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/editar-curso/[id]/page.tsx).
+   - En [`components/OnboardingTour.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/OnboardingTour.tsx), se actualizó el paso del botón `#btn-simulador-ingresos` con la descripción del nuevo simulador 2026.
+4. **Pruebas Automatizadas E2E ([`e2e/finances.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/finances.spec.ts)):**
+   - Validación de apertura desde `/profesor/subir-curso` y `/profesor/editar-curso/[id]` verificando el texto **"Simular Ganancias"** en el botón disparador, estado inicial (`20 alumnos × $200`), ausencia de botón *"Aplicar Precio al Curso"* y enlace WhatsApp.
+   - Verificación exacta contra los casos de referencia de los tres Excel (`25 alumnos × $1,000` -> Neto PF/PM `$14,499.66 MXN`, Sin RFC `$9,003.97 MXN`).
+   - Interacción con acordeón, tooltips `(i)`, sliders, viewport móvil (`375x667`), botón de cierre y edición de curso existente en `/profesor/editar-curso/[id]` ignorando valores legacy en BD.
+
+#### Verificación:
+- Validación numérica directa de [`lib/simulador-ganancias.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/simulador-ganancias.ts) contra las 17 celdas clave (`B5..B28`) de los 3 archivos `.xlsx` en `public/`: coincidencia exacta (`< 1e-6`).
+- `npx tsc --noEmit`: finalizado sin errores.
+- `npm run build`: compilación de producción limpia (51/51 rutas generadas).
+- `npx playwright test e2e/finances.spec.ts`: 5 de 5 pruebas aprobadas.
+- `npx playwright test`: suite completa ejecutada con 84 de 84 pruebas aprobadas sin regresiones (rama `staging`).
+
+---
+
+## Fecha: 2026-11-10
 ### Tarea: Blindaje de Notificaciones al Instructor ante Inscripciones con Cupón del 100% y Ejecución Síncrona en Endpoints Serverless
 
 #### Diagnóstico y Causa Raíz:

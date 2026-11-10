@@ -343,8 +343,8 @@ export default function OnboardingTour({ rol = 'alumno' }: OnboardingTourProps) 
         stepsSubir.push({
           element: '#btn-simulador-ingresos',
           popover: {
-            title: 'Simulador de Ventas e Ingresos 📊',
-            description: 'Calcula tus ganancias estimadas de acuerdo con tu régimen fiscal. Escribe el precio deseado del curso (mínimo $199 MXN) y simula ganancias netas deduciendo comisiones bancarias.',
+            title: 'Simula tus ingresos 📊',
+            description: 'Calcula tus ganancias estimadas según tu situación fiscal (Persona física, Persona moral o Sin RFC), volumen de alumnos y precio del curso.',
             side: 'bottom',
             align: 'center'
           },
