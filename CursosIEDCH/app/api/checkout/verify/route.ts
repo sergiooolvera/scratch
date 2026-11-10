@@ -62,8 +62,8 @@ export async function GET(req: Request) {
                         console.error('Error registrando compra en DB:', error)
                     } else {
                         console.log('Compra validada y registrada correctamente vía redirección.')
-                        // Notificar al profesor vía correo electrónico con Resend
-                        notifyTeacherOnEnrollment({
+                        // Notificar al profesor vía correo electrónico con Resend (esperando antes de redirigir)
+                        await notifyTeacherOnEnrollment({
                             cursoId,
                             alumnoId: userId,
                             metodoPago: 'Stripe (Verificado)',

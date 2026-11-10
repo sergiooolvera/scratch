@@ -1,5 +1,45 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-11-10
+### Tarea: Blindaje de Notificaciones al Instructor ante Inscripciones con Cupón del 100% y Ejecución Síncrona en Endpoints Serverless
+
+#### Diagnóstico y Causa Raíz:
+- **Consulta del Usuario:** Validación del comportamiento de notificaciones (correo electrónico vía Resend e in-app) hacia el instructor cuando un alumno se inscribe aplicando un cupón de descuento del 100%.
+- **Hallazgos en Auditoría de Código:**
+  1. Aunque [`app/api/checkout/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/checkout/route.ts) ya contemplaba llamar a [`notifyTeacherOnEnrollment`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/teacher-notifications.ts) para cupones del 100% (`finalPrice <= 0` con `createInAppNotification: true`), la llamada se ejecutaba como *fire-and-forget* (sin `await`) inmediatamente antes de retornar `NextResponse.json(...)`.
+  2. En entornos *serverless* de Vercel, retornar la respuesta HTTP antes de resolver las consultas secuenciales a Supabase y el envío por Resend conlleva un riesgo alto de que la ejecución sea congelada antes de completarse la notificación.
+  3. El mismo patrón sin `await` existía en [`app/api/checkout/verify/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/checkout/verify/route.ts), [`app/api/approve-payment/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts), [`app/api/report-payment-auto/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/report-payment-auto/route.ts) y [`app/api/webhook/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/webhook/route.ts).
+  4. Adicionalmente, en [`app/api/approve-payment/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts) se pasaba un cliente servidor con sesión de cookies (`createClient()` de `@/lib/supabase/server`) como `supabaseAdminClient`, impidiendo consultas administrativas (`auth.admin.getUserById`) si el instructor dependía del correo en `auth.users`.
+
+#### Solución Implementada:
+1. **Espera Explícita (`await`) en Todos los Flujos de Notificación al Instructor:**
+   - Se añadió `await` a [`notifyTeacherOnEnrollment`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/teacher-notifications.ts) (conservando `.catch(...)` para no interrumpir la respuesta al usuario en caso de fallo externo) en:
+     - [`app/api/checkout/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/checkout/route.ts)
+     - [`app/api/checkout/verify/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/checkout/verify/route.ts)
+     - [`app/api/approve-payment/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts)
+     - [`app/api/report-payment-auto/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/report-payment-auto/route.ts)
+     - [`app/api/webhook/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/webhook/route.ts)
+2. **Endurecimiento del Checkout con Cupón del 100% y Notificaciones:**
+   - En [`app/api/checkout/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/checkout/route.ts): se normalizó `cuponCodigo` (`trim().toUpperCase()`) y se validó explícitamente el resultado de la inserción en `ie_compras` antes de disparar la notificación.
+   - En [`app/api/approve-payment/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/approve-payment/route.ts): se delegó a [`notifyTeacherOnEnrollment`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/teacher-notifications.ts) la creación de su propio cliente administrativo con `SUPABASE_SERVICE_ROLE_KEY`.
+   - En [`lib/teacher-notifications.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/teacher-notifications.ts): se registró en consola cualquier error devuelto por el `insert` a `ie_notificaciones`.
+3. **Pruebas Automatizadas E2E (`e2e/notificar-profesor-inscripcion.spec.ts`):**
+   - Se añadió validación de rechazo `401` sin sesión activa en `/api/checkout`.
+   - Se añadió prueba E2E completa de canje de cupón del 100% desde `/cursos/[id]`, verificando la creación de la compra en `ie_compras`, la notificación in-app en `ie_notificaciones` y el registro de envío Resend (`EMAIL_PROFESOR_NUEVO_ALUMNO`) en `ie_auditoria_logs` de forma síncrona antes de la respuesta de `/api/checkout` (con limpieza posterior de registros temporales).
+
+#### Verificación:
+- `npx tsc --noEmit`: finalizado sin errores.
+- `npm run build`: compilación de producción limpia sin errores (51/51 páginas estáticas y rutas dinámicas).
+- `npx playwright test e2e/notificar-profesor-inscripcion.spec.ts`: 7 de 7 pruebas aprobadas.
+- `npx playwright test`: suite completa ejecutada con 81 de 81 pruebas aprobadas sin regresiones (trabajando en rama `staging`).
+
+#### Procedimiento de Despliegue a Producción:
+- Envío de cambios a la rama `staging` (`git push origin staging`).
+- Fusión hacia la rama `main` (`git checkout main`, `git merge staging`) y push a GitHub (`git push origin main`), activando la compilación y despliegue automático en producción en Vercel.
+- Retorno a la rama de desarrollo `staging`.
+
+---
+
 ## Fecha: 2026-11-07
 ### Tarea: Corrección de Multiplicador Residual de IVA en Guardado Silencioso de Cursos y Restablecimiento de Precio en Base de Datos
 

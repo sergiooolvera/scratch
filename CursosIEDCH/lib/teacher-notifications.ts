@@ -133,13 +133,16 @@ export async function notifyTeacherOnEnrollment(
         // 5. Notificación in-app si se solicita
         if (params.createInAppNotification) {
             try {
-                await supabaseAdmin.from('ie_notificaciones').insert({
+                const { error: notifInsertError } = await supabaseAdmin.from('ie_notificaciones').insert({
                     usuario_id: curso.creado_por,
                     actor_id: params.alumnoId,
                     tipo: 'venta_curso',
                     mensaje: `¡Felicidades! El alumno ${studentEmail} se ha inscrito a tu curso "${curso.titulo}".`,
                     enlace: '/profesor/ventas'
                 });
+                if (notifInsertError) {
+                    console.error('[TEACHER_NOTIF] Error insertando notificación in-app:', notifInsertError);
+                }
             } catch (notifErr) {
                 console.error('[TEACHER_NOTIF] Error registrando notificación in-app:', notifErr);
             }

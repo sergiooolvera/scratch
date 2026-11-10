@@ -154,8 +154,8 @@ export async function POST(req: Request) {
 
             if (insertError) throw insertError
 
-            // Notificar al profesor vía correo electrónico con Resend
-            notifyTeacherOnEnrollment({
+            // Notificar al profesor vía correo electrónico con Resend antes de responder
+            await notifyTeacherOnEnrollment({
                 cursoId,
                 alumnoId: userId,
                 metodoPago: metodo === 'oxxo' ? 'Depósito en OXXO (Ticket subido)' : 'Transferencia bancaria (Comprobante subido)',

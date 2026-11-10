@@ -169,8 +169,8 @@ export async function POST(req: Request) {
                         enlace: `/profesor/ventas`
                     });
 
-                    // Notificar al profesor por correo electrónico vía Resend
-                    notifyTeacherOnEnrollment({
+                    // Notificar al profesor por correo electrónico vía Resend antes de concluir la invocación
+                    await notifyTeacherOnEnrollment({
                         cursoId,
                         alumnoId: userId,
                         alumnoEmail: emailAlumno,

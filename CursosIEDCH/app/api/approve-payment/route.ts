@@ -92,14 +92,13 @@ export async function POST(req: Request) {
                         enlace: `/profesor/ventas`
                     });
 
-                    // Notificar al profesor vía correo electrónico con Resend
-                    notifyTeacherOnEnrollment({
+                    // Notificar al profesor vía correo electrónico con Resend usando cliente Service Role interno
+                    await notifyTeacherOnEnrollment({
                         cursoId,
                         alumnoId: userId,
                         alumnoEmail: userEmail,
                         alumnoNombre: userName,
                         metodoPago: 'Transferencia bancaria / Pago manual',
-                        supabaseAdminClient: supabaseAdmin,
                     }).catch(emailErr => console.error('[APPROVE_PAYMENT_TEACHER_EMAIL_ERROR]', emailErr));
                 }
 

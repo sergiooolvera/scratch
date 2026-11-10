@@ -110,12 +110,13 @@ export async function POST(req: Request) {
 
         let basePrice = finalPrice
         let usoCupon = false
+        const normalizedCupon = typeof cuponCodigo === 'string' ? cuponCodigo.trim().toUpperCase() : ''
 
-        if (cuponCodigo) {
+        if (normalizedCupon) {
             const { data: cupon } = await supabase
                 .from('ie_cupones')
                 .select('*')
-                .eq('codigo', cuponCodigo)
+                .eq('codigo', normalizedCupon)
                 .eq('activo', true)
                 .single()
 
@@ -146,7 +147,7 @@ export async function POST(req: Request) {
                 .single()
 
             if (!existe) {
-                await adminSupabase.from('ie_compras').insert({
+                const { error: insertError } = await adminSupabase.from('ie_compras').insert({
                     user_id: userId,
                     curso_id: cursoId,
                     pagado: true,
@@ -155,12 +156,17 @@ export async function POST(req: Request) {
                     ...(referredById ? { referred_by: referredById } : {}),
                 })
 
-                // Notificar al profesor vía correo electrónico con Resend
-                notifyTeacherOnEnrollment({
+                if (insertError) {
+                    console.error('[FREE_CHECKOUT_INSERT_ERROR]', insertError)
+                    return NextResponse.json({ error: 'No se pudo registrar la inscripción al curso.' }, { status: 500 })
+                }
+
+                // Esperar la notificación antes de responder para evitar cortes en funciones serverless (Vercel)
+                await notifyTeacherOnEnrollment({
                     cursoId,
                     alumnoId: userId,
                     alumnoEmail: user.email,
-                    metodoPago: usoCupon ? `Cupón 100% (${cuponCodigo})` : 'Inscripción Gratuita',
+                    metodoPago: usoCupon ? `Cupón 100% (${normalizedCupon})` : 'Inscripción Gratuita',
                     supabaseAdminClient: adminSupabase,
                     createInAppNotification: true,
                 }).catch(emailErr => console.error('[FREE_CHECKOUT_TEACHER_EMAIL_ERROR]', emailErr));
