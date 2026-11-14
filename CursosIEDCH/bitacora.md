@@ -1,5 +1,26 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-11-14
+### Tarea: Despliegue a Producción del Nuevo Simulador de Ingresos 2026 (Esquema 70/30)
+
+#### Procedimiento de Despliegue a Producción:
+- **Verificación Técnica en Staging:**
+  - Fusión de la rama `feature/simulador-2026` a `staging` (`commit 5470ea2`).
+  - Validación de tipos de TypeScript con `npx tsc --noEmit` (cero errores).
+  - Ejecución satisfactoria de la suite de pruebas E2E de finanzas y simulador (`npx playwright test e2e/finances.spec.ts`) con 5 de 5 pruebas aprobadas (100% de éxito).
+  - Compilación de producción con Turbopack (`npm run build`) generando de forma limpia las 51 rutas de la plataforma.
+- **Fusión y Despliegue:**
+  - Sincronización de `staging` con el repositorio remoto (`git push origin staging`).
+  - Fusión de `staging` hacia `main` (`git checkout main`, `git merge staging`).
+  - Envío de `main` a GitHub (`git push origin main`), activando la compilación y despliegue automático en producción en Vercel.
+  - Verificación del estado del despliegue en Vercel CLI (`dpl_GViMm55un8FnFHm1qfM7fZRmRQEM`): Estado `● Ready` activo y sirviendo en los dominios oficiales de producción:
+    - [https://www.grupoegac.com](https://www.grupoegac.com)
+    - [https://cursos.grupoegac.com](https://cursos.grupoegac.com)
+- **Entorno de Trabajo:**
+  - Retorno ordenado a la rama de desarrollo `staging`.
+
+---
+
 ## Fecha: 2026-11-10
 ### Tarea: Nuevo Simulador de Ingresos 2026 (Esquema 70/30 y Rediseño Visual)
 
