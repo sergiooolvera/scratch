@@ -401,18 +401,23 @@ export default function SimuladorIngresosModal({
               <Coins className="w-5 h-5" />
             </div>
             <div>
-              <span className="block text-xs font-semibold text-emerald-800">
-                Tu estimación
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="block text-xs font-semibold text-emerald-800">
+                  Tu estimación
+                </span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200/70 text-emerald-900 border border-emerald-300/60">
+                  {resultado.regimen.titulo}
+                </span>
+              </div>
               <div
                 data-testid="simulador-ingreso-neto-hero"
-                className="text-2xl sm:text-3xl font-black text-emerald-950 tracking-tight leading-tight"
+                className="text-2xl sm:text-3xl font-black text-emerald-950 tracking-tight leading-tight mt-0.5"
               >
                 {formatMXN(resultado.liquidacionNetaTotal)}{' '}
                 <span className="text-sm sm:text-base font-bold text-emerald-900">MXN</span>
               </div>
-              <span className="block text-xs text-emerald-800/80">
-                Ingreso neto estimado
+              <span className="block text-xs font-medium text-emerald-800/90 mt-0.5">
+                {resultado.regimen.descripcionLiquidacion}
               </span>
             </div>
           </div>
@@ -590,24 +595,40 @@ export default function SimuladorIngresosModal({
                       -{formatMXN(resultado.totalImpuestosRetenciones)} MXN
                     </span>
                   </div>
+
+                  {/* Subdetalle por impuesto específico */}
+                  <div className="mt-2 space-y-1.5 pl-3 border-l-2 border-slate-200 text-[11px] sm:text-xs">
+                    <div className="flex items-center justify-between text-slate-500">
+                      <span>{resultado.regimen.etiquetaISR}</span>
+                      <span className="font-medium text-slate-700">-{formatMXN(resultado.retencionISR)} MXN</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-500">
+                      <span>{resultado.regimen.etiquetaIVA}</span>
+                      <span className="font-medium text-slate-700">-{formatMXN(resultado.retencionIVA)} MXN</span>
+                    </div>
+                  </div>
+
                   {activeTooltip === 'impuestos' && (
-                    <p className="mt-1.5 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-600 leading-relaxed">
-                      {resultado.regimen.resumenFiscal} ISR retenido:{' '}
-                      {formatMXN(resultado.retencionISR)} · IVA retenido:{' '}
-                      {formatMXN(resultado.retencionIVA)} (sobre IVA trasladado de{' '}
-                      {formatMXN(resultado.ivaTrasladadoAlumnos)}). Ganancia neta por alumno:{' '}
-                      {formatMXN(resultado.gananciaNetaPorAlumno)}.
+                    <p className="mt-2 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-600 leading-relaxed">
+                      {resultado.regimen.resumenFiscal} {resultado.regimen.descripcionISR} ({formatMXN(resultado.retencionISR)}) y {resultado.regimen.descripcionIVA} ({formatMXN(resultado.retencionIVA)} s/IVA de {formatMXN(resultado.ivaTrasladadoAlumnos)}). Ganancia neta por alumno: {formatMXN(resultado.gananciaNetaPorAlumno)}.
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Ingreso neto estimado */}
-              <div className="bg-emerald-50/80 border border-emerald-100 rounded-xl px-4 py-3 flex items-center justify-between gap-2">
-                <span className="font-bold text-emerald-950">Ingreso neto estimado</span>
+              {/* Fila 26 del Excel: Liquidación neta total en banco */}
+              <div className="bg-emerald-50/80 border border-emerald-100 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <span className="font-bold text-emerald-950 block text-xs sm:text-sm">
+                    {resultado.regimen.etiquetaLiquidacion}
+                  </span>
+                  <span className="text-[11px] text-emerald-800/80 block mt-0.5">
+                    {resultado.regimen.descripcionLiquidacion}
+                  </span>
+                </div>
                 <span
                   data-testid="simulador-ingreso-neto-desglose"
-                  className="font-black text-emerald-950 tabular-nums text-sm sm:text-base"
+                  className="font-black text-emerald-950 tabular-nums text-base sm:text-lg shrink-0"
                 >
                   {formatMXN(resultado.liquidacionNetaTotal)} MXN
                 </span>

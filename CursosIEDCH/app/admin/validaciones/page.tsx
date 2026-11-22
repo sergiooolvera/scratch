@@ -27,10 +27,13 @@ export default function AdminValidacionesPage() {
                 const filtered = (result.data || []).filter((p: any) => 
                     ['instructor', 'vendedor', 'capacitador', 'institucion'].includes(p.rol)
                 )
-                // Pendientes de validar primero
+                // Priorizar los que tengan régimen fiscal pendiente o identidad pendiente
                 filtered.sort((a: any, b: any) => {
-                    if (a.identidad_validada === b.identidad_validada) return 0;
-                    return a.identidad_validada ? 1 : -1;
+                    const aPendiente = a.regimen_fiscal_estado === 'pendiente' || !a.identidad_validada;
+                    const bPendiente = b.regimen_fiscal_estado === 'pendiente' || !b.identidad_validada;
+                    if (aPendiente && !bPendiente) return -1;
+                    if (!aPendiente && bPendiente) return 1;
+                    return 0;
                 });
                 setProfiles(filtered)
             } else {
@@ -40,6 +43,34 @@ export default function AdminValidacionesPage() {
             console.error('Error fetching validaciones:', e)
         }
         setLoading(false)
+    }
+
+    const procesarRegimen = async (id: string, accion: 'aprobar' | 'rechazar', nuevoRegimen?: string) => {
+        let motivoRechazo = ''
+        if (accion === 'rechazar') {
+            const inputMotivo = window.prompt('Ingresa el motivo del rechazo del régimen fiscal (opcional):', 'Datos de RFC o documentación fiscal no válidos')
+            if (inputMotivo === null) return // Cancelado por el admin
+            motivoRechazo = inputMotivo.trim()
+        } else {
+            const confirmar = window.confirm(`¿Confirmas la APROBACIÓN de este régimen fiscal para el usuario?`)
+            if (!confirmar) return
+        }
+
+        try {
+            const res = await fetch('/api/admin/usuarios/validar-regimen', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: id, accion, motivoRechazo, nuevoRegimen })
+            })
+            const result = await res.json()
+            if (res.ok && result.success) {
+                fetchProfiles();
+            } else {
+                alert('Error al procesar régimen: ' + (result.error || 'Error de red'));
+            }
+        } catch (e: any) {
+            alert('Error de conexión con el servidor: ' + e.message);
+        }
     }
 
     const toggleValidacion = async (id: string, currentStatus: boolean) => {
@@ -104,20 +135,21 @@ export default function AdminValidacionesPage() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datos de Contacto</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expediente / Perfil</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documentos</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Régimen Fiscal</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Identidad</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredProfiles.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                                         No se encontraron perfiles.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredProfiles.map((profile) => (
-                                    <tr key={profile.id} className={!profile.identidad_validada ? 'bg-orange-50/30' : ''}>
+                                    <tr key={profile.id} className={profile.regimen_fiscal_estado === 'pendiente' ? 'bg-amber-50/40' : !profile.identidad_validada ? 'bg-orange-50/30' : ''}>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="font-bold text-gray-900">
                                                 {`${profile.nombre || ''} ${profile.apellido_paterno || ''}`.trim() || 'Usuario sin nombre'}
@@ -161,6 +193,67 @@ export default function AdminValidacionesPage() {
                                                         <ImageIcon className="h-4 w-4 mr-1" /> Ver Foto
                                                     </a>
                                                 ) : <span className="text-xs text-gray-400">Sin Foto</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm">
+                                            <div className="flex flex-col gap-1.5 min-w-[140px]">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[10px] text-gray-400 font-bold uppercase">Activo:</span>
+                                                    <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+                                                        profile.regimen_fiscal === 'con_rfc' ? 'bg-blue-100 text-blue-800' :
+                                                        profile.regimen_fiscal === 'persona_moral' ? 'bg-purple-100 text-purple-800' :
+                                                        'bg-gray-100 text-gray-700'
+                                                    }`}>
+                                                        {profile.regimen_fiscal === 'con_rfc' ? 'Con RFC (PF)' :
+                                                         profile.regimen_fiscal === 'persona_moral' ? 'Persona Moral' : 'Sin RFC'}
+                                                    </span>
+                                                </div>
+
+                                                {profile.regimen_fiscal_estado === 'pendiente' && profile.regimen_fiscal_solicitado && (
+                                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs shadow-2xs">
+                                                        <div className="text-amber-900 font-bold mb-1 flex items-center gap-1">
+                                                            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                                            Solicita: {profile.regimen_fiscal_solicitado === 'con_rfc' ? 'Con RFC' : 'Persona Moral'}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                                            <button
+                                                                onClick={() => procesarRegimen(profile.id, 'aprobar')}
+                                                                data-testid={`btn-aprobar-regimen-${profile.id}`}
+                                                                className="px-2.5 py-1 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition shadow-xs"
+                                                            >
+                                                                ✓ Aprobar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => procesarRegimen(profile.id, 'rechazar')}
+                                                                data-testid={`btn-rechazar-regimen-${profile.id}`}
+                                                                className="px-2.5 py-1 text-[11px] font-bold bg-red-500 hover:bg-red-600 text-white rounded-md transition shadow-xs"
+                                                            >
+                                                                ✕ Rechazar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {profile.regimen_fiscal_estado === 'rechazado' && (
+                                                    <div className="text-[11px] text-red-600 bg-red-50 p-1.5 rounded border border-red-100">
+                                                        <span className="font-bold">Rechazado:</span> {profile.regimen_fiscal_motivo_rechazo || 'No validado'}
+                                                    </div>
+                                                )}
+
+                                                {profile.regimen_fiscal_estado !== 'pendiente' && (
+                                                    <div className="mt-1">
+                                                        <select
+                                                            value={profile.regimen_fiscal || 'sin_rfc'}
+                                                            onChange={(e) => procesarRegimen(profile.id, 'aprobar', e.target.value)}
+                                                            className="text-[11px] border border-gray-200 rounded px-1.5 py-0.5 text-gray-600 bg-white"
+                                                            title="Cambiar régimen directamente como admin"
+                                                        >
+                                                            <option value="sin_rfc">Sin RFC</option>
+                                                            <option value="con_rfc">Con RFC (PF)</option>
+                                                            <option value="persona_moral">Persona Moral</option>
+                                                        </select>
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

@@ -16,6 +16,13 @@ export interface RegimenMetadata {
   tasaRetencionISR: number
   tasaRetencionIVA: number
   resumenFiscal: string
+  etiquetaLiquidacion: string
+  descripcionLiquidacion: string
+  etiquetaParticipacion: string
+  etiquetaISR: string
+  descripcionISR: string
+  etiquetaIVA: string
+  descripcionIVA: string
 }
 
 export const REGIMENES_SIMULADOR: Record<RegimenFiscalSimulador, RegimenMetadata> = {
@@ -25,7 +32,14 @@ export const REGIMENES_SIMULADOR: Record<RegimenFiscalSimulador, RegimenMetadata
     subtitulo: 'Plataformas digitales',
     tasaRetencionISR: 0.025, // 2.5% Art. 113-A LISR Reforma 2026
     tasaRetencionIVA: 0.5, // 50% del IVA trasladado Art. 18-J LIVA
-    resumenFiscal: 'Retención 2.5% ISR (Art. 113-A LISR) y 50% del IVA trasladado (Art. 18-J LIVA).'
+    resumenFiscal: 'Retención 2.5% ISR (Art. 113-A LISR) y 50% del IVA trasladado (Art. 18-J LIVA).',
+    etiquetaLiquidacion: 'Liquidación Neta Total en Banco al Instructor PF',
+    descripcionLiquidacion: 'Efectivo neto depositado en la cuenta bancaria',
+    etiquetaParticipacion: 'Participación Bruta Instructor PF (70%)',
+    etiquetaISR: 'Retención ISR PF (2.5% Reforma 2026)',
+    descripcionISR: 'Retención de ISR retenida por la plataforma',
+    etiquetaIVA: 'Retención IVA PF (50% IVA)',
+    descripcionIVA: 'Retención del 50% del IVA cobrado'
   },
   PERSONA_MORAL: {
     id: 'PERSONA_MORAL',
@@ -33,7 +47,14 @@ export const REGIMENES_SIMULADOR: Record<RegimenFiscalSimulador, RegimenMetadata
     subtitulo: 'Empresa / sociedad',
     tasaRetencionISR: 0.025, // 2.5% acreditable a cuenta del ISR anual PM Reforma 2026
     tasaRetencionIVA: 0.5, // 50% del IVA trasladado Art. 18-J LIVA
-    resumenFiscal: 'Retención 2.5% ISR acreditable a cuenta del ISR anual PM y 50% del IVA trasladado (Art. 18-J LIVA).'
+    resumenFiscal: 'Retención 2.5% ISR acreditable a cuenta del ISR anual PM y 50% del IVA trasladado (Art. 18-J LIVA).',
+    etiquetaLiquidacion: 'Liquidación Neta Total en Banco al Instructor PM',
+    descripcionLiquidacion: 'Efectivo neto depositado en la cuenta bancaria de la PM',
+    etiquetaParticipacion: 'Participación Bruta Instructor PM (70%)',
+    etiquetaISR: 'Retención ISR PM Enterada al SAT (2.5% Reforma 2026)',
+    descripcionISR: 'Retención a cuenta del impuesto corporativo de la PM',
+    etiquetaIVA: 'Retención IVA PM Enterada al SAT (50% IVA)',
+    descripcionIVA: 'Retención del 50% del IVA cobrado'
   },
   SIN_RFC: {
     id: 'SIN_RFC',
@@ -41,7 +62,14 @@ export const REGIMENES_SIMULADOR: Record<RegimenFiscalSimulador, RegimenMetadata
     subtitulo: 'Aún no cuenta con RFC',
     tasaRetencionISR: 0.2, // 20.0% Art. 113-A LISR por falta de RFC
     tasaRetencionIVA: 1.0, // 100.0% del IVA trasladado Art. 18-J LIVA por falta de RFC
-    resumenFiscal: 'Retención 20% ISR (Art. 113-A LISR) y 100% del IVA trasladado (Art. 18-J LIVA) por falta de RFC.'
+    resumenFiscal: 'Retención 20% ISR (Art. 113-A LISR) y 100% del IVA trasladado (Art. 18-J LIVA) por falta de RFC.',
+    etiquetaLiquidacion: 'Liquidación Neta Total en Banco al Instructor (Sin RFC)',
+    descripcionLiquidacion: 'Efectivo neto depositado en la cuenta bancaria',
+    etiquetaParticipacion: 'Participación Bruta Instructor (70%)',
+    etiquetaISR: 'Retención ISR Enterada al SAT (20.0% Sin RFC)',
+    descripcionISR: 'Retención de ISR máxima por falta de RFC (Art. 113-A LISR)',
+    etiquetaIVA: 'Retención IVA Enterada al SAT (100% IVA)',
+    descripcionIVA: 'Retención del 100% del IVA cobrado por falta de RFC (Art. 18-J LIVA)'
   }
 }
 

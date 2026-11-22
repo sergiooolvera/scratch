@@ -1,5 +1,101 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-11-21
+### Tarea: Implementación de Selección de Régimen Fiscal (Sin RFC, Con RFC, Persona Moral), Autorización Administrativa y Proyección en "Mis Ventas"
+
+#### Diagnóstico y Requerimientos:
+- **Solicitud del Usuario:**
+  - Al completar su perfil, el instructor, institución o capacitador debe seleccionar entre tres opciones de régimen fiscal: "Con RFC", "Sin RFC" o "Persona Moral", con valor predeterminado en "Sin RFC".
+  - El usuario puede cambiar su opción en cualquier momento.
+  - El administrador autoriza la opción elegida ("Con RFC" y "Persona Moral"). "Sin RFC" queda activo automáticamente.
+  - La opción activa impacta directamente en el proceso y pantalla de **"Mis Ventas"**.
+  - Si el administrador rechaza la solicitud, el perfil regresa al régimen activo previo (o "Sin RFC"), con un motivo de rechazo visible para corrección.
+
+#### Solución Implementada:
+1. **Base de Datos y Esquema SQL:**
+   - **Archivo de Migración:** Creado [`agregar_regimen_fiscal_perfiles.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/agregar_regimen_fiscal_perfiles.sql) y [`supabase/migrations/20261121_regimen_fiscal_perfiles.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/supabase/migrations/20261121_regimen_fiscal_perfiles.sql).
+   - **Nuevas Columnas en `ie_profiles`:**
+     - `regimen_fiscal text NOT NULL DEFAULT 'sin_rfc'` (CHECK: `'sin_rfc'`, `'con_rfc'`, `'persona_moral'`).
+     - `regimen_fiscal_solicitado text` (CHECK nullable).
+     - `regimen_fiscal_estado text NOT NULL DEFAULT 'aprobado'` (CHECK: `'aprobado'`, `'pendiente'`, `'rechazado'`).
+     - `regimen_fiscal_motivo_rechazo text`.
+     - `regimen_fiscal_actualizado_at timestamptz DEFAULT now()`.
+   - **Índices de Rendimiento:** Agregados `idx_ie_profiles_regimen_fiscal` y `idx_ie_profiles_regimen_estado`.
+   - **Esquema General:** Actualizado [`esquema_produccion.sql`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/esquema_produccion.sql).
+
+2. **Endpoints de API:**
+   - **[`app/api/perfil/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/perfil/route.ts):**
+     - `GET`: Retorna los campos de régimen fiscal y estado con fallback resiliente ante esquemas en transición.
+     - `POST`: Implementa la lógica de negocio segura: `sin_rfc` se autoaprueba; `con_rfc` (13 caracteres obligatorios) y `persona_moral` (12 caracteres obligatorios) entran en estado `pendiente`.
+   - **[`app/api/admin/usuarios/validar-regimen/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/admin/usuarios/validar-regimen/route.ts):**
+     - Endpoint protegido para administradores para aprobar o rechazar solicitudes de régimen fiscal con motivo opcional de rechazo.
+   - **[`app/api/admin/usuarios/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/api/admin/usuarios/route.ts):**
+     - Enriquecido para suministrar el estado de régimen fiscal en la administración de usuarios.
+
+3. **Interfaz de Usuario del Perfil ([`app/perfil/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/perfil/page.tsx)):**
+   - Incorporación de Radio Cards interactivas para "Sin RFC (Predeterminado)", "Con RFC (Persona Física)" y "Persona Moral", detallando sus retenciones (20% ISR / 100% IVA vs 2.5% ISR / 50% IVA).
+   - Manejo dinámico de campos: RFC y CSF ocultos/deshabilitados para "Sin RFC"; obligatoriedad de RFC con longitud exacta (13 o 12 caracteres) para regímenes fiscales formalizados.
+   - Banners de estado: "Régimen Activo", "Pendiente de Autorización" y "Solicitud Rechazada" con motivo.
+
+4. **Panel de Administración ([`app/admin/validaciones/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/admin/validaciones/page.tsx)):**
+   - Se añadió la columna **Régimen Fiscal** con badges informativos.
+   - Botones directos de acción: `✓ Aprobar` y `✕ Rechazar` para solicitudes en estado pendiente.
+   - Selector administrativo para cambios directos de régimen.
+   - Ordenamiento prioritario colocando perfiles con solicitudes fiscales pendientes en los primeros lugares.
+
+5. **Panel de "Mis Ventas" ([`app/profesor/ventas/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/app/profesor/ventas/page.tsx)):**
+   - Banner de cabecera con el **Régimen Fiscal Activo** del instructor y aviso si hay una solicitud en revisión.
+   - Integración con el motor de cálculo oficial [`lib/simulador-ganancias.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/simulador-ganancias.ts).
+   - **Tarjeta Destacada de Liquidación Neta:**
+     - Ventas Brutas Totales.
+     - Participación Bruta del Instructor (70%).
+     - Retención de ISR calculada por venta.
+     - Retención de IVA calculada por venta.
+     - **Liquidación Neta Total en Banco** destacada en verde esmeralda.
+     - Tip fiscal con enlace a `/perfil` invitando a reducir retenciones mediante RFC.
+
+6. **Pruebas Automatizadas con Playwright ([`e2e/regimen-fiscal.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/regimen-fiscal.spec.ts)):**
+   - Nueva suite de 3 pruebas validando:
+     - Selección de las 3 opciones de régimen en `/perfil` y validación de RFC.
+     - Visualización y botones de aprobación en `/admin/validaciones`.
+     - Proyección del régimen activo y desglose financiero en `/profesor/ventas`.
+
+#### Verificación:
+- `npx playwright test e2e/regimen-fiscal.spec.ts`: 3 de 3 pruebas aprobadas (100% de éxito).
+- `npx playwright test e2e/finances.spec.ts`: 5 de 5 pruebas aprobadas (100% de éxito).
+- `npm run build`: Compilación limpia de producción con Turbopack (51/51 rutas generadas).
+
+---
+
+## Fecha: 2026-11-18
+### Tarea: Alineación y Clarificación Visual del Régimen Persona Moral con la Fila 26 del Excel Oficial 2026
+
+#### Diagnóstico y Causa Raíz:
+- **Consulta del Usuario:** Al seleccionar "Persona moral" en el simulador de ingresos, el usuario observó que el monto estimado ($579.99 MXN para 1 alumno a $1,000 MXN) era idéntico al de Persona Física con RFC y señaló la fila 26 del archivo Excel (`(=) LIQUIDACIÓN NETA TOTAL EN BANCO AL INSTRUCTOR PM | $579.99 | Efectivo neto depositado en la cuenta bancaria de la PM`).
+- **Análisis Matemático:** Se verificó que matemáticamente tanto el libro oficial de Persona Física como el de Persona Moral comparten en la versión 2026 las mismas tasas (2.5% ISR y 50% de retención de IVA), dando en ambos exactamente $579.99 MXN en la celda B26. Sin embargo, en la interfaz web no se reflejaban de forma explícita las etiquetas ni descripciones particulares de la Fila 26 del Excel de Persona Moral, generando la percepción de que el simulador permanecía en el régimen físico.
+
+#### Solución Implementada:
+1. **Enriquecimiento del Motor de Cálculo ([`lib/simulador-ganancias.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/simulador-ganancias.ts)):**
+   - Se añadieron a `RegimenMetadata` los campos textuales exactos de los libros de Excel 2026:
+     - `etiquetaLiquidacion`: Fila 26 (`Liquidación Neta Total en Banco al Instructor PM / PF / Sin RFC`).
+     - `descripcionLiquidacion`: Columna explicativa de la Fila 26 (`Efectivo neto depositado en la cuenta bancaria de la PM` para Persona Moral).
+     - `etiquetaISR` y `descripcionISR`: Retención ISR específica (`Retención a cuenta del impuesto corporativo de la PM`).
+     - `etiquetaIVA` y `descripcionIVA`: Retención IVA específica (`Retención del 50% del IVA cobrado`).
+     - `etiquetaParticipacion`: Participación bruta del 70%.
+2. **Clarificación y Alineación Visual en el Modal ([`components/SimuladorIngresosModal.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx)):**
+   - **Tarjeta Verde de Estimación:** Se incorporó un badge dinámico con el régimen activo (`Persona moral`, `Persona física` o `Sin RFC`) y la descripción oficial de la Fila 26 del Excel (`Efectivo neto depositado en la cuenta bancaria de la PM`).
+   - **Desglose de Retenciones e Impuestos:** Se desglosaron individualmente las líneas de retención de ISR e IVA con sus etiquetas legales exactas de Persona Moral.
+   - **Tarjeta Final de Liquidación:** Se sustituyó la etiqueta genérica por el texto oficial de la Fila 26 (`Liquidación Neta Total en Banco al Instructor PM`), su monto ($579.99 MXN) y su descripción de depósito en cuenta bancaria de la PM.
+3. **Pruebas Automatizadas E2E ([`e2e/finances.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/finances.spec.ts)):**
+   - Se actualizaron las pruebas Playwright para validar la presencia de las etiquetas exactas de la Fila 26 de Persona Moral, el desglose de ISR/IVA corporativo y la coincidencia matemática exacta de 1 alumno a $1,000 MXN ($579.99 MXN) y 25 alumnos a $1,000 MXN ($14,499.66 MXN).
+
+#### Verificación:
+- `npx tsc --noEmit`: validación de tipos TypeScript sin errores.
+- `npx playwright test e2e/finances.spec.ts`: 5 de 5 pruebas aprobadas (100% éxito).
+- `npm run build`: compilación de producción con Turbopack exitosa (51/51 rutas).
+
+---
+
 ## Fecha: 2026-11-14
 ### Tarea: Despliegue a Producción del Nuevo Simulador de Ingresos 2026 (Esquema 70/30)
 

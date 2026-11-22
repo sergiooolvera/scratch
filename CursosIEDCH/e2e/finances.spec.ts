@@ -74,11 +74,24 @@ test.describe('Módulo de Finanzas, Ventas y Simulador Fiscal 2026', () => {
     await expect(dialog.getByTestId('simulador-ingreso-neto-desglose')).toContainText('$14,499.66 MXN');
     await expect(dialog.getByTestId('simulador-porcentaje-ventas')).toHaveText('58%');
 
-    // 2. Persona moral (2.5% ISR acreditable + 50% IVA)
+    // 2. Persona moral (2.5% ISR acreditable + 50% IVA - Fila 26 del Excel PM)
     await dialog.getByTestId('regimen-PERSONA_MORAL').click();
     await expect(dialog.getByTestId('regimen-PERSONA_MORAL')).toHaveAttribute('aria-checked', 'true');
     await expect(dialog.getByTestId('desglose-impuestos')).toContainText('-$2,262.93 MXN');
     await expect(dialog.getByTestId('simulador-ingreso-neto-hero')).toContainText('$14,499.66 MXN');
+    await expect(dialog).toContainText('Liquidación Neta Total en Banco al Instructor PM');
+    await expect(dialog).toContainText('Efectivo neto depositado en la cuenta bancaria de la PM');
+    await expect(dialog).toContainText('Retención ISR PM Enterada al SAT (2.5% Reforma 2026)');
+    await expect(dialog).toContainText('Retención IVA PM Enterada al SAT (50% IVA)');
+
+    // Probar caso de 1 alumno a $1,000 MXN en Persona Moral (coincidencia con Fila 26: $579.99 MXN)
+    await dialog.getByTestId('simulador-alumnos-input').fill('1');
+    await expect(dialog.getByTestId('simulador-ingreso-neto-hero')).toContainText('$579.99 MXN');
+    await expect(dialog.getByTestId('simulador-ingreso-neto-desglose')).toContainText('$579.99 MXN');
+    await expect(dialog).toContainText('Efectivo neto depositado en la cuenta bancaria de la PM');
+
+    // Regresar a 25 alumnos para continuar con Sin RFC
+    await dialog.getByTestId('simulador-alumnos-input').fill('25');
 
     // 3. Sin RFC (20% ISR + 100% IVA)
     await dialog.getByTestId('regimen-SIN_RFC').click();

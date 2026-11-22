@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Filter, Calendar, BookOpen, User, DollarSign, ListOrdered, FileText, Search, AlertCircle } from 'lucide-react'
+import { Filter, Calendar, BookOpen, User, DollarSign, ListOrdered, FileText, Search, AlertCircle, ShieldCheck, TrendingUp, Sparkles } from 'lucide-react'
+import { calcularSimulacionGanancias, REGIMENES_SIMULADOR, RegimenFiscalSimulador } from '@/lib/simulador-ganancias'
 
 export default function ProfesorVentasPage() {
     const [cursos, setCursos] = useState<any[]>([])
@@ -137,12 +138,55 @@ export default function ProfesorVentasPage() {
         })
     }, [rawVentas, filtroCurso, filtroAlumno, filtroFechaInicio, filtroFechaFin, hasSearched])
 
-    // Suma total de los montos filtrados
-    const totalMontoFiltrado = useMemo(() => {
-        const total = ventasFiltradas.reduce((sum, v) => sum + v.monto, 0)
-        const isInstitucion = userProfile?.rol === 'institucion'
-        return isInstitucion ? total * 0.5 : total
+    // Cálculo financiero completo según el Régimen Fiscal activo
+    const desgloseFinanciero = useMemo(() => {
+        let regimenKey: RegimenFiscalSimulador = 'SIN_RFC'
+        const rf = userProfile?.regimen_fiscal
+        if (rf === 'con_rfc') {
+            regimenKey = 'PERSONA_FISICA'
+        } else if (rf === 'persona_moral') {
+            regimenKey = 'PERSONA_MORAL'
+        }
+
+        const metadata = REGIMENES_SIMULADOR[regimenKey]
+
+        let ventaBrutaTotal = 0
+        let participacionBrutaTotal = 0
+        let retencionISRTotal = 0
+        let retencionIVATotal = 0
+        let liquidacionNetaTotal = 0
+
+        ventasFiltradas.forEach(v => {
+            const monto = Number(v.monto) || 0
+            if (monto > 0) {
+                const sim = calcularSimulacionGanancias({
+                    regimen: regimenKey,
+                    precioLista: monto,
+                    alumnos: 1
+                })
+                ventaBrutaTotal += sim.ventasBrutas
+                participacionBrutaTotal += sim.participacionBrutaInstructor
+                retencionISRTotal += sim.retencionISR
+                retencionIVATotal += sim.retencionIVA
+                liquidacionNetaTotal += sim.liquidacionNetaTotal
+            }
+        })
+
+        return {
+            regimenKey,
+            metadata,
+            ventaBrutaTotal,
+            participacionBrutaTotal,
+            retencionISRTotal,
+            retencionIVATotal,
+            liquidacionNetaTotal
+        }
     }, [ventasFiltradas, userProfile])
+
+    // Suma total de los montos brutos filtrados
+    const totalMontoFiltrado = useMemo(() => {
+        return desgloseFinanciero.ventaBrutaTotal
+    }, [desgloseFinanciero])
 
     const limpiarFiltros = () => {
         setFiltroCurso('')
@@ -161,11 +205,38 @@ export default function ProfesorVentasPage() {
          <div className="max-w-6xl mx-auto px-4 py-8 font-sans">
             <h1 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Mis Ventas de Cursos</h1>
             
-            {userProfile?.rol === 'institucion' && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex items-start gap-2 shadow-sm">
+            {/* Estado del Régimen Fiscal */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-gray-200 rounded-2xl p-4 mb-6 shadow-xs">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">
+                        <ShieldCheck className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Régimen Fiscal Activo:</span>
+                            <span className="text-sm font-extrabold text-gray-900" data-testid="regimen-activo-titulo">
+                                {desgloseFinanciero.metadata.titulo}
+                            </span>
+                            <span className="text-xs text-gray-500 font-medium">({desgloseFinanciero.metadata.subtitulo})</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                            {desgloseFinanciero.metadata.resumenFiscal}
+                        </p>
+                    </div>
+                </div>
+                <a 
+                    href="/perfil"
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3.5 py-2 rounded-xl transition whitespace-nowrap"
+                >
+                    Cambiar Régimen Fiscal →
+                </a>
+            </div>
+
+            {userProfile?.regimen_fiscal_estado === 'pendiente' && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-4 mb-6 text-sm flex items-start gap-2.5 shadow-xs">
                     <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600" />
                     <div>
-                        <strong>Nota importante:</strong> Los montos mostrados en este panel representan el 50% de las ventas brutas. Esta es una cifra aproximada, ya que faltan deducciones por impuestos, comisiones por pasarela de pago, cupones de descuento aplicados, etc.
+                        <strong>Cambio de régimen en revisión:</strong> Has solicitado pasar al régimen <strong>{userProfile.regimen_fiscal_solicitado === 'con_rfc' ? 'Con RFC (Persona Física)' : 'Persona Moral'}</strong>. Mientras el administrador valida tu solicitud, tus ventas y liquidaciones se calculan bajo tu régimen activo ({desgloseFinanciero.metadata.titulo}).
                     </div>
                 </div>
             )}
@@ -389,18 +460,95 @@ export default function ProfesorVentasPage() {
                         </div>
                     ) : hasSearched ? (
                         <>
-                            {/* KPIs */}
+                            {/* Tarjeta Destacada de Liquidación Neta y Deducciones Fiscales */}
+                            <div className="bg-gradient-to-br from-slate-900 via-slate-850 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 border border-slate-700/60" data-testid="desglose-financiero-card">
+                                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-700/60 pb-5 mb-6">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <span className="text-[11px] font-black uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
+                                                Modelo Oficial 70/30
+                                            </span>
+                                            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/10 text-white font-semibold">
+                                                {desgloseFinanciero.metadata.titulo}
+                                            </span>
+                                        </div>
+                                        <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                                            Liquidación Neta y Proyección Fiscal
+                                        </h3>
+                                        <p className="text-xs text-slate-300 mt-1 max-w-xl">
+                                            {desgloseFinanciero.metadata.resumenFiscal}
+                                        </p>
+                                    </div>
+                                    <div className="text-left sm:text-right">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                                            {desgloseFinanciero.metadata.etiquetaLiquidacion}
+                                        </span>
+                                        <div className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight" data-testid="liquidacion-neta-total">
+                                            ${desgloseFinanciero.liquidacionNetaTotal.toFixed(2)} <span className="text-base text-slate-300 font-medium">MXN</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 mt-0.5">Efectivo depositado en cuenta bancaria</p>
+                                    </div>
+                                </div>
+
+                                {/* Desglose detallado de las 4 columnas */}
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ventas Brutas</p>
+                                        <p className="text-lg sm:text-xl font-black text-white" data-testid="monto-bruto-total">${desgloseFinanciero.ventaBrutaTotal.toFixed(2)}</p>
+                                        <p className="text-[10px] text-slate-400">Total pagado por alumnos</p>
+                                    </div>
+
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Participación Bruta (70%)</p>
+                                        <p className="text-lg sm:text-xl font-black text-indigo-300">${desgloseFinanciero.participacionBrutaTotal.toFixed(2)}</p>
+                                        <p className="text-[10px] text-slate-400">Base distribuible instructor</p>
+                                    </div>
+
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                        <p className="text-[11px] font-bold text-rose-300 uppercase tracking-wider mb-1">
+                                            Retención ISR ({desgloseFinanciero.regimenKey === 'SIN_RFC' ? '20%' : '2.5%'})
+                                        </p>
+                                        <p className="text-lg sm:text-xl font-black text-rose-400">-${desgloseFinanciero.retencionISRTotal.toFixed(2)}</p>
+                                        <p className="text-[10px] text-slate-400">{desgloseFinanciero.metadata.descripcionISR}</p>
+                                    </div>
+
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                        <p className="text-[11px] font-bold text-rose-300 uppercase tracking-wider mb-1">
+                                            Retención IVA ({desgloseFinanciero.regimenKey === 'SIN_RFC' ? '100%' : '50%'})
+                                        </p>
+                                        <p className="text-lg sm:text-xl font-black text-rose-400">-${desgloseFinanciero.retencionIVATotal.toFixed(2)}</p>
+                                        <p className="text-[10px] text-slate-400">{desgloseFinanciero.metadata.descripcionIVA}</p>
+                                    </div>
+                                </div>
+
+                                {desgloseFinanciero.regimenKey === 'SIN_RFC' && (
+                                    <div className="mt-5 bg-indigo-950/60 border border-indigo-500/30 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                        <div className="flex items-center gap-2.5">
+                                            <Sparkles className="w-5 h-5 text-amber-300 flex-shrink-0" />
+                                            <span className="text-slate-200">
+                                                💡 <strong>Tip fiscal:</strong> Configurando tu RFC en tu perfil, la retención de ISR disminuye del <strong>20% al 2.5%</strong> y la de IVA al 50%.
+                                            </span>
+                                        </div>
+                                        <a 
+                                            href="/perfil" 
+                                            className="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-xl font-bold transition whitespace-nowrap shadow-sm"
+                                        >
+                                            Configurar mi RFC →
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* KPIs Rápidos */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center gap-4">
                                     <div className="h-12 w-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
                                         <DollarSign className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Ingresos Totales</p>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Ingresos Totales Brutos</p>
                                         <p className="text-2xl font-black text-blue-600">${totalMontoFiltrado.toFixed(2)}</p>
-                                        <p className="text-[10px] text-gray-400 font-medium">
-                                            {userProfile?.rol === 'institucion' ? 'MXN (Aprox. 50% neto)' : 'MXN (Filtrado)'}
-                                        </p>
+                                        <p className="text-[10px] text-gray-400 font-medium">MXN (Filtrado)</p>
                                     </div>
                                 </div>
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center gap-4">

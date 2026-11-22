@@ -51,6 +51,8 @@ export async function GET() {
         // Combinar datos
         const mergedUsers = profiles?.map(p => ({
             ...p,
+            regimen_fiscal: p.regimen_fiscal || 'sin_rfc',
+            regimen_fiscal_estado: p.regimen_fiscal_estado || 'aprobado',
             email: emailMap[p.id] || 'N/A'
         })) || [];
 

@@ -49,6 +49,11 @@ CREATE TABLE IF NOT EXISTS public.ie_profiles (
     representante_nombre text,
     representante_cargo text,
     descripcion_institucional character varying(300),
+    regimen_fiscal text NOT NULL DEFAULT 'sin_rfc' CHECK (regimen_fiscal IN ('sin_rfc', 'con_rfc', 'persona_moral')),
+    regimen_fiscal_solicitado text CHECK (regimen_fiscal_solicitado IS NULL OR regimen_fiscal_solicitado IN ('sin_rfc', 'con_rfc', 'persona_moral')),
+    regimen_fiscal_estado text NOT NULL DEFAULT 'aprobado' CHECK (regimen_fiscal_estado IN ('aprobado', 'pendiente', 'rechazado')),
+    regimen_fiscal_motivo_rechazo text,
+    regimen_fiscal_actualizado_at timestamp with time zone DEFAULT now(),
     CONSTRAINT ie_profiles_rol_check CHECK (rol IN ('alumno', 'profesor', 'vendedor', 'admin', 'financiero', 'institucion', 'instructor'))
 );
 
@@ -498,6 +503,8 @@ ALTER TABLE public.ie_comentarios
 
 -- Índices de rendimiento
 CREATE INDEX IF NOT EXISTS idx_ie_profiles_rol ON public.ie_profiles(rol);
+CREATE INDEX IF NOT EXISTS idx_ie_profiles_regimen_fiscal ON public.ie_profiles(regimen_fiscal);
+CREATE INDEX IF NOT EXISTS idx_ie_profiles_regimen_estado ON public.ie_profiles(regimen_fiscal_estado);
 CREATE INDEX IF NOT EXISTS idx_ie_comentarios_user_id ON public.ie_comentarios(user_id);
 CREATE INDEX IF NOT EXISTS idx_ie_comentarios_created_at ON public.ie_comentarios(created_at);
 

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { User, Save, CheckCircle, GraduationCap, Copy, Link2 } from 'lucide-react'
+import { User, Save, CheckCircle, GraduationCap, Copy, Link2, AlertCircle, ShieldCheck } from 'lucide-react'
 
 export default function PerfilPage() {
     const [nombre, setNombre] = useState('')
@@ -22,6 +22,13 @@ export default function PerfilPage() {
     const [fotografiaPerfil, setFotografiaPerfil] = useState('')
     const [identidadValidada, setIdentidadValidada] = useState(false)
     const [verificado, setVerificado] = useState(false)
+    
+    // Estados para Régimen Fiscal (Sin RFC, Con RFC, Persona Moral)
+    const [regimenFiscal, setRegimenFiscal] = useState('sin_rfc')
+    const [regimenFiscalDeseado, setRegimenFiscalDeseado] = useState('sin_rfc')
+    const [regimenFiscalSolicitado, setRegimenFiscalSolicitado] = useState<string | null>(null)
+    const [regimenFiscalEstado, setRegimenFiscalEstado] = useState('aprobado')
+    const [regimenFiscalMotivoRechazo, setRegimenFiscalMotivoRechazo] = useState<string | null>(null)
     
     const [correoAdicional, setCorreoAdicional] = useState('')
     const [profesionEspecialidad, setProfesionEspecialidad] = useState('')
@@ -145,6 +152,16 @@ export default function PerfilPage() {
                 setFotografiaPerfil(prof.fotografia_perfil || '')
                 setIdentidadValidada(prof.identidad_validada || false)
                 setVerificado(prof.verificado || false)
+
+                // Cargar Régimen Fiscal
+                const rf = prof.regimen_fiscal || 'sin_rfc'
+                const rfs = prof.regimen_fiscal_solicitado || null
+                const rfe = prof.regimen_fiscal_estado || 'aprobado'
+                setRegimenFiscal(rf)
+                setRegimenFiscalSolicitado(rfs)
+                setRegimenFiscalEstado(rfe)
+                setRegimenFiscalMotivoRechazo(prof.regimen_fiscal_motivo_rechazo || null)
+                setRegimenFiscalDeseado(rfs || rf)
                 setDatosBancariosCapturados(prof.datos_bancarios_capturados || false)
                 setSolicitudCambioDatos(prof.solicitud_cambio_datos || false)
                 setCorreoAdicional(prof.correo_adicional || '')
@@ -246,16 +263,30 @@ export default function PerfilPage() {
             ? `${tipoInstitucion} - ${nombreInstitucion}` 
             : (nombreInstitucion || tipoInstitucion || '');
 
-        const { error: updateError } = await supabase
-            .from('ie_profiles')
-            .update({ 
+        // Validaciones previas de RFC si no es sin_rfc
+        const rfcTrimmed = rfc.trim().toUpperCase()
+        if (regimenFiscalDeseado === 'con_rfc' && rfcTrimmed.length !== 13) {
+            setError('El RFC para Persona Física debe contener exactamente 13 caracteres.')
+            setSaving(false)
+            return
+        }
+        if (regimenFiscalDeseado === 'persona_moral' && rfcTrimmed.length !== 12) {
+            setError('El RFC para Persona Moral debe contener exactamente 12 caracteres.')
+            setSaving(false)
+            return
+        }
+
+        const res = await fetch('/api/perfil', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
                 nombre,
                 apellido_paterno: apellidoPaterno,
                 apellido_materno: apellidoMaterno,
                 telefono,
                 banco,
                 clabe,
-                rfc,
+                rfc: regimenFiscalDeseado === 'sin_rfc' ? '' : rfcTrimmed,
                 constancia_situacion_fiscal: finalCsfUrl,
                 fotografia_perfil: finalFotoUrl,
                 datos_bancarios_capturados: nuevosDatosCapturados,
@@ -273,28 +304,44 @@ export default function PerfilPage() {
                 organizacion_tipo: finalOrganizacionTipo,
                 representante_nombre: representanteNombre,
                 representante_cargo: representanteCargo,
-                descripcion_institucional: descripcionInstitucional
-            })
-            .eq('id', user.id)
+                descripcion_institucional: descripcionInstitucional,
 
-        if (!updateError && nuevosDatosCapturados && !datosBancariosCapturados) {
+                // Régimen Fiscal
+                regimen_fiscal_deseado: regimenFiscalDeseado
+            })
+        })
+
+        const result = await res.json()
+
+        if (!res.ok) {
+            setError(result.error || 'Error al actualizar el perfil')
+            setSaving(false)
+            return
+        }
+
+        if (nuevosDatosCapturados && !datosBancariosCapturados) {
             setDatosBancariosCapturados(true);
         }
 
-        if (updateError) {
-            setError('Error al actualizar el perfil: ' + updateError.message)
-        } else {
-            setSuccess('Perfil actualizado correctamente.')
-            window.dispatchEvent(new Event('profile-updated'))
-            
-            // Redireccionar si existe el parámetro 'redirect' en la URL
-            const params = new URLSearchParams(window.location.search);
-            const redirectUrl = params.get('redirect');
-            if (redirectUrl) {
-                setTimeout(() => {
-                    router.push(redirectUrl);
-                }, 3000); // Dar 3 segundos para ver el modal de éxito, o hasta que pulsen Aceptar
+        if (result.data) {
+            if (result.data.regimen_fiscal) setRegimenFiscal(result.data.regimen_fiscal)
+            setRegimenFiscalSolicitado(result.data.regimen_fiscal_solicitado || null)
+            if (result.data.regimen_fiscal_estado) setRegimenFiscalEstado(result.data.regimen_fiscal_estado)
+            if (result.data.regimen_fiscal_motivo_rechazo !== undefined) {
+                setRegimenFiscalMotivoRechazo(result.data.regimen_fiscal_motivo_rechazo)
             }
+        }
+
+        setSuccess('Perfil actualizado correctamente.')
+        window.dispatchEvent(new Event('profile-updated'))
+        
+        // Redireccionar si existe el parámetro 'redirect' en la URL
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect');
+        if (redirectUrl) {
+            setTimeout(() => {
+                router.push(redirectUrl);
+            }, 3000); // Dar 3 segundos para ver el modal de éxito, o hasta que pulsen Aceptar
         }
         setSaving(false)
     }
@@ -766,41 +813,172 @@ export default function PerfilPage() {
                             </div>
                         )}
 
-                        {(rol === 'instructor' || rol === 'vendedor' || rol === 'capacitador' || rol === 'institucion') && (
+                        {(rol === 'instructor' || rol === 'profesor' || rol === 'vendedor' || rol === 'capacitador' || rol === 'institucion') && (
                             <div className="pt-4 border-t border-gray-100">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-bold text-gray-800">Validación de Identidad</h2>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${identidadValidada ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                        {identidadValidada ? 'Validado' : 'Pendiente'}
-                                    </span>
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                    <h2 className="text-lg font-bold text-gray-800">Régimen Fiscal y Facturación</h2>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                            regimenFiscalEstado === 'aprobado' ? 'bg-emerald-100 text-emerald-800' :
+                                            regimenFiscalEstado === 'pendiente' ? 'bg-amber-100 text-amber-800 animate-pulse' :
+                                            'bg-red-100 text-red-800'
+                                        }`}>
+                                            {regimenFiscalEstado === 'aprobado' ? 'Régimen Activo' :
+                                             regimenFiscalEstado === 'pendiente' ? 'Pendiente de Autorización' : 'Solicitud Rechazada'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <p className="text-sm text-gray-500 mb-5 leading-relaxed">
-                                    Para operar en la plataforma necesitas completar estos datos. Una vez guardados, el administrador validará tu identidad.
+                                <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+                                    Selecciona tu régimen fiscal ante el SAT. Esta opción determina los porcentajes de retención aplicables a tus comisiones en <strong>"Mis Ventas"</strong>. Puedes solicitar un cambio cuando lo desees.
                                 </p>
-                                
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">RFC</label>
-                                        <input 
-                                            type="text" 
-                                            value={rfc} 
-                                            onChange={(e) => setRfc(e.target.value.toUpperCase())}
-                                            className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-md px-4 py-3 sm:text-base border text-black font-medium"
-                                            placeholder="Ej. XAXX010101000"
-                                            maxLength={13}
-                                        />
+
+                                {regimenFiscalEstado === 'pendiente' && (
+                                    <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3.5 text-xs flex items-start gap-2 shadow-xs">
+                                        <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <strong>Cambio en revisión por administración:</strong> Has solicitado el régimen <strong>{regimenFiscalSolicitado === 'con_rfc' ? 'Con RFC (Persona Física)' : 'Persona Moral'}</strong>. Mientras el administrador valida tu solicitud, tus ventas se liquidarán bajo tu régimen activo ({regimenFiscal === 'sin_rfc' ? 'Sin RFC' : regimenFiscal === 'con_rfc' ? 'Con RFC (Persona Física)' : 'Persona Moral'}).
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Constancia de Situación Fiscal (PDF) (Opcional)</label>
-                                        {csfUrl && <p className="text-xs text-blue-600 truncate mb-1">Archivo actual guardado</p>}
-                                        <input 
-                                            type="file" 
-                                            accept=".pdf"
-                                            onChange={(e) => setCsfFile(e.target.files?.[0] || null)}
-                                            className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 rounded-md bg-white border-gray-300"
-                                        />
+                                )}
+
+                                {regimenFiscalEstado === 'rechazado' && regimenFiscalMotivoRechazo && (
+                                    <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-xl p-3.5 text-xs flex items-start gap-2 shadow-xs">
+                                        <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <strong>Solicitud no autorizada:</strong> {regimenFiscalMotivoRechazo}. Por favor verifica tus datos e intenta nuevamente.
+                                        </div>
                                     </div>
+                                )}
+
+                                {/* Radio Cards de Selección de Régimen */}
+                                <div className="grid grid-cols-1 gap-3 mb-5" data-testid="regimen-fiscal-selector">
+                                    {/* Sin RFC */}
+                                    <label className={`relative flex flex-col p-4 border-2 rounded-2xl cursor-pointer transition-all ${
+                                        regimenFiscalDeseado === 'sin_rfc' 
+                                        ? 'border-blue-600 bg-blue-50/40 shadow-xs ring-1 ring-blue-500' 
+                                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                                    }`}>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <div className="flex items-center gap-2.5">
+                                                <input 
+                                                    type="radio" 
+                                                    name="regimen_fiscal_deseado" 
+                                                    value="sin_rfc" 
+                                                    data-testid="radio-sin-rfc"
+                                                    checked={regimenFiscalDeseado === 'sin_rfc'}
+                                                    onChange={() => setRegimenFiscalDeseado('sin_rfc')}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                />
+                                                <span className="font-bold text-gray-900 text-sm">Sin RFC (Predeterminado)</span>
+                                            </div>
+                                            <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Automático</span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 mb-2 pl-6.5">
+                                            Ideal si aún no cuentas con RFC. Puedes comenzar a impartir cursos y cobrar de inmediato.
+                                        </p>
+                                        <div className="pl-6.5 text-[11px] font-semibold text-amber-700 bg-amber-50/80 rounded-lg p-2 border border-amber-100">
+                                            Retenciones automáticas SAT: <strong>20% ISR</strong> y <strong>100% IVA</strong> por falta de RFC.
+                                        </div>
+                                    </label>
+
+                                    {/* Con RFC */}
+                                    <label className={`relative flex flex-col p-4 border-2 rounded-2xl cursor-pointer transition-all ${
+                                        regimenFiscalDeseado === 'con_rfc' 
+                                        ? 'border-blue-600 bg-blue-50/40 shadow-xs ring-1 ring-blue-500' 
+                                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                                    }`}>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <div className="flex items-center gap-2.5">
+                                                <input 
+                                                    type="radio" 
+                                                    name="regimen_fiscal_deseado" 
+                                                    value="con_rfc" 
+                                                    data-testid="radio-con-rfc"
+                                                    checked={regimenFiscalDeseado === 'con_rfc'}
+                                                    onChange={() => setRegimenFiscalDeseado('con_rfc')}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                />
+                                                <span className="font-bold text-gray-900 text-sm">Con RFC (Persona Física)</span>
+                                            </div>
+                                            <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Requiere Autorización</span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 mb-2 pl-6.5">
+                                            Para instructores o profesionistas dados de alta ante el SAT con actividad empresarial o plataformas tecnológicas.
+                                        </p>
+                                        <div className="pl-6.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50/80 rounded-lg p-2 border border-emerald-100">
+                                            Retención preferencial: <strong>2.5% ISR</strong> (Art. 113-A LISR) y <strong>50% IVA</strong> trasladado.
+                                        </div>
+                                    </label>
+
+                                    {/* Persona Moral */}
+                                    <label className={`relative flex flex-col p-4 border-2 rounded-2xl cursor-pointer transition-all ${
+                                        regimenFiscalDeseado === 'persona_moral' 
+                                        ? 'border-blue-600 bg-blue-50/40 shadow-xs ring-1 ring-blue-500' 
+                                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                                    }`}>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <div className="flex items-center gap-2.5">
+                                                <input 
+                                                    type="radio" 
+                                                    name="regimen_fiscal_deseado" 
+                                                    value="persona_moral" 
+                                                    data-testid="radio-persona-moral"
+                                                    checked={regimenFiscalDeseado === 'persona_moral'}
+                                                    onChange={() => setRegimenFiscalDeseado('persona_moral')}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                />
+                                                <span className="font-bold text-gray-900 text-sm">Persona Moral</span>
+                                            </div>
+                                            <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Requiere Autorización</span>
+                                        </div>
+                                        <p className="text-xs text-gray-600 mb-2 pl-6.5">
+                                            Para instituciones educativas, empresas, sociedades civiles o academias legalmente constituidas.
+                                        </p>
+                                        <div className="pl-6.5 text-[11px] font-semibold text-purple-800 bg-purple-50/80 rounded-lg p-2 border border-purple-100">
+                                            Retención corporativa: <strong>2.5% ISR</strong> a cuenta del ejercicio y <strong>50% IVA</strong> trasladado.
+                                        </div>
+                                    </label>
                                 </div>
+
+                                {/* Campos de RFC y CSF condicionales */}
+                                {regimenFiscalDeseado !== 'sin_rfc' ? (
+                                    <div className="space-y-4 bg-gray-50/80 p-4 rounded-2xl border border-gray-200">
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">
+                                                RFC {regimenFiscalDeseado === 'con_rfc' ? '(Persona Física - 13 caracteres)' : '(Persona Moral - 12 caracteres)'} <span className="text-red-500">*</span>
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                data-testid="input-rfc"
+                                                value={rfc} 
+                                                onChange={(e) => setRfc(e.target.value.toUpperCase().trim())}
+                                                required
+                                                className="focus:ring-blue-500 focus:border-blue-500 block w-full border-gray-300 rounded-xl px-4 py-3 sm:text-base border text-black font-mono font-bold bg-white uppercase"
+                                                placeholder={regimenFiscalDeseado === 'con_rfc' ? "Ej. ABCD800101XYZ" : "Ej. ABC800101XYZ"}
+                                                maxLength={regimenFiscalDeseado === 'con_rfc' ? 13 : 12}
+                                            />
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                {regimenFiscalDeseado === 'con_rfc' 
+                                                    ? 'Debe contener 13 caracteres (4 letras, 6 dígitos AAMMDD y 3 dígitos homoclave).' 
+                                                    : 'Debe contener 12 caracteres (3 letras, 6 dígitos AAMMDD y 3 dígitos homoclave).'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">Constancia de Situación Fiscal (PDF) (Opcional)</label>
+                                            {csfUrl && <p className="text-xs text-blue-600 truncate mb-1">✓ Archivo actual guardado</p>}
+                                            <input 
+                                                type="file" 
+                                                accept=".pdf"
+                                                onChange={(e) => setCsfFile(e.target.files?.[0] || null)}
+                                                className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border p-1 rounded-md bg-white border-gray-300"
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-gray-500 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+                                        ℹ️ Al seleccionar <strong>Sin RFC</strong> no es necesario proporcionar RFC ni Constancia de Situación Fiscal. Se aplicarán las retenciones estándar por ley sobre las ventas.
+                                    </div>
+                                )}
                             </div>
                         )}
 
