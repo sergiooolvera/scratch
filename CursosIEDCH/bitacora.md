@@ -65,6 +65,16 @@
 - `npx playwright test e2e/finances.spec.ts`: 5 de 5 pruebas aprobadas (100% de éxito).
 - `npm run build`: Compilación limpia de producción con Turbopack (51/51 rutas generadas).
 
+#### Despliegue a Producción:
+- Sincronización de rama `staging` con el repositorio remoto (`git push origin staging`).
+- Fusión de `staging` hacia `main` (`git checkout main`, `git merge staging`).
+- Envío a producción en GitHub (`git push origin main`), activando el despliegue automático en Vercel.
+- Verificación del despliegue en Vercel CLI (`dpl_36DstAtud8SU1TnzUAKvzHp1Kf9G`): Estado `● Ready` activo en los dominios oficiales de producción:
+  - [https://www.grupoegac.com](https://www.grupoegac.com)
+  - [https://cursos.grupoegac.com](https://cursos.grupoegac.com)
+  - [https://cursos-iedch.vercel.app](https://cursos-iedch.vercel.app)
+- Retorno y permanencia de trabajo en la rama `staging`.
+
 ---
 
 ## Fecha: 2026-11-18
