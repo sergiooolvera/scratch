@@ -1,6 +1,36 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
 ## Fecha: 2026-11-25
+### Tarea: Ajuste del Precio Mínimo Permitido en el Simulador de Ingresos 2026 a $100 MXN
+
+#### Diagnóstico y Requerimiento:
+- **Observación del Usuario:** En el modal de simulación de ganancias, la interfaz no permitía ingresar ni deslizar a valores menores a $200 MXN. Si bien la creación y edición de cursos exige un precio mínimo de $199.00 / $200.00 MXN para cursos de pago, en el simulador de ganancias se requirió explícitamente permitir un valor mínimo de **$100.00 MXN** para evaluar escenarios de promociones, descuentos y volumen.
+- **Análisis de Código:**
+  1. En [`lib/simulador-ganancias.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/simulador-ganancias.ts), la constante `SIMULADOR_CONSTANTS.MIN_PRECIO` estaba establecida en `200`.
+  2. En [`components/SimuladorIngresosModal.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx), el slider de precio tenía `min={SIMULADOR_CONSTANTS.MIN_PRECIO}` y el input numérico forzaba en el evento `onBlur` a acotar cualquier valor menor a `MIN_PRECIO`. Además, la etiqueta visual inferior del slider tenía un texto estático `<span>$200</span>`.
+
+#### Solución Implementada:
+1. **Actualización de Constantes Oficiales del Simulador ([`lib/simulador-ganancias.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/lib/simulador-ganancias.ts)):**
+   - Se actualizó `SIMULADOR_CONSTANTS.MIN_PRECIO` a `100`.
+   - Se incorporó `SIMULADOR_CONSTANTS.DEFAULT_PRECIO = 200` para conservar un punto de partida representativo de un curso comercial cuando el formulario no tiene un precio definido.
+2. **Ajuste de Rango e Interfaz en el Modal ([`components/SimuladorIngresosModal.tsx`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/components/SimuladorIngresosModal.tsx)):**
+   - El control deslizante (`input[type="range"]`) y el input numérico ahora aceptan valores desde `$100 MXN` con incrementos de `$50` ($100, $150, $200, etc.).
+   - La etiqueta visual en la parte inferior del slider ahora muestra dinámicamente `$100` en el extremo izquierdo y `$10,000` en el extremo derecho.
+   - La normalización en `onBlur` del input numérico ahora permite números `>= $100 MXN`.
+   - Si el modal se abre desde un curso que ya tiene un precio `>= $100 MXN`, se precarga dicho precio. Si es menor a $100 o $0, se inicializa en `$200 MXN` con total libertad de deslizar o escribir desde `$100 MXN`.
+3. **Pruebas Automatizadas E2E en Playwright ([`e2e/finances.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch/CursosIEDCH/e2e/finances.spec.ts)):**
+   - Se añadió un test E2E exhaustivo: *"Debe permitir en el simulador un precio mínimo de $100 MXN y validar cálculos correspondientes"*.
+   - Se validaron los atributos `min="100"` en slider e input, la visualización de `$100`, el cálculo financiero exacto para $100 MXN (20 alumnos x $100 = $2,000 MXN brutos, $1,119.13 MXN neto, 56% retorno neto) y la corrección automática en `blur` si se teclean montos menores a 100.
+   - Ejecución de la suite completa de finanzas: **6 de 6 pruebas aprobadas (100%)**.
+
+#### Verificación Técnica:
+- `npx tsc --noEmit`: 0 errores.
+- `npx playwright test e2e/finances.spec.ts`: 6 passed (30.9s).
+- `npm run build`: compilación de producción con Turbopack exitosa (51/51 rutas).
+
+---
+
+## Fecha: 2026-11-25
 ### Tarea: Rediseño Integral del Reporte de Ventas para Instructores/Instituciones/Capacitadores (Mockup Oficial, Métodos de Pago, Cortes y Verificación)
 
 #### Diagnóstico y Requerimientos:

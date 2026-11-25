@@ -192,4 +192,36 @@ test.describe('Módulo de Finanzas, Ventas y Simulador Fiscal 2026', () => {
       await adminClient.from('ie_cursos').delete().eq('id', tempCurso!.id);
     }
   });
+
+  test('Debe permitir en el simulador un precio mínimo de $100 MXN y validar cálculos correspondientes', async ({ page }) => {
+    await loginAs(page, TEST_USERS.profesor);
+    await page.goto('/profesor/subir-curso');
+
+    await page.locator('#btn-simulador-ingresos').click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
+    // Validar atributos de límite mínimo en slider e input de precio
+    const sliderPrecio = dialog.getByTestId('simulador-precio-slider');
+    const inputPrecio = dialog.getByTestId('simulador-precio-input');
+    await expect(sliderPrecio).toHaveAttribute('min', '100');
+    await expect(inputPrecio).toHaveAttribute('min', '100');
+    await expect(dialog.getByText('$100')).toBeVisible();
+
+    // 1. Establecer precio en el nuevo mínimo permitido de $100 MXN con 20 alumnos
+    await inputPrecio.fill('100');
+    await expect(dialog.getByTestId('simulador-ventas-brutas-hero')).toContainText('$2,000.00 MXN');
+    await expect(dialog.getByTestId('simulador-ingreso-neto-hero')).toContainText('$1,119.13 MXN');
+    await expect(dialog.getByTestId('simulador-porcentaje-ventas')).toHaveText('56%');
+
+    // 2. Mover slider al mínimo ($100 MXN)
+    await sliderPrecio.fill('100');
+    await expect(inputPrecio).toHaveValue('100');
+
+    // 3. Validar que si el usuario escribe un valor menor a 100 (ej: 50), al salir del input (blur) se normalice a 100
+    await inputPrecio.fill('50');
+    await inputPrecio.blur();
+    await expect(inputPrecio).toHaveValue('100');
+    await expect(dialog.getByTestId('simulador-ventas-brutas-hero')).toContainText('$2,000.00 MXN');
+  });
 });

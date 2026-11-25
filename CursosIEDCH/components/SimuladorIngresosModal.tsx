@@ -59,8 +59,8 @@ export default function SimuladorIngresosModal({
   const [regimen, setRegimen] = useState<RegimenFiscalSimulador>('PERSONA_FISICA')
   const [alumnos, setAlumnos] = useState<number>(SIMULADOR_CONSTANTS.DEFAULT_ALUMNOS)
   const [alumnosStr, setAlumnosStr] = useState<string>(String(SIMULADOR_CONSTANTS.DEFAULT_ALUMNOS))
-  const [precio, setPrecio] = useState<number>(SIMULADOR_CONSTANTS.MIN_PRECIO)
-  const [precioStr, setPrecioStr] = useState<string>(String(SIMULADOR_CONSTANTS.MIN_PRECIO))
+  const [precio, setPrecio] = useState<number>(SIMULADOR_CONSTANTS.DEFAULT_PRECIO)
+  const [precioStr, setPrecioStr] = useState<string>(String(SIMULADOR_CONSTANTS.DEFAULT_PRECIO))
   const [desgloseAbierto, setDesgloseAbierto] = useState<boolean>(true)
   const [activeTooltip, setActiveTooltip] = useState<TooltipKey>(null)
 
@@ -69,7 +69,7 @@ export default function SimuladorIngresosModal({
       const precioInicial =
         Number.isFinite(precioPublico) && precioPublico >= SIMULADOR_CONSTANTS.MIN_PRECIO
           ? Math.round(precioPublico)
-          : SIMULADOR_CONSTANTS.MIN_PRECIO
+          : SIMULADOR_CONSTANTS.DEFAULT_PRECIO
       setPrecio(precioInicial)
       setPrecioStr(String(precioInicial))
       setActiveTooltip(null)
@@ -387,8 +387,8 @@ export default function SimuladorIngresosModal({
                 className="w-full h-2 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-emerald-500 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-md"
               />
               <div className="flex justify-between text-[11px] font-medium text-slate-500 mt-1.5">
-                <span>$200</span>
-                <span>$10,000</span>
+                <span>${SIMULADOR_CONSTANTS.MIN_PRECIO.toLocaleString('es-MX')}</span>
+                <span>${SIMULADOR_CONSTANTS.MAX_PRECIO.toLocaleString('es-MX')}</span>
               </div>
             </div>
           </div>
