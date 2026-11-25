@@ -1,5 +1,48 @@
 # Bitácora de Desarrollo - CursosIEDCH
 
+## Fecha: 2026-11-25
+### Tarea: Rediseño Integral del Reporte de Ventas para Instructores/Instituciones/Capacitadores (Mockup Oficial, Métodos de Pago, Cortes y Verificación)
+
+#### Diagnóstico y Requerimientos:
+- **Solicitud del Usuario:**
+  1. Identificar con precisión el origen y método del recurso: OXXO, Tarjeta bancaria (crédito/débito), Cupón (parcial o 100% beca) y Transferencia.
+  2. Modalidad Abierta: Periodo de cálculo de principio a fin de mes para consultar los pagos a realizar.
+  3. Modalidad Cerrada: Fecha límite de inscripción + 7 días (periodo de gracia por acreditación de pagos OXXO y aclaraciones).
+  4. Marca de "VERIFICADO": Si el instructor está verificado, fecha de pago a 15 días posteriores a la fecha de corte; si no está verificado, se programa al mes (30 días).
+  5. Cálculo de pago con respecto a la opción de régimen fiscal elegida en su perfil (`con_rfc`, `persona_moral`, `sin_rfc`) calculando la liquidación neta bancaria real.
+  6. Maquetación exacta basada en la imagen/mockup oficial aportada por el usuario (Header con título y avatar, filtros por nombre y curso, 4 KPIs clave, panel de datos bancarios con estatus de verificación, panel de pagos pendientes por curso y tabla detallada de ventas con paginación).
+
+#### Solución Implementada:
+1. **API de Transacciones Consolidada ([`app/api/admin/stripe-sessions/route.ts`](file:///c:/Users/sergi/.gemini/antigravity/scratch\CursosIEDCH\app\api\admin\stripe-sessions\route.ts)):**
+   - Habilitación de sesiones abiertas/activas de Stripe (especialmente fichas OXXO en espera de pago en tienda) con `payment_status: 'unpaid'` para reflejar pagos con estatus `Pendiente`.
+   - Inclusión de metadatos del curso en cada transacción: `curso_modalidad` ('abierta' o 'cerrada') y `curso_limite_inscripcion`.
+   - Normalización de nombres de método de pago: `'Tarjeta'`, `'OXXO'`, `'Transferencia'` y `'Cupón'`.
+2. **Reingeniería de la Pantalla de Ventas ([`app/profesor/ventas/page.tsx`](file:///c:/Users/sergi/.gemini/antigravity\scratch\CursosIEDCH\app\profesor\ventas\page.tsx)):**
+   - **Header:** Botón de retroceso, título del curso consultado ("Curso: [Título]" o "Ventas Generales") y avatar de usuario con inicial.
+   - **Buscador & Filtros:** Búsqueda por nombre de alumno, selector de curso con modalidad indicada, selector dual e independiente de **Año** (`select-buscar-anio`: Todos los años, 2026, 2025...) y **Mes** (`select-buscar-mes`: Todos los meses, Enero...Diciembre) con distribución responsiva de 12 columnas y botón morado de búsqueda.
+   - **4 KPIs:** *Ventas registradas* (total), *Próximo pago* (fecha más próxima calculada), *Pagos pendientes* (cursos con ventas por liquidar) y *Monto pendiente* (liquidación neta real acumulada).
+   - **Panel Izquierdo:** *Datos bancarios registrados* (Banco, Titular, Cuenta y CLABE enmascaradas con asteriscos `**** **** **** 1234`), insignia `VERIFICADO` (verde) / `NO VERIFICADO` (ámbar), aviso de beneficios de 15 vs 30 días y régimen fiscal activo.
+   - **Panel Derecho - Pagos Pendientes por Curso y Periodo Mensual:**
+     - Separación automática por periodo mensual de corte en Modalidad Abierta (ej. Corte Marzo 2026 con pago 15/04/2026, Corte Abril 2026 con pago 15/05/2026).
+     - Indicador diferenciado de ventas: muestra conteo de ventas con pago monetario y desglose de cupones 100% de $0.00.
+     - **Nueva Columna y Enlace "Desglose":** Al hacer clic, abre un modal emergente interactivo que explica al instructor el cálculo exacto de su liquidación neta (Ventas brutas, comisión de pasarela Stripe, base distribuible 70/30, retenciones de ISR e IVA según su régimen fiscal).
+   - **Grid de Ventas con Filtro por Método de Pago:**
+     - Incorporación en el encabezado de la tabla de ventas de un selector reactivo: *Todos los métodos*, *Tarjeta*, *OXXO*, *Transferencia* y *Cupón*.
+   - **Algoritmo de Fechas de Dispersión:**
+     - Modalidad Cerrada: `fechaCorte = limite_inscripcion + 7 días`.
+     - Modalidad Abierta: `fechaCorte = último día del mes correspondiente a las ventas`.
+     - Dispersión: `fechaCorte + 15 días` si `verificado = true`; `fechaCorte + 30 días` si `verificado = false`.
+   - **Cálculo Fiscal Neto:** Integración de `calcularSimulacionGanancias` de [`lib/simulador-ganancias.ts`](file:///c:/Users/sergi/.gemini/antigravity\scratch\CursosIEDCH\lib\simulador-ganancias.ts) aplicando el 70% de participación bruta, deducción de pasarela y retenciones ISR/IVA oficiales 2026.
+   - **Tabla de Ventas con Paginación:** Alumno con avatar, fecha (DD/MM/AAAA), hora (HH:mm), curso, método de pago con icono representativo, monto formateado, estatus `Pagado` (verde) o `Pendiente` (ámbar) y selector de elementos por página (5, 10, 20) con paginación interactiva.
+3. **Pruebas Automatizadas E2E en Playwright ([`e2e/profesor-ventas-reporte.spec.ts`](file:///c:/Users/sergi/.gemini/antigravity\scratch\CursosIEDCH\e2e\profesor-ventas-reporte.spec.ts)):**
+   - Cobertura de la estructura visual (Header, Filtros, KPIs, Paneles, Tabla).
+   - Verificación de datos bancarios e insignia de verificación.
+   - Validación de apertura y cierre del Modal de Desglose de Simulación con todos los conceptos contables.
+   - Validación del filtro reactivo por método de pago en el grid (Tarjeta, OXXO, Transferencia).
+   - Validación del filtro por año y mes en el buscador superior.
+   - Validación exitosa de las 6 pruebas en la suite (`6 passed`).
+
+
 ## Fecha: 2026-11-21
 ### Tarea: Implementación de Selección de Régimen Fiscal (Sin RFC, Con RFC, Persona Moral), Autorización Administrativa y Proyección en "Mis Ventas"
 

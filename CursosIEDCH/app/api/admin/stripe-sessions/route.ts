@@ -36,9 +36,17 @@ export async function GET() {
         }
 
         // Fetch cursos
-        const { data: cursos } = await supabaseAdmin.from('ie_cursos').select('id, titulo, precio, creado_por');
-        const cursoMap: Record<string, { titulo: string, precio: number, profesor_id: string }> = {};
-        cursos?.forEach(c => { cursoMap[c.id] = { titulo: c.titulo, precio: c.precio, profesor_id: c.creado_por } });
+        const { data: cursos } = await supabaseAdmin.from('ie_cursos').select('id, titulo, precio, creado_por, modalidad, limite_inscripcion');
+        const cursoMap: Record<string, { titulo: string, precio: number, profesor_id: string, modalidad: string, limite_inscripcion: string | null }> = {};
+        cursos?.forEach(c => { 
+            cursoMap[c.id] = { 
+                titulo: c.titulo, 
+                precio: c.precio, 
+                profesor_id: c.creado_por,
+                modalidad: c.modalidad || 'abierta',
+                limite_inscripcion: c.limite_inscripcion || null
+            } 
+        });
 
         const matchedKeys = new Set<string>();
 
@@ -84,13 +92,14 @@ export async function GET() {
 
         const stripeTransactions = sessions.data.map(session => {
             const isPaid = session.payment_status === 'paid';
-            if (!isPaid) return null; // Solo reportamos lo pagado
+            const isOpen = session.status === 'open';
+            if (!isPaid && !isOpen) return null; // Reportamos transacciones pagadas y sesiones activas/pendientes
 
             const pi = session.payment_intent as any;
             let methodLabel = 'Tarjeta';
             
             if (pi?.next_action?.type === 'display_oxxo_details') {
-                methodLabel = 'OXXO (Ficha generada)';
+                methodLabel = 'OXXO';
             } else if (pi?.payment_method_types?.includes('oxxo') && pi?.status === 'succeeded') {
                 methodLabel = 'OXXO';
             } else if (session.payment_method_types?.length === 1 && session.payment_method_types[0] === 'oxxo') {
@@ -134,6 +143,8 @@ export async function GET() {
                 user_id: uid || null,
                 curso_id: cid,
                 curso_titulo: cData?.titulo || 'Curso desconocido',
+                curso_modalidad: cData?.modalidad || 'abierta',
+                curso_limite_inscripcion: cData?.limite_inscripcion || null,
                 profesor_id: cData?.profesor_id || null,
                 profesor_nombre: profileNameMap[cData?.profesor_id] || 'Desconocido',
                 method: methodLabel + bonoLabel,
@@ -199,9 +210,11 @@ export async function GET() {
                 user_id: m.user_id,
                 curso_id: m.curso_id,
                 curso_titulo: curso?.titulo || 'Curso desconocido',
+                curso_modalidad: curso?.modalidad || 'abierta',
+                curso_limite_inscripcion: curso?.limite_inscripcion || null,
                 profesor_id: curso?.profesor_id || null,
                 profesor_nombre: profileNameMap[curso?.profesor_id] || 'Desconocido',
-                method: 'Transferencia/Depósito / Efectivo',
+                method: 'Transferencia',
                 referred_by: manualReferredBy,
             };
         }));
@@ -243,6 +256,8 @@ export async function GET() {
                 user_id: c.user_id,
                 curso_id: c.curso_id,
                 curso_titulo: curso?.titulo || 'Curso desconocido',
+                curso_modalidad: curso?.modalidad || 'abierta',
+                curso_limite_inscripcion: curso?.limite_inscripcion || null,
                 profesor_nombre: profileNameMap[curso?.profesor_id] || 'Desconocido',
                 method: finalMethod,
                 referred_by: c.referred_by
