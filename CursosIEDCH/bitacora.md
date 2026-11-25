@@ -28,6 +28,16 @@
 - `npx playwright test e2e/finances.spec.ts`: 6 passed (30.9s).
 - `npm run build`: compilación de producción con Turbopack exitosa (51/51 rutas).
 
+#### Procedimiento de Despliegue a Producción:
+- **Fusión a `main`:** Integración de la rama `staging` en `main` mediante `git merge staging` (commit `4d734cb`).
+- **Push a Repositorio Remoto:** Envío de cambios a `origin/main` activando el pipeline de CI/CD en Vercel.
+- **Validación de Despliegue en Vercel:**
+  - Proyecto: `sergioolver-5875s-projects/cursos-iedch`.
+  - Deployment: `https://cursos-iedch-khmwp6t1n-sergioolver-5875s-projects.vercel.app`.
+  - Entorno: **Production** (`● Ready`).
+  - Dominios activos enlazados: `https://www.grupoegac.com`, `https://cursos.grupoegac.com`, `https://cursos-iedch.vercel.app`.
+- **Retorno al Entorno de Trabajo:** Regreso a la rama `staging` con variables de entorno de `.env.local`.
+
 ---
 
 ## Fecha: 2026-11-25
