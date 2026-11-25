@@ -42,6 +42,13 @@
    - Validación del filtro por año y mes en el buscador superior.
    - Validación exitosa de las 6 pruebas en la suite (`6 passed`).
 
+4. **Pase a Producción y Despliegue en Vercel:**
+   - Fusión exitosa de la rama `staging` a la rama `main` (commit `128714d`).
+   - Push de la rama `main` a `origin/main`.
+   - Build y despliegue exitoso en producción en Vercel (`cursos-iedch`, deployment `dpl_5VNbXUsLSqvL8xNEbaZqbEBgiJoe`, status `● Ready`).
+   - Producción activa y enrutada a dominios oficiales: `https://www.grupoegac.com`, `https://cursos.grupoegac.com` y `https://cursos-iedch.vercel.app`.
+   - Retorno a la rama de trabajo `staging` con variables `.env.local`.
+
 
 ## Fecha: 2026-11-21
 ### Tarea: Implementación de Selección de Régimen Fiscal (Sin RFC, Con RFC, Persona Moral), Autorización Administrativa y Proyección en "Mis Ventas"
